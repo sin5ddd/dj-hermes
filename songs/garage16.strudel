@@ -1,0 +1,15 @@
+// title: garage16
+// 16-bar UK garage / 2-step loop @ 132 BPM
+setcpm(132/4)
+// kick
+$: s("<[bd ~ ~ ~ bd ~ bd ~] [bd ~ ~ ~ bd ~ ~ ~] [bd ~ ~ ~ bd ~ bd ~] [bd ~ bd ~ bd ~ ~ ~] [bd ~ ~ ~ bd ~ bd ~] [bd ~ ~ ~ bd ~ ~ ~] [bd ~ ~ ~ bd ~ bd ~] [bd ~ bd ~ ~ bd ~ ~] [bd ~ ~ ~ ~ ~ ~ ~] [~ ~ ~ ~ bd ~ bd ~] [bd ~ ~ ~ bd ~ bd ~] [bd ~ ~ ~ bd ~ ~ ~] [bd ~ ~ ~ bd ~ bd ~] [bd ~ bd ~ bd ~ ~ ~] [bd ~ ~ ~ bd ~ bd ~] [bd ~ bd ~ bd ~ bd ~]>").gain(0.88)
+// snare
+$: s("<[~ ~ sd ~ ~ sd ~ ~] [~ ~ sd ~ ~ ~ sd ~] [~ ~ sd ~ ~ sd ~ ~] [~ ~ sd ~ sd ~ sd ~] [~ ~ sd ~ ~ sd ~ ~] [~ ~ sd ~ ~ ~ sd ~] [~ ~ sd ~ ~ sd ~ ~] [~ sd ~ sd ~ ~ sd ~] [~ ~ ~ ~ ~ sd ~ ~] [~ ~ sd ~ ~ ~ ~ ~] [~ ~ sd ~ ~ sd ~ ~] [~ ~ sd ~ ~ ~ sd ~] [~ ~ sd ~ ~ sd ~ ~] [~ ~ sd ~ sd ~ sd ~] [~ ~ sd ~ ~ sd ~ ~] [sd ~ sd ~ ~ sd sd ~]>").gain(0.8)
+// hat
+$: s("<[hh ~ hh hh hh ~ hh ~] [hh ~ hh hh hh ~ hh hh] [hh ~ hh hh hh ~ hh ~] [hh hh hh ~ hh ~ hh ~] [hh ~ hh hh hh ~ hh ~] [hh ~ hh hh hh ~ hh hh] [hh ~ hh hh hh ~ hh ~] [hh hh ~ hh hh ~ hh hh] [hh ~ ~ ~ hh ~ ~ ~] [~ hh ~ hh ~ hh ~ hh] [hh ~ hh hh hh ~ hh ~] [hh ~ hh hh hh ~ hh hh] [hh ~ hh hh hh ~ hh ~] [hh hh hh ~ hh ~ hh ~] [hh ~ hh hh hh ~ hh ~] [hh hh hh hh hh ~ hh hh]>").gain(0.27)
+// openhat
+$: s("<[~ ~ ~ oh ~ ~ ~ ~] [~ ~ ~ ~ ~ ~ oh ~] [~ ~ ~ oh ~ ~ ~ ~] [~ ~ ~ ~ oh ~ ~ oh] [~ ~ ~ oh ~ ~ ~ ~] [~ ~ ~ ~ ~ ~ oh ~] [~ ~ ~ oh ~ ~ ~ ~] [~ oh ~ ~ ~ ~ oh ~] [~ ~ ~ ~ ~ ~ ~ ~] [~ ~ ~ oh ~ ~ ~ ~] [~ ~ ~ oh ~ ~ ~ ~] [~ ~ ~ ~ ~ ~ oh ~] [~ ~ ~ oh ~ ~ ~ ~] [~ ~ ~ ~ oh ~ ~ oh] [~ ~ ~ oh ~ ~ ~ ~] [~ oh ~ oh ~ oh ~ ~]>").gain(0.34)
+// bass
+$: note("<[f2 ~ f2 ~ ab2 ~ c3 ~] [f2 ~ f2 ~ eb2 ~ f2 ~] [f2 ~ f2 ~ ab2 ~ c3 ~] [bb1 ~ bb1 ~ c2 ~ eb2 ~] [f2 ~ f2 ~ ab2 ~ c3 ~] [f2 ~ f2 ~ eb2 ~ f2 ~] [f2 ~ f2 ~ ab2 ~ c3 ~] [bb1 ~ c2 ~ eb2 ~ f2 ~] [f2 ~ ~ ~ ~ ~ ~ ~] [~ ~ f2 ~ ab2 ~ c3 ~] [f2 ~ f2 ~ ab2 ~ c3 ~] [f2 ~ f2 ~ eb2 ~ f2 ~] [f2 ~ f2 ~ ab2 ~ c3 ~] [bb1 ~ bb1 ~ c2 ~ eb2 ~] [f2 ~ f2 ~ ab2 ~ c3 ~] [f2 eb2 c2 bb1 ab1 bb1 c2 f2]>").s("sawtooth").lpf(450).gain(0.5).attack(0.005).decay(0.1).sustain(0.3).release(0.08)
+// keys
+$: note("<[~ ~ ab3 ~ ~ ~ c4 ~] [~ ~ ~ ~ ab3 ~ ~ ~] [~ ~ ab3 ~ ~ ~ c4 ~] [~ ~ bb3 ~ ~ ab3 ~ ~] [~ ~ ab3 ~ ~ ~ c4 ~] [~ ~ ~ ~ ab3 ~ ~ ~] [~ ~ ab3 ~ ~ ~ c4 ~] [~ bb3 ~ ab3 ~ f3 ~ ~] [~ ~ ~ ~ ~ ~ ~ ~] [~ ~ ~ ~ ~ ~ ab3 ~] [~ ~ ab3 ~ ~ ~ c4 ~] [~ ~ ~ ~ ab3 ~ ~ ~] [~ ~ ab3 ~ ~ ~ c4 ~] [~ ~ bb3 ~ ~ ab3 ~ ~] [~ ~ ab3 ~ ~ ~ c4 ~] [ab3 ~ bb3 ~ c4 ~ eb4 ~]>").s("triangle").lpf(1800).gain(0.2).attack(0.002).decay(0.12).sustain(0.25).release(0.08)
