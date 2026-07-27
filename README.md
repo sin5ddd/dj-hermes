@@ -22,12 +22,22 @@ cargo run -- play songs/smoke.strudel
 cargo run -- play songs/smoke.strudel --seconds 15
 # TUI なし（メタログのみ・スクリプト向け）
 cargo run -- play songs/smoke.strudel --headless
+# REPL + 曲ファイル監視（バー量子化ロード / xfade など）
+cargo run -- play --repl songs/techno16.strudel
 ```
 
 - **既定はループ再生**（終了: TUI なら `q` / Esc、`--headless` なら Ctrl+C）
 - `--seconds N`: N 秒で自動停止（スクリプト向け）
 - **既定はミニ記法ライブハイライト TUI**（曲ソース表示・再生中 atom を ANSI 強調）
 - `--headless`: 旧来のメタログのみ（TTY 不要・CI / パイプ向け）
+- **`--repl`**: **ハイライト + コマンド行**のライブ UI + `songs/` ウォッチャ（デモ向け）
+  - 画面上段: **左 = デッキ A / 右 = デッキ B** のミニ記法ハイライト（同時表示）
+  - 下段: ログ + `»` プロンプト
+  - コマンド例（コロン不要）:
+    - `a load songs/techno16.strudel` / `b load songs/house16.strudel`
+    - `x 4`（反対側デッキへ 4 小節 xfade）/ `b x 4`（明示的に B へ）
+    - `a mute kick` / `bpm 128` / `hush` / `status` / `quit`
+- **`--repl-text`**: ハイライトなしの rustyline テキスト REPL（同じコマンド体系）
 - サンプルは `./samples`（Sonic Pi 由来 CC0）。曲は `songs/*.strudel`
 - 出力デバイスが無い環境ではエラー終了（`cargo test` / build はデバイス不要）
 

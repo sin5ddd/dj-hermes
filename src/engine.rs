@@ -1,9 +1,10 @@
-//! Engine: dual decks, bar-quantized Command queue, mix to mono.
+//! Engine: dual decks, bar-quantized Command queue, mixer layer.
 
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 
 use crate::deck::Deck;
+use crate::mixer::{Mixer, XFadeTick};
 use crate::sample::SampleBank;
 use crate::song::Song;
 use crate::transport::Transport;
@@ -27,6 +28,14 @@ pub enum Command {
         track: String,
         muted: bool,
     },
+    /// Mixer fader (immediate; not bar-quantized).
+    SetDeckGain {
+        deck: usize,
+        gain: f32,
+    },
+    /// Master LPF cutoff Hz; `None` via negative/NaN not used — use `SetMixerLpf(None)`.
+    SetMixerLpf(Option<f32>),
+    SetMixerHpf(Option<f32>),
 }
 
 enum Pending {
@@ -52,17 +61,11 @@ struct Queued {
     kind: Pending,
 }
 
-struct XFadeState {
-    to_deck: usize,
-    start_sample: u64,
-    end_sample: u64,
-}
-
 pub struct Engine {
     pub transport: Transport,
     pub decks: [Deck; 2],
+    pub mixer: Mixer,
     pending: Vec<Queued>,
-    xfade: Option<XFadeState>,
     scratch_a: Vec<f32>,
     scratch_b: Vec<f32>,
     /// Lock-free playhead for UI highlight (UI re-evaluates patterns; audio only stores).
@@ -74,8 +77,8 @@ impl Engine {
         Self {
             transport: Transport::new(sample_rate, bpm),
             decks: [Deck::new("A"), Deck::new("B")],
+            mixer: Mixer::new(),
             pending: Vec::new(),
-            xfade: None,
             scratch_a: Vec::new(),
             scratch_b: Vec::new(),
             playhead: Arc::new(AtomicU64::new(0)),
@@ -101,7 +104,12 @@ impl Engine {
             self.transport.set_bpm(bpm);
         }
         self.decks[deck].load(song);
-        self.decks[deck].gain = 1.0;
+        // Audition / startup: ensure the loaded deck is audible.
+        if deck == 0 {
+            self.mixer.gain_a = 1.0;
+        } else if deck == 1 && self.mixer.gain_b <= 0.0 && self.mixer.gain_a <= 0.0 {
+            self.mixer.gain_b = 1.0;
+        }
     }
 
     pub fn push_command(&mut self, cmd: Command) {
@@ -109,12 +117,15 @@ impl Engine {
             Command::Hush => {
                 self.decks[0].unload();
                 self.decks[1].unload();
-                self.xfade = None;
+                self.mixer.clear_xfade();
+                self.mixer.gain_a = 0.0;
+                self.mixer.gain_b = 0.0;
                 self.pending.clear();
             }
             Command::UnloadDeck { deck } => {
                 if deck < 2 {
                     self.decks[deck].unload();
+                    self.mixer.set_deck_gain(deck, 0.0);
                 }
             }
             Command::LoadSong { deck, song } => {
@@ -147,6 +158,17 @@ impl Engine {
                     });
                 }
             }
+            Command::SetDeckGain { deck, gain } => {
+                if deck < 2 {
+                    self.mixer.set_deck_gain(deck, gain);
+                }
+            }
+            Command::SetMixerLpf(hz) => {
+                self.mixer.lpf_hz = hz;
+            }
+            Command::SetMixerHpf(hz) => {
+                self.mixer.hpf_hz = hz;
+            }
         }
     }
 
@@ -178,6 +200,13 @@ impl Engine {
                         self.transport.set_bpm(bpm);
                     }
                     self.decks[deck].load(song);
+                    // Ensure loaded deck is audible if its fader is zero and the other is also silent.
+                    if self.mixer.deck_gain(deck) <= 0.0 {
+                        let other = 1 - deck;
+                        if self.mixer.deck_gain(other) <= 0.0 {
+                            self.mixer.set_deck_gain(deck, 1.0);
+                        }
+                    }
                 }
                 Pending::SetBpm(b) => self.transport.set_bpm(b),
                 Pending::TrackMute { deck, track, muted } => {
@@ -186,11 +215,7 @@ impl Engine {
                 Pending::XFade { to_deck, bars } => {
                     let start = self.transport.global_sample;
                     let len = (bars as f64 * self.transport.samples_per_bar()) as u64;
-                    self.xfade = Some(XFadeState {
-                        to_deck,
-                        start_sample: start,
-                        end_sample: start.saturating_add(len.max(1)),
-                    });
+                    self.mixer.start_xfade(to_deck, start, len.max(1));
                 }
             }
         }
@@ -199,20 +224,11 @@ impl Engine {
     pub fn process(&mut self, out: &mut [f32], samples: &SampleBank) {
         self.apply_pending_at_bar_boundary();
 
-        if let Some(x) = &self.xfade {
-            let denom = (x.end_sample - x.start_sample).max(1) as f64;
-            let t = ((self.transport.global_sample.saturating_sub(x.start_sample)) as f64 / denom)
-                .clamp(0.0, 1.0);
-            let theta = t * std::f64::consts::FRAC_PI_2;
-            let (from, to) = if x.to_deck == 1 { (0, 1) } else { (1, 0) };
-            self.decks[from].gain = theta.cos() as f32;
-            self.decks[to].gain = theta.sin() as f32;
-            if t >= 1.0 {
-                self.decks[from].unload();
-                self.decks[from].gain = 0.0;
-                self.decks[to].gain = 1.0;
-                self.xfade = None;
+        match self.mixer.tick_xfade(self.transport.global_sample) {
+            XFadeTick::Finished { from_deck, .. } => {
+                self.decks[from_deck].unload();
             }
+            XFadeTick::Idle | XFadeTick::Active => {}
         }
 
         let n = out.len();
@@ -222,16 +238,17 @@ impl Engine {
         }
         self.scratch_a[..n].fill(0.0);
         self.scratch_b[..n].fill(0.0);
+
+        // Deck outputs are pre-fader; mixer applies gain_a/gain_b.
+        self.decks[0].gain = 1.0;
+        self.decks[1].gain = 1.0;
         self.decks[0].process(&mut self.scratch_a[..n], &self.transport, samples);
         self.decks[1].process(&mut self.scratch_b[..n], &self.transport, samples);
 
-        for (o, (a, b)) in out
-            .iter_mut()
-            .zip(self.scratch_a.iter().zip(self.scratch_b.iter()))
-            .take(n)
-        {
-            *o = (a + b).clamp(-1.0, 1.0);
-        }
+        let sr = self.transport.sample_rate as f32;
+        self.mixer
+            .mix(out, &self.scratch_a[..n], &self.scratch_b[..n], sr);
+
         self.transport.advance(n);
         // Publish after advance so UI sees the end-of-buffer position.
         self.playhead
@@ -289,6 +306,171 @@ b: note("{n}").s("sawtooth").gain(0.8)
         assert!(
             buf.iter().any(|s| s.abs() > 0.001),
             "should sound after bar boundary"
+        );
+    }
+
+    #[test]
+    fn bpm_change_waits_for_bar() {
+        let mut e = Engine::new(48_000, 120.0);
+        let bank = SampleBank::empty();
+        e.push_command(Command::SetBpm(60.0));
+        let mut buf = vec![0f32; 4_800]; // mid-bar
+        e.process(&mut buf, &bank);
+        assert!(
+            (e.transport.bpm - 120.0).abs() < 1e-9,
+            "bpm must not change mid-bar"
+        );
+        // Finish the rest of bar 0 (still applied at buffer head = mid-bar → no change).
+        let mut buf = vec![0f32; 96_000 - 4_800];
+        e.process(&mut buf, &bank);
+        assert!(
+            (e.transport.bpm - 120.0).abs() < 1e-9,
+            "bpm still unchanged until a buffer starts on the next bar"
+        );
+        // Buffer head is now exactly at bar 1 → apply pending.
+        let mut buf = vec![0f32; 1_000];
+        e.process(&mut buf, &bank);
+        assert!(
+            (e.transport.bpm - 60.0).abs() < 1e-9,
+            "bpm must change at bar boundary, got {}",
+            e.transport.bpm
+        );
+    }
+
+    #[test]
+    fn track_mute_waits_for_bar() {
+        let mut e = Engine::new(48_000, 120.0);
+        let bank = SampleBank::empty();
+        let song = parse_song("---\nb: note(\"c3\").s(\"sawtooth\").gain(0.8)", "t").unwrap();
+        e.push_command(Command::LoadSong { deck: 0, song });
+        // Apply load at bar 1.
+        let mut buf = vec![0f32; 96_000];
+        e.process(&mut buf, &bank);
+        let mut buf = vec![0f32; 48_000];
+        e.process(&mut buf, &bank);
+        assert!(
+            buf.iter().any(|s| s.abs() > 0.001),
+            "should sound before mute"
+        );
+
+        e.push_command(Command::SetTrackMute {
+            deck: 0,
+            track: "b".into(),
+            muted: true,
+        });
+        // Still same bar: mute pending for next bar → still sounding.
+        let mut buf = vec![0f32; 4_800];
+        e.process(&mut buf, &bank);
+        assert!(
+            buf.iter().any(|s| s.abs() > 0.0),
+            "should still sound mid-bar after mute request"
+        );
+
+        // Cross bar boundary → muted (voices may tail; process full bars to drain).
+        let mut buf = vec![0f32; 96_000];
+        e.process(&mut buf, &bank);
+        // One more bar: no new notes.
+        let mut buf = vec![0f32; 96_000];
+        e.process(&mut buf, &bank);
+        assert!(
+            buf.iter().all(|s| s.abs() < 1e-4),
+            "should be silent after mute at bar boundary"
+        );
+    }
+
+    #[test]
+    fn xfade_transitions_between_decks() {
+        // 120 BPM @ 48k → 1 bar = 96000 samples. Pending applies only at buffer head.
+        let mut e = Engine::new(48_000, 120.0);
+        let bank = SampleBank::empty();
+        let bar = 96_000usize;
+
+        e.push_command(Command::LoadSong {
+            deck: 0,
+            song: test_song("c3"),
+        });
+        // Reach bar 1 head and apply load A.
+        let mut buf = vec![0f32; bar];
+        e.process(&mut buf, &bank);
+        let mut buf = vec![0f32; bar];
+        e.process(&mut buf, &bank);
+        assert_eq!(e.decks[0].song_title(), Some("t"));
+        assert!((e.mixer.gain_a - 1.0).abs() < 1e-5);
+
+        e.push_command(Command::LoadSong {
+            deck: 1,
+            song: test_song("g3"),
+        });
+        e.push_command(Command::XFade {
+            to_deck: 1,
+            bars: 2,
+        });
+
+        // Process until pending targets are reached (next bar head).
+        let mut buf = vec![0f32; bar];
+        e.process(&mut buf, &bank);
+        // If still pending (buffer head was mid-timeline), one more bar.
+        if e.mixer.xfade().is_none() && e.decks[1].song_title().is_none() {
+            let mut buf = vec![0f32; bar];
+            e.process(&mut buf, &bank);
+        }
+        assert_eq!(
+            e.decks[1].song_title(),
+            Some("t"),
+            "deck B should be loaded"
+        );
+        assert!(
+            e.mixer.xfade().is_some() || e.mixer.gain_b > 0.0,
+            "xfade should have started or completed, a={} b={}",
+            e.mixer.gain_a,
+            e.mixer.gain_b
+        );
+
+        // Run enough bars for a 2-bar xfade to finish.
+        for _ in 0..4 {
+            let mut buf = vec![0f32; bar];
+            e.process(&mut buf, &bank);
+        }
+
+        assert!(
+            e.mixer.gain_a.abs() < 1e-3,
+            "from gain should be 0, got {}",
+            e.mixer.gain_a
+        );
+        assert!(
+            (e.mixer.gain_b - 1.0).abs() < 1e-3,
+            "to gain should be 1, got {}",
+            e.mixer.gain_b
+        );
+        assert!(
+            e.decks[0].song_title().is_none(),
+            "old deck unloaded after xfade"
+        );
+        assert_eq!(e.decks[1].song_title(), Some("t"));
+    }
+
+    #[test]
+    fn decks_share_transport() {
+        let mut e = Engine::new(48_000, 120.0);
+        let bank = SampleBank::empty();
+        e.mixer.gain_a = 1.0;
+        e.mixer.gain_b = 1.0;
+        e.push_command(Command::LoadSong {
+            deck: 0,
+            song: test_song("c3"),
+        });
+        e.push_command(Command::LoadSong {
+            deck: 1,
+            song: test_song("c3"),
+        });
+        let mut buf = vec![0f32; 96_000];
+        e.process(&mut buf, &bank); // apply at bar 1
+        let mut buf = vec![0f32; 48_000];
+        e.process(&mut buf, &bank);
+        let peak = buf.iter().fold(0f32, |m, s| m.max(s.abs()));
+        assert!(
+            peak > 0.3,
+            "expected constructive interference, peak={peak}"
         );
     }
 

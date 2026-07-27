@@ -93,8 +93,19 @@ pub fn active_spans(model: &HighlightModel, bar: u64, bar_pos: f64) -> Vec<Span>
     out
 }
 
-/// Build a full-screen ANSI frame: header + source with reverse-video active spans.
+/// Build an ANSI frame: header + source with reverse-video active spans.
+/// When `with_quit_footer` is true, append the standalone-play quit hint.
 pub fn render_ansi(model: &HighlightModel, active: &[Span], header: &str) -> String {
+    render_ansi_ex(model, active, header, true)
+}
+
+/// Same as [`render_ansi`], with optional quit footer (omit in live UI that draws its own).
+pub fn render_ansi_ex(
+    model: &HighlightModel,
+    active: &[Span],
+    header: &str,
+    with_quit_footer: bool,
+) -> String {
     let src = &model.source;
     let mut marks = vec![false; src.len()];
     for sp in active {
@@ -140,7 +151,9 @@ pub fn render_ansi(model: &HighlightModel, active: &[Span], header: &str) -> Str
         out.push('\n');
     }
     out.push_str("────────────────────────────────────────\n");
-    out.push_str("[q] quit  ·  mini-notation highlight\n");
+    if with_quit_footer {
+        out.push_str("[q] quit  ·  mini-notation highlight\n");
+    }
     out
 }
 
