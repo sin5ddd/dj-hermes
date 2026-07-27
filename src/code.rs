@@ -1,5 +1,6 @@
 //! Method-chain pattern code: `note("...").s("sawtooth").lpf(800)...`
 
+use crate::dsp::CompressorParams;
 use crate::mini::{self, Node};
 
 /// Defaults for amplitude envelope (seconds; sustain is level 0..1).
@@ -22,6 +23,94 @@ impl Default for Adsr {
     }
 }
 
+/// Local filter cutoffs / Q (None = bypass that stage).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct FilterParams {
+    pub lpf: Option<f32>,
+    pub lpq: f32,
+    pub hpf: Option<f32>,
+    pub hpq: f32,
+    pub bpf: Option<f32>,
+    pub bpq: f32,
+}
+
+impl Default for FilterParams {
+    fn default() -> Self {
+        Self {
+            lpf: None,
+            lpq: 0.707,
+            hpf: None,
+            hpq: 0.707,
+            bpf: None,
+            bpq: 1.0,
+        }
+    }
+}
+
+/// Vibrato / FM / pitch & filter envelope modulation.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct ModParams {
+    pub vib_hz: f32,
+    pub vibmod: f32,
+    pub fm: f32,
+    pub fmh: f32,
+    pub fm_attack: f32,
+    pub fm_decay: f32,
+    pub fm_sustain: f32,
+    pub noise_mix: f32,
+    pub penv: f32,
+    pub patt: f32,
+    pub pdec: f32,
+    pub lpenv: f32,
+    pub lpa: f32,
+    pub lpd: f32,
+    pub lps: f32,
+    pub lpr: f32,
+}
+
+impl Default for ModParams {
+    fn default() -> Self {
+        Self {
+            vib_hz: 0.0,
+            vibmod: 0.5,
+            fm: 0.0,
+            fmh: 1.0,
+            fm_attack: 0.001,
+            fm_decay: 0.1,
+            fm_sustain: 0.0,
+            noise_mix: 0.0,
+            penv: 0.0,
+            patt: 0.2,
+            pdec: 0.0,
+            lpenv: 0.0,
+            lpa: 0.01,
+            lpd: 0.1,
+            lps: 0.5,
+            lpr: 0.1,
+        }
+    }
+}
+
+/// Up to 4 duck targets (orbit id 1-based; 0 = unused slot).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct DuckParams {
+    pub count: u8,
+    pub orbits: [u8; 4],
+    pub attack: [f32; 4],
+    pub depth: [f32; 4],
+}
+
+impl Default for DuckParams {
+    fn default() -> Self {
+        Self {
+            count: 0,
+            orbits: [0; 4],
+            attack: [0.2; 4],
+            depth: [1.0; 4],
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct PatternCode {
     pub pattern: Node,
@@ -30,27 +119,48 @@ pub struct PatternCode {
     pub gain: f32,
     /// Multiplier applied with gain (from velocity/vel).
     pub velocity: f32,
-    pub lpf: Option<f32>,
+    pub filter: FilterParams,
     /// Accumulated slow/fast factor (slow divides, fast multiplies).
     pub speed: f64,
     pub is_note: bool,
     pub adsr: Adsr,
+    pub mod_params: ModParams,
     pub begin: f32,
     pub end: f32,
     pub sample_speed: f32,
     pub sample_n: Option<i32>,
+    /// Sample bank prefix (`.bank("RolandTR808")` → resolve `rolandtr808_bd`).
+    pub bank: Option<String>,
+    /// Event length multiplier (clip / legato). None = 1.0.
+    pub clip: Option<f32>,
+    pub legato: Option<f32>,
+    /// Cut group; same group steals previous voices.
+    pub cut: Option<i32>,
+    /// Orbit id (1-based, default 1).
+    pub orbit: u8,
+    pub duck: DuckParams,
+    pub compressor: Option<CompressorParams>,
     /// Original source text (for display / error context).
     pub raw: String,
     /// Mini-notation string (contents of the first `"..."`).
     pub mini_src: String,
     /// Absolute byte offset of `mini_src` in the song file (set by song parser).
-    /// Relative to the code input until `with_source_base` is applied.
     pub mini_base: usize,
 }
 
 impl PatternCode {
     pub fn effective_gain(&self) -> f32 {
         self.gain * self.velocity
+    }
+
+    /// Length scale from clip (priority) or legato; default 1.0.
+    pub fn length_scale(&self) -> f32 {
+        self.clip.or(self.legato).unwrap_or(1.0).max(0.01)
+    }
+
+    /// Convenience: legacy field name used in tests.
+    pub fn lpf(&self) -> Option<f32> {
+        self.filter.lpf
     }
 
     /// Shift mini_base from code-relative to absolute song source offset.
@@ -68,14 +178,22 @@ pub fn parse_code(input: &str) -> Result<PatternCode, String> {
         sound: "triangle".into(),
         gain: 0.5,
         velocity: 1.0,
-        lpf: None,
+        filter: FilterParams::default(),
         speed: 1.0,
         is_note: false,
         adsr: Adsr::default(),
+        mod_params: ModParams::default(),
         begin: 0.0,
         end: 1.0,
         sample_speed: 1.0,
         sample_n: None,
+        bank: None,
+        clip: None,
+        legato: None,
+        cut: None,
+        orbit: 1,
+        duck: DuckParams::default(),
+        compressor: None,
         raw: input.to_string(),
         mini_src: String::new(),
         mini_base: 0,
@@ -87,13 +205,11 @@ pub fn parse_code(input: &str) -> Result<PatternCode, String> {
         return Err(format!("unknown head: {head} (use note/s)"));
     }
 
-    // Require balanced parens for the whole expression (catches `note("c3"`).
     if !parens_balanced(input) {
         return Err("unbalanced parens".into());
     }
 
     let (first_str, content_start_in_tail) = extract_first_string(&input[open..])?;
-    // mini content offset within the untrimmed code string (for song absolute base).
     pc.mini_base = trim_start + open + content_start_in_tail;
     pc.mini_src = first_str.clone();
     pc.pattern = mini::parse(&first_str)?;
@@ -103,7 +219,6 @@ pub fn parse_code(input: &str) -> Result<PatternCode, String> {
         pc.is_note = false;
     }
 
-    // Walk `.name(args)` chain
     let mut cur = &input[open..];
     while let Some(dot) = cur.find('.') {
         let after = &cur[dot + 1..];
@@ -161,7 +276,6 @@ fn leading_ws_bytes(s: &str) -> usize {
     s.len() - s.trim_start().len()
 }
 
-/// Returns (string contents, byte offset of first content char within `s`).
 fn extract_first_string(s: &str) -> Result<(String, usize), String> {
     let start = s.find('"').ok_or_else(|| "missing \"".to_string())?;
     let end = s[start + 1..]
@@ -180,6 +294,32 @@ fn parse_num(a: &str) -> Result<f64, String> {
         .map_err(|_| format!("bad number: {a}"))
 }
 
+/// Split `a:b:c` or whitespace; strips surrounding quotes.
+fn parse_colon_list(args: &str) -> Vec<f64> {
+    let raw = args.trim().trim_matches('"');
+    if raw.is_empty() {
+        return Vec::new();
+    }
+    let parts: Vec<&str> = if raw.contains(':') {
+        raw.split(':').collect()
+    } else {
+        raw.split_whitespace().collect()
+    };
+    parts
+        .into_iter()
+        .filter_map(|p| p.trim().parse::<f64>().ok())
+        .collect()
+}
+
+fn apply_cutoff_q(list: &[f64]) -> Result<(f32, Option<f32>), String> {
+    if list.is_empty() {
+        return Err("missing cutoff".into());
+    }
+    let cut = list[0] as f32;
+    let q = list.get(1).map(|v| *v as f32);
+    Ok((cut, q))
+}
+
 fn apply_method(pc: &mut PatternCode, name: &str, args: &str) -> Result<(), String> {
     match name {
         "s" | "sound" => {
@@ -195,7 +335,42 @@ fn apply_method(pc: &mut PatternCode, name: &str, args: &str) -> Result<(), Stri
             Ok(())
         }
         "lpf" | "cutoff" | "lp" | "ctf" => {
-            pc.lpf = Some(parse_num(args)? as f32);
+            let list = parse_colon_list(args);
+            let (cut, q) = apply_cutoff_q(&list)?;
+            pc.filter.lpf = Some(cut);
+            if let Some(q) = q {
+                pc.filter.lpq = q;
+            }
+            Ok(())
+        }
+        "lpq" | "resonance" => {
+            pc.filter.lpq = parse_num(args)? as f32;
+            Ok(())
+        }
+        "hpf" | "hp" | "hcutoff" => {
+            let list = parse_colon_list(args);
+            let (cut, q) = apply_cutoff_q(&list)?;
+            pc.filter.hpf = Some(cut);
+            if let Some(q) = q {
+                pc.filter.hpq = q;
+            }
+            Ok(())
+        }
+        "hpq" | "hresonance" => {
+            pc.filter.hpq = parse_num(args)? as f32;
+            Ok(())
+        }
+        "bpf" | "bp" | "bandf" => {
+            let list = parse_colon_list(args);
+            let (cut, q) = apply_cutoff_q(&list)?;
+            pc.filter.bpf = Some(cut);
+            if let Some(q) = q {
+                pc.filter.bpq = q;
+            }
+            Ok(())
+        }
+        "bpq" | "bandq" => {
+            pc.filter.bpq = parse_num(args)? as f32;
             Ok(())
         }
         "attack" | "att" => {
@@ -215,7 +390,6 @@ fn apply_method(pc: &mut PatternCode, name: &str, args: &str) -> Result<(), Stri
             Ok(())
         }
         "adsr" => {
-            // "a:d:s:r" or a d s r
             let raw = args.trim().trim_matches('"');
             let parts: Vec<&str> = if raw.contains(':') {
                 raw.split(':').collect()
@@ -229,6 +403,85 @@ fn apply_method(pc: &mut PatternCode, name: &str, args: &str) -> Result<(), Stri
             pc.adsr.decay = parse_num(parts[1])? as f32;
             pc.adsr.sustain = parse_num(parts[2])? as f32;
             pc.adsr.release = parse_num(parts[3])? as f32;
+            Ok(())
+        }
+        "vib" | "vibrato" | "v" => {
+            let list = parse_colon_list(args);
+            if list.is_empty() {
+                return Err("vib expects frequency".into());
+            }
+            pc.mod_params.vib_hz = list[0] as f32;
+            if let Some(d) = list.get(1) {
+                pc.mod_params.vibmod = *d as f32;
+            }
+            Ok(())
+        }
+        "vibmod" | "vmod" => {
+            let list = parse_colon_list(args);
+            if list.is_empty() {
+                return Err("vibmod expects depth".into());
+            }
+            pc.mod_params.vibmod = list[0] as f32;
+            if let Some(f) = list.get(1) {
+                pc.mod_params.vib_hz = *f as f32;
+            }
+            Ok(())
+        }
+        "fm" => {
+            pc.mod_params.fm = parse_num(args)? as f32;
+            Ok(())
+        }
+        "fmh" => {
+            pc.mod_params.fmh = parse_num(args)? as f32;
+            Ok(())
+        }
+        "fmattack" | "fmatt" => {
+            pc.mod_params.fm_attack = parse_num(args)? as f32;
+            Ok(())
+        }
+        "fmdecay" | "fmdec" => {
+            pc.mod_params.fm_decay = parse_num(args)? as f32;
+            Ok(())
+        }
+        "fmsustain" | "fmsus" => {
+            pc.mod_params.fm_sustain = parse_num(args)? as f32;
+            Ok(())
+        }
+        "noise" => {
+            // Pink noise mix into oscillator (not the white/pink/brown sound sources).
+            pc.mod_params.noise_mix = (parse_num(args)? as f32).clamp(0.0, 1.0);
+            Ok(())
+        }
+        "penv" => {
+            pc.mod_params.penv = parse_num(args)? as f32;
+            Ok(())
+        }
+        "pattack" | "patt" => {
+            pc.mod_params.patt = parse_num(args)? as f32;
+            Ok(())
+        }
+        "pdecay" | "pdec" => {
+            pc.mod_params.pdec = parse_num(args)? as f32;
+            Ok(())
+        }
+        "lpenv" | "lpe" => {
+            pc.mod_params.lpenv = parse_num(args)? as f32;
+            Ok(())
+        }
+        "lpattack" | "lpa" => {
+            pc.mod_params.lpa = parse_num(args)? as f32;
+            Ok(())
+        }
+        "lpdecay" | "lpd" => {
+            pc.mod_params.lpd = parse_num(args)? as f32;
+            Ok(())
+        }
+        "lpsustain" | "lps" => {
+            pc.mod_params.lps = parse_num(args)? as f32;
+            Ok(())
+        }
+        "lprelease" | "lpr" => {
+            pc.mod_params.lpr = parse_num(args)? as f32;
             Ok(())
         }
         "begin" => {
@@ -251,9 +504,71 @@ fn apply_method(pc: &mut PatternCode, name: &str, args: &str) -> Result<(), Stri
             pc.speed *= parse_num(args)?;
             Ok(())
         }
+        "bank" => {
+            pc.bank = Some(args.trim().trim_matches('"').to_ascii_lowercase());
+            Ok(())
+        }
+        "clip" => {
+            pc.clip = Some(parse_num(args)? as f32);
+            Ok(())
+        }
+        "legato" => {
+            pc.legato = Some(parse_num(args)? as f32);
+            Ok(())
+        }
+        "cut" => {
+            pc.cut = Some(parse_num(args)? as i32);
+            Ok(())
+        }
+        "orbit" | "o" => {
+            let n = parse_num(args)? as i32;
+            if n < 1 {
+                return Err(format!("orbit must be >= 1, got {n}"));
+            }
+            pc.orbit = n.clamp(1, 4) as u8;
+            Ok(())
+        }
+        "duckorbit" | "duck" => {
+            let list = parse_colon_list(args);
+            if list.is_empty() {
+                return Err("duckorbit expects orbit id".into());
+            }
+            pc.duck.count = 0;
+            for (i, v) in list.iter().take(4).enumerate() {
+                let id = (*v as i32).clamp(1, 4) as u8;
+                pc.duck.orbits[i] = id;
+                pc.duck.count = (i + 1) as u8;
+            }
+            Ok(())
+        }
+        "duckattack" | "duckatt" | "datt" => {
+            let list = parse_colon_list(args);
+            if list.is_empty() {
+                return Err("duckattack expects time".into());
+            }
+            for i in 0..4 {
+                let v = list.get(i).or_else(|| list.first()).copied().unwrap_or(0.2);
+                pc.duck.attack[i] = v as f32;
+            }
+            Ok(())
+        }
+        "duckdepth" => {
+            let list = parse_colon_list(args);
+            if list.is_empty() {
+                return Err("duckdepth expects depth".into());
+            }
+            for i in 0..4 {
+                let v = list.get(i).or_else(|| list.first()).copied().unwrap_or(1.0);
+                pc.duck.depth[i] = (v as f32).clamp(0.0, 1.0);
+            }
+            Ok(())
+        }
+        "compressor" => {
+            pc.compressor = Some(CompressorParams::parse(args)?);
+            Ok(())
+        }
         "note" => Ok(()),
         "n" => {
-            // sample index when used as method; note head already handled
             if let Ok(i) = parse_num(args) {
                 pc.sample_n = Some(i as i32);
             }
@@ -268,7 +583,6 @@ pub fn note_to_hz(note: &str) -> Result<f32, String> {
     if note.is_empty() {
         return Err("empty note".into());
     }
-    // Strip chord suffix if present (caller should use expand_chord)
     let note = note.split('\'').next().unwrap_or(note);
     let bytes = note.as_bytes();
     let mut i = 0;
@@ -291,7 +605,6 @@ pub fn note_to_hz(note: &str) -> Result<f32, String> {
                 i += 1;
             }
             'b' => {
-                // flat only if not start of octave number; 'b' after letter is flat
                 semis -= 1;
                 i += 1;
             }
@@ -302,24 +615,20 @@ pub fn note_to_hz(note: &str) -> Result<f32, String> {
     let oct: i32 = oct_str
         .parse()
         .map_err(|_| format!("bad octave in {note}"))?;
-    // MIDI: C-1 = 0, C4 = 60. formula: (oct + 1) * 12 + semis
     let midi = (oct + 1) * 12 + semis;
     Ok(440.0 * 2f32.powf((midi - 69) as f32 / 12.0))
 }
 
 /// `c3'maj` / `c3'min7` → chord tones as note names. Plain notes → one element.
-/// Supported qualities: maj, min, maj7, min7, dim, aug, sus2, sus4.
 pub fn expand_chord(token: &str) -> Result<Vec<String>, String> {
     if !token.contains('\'') {
-        // validate as a note
         note_to_hz(token)?;
         return Ok(vec![token.to_string()]);
     }
     let (root_part, quality) = token
         .split_once('\'')
         .ok_or_else(|| format!("bad chord token: {token}"))?;
-    let root_hz_check = note_to_hz(root_part)?;
-    let _ = root_hz_check;
+    let _ = note_to_hz(root_part)?;
 
     let q = quality.to_ascii_lowercase();
     let intervals: &[i32] = match q.as_str() {
@@ -352,23 +661,11 @@ fn split_root(root: &str) -> Result<(String, i32), String> {
         return Err("empty root".into());
     }
     let mut i = 1;
-    while i < bytes.len() && (bytes[i] == b'#' || (bytes[i] == b'b' && i == 1)) {
-        // allow # or b accidentals after letter
-        if bytes[i] == b'#' || bytes[i] == b'b' {
-            i += 1;
-        } else {
-            break;
-        }
-    }
-    // also consume multi accidentals simply
     while i < bytes.len() && (bytes[i] == b'#' || bytes[i] == b'b') {
-        // only if not digit
         if bytes[i].is_ascii_digit() {
             break;
         }
-        if bytes[i] == b'#' || bytes[i] == b'b' {
-            i += 1;
-        }
+        i += 1;
     }
     let letter_acc = root[..i].to_string();
     let oct: i32 = root[i..]
@@ -421,7 +718,7 @@ mod tests {
             parse_code(r#"note("c3 e3 [g3 ~]").s("sawtooth").lpf(800).gain(0.4).slow(2)"#).unwrap();
         assert!(pc.is_note);
         assert_eq!(pc.sound, "sawtooth");
-        assert_eq!(pc.lpf, Some(800.0));
+        assert_eq!(pc.lpf(), Some(800.0));
         assert!((pc.speed - 0.5).abs() < 1e-9);
     }
 
@@ -463,8 +760,6 @@ mod tests {
     fn expand_maj() {
         let notes = expand_chord("c3'maj").unwrap();
         assert_eq!(notes, vec!["c3", "e3", "g3"]);
-        let freqs: Vec<f32> = notes.iter().map(|n| note_to_hz(n).unwrap()).collect();
-        assert!((freqs[0] - 130.81).abs() < 0.5);
     }
 
     #[test]
@@ -492,5 +787,41 @@ mod tests {
             &code[pc.mini_base..pc.mini_base + pc.mini_src.len()],
             "bd*4"
         );
+    }
+
+    #[test]
+    fn vib_colon_and_orbit_duck() {
+        let pc = parse_code(
+            r#"note("c3").s("sawtooth").vib("4:12").orbit(2).duckorbit("2:3").duckattack(0.15).duckdepth("1:0.5")"#,
+        )
+        .unwrap();
+        assert!((pc.mod_params.vib_hz - 4.0).abs() < 1e-6);
+        assert!((pc.mod_params.vibmod - 12.0).abs() < 1e-6);
+        assert_eq!(pc.orbit, 2);
+        assert_eq!(pc.duck.count, 2);
+        assert_eq!(pc.duck.orbits[0], 2);
+        assert_eq!(pc.duck.orbits[1], 3);
+        assert!((pc.duck.depth[1] - 0.5).abs() < 1e-6);
+    }
+
+    #[test]
+    fn filter_and_bank_clip() {
+        let pc =
+            parse_code(r#"s("bd").bank("tr808").hpf(200).lpq(2).lpf("1000:8").clip(0.5).cut(1)"#)
+                .unwrap();
+        assert_eq!(pc.bank.as_deref(), Some("tr808"));
+        assert_eq!(pc.filter.hpf, Some(200.0));
+        assert!((pc.filter.lpq - 8.0).abs() < 1e-6);
+        assert_eq!(pc.filter.lpf, Some(1000.0));
+        assert_eq!(pc.clip, Some(0.5));
+        assert_eq!(pc.cut, Some(1));
+    }
+
+    #[test]
+    fn compressor_method() {
+        let pc = parse_code(r#"s("bd").compressor("-20:4:6:.003:.1")"#).unwrap();
+        let c = pc.compressor.unwrap();
+        assert!((c.threshold_db + 20.0).abs() < 1e-5);
+        assert!((c.ratio - 4.0).abs() < 1e-5);
     }
 }

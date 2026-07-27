@@ -5,6 +5,7 @@ pub mod backend;
 pub mod cmd;
 pub mod code;
 pub mod deck;
+pub mod dsp;
 pub mod engine;
 pub mod highlight;
 pub mod live_ui;

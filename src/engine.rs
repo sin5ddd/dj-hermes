@@ -246,6 +246,13 @@ impl Engine {
         self.decks[1].process(&mut self.scratch_b[..n], &self.transport, samples);
 
         let sr = self.transport.sample_rate as f32;
+        // Last-write-wins compressor params from either deck's pattern hits.
+        if let Some(c) = self.decks[0]
+            .pending_compressor
+            .or(self.decks[1].pending_compressor)
+        {
+            self.mixer.set_compressor(Some(c), sr);
+        }
         self.mixer
             .mix(out, &self.scratch_a[..n], &self.scratch_b[..n], sr);
 
