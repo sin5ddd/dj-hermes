@@ -61,6 +61,29 @@ strudel-rs play --repl songs/techno16.strudel
 - サンプルは `./samples`（Sonic Pi 由来 CC0）。曲は `songs/*.strudel`
 - 出力デバイスが無い環境ではエラー終了（`cargo test` / build はデバイス不要）
 
+## パターン記法の拡張（Task 23）
+
+ローカル FX・シンセ（パーボイス）と Deck 内 orbit をサポートしています。
+
+| 系統 | メソッド例 |
+| --- | --- |
+| 波形 / ノイズ | `sine` `sawtooth` `square` `triangle` `white` `pink` `brown` |
+| ウェーブテーブル | `wt_sine` `wt_bright` `wt_organ`（手続き生成の 1 周期） |
+| 変調 | `.vib("4:12")` `.fm(4).fmh(1.5)` `.noise(0.2)` `.penv(12)` |
+| フィルタ | `.lpf(800)` `.lpq(2)` `.hpf(200)` `.bpf(1000)` `.lpenv(4).lpa(0.01)` |
+| サンプル | `.bank("tr808")` `.clip(0.5)` `.legato(1.2)` `.cut(1)` `.n(0)` |
+| orbit / duck | `.orbit(2)` `.duckorbit(2).duckattack(0.15).duckdepth(0.9)` |
+| ダイナミクス | `.compressor("-20:4:6:.003:.1")`（Mixer マスターへ last-write） |
+
+orbit は **デッキ単位で 4 本**（id 1..4）。Deck A と B の orbit は共有しません。  
+`delay` / `room` は未実装で、Task 24 で orbit バスへ接続予定です。
+
+```
+// kick が pad の orbit を duck
+$: s("bd*4").gain(0.9).duckorbit(2).duckattack(0.15).duckdepth(0.9)
+$: note("c3'maj").s("sawtooth").lpf(800).orbit(2).gain(0.4)
+```
+
 ## HTTP API
 
 `play` 起動時に **HTTP API** が立ち上がります（既定 `http://127.0.0.1:17878`）。

@@ -2,6 +2,7 @@
 
 このリポジトリで作業する AI エージェント向けのプロジェクト概要と実装上の制約です。
 詳細なタスク分解は `docs/plans/2026-07-27_020000-strudel-rs-final.md` を正本とします。
+**完了タスクの詳細手順**は `docs/plans/done/` に切り出し済み（索引: `docs/plans/done/README.md`）。
 
 ---
 
@@ -235,13 +236,14 @@ Rust の build/test/clippy 実行時は、利用可能なら `cargo-runner` ス�
 | 項目 | 状態 |
 | --- | --- |
 | リポジトリ | GitHub private（`sin5ddd/strudel-rust`）+ CI/CD 基盤 |
-| cargo プロジェクト | Task 1–19 + Task 26 完了（HTTP API / MCP ブリッジ / エラー報告） |
-| 実装タスク | Task 20 任意（クライアント連携ドキュメント）→ Task 21 E2E 以降 |
+| cargo プロジェクト | Task 1–19 + Task 23 + Task 26 完了 |
+| 実装タスク | Task 20 任意 → Task 21 E2E → Task 22 計測 → Task 24（delay/room on orbit） |
 
 次に実装する場合の入口:
 
 1. Task 21: サンプル曲 + E2E
 2. Task 20（任意）: 汎用 ctl スクリプト + MCP クライアント設定例（Hermes 専用ランタイムは作らない）
 3. Task 22: リソース計測 + README 展示手順
+4. Task 24: orbit 共有 delay / room
 
 詰まった点・設計判断はプラン末尾の「詰まりログ」「追加メモ」「Risks / Open Questions」に追記する。

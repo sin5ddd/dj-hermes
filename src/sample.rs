@@ -1,9 +1,11 @@
-//! SampleBank (WAV) + SampleVoice playback (tier A).
+//! SampleBank (WAV) + SampleVoice playback (tier A/B).
 
 use std::collections::HashMap;
 use std::path::Path;
 use std::sync::Arc;
 
+use crate::code::{Adsr, FilterParams};
+use crate::dsp::{Biquad, BiquadKind};
 use crate::synth::Voice;
 
 /// Default root pitch for `note().s("sample")` speed scaling (C3).
@@ -188,13 +190,29 @@ fn decode_wav_bytes(bytes: &[u8], target_sr: u32) -> Result<Vec<f32>, String> {
     Ok(out)
 }
 
-/// One-shot / pitched sample voice with begin/end/speed and linear interpolation.
+/// One-shot / pitched sample voice with begin/end/speed, ADSR, and biquad filters.
 pub struct SampleVoice {
     data: Arc<Vec<f32>>,
     pos: f64,
     step: f64,
     end: f64,
     gain: f32,
+    pub orbit: u8,
+    pub cut: Option<i32>,
+    // amp env
+    adsr: Adsr,
+    stage: u8, // 0A 1D 2S 3R 4Done
+    env_level: f32,
+    sample_i: u64,
+    gate_off: u64,
+    attack_s: u64,
+    decay_s: u64,
+    release_s: u64,
+    lpf: Biquad,
+    hpf: Biquad,
+    use_lpf: bool,
+    use_hpf: bool,
+    timed: bool,
 }
 
 impl SampleVoice {
@@ -208,6 +226,33 @@ impl SampleVoice {
         speed: f32,
         pitch_ratio: f32,
     ) -> Self {
+        Self::new_fx(
+            data,
+            gain,
+            begin,
+            end,
+            speed,
+            pitch_ratio,
+            FilterParams::default(),
+            Adsr::default(),
+            1,
+            None,
+        )
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub fn new_fx(
+        data: Arc<Vec<f32>>,
+        gain: f32,
+        begin: f32,
+        end: f32,
+        speed: f32,
+        pitch_ratio: f32,
+        filter: FilterParams,
+        adsr: Adsr,
+        orbit: u8,
+        cut: Option<i32>,
+    ) -> Self {
         let len = data.len() as f64;
         let b = begin.clamp(0.0, 1.0) as f64;
         let e = end.clamp(0.0, 1.0) as f64;
@@ -217,35 +262,146 @@ impl SampleVoice {
             (0.0, len)
         };
         let step = (speed.max(1e-6) as f64) * (pitch_ratio.max(1e-6) as f64);
+        let use_lpf = filter.lpf.is_some();
+        let use_hpf = filter.hpf.is_some();
         Self {
             data,
             pos: start,
             step,
             end,
             gain,
+            orbit,
+            cut,
+            adsr,
+            stage: 0,
+            env_level: 0.0,
+            sample_i: 0,
+            gate_off: u64::MAX,
+            attack_s: 1,
+            decay_s: 1,
+            release_s: 1,
+            lpf: Biquad::bypass(),
+            hpf: Biquad::bypass(),
+            use_lpf,
+            use_hpf,
+            timed: false,
         }
+        .with_filters(filter, 48_000.0)
     }
 
-    pub fn next_sample(&mut self) -> Option<f32> {
-        if self.pos >= self.end || self.data.is_empty() {
+    fn with_filters(mut self, filter: FilterParams, sr: f32) -> Self {
+        if let Some(cut) = filter.lpf {
+            self.lpf = Biquad::new(BiquadKind::LowPass, cut, filter.lpq, sr);
+            self.use_lpf = true;
+        }
+        if let Some(cut) = filter.hpf {
+            self.hpf = Biquad::new(BiquadKind::HighPass, cut, filter.hpq, sr);
+            self.use_hpf = true;
+        }
+        self
+    }
+
+    pub fn with_adsr_timing(mut self, sr: f32, gate_samples: u64) -> Self {
+        self.attack_s = (self.adsr.attack.max(0.0) * sr).max(1.0) as u64;
+        self.decay_s = (self.adsr.decay.max(0.0) * sr).max(1.0) as u64;
+        self.release_s = (self.adsr.release.max(0.0) * sr).max(1.0) as u64;
+        self.gate_off = gate_samples;
+        self.timed = true;
+        self
+    }
+
+    pub fn next_sample(&mut self, sr: f32) -> Option<f32> {
+        if self.stage == 4 || self.pos >= self.end || self.data.is_empty() {
+            self.stage = 4;
             return None;
         }
+        if !self.timed {
+            // one-shot without explicit timing: no env shaping
+            self.timed = true;
+            self.gate_off = u64::MAX / 4;
+            self.attack_s = 1;
+            self.decay_s = 1;
+            self.release_s = 1;
+            let _ = sr;
+        }
+
+        if self.sample_i >= self.gate_off && self.stage < 3 {
+            self.stage = 3;
+        }
+
+        let env = self.advance_env();
         let i0 = self.pos.floor() as usize;
         if i0 >= self.data.len() {
+            self.stage = 4;
             return None;
         }
         let frac = self.pos - i0 as f64;
         let s0 = self.data[i0];
         let s1 = self.data.get(i0 + 1).copied().unwrap_or(s0);
-        let x = (s0 as f64 + (s1 as f64 - s0 as f64) * frac) as f32 * self.gain;
+        let mut x = (s0 as f64 + (s1 as f64 - s0 as f64) * frac) as f32 * self.gain * env;
+        if self.use_lpf {
+            x = self.lpf.process(x);
+        }
+        if self.use_hpf {
+            x = self.hpf.process(x);
+        }
         self.pos += self.step;
+        self.sample_i += 1;
+        if self.stage == 4 {
+            return None;
+        }
         Some(x)
+    }
+
+    fn advance_env(&mut self) -> f32 {
+        match self.stage {
+            0 => {
+                let t = self.sample_i as f32 / self.attack_s as f32;
+                self.env_level = t.min(1.0);
+                if self.sample_i + 1 >= self.attack_s {
+                    self.stage = 1;
+                }
+                self.env_level
+            }
+            1 => {
+                let start = self.attack_s;
+                let elapsed = self.sample_i.saturating_sub(start) as f32;
+                let t = (elapsed / self.decay_s as f32).min(1.0);
+                self.env_level = 1.0 + (self.adsr.sustain - 1.0) * t;
+                if self.sample_i + 1 >= start + self.decay_s {
+                    self.stage = 2;
+                    self.env_level = self.adsr.sustain;
+                }
+                self.env_level
+            }
+            2 => {
+                self.env_level = self.adsr.sustain;
+                self.env_level
+            }
+            3 => {
+                let level = if self.env_level <= 0.0 {
+                    self.adsr.sustain
+                } else {
+                    self.env_level
+                };
+                let elapsed = self.sample_i.saturating_sub(self.gate_off) as f32;
+                let t = (elapsed / self.release_s as f32).min(1.0);
+                self.env_level = level * (1.0 - t);
+                if elapsed + 1.0 >= self.release_s as f32 {
+                    self.stage = 4;
+                    self.env_level = 0.0;
+                }
+                self.env_level
+            }
+            _ => 0.0,
+        }
     }
 }
 
 /// Synth or sample voice for the deck pool.
+/// `Voice` is large (filters/mod state); box it to keep the enum small.
 pub enum VoiceKind {
-    Synth(Voice),
+    Synth(Box<Voice>),
     Sample(SampleVoice),
 }
 
@@ -253,7 +409,22 @@ impl VoiceKind {
     pub fn next_sample(&mut self, sr: f32) -> Option<f32> {
         match self {
             VoiceKind::Synth(v) => v.next_sample(sr),
-            VoiceKind::Sample(v) => v.next_sample(),
+            VoiceKind::Sample(v) => v.next_sample(sr),
+        }
+    }
+
+    pub fn orbit_index(&self) -> usize {
+        let o = match self {
+            VoiceKind::Synth(v) => v.orbit,
+            VoiceKind::Sample(v) => v.orbit,
+        };
+        crate::dsp::orbit_index(o)
+    }
+
+    pub fn cut_group(&self) -> Option<i32> {
+        match self {
+            VoiceKind::Synth(v) => v.cut,
+            VoiceKind::Sample(v) => v.cut,
         }
     }
 }
@@ -336,7 +507,7 @@ mod tests {
         let data = Arc::new(vec![0.0, 0.5, 1.0, 0.5, 0.0]);
         let mut v = SampleVoice::new(data, 1.0, 0.0, 1.0, 1.0, 1.0);
         let mut n = 0;
-        while v.next_sample().is_some() {
+        while v.next_sample(48_000.0).is_some() {
             n += 1;
             if n > 20 {
                 break;

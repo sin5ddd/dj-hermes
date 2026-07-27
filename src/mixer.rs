@@ -1,4 +1,6 @@
-//! Mixer layer: A/B faders, master 1-pole LPF/HPF, equal-power xfade.
+//! Mixer layer: A/B faders, master 1-pole LPF/HPF, compressor, equal-power xfade.
+
+use crate::dsp::{Compressor, CompressorParams};
 
 /// Equal-power crossfade over N bars (sample range).
 #[derive(Debug, Clone)]
@@ -32,6 +34,8 @@ pub struct Mixer {
     lpf_y: f32,
     hpf_y: f32,
     hpf_x_prev: f32,
+    compressor: Option<Compressor>,
+    comp_sr: f32,
 }
 
 impl Default for Mixer {
@@ -51,6 +55,8 @@ impl Mixer {
             lpf_y: 0.0,
             hpf_y: 0.0,
             hpf_x_prev: 0.0,
+            compressor: None,
+            comp_sr: 48_000.0,
         }
     }
 
@@ -72,6 +78,15 @@ impl Mixer {
             1 => self.gain_b,
             _ => 0.0,
         }
+    }
+
+    pub fn set_compressor(&mut self, params: Option<CompressorParams>, sr: f32) {
+        self.comp_sr = sr.max(1.0);
+        self.compressor = params.map(|p| Compressor::new(p, self.comp_sr));
+    }
+
+    pub fn compressor_params(&self) -> Option<CompressorParams> {
+        self.compressor.as_ref().map(|c| c.params)
     }
 
     /// Start equal-power xfade at `global_sample` over `bars` (length in samples).
@@ -99,7 +114,6 @@ impl Mixer {
         let t = ((global_sample.saturating_sub(x.start_sample)) as f64 / denom).clamp(0.0, 1.0);
         let theta = t * std::f64::consts::FRAC_PI_2;
         let (from, to) = if x.to_deck == 1 { (0, 1) } else { (1, 0) };
-        // from → cos (1→0), to → sin (0→1)
         if from == 0 {
             self.gain_a = theta.cos() as f32;
             self.gain_b = theta.sin() as f32;
@@ -110,7 +124,6 @@ impl Mixer {
 
         if t >= 1.0 {
             self.xfade = None;
-            // Snap to destination
             if to == 0 {
                 self.gain_a = 1.0;
                 self.gain_b = 0.0;
@@ -127,7 +140,7 @@ impl Mixer {
         }
     }
 
-    /// Mix A/B mono buffers with faders + master EQ into `out` (same length).
+    /// Mix A/B mono buffers with faders + master EQ + optional compressor into `out`.
     pub fn mix(&mut self, out: &mut [f32], a: &[f32], b: &[f32], sample_rate: f32) {
         let n = out.len().min(a.len()).min(b.len());
         let ga = self.gain_a;
@@ -147,7 +160,6 @@ impl Mixer {
             let mut x = a[i] * ga + b[i] * gb;
 
             if let Some(k) = hpf_k {
-                // One-pole HPF: y[n] = k * (y[n-1] + x[n] - x[n-1])
                 let y = k * (self.hpf_y + x - self.hpf_x_prev);
                 self.hpf_x_prev = x;
                 self.hpf_y = y;
@@ -156,6 +168,10 @@ impl Mixer {
             if let Some(k) = lpf_k {
                 self.lpf_y += k * (x - self.lpf_y);
                 x = self.lpf_y;
+            }
+
+            if let Some(comp) = self.compressor.as_mut() {
+                x = comp.process(x);
             }
 
             out[i] = x.clamp(-1.0, 1.0);
@@ -188,5 +204,28 @@ mod tests {
         );
         assert!(m.gain_a.abs() < 1e-5);
         assert!((m.gain_b - 1.0).abs() < 1e-5);
+    }
+
+    #[test]
+    fn compressor_on_mix_reduces_peak() {
+        let mut m = Mixer::new();
+        m.gain_a = 1.0;
+        m.gain_b = 0.0;
+        m.set_compressor(
+            Some(CompressorParams {
+                threshold_db: -12.0,
+                ratio: 20.0,
+                knee_db: 0.0,
+                attack: 0.0,
+                release: 0.05,
+            }),
+            48_000.0,
+        );
+        let a = vec![0.9f32; 2000];
+        let b = vec![0.0f32; 2000];
+        let mut out = vec![0.0f32; 2000];
+        m.mix(&mut out, &a, &b, 48_000.0);
+        let peak = out.iter().map(|x| x.abs()).fold(0.0f32, f32::max);
+        assert!(peak < 0.9, "peak={peak}");
     }
 }

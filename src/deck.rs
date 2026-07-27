@@ -1,28 +1,36 @@
-//! Deck: schedule song tracks for one bar and mix a voice pool.
+//! Deck: schedule song tracks for one bar, orbit buses, duck, voice pool.
 
-use crate::code::{note_to_hz, Adsr, PatternCode};
+use crate::code::{note_to_hz, Adsr, DuckParams, FilterParams, ModParams, PatternCode};
+use crate::dsp::{orbit_index, CompressorParams, DuckState, NUM_ORBITS};
 use crate::mini;
 use crate::sample::{SampleBank, SampleVoice, VoiceKind, SAMPLE_ROOT_HZ};
 use crate::song::Song;
-use crate::sound::{resolve_sound, ResolvedSound};
+use crate::sound::{resolve_sound_with_bank, ResolvedSound};
 use crate::synth::{OscSource, Voice};
 use crate::transport::Transport;
 
 pub const MAX_VOICES: usize = 32;
 
+#[derive(Clone)]
 struct ScheduledHit {
     at_sample: u64,
     len_samples: u64,
     sound: String,
     freq: f32,
     gain: f32,
-    lpf: Option<f32>,
+    filter: FilterParams,
     adsr: Adsr,
+    mods: ModParams,
     is_note: bool,
     begin: f32,
     end: f32,
     sample_speed: f32,
     sample_n: Option<i32>,
+    bank: Option<String>,
+    orbit: u8,
+    duck: DuckParams,
+    cut: Option<i32>,
+    compressor: Option<CompressorParams>,
 }
 
 pub struct Deck {
@@ -31,11 +39,13 @@ pub struct Deck {
     /// Pre-mixer level (Engine normally leaves this at 1.0; Mixer owns faders).
     pub gain: f32,
     voices: Vec<Option<VoiceKind>>,
-    /// Round-robin steal index when pool is full.
     steal_cursor: usize,
     scheduled: Vec<ScheduledHit>,
     next_event: usize,
     scheduled_bar: u64,
+    ducks: [DuckState; NUM_ORBITS],
+    /// Last compressor params seen on a spawned hit (Engine may promote to Mixer).
+    pub pending_compressor: Option<CompressorParams>,
 }
 
 impl Deck {
@@ -49,6 +59,8 @@ impl Deck {
             scheduled: Vec::with_capacity(512),
             next_event: 0,
             scheduled_bar: u64::MAX,
+            ducks: [DuckState::default(); NUM_ORBITS],
+            pending_compressor: None,
         }
     }
 
@@ -65,6 +77,8 @@ impl Deck {
         self.scheduled.clear();
         self.next_event = 0;
         self.scheduled_bar = u64::MAX;
+        self.ducks = [DuckState::default(); NUM_ORBITS];
+        self.pending_compressor = None;
     }
 
     pub fn song_title(&self) -> Option<&str> {
@@ -79,7 +93,6 @@ impl Deck {
         self.song.as_mut()
     }
 
-    /// Mute/unmute a track and force reschedule on next process.
     pub fn set_track_mute(&mut self, track: &str, muted: bool) {
         if let Some(song) = self.song.as_mut() {
             for t in &mut song.tracks {
@@ -96,7 +109,6 @@ impl Deck {
         self.next_event = 0;
         let spb = transport.samples_per_bar();
         let bar_start = (bar as f64 * spb) as u64;
-        // Clone track codes to avoid borrow conflict with `self.scheduled`.
         let tracks: Vec<PatternCode> = self
             .song
             .as_ref()
@@ -124,12 +136,13 @@ fn schedule_track_into(
     spb: f64,
 ) {
     let speed = pc.speed.max(1e-6);
+    let len_scale = pc.length_scale() as f64;
     for ev in mini::events(&pc.pattern, bar) {
         if ev.value == "~" || ev.value.is_empty() {
             continue;
         }
         let at = bar_start + ((ev.start * spb) / speed) as u64;
-        let len = (((ev.dur * spb) / speed) as u64).max(64);
+        let len = ((((ev.dur * spb) / speed) * len_scale) as u64).max(64);
         let (sound, freq, is_note) = if pc.is_note {
             match note_to_hz(&ev.value) {
                 Ok(h) => (pc.sound.clone(), h, true),
@@ -144,31 +157,65 @@ fn schedule_track_into(
             sound,
             freq,
             gain: pc.effective_gain(),
-            lpf: pc.lpf,
+            filter: pc.filter,
             adsr: pc.adsr,
+            mods: pc.mod_params,
             is_note,
             begin: pc.begin,
             end: pc.end,
             sample_speed: pc.sample_speed,
             sample_n: pc.sample_n,
+            bank: pc.bank.clone(),
+            orbit: pc.orbit,
+            duck: pc.duck,
+            cut: pc.cut,
+            compressor: pc.compressor,
         });
     }
 }
 
 impl Deck {
     fn alloc_voice(&mut self, voice: VoiceKind) {
+        if let Some(cut) = voice.cut_group() {
+            for slot in self.voices.iter_mut() {
+                if let Some(v) = slot {
+                    if v.cut_group() == Some(cut) {
+                        *slot = None;
+                    }
+                }
+            }
+        }
         if let Some(slot) = self.voices.iter_mut().find(|v| v.is_none()) {
             *slot = Some(voice);
             return;
         }
-        // steal oldest by round-robin
         let i = self.steal_cursor % MAX_VOICES;
         self.voices[i] = Some(voice);
         self.steal_cursor = self.steal_cursor.wrapping_add(1);
     }
 
+    fn trigger_duck(&mut self, duck: &DuckParams, sr: f32) {
+        let n = duck.count.min(4) as usize;
+        for i in 0..n {
+            let orbit = duck.orbits[i];
+            if orbit == 0 {
+                continue;
+            }
+            let idx = orbit_index(orbit);
+            self.ducks[idx].trigger(duck.depth[i], duck.attack[i], sr);
+        }
+    }
+
     fn spawn_hit(&mut self, hit: &ScheduledHit, samples: &SampleBank, sr: f32) {
-        let Ok(resolved) = resolve_sound(&hit.sound, samples) else {
+        if hit.duck.count > 0 {
+            self.trigger_duck(&hit.duck, sr);
+        }
+        if let Some(c) = hit.compressor {
+            self.pending_compressor = Some(c);
+        }
+
+        let bank_ref = hit.bank.as_deref();
+        let Ok(resolved) = resolve_sound_with_bank(&hit.sound, bank_ref, samples) else {
             return;
         };
         match resolved {
@@ -178,11 +225,14 @@ impl Deck {
                     hit.freq.max(1.0),
                     hit.gain,
                     hit.len_samples,
-                    hit.lpf,
+                    hit.filter,
                     hit.adsr,
+                    hit.mods,
+                    hit.orbit,
+                    hit.cut,
                 )
                 .with_adsr_timing(sr, hit.len_samples);
-                self.alloc_voice(VoiceKind::Synth(v));
+                self.alloc_voice(VoiceKind::Synth(Box::new(v)));
             }
             ResolvedSound::Noise(n) => {
                 let v = Voice::new(
@@ -190,11 +240,29 @@ impl Deck {
                     hit.freq.max(1.0),
                     hit.gain,
                     hit.len_samples,
-                    hit.lpf,
+                    hit.filter,
                     hit.adsr,
+                    hit.mods,
+                    hit.orbit,
+                    hit.cut,
                 )
                 .with_adsr_timing(sr, hit.len_samples);
-                self.alloc_voice(VoiceKind::Synth(v));
+                self.alloc_voice(VoiceKind::Synth(Box::new(v)));
+            }
+            ResolvedSound::Wavetable(table) => {
+                let v = Voice::new(
+                    OscSource::Wavetable(table),
+                    hit.freq.max(1.0),
+                    hit.gain,
+                    hit.len_samples,
+                    hit.filter,
+                    hit.adsr,
+                    hit.mods,
+                    hit.orbit,
+                    hit.cut,
+                )
+                .with_adsr_timing(sr, hit.len_samples);
+                self.alloc_voice(VoiceKind::Synth(Box::new(v)));
             }
             ResolvedSound::Sample(name) => {
                 let Some(data) = samples.get(&name, hit.sample_n) else {
@@ -205,14 +273,19 @@ impl Deck {
                 } else {
                     1.0
                 };
-                let v = SampleVoice::new(
+                let v = SampleVoice::new_fx(
                     data,
                     hit.gain,
                     hit.begin,
                     hit.end,
                     hit.sample_speed,
                     pitch_ratio,
-                );
+                    hit.filter,
+                    hit.adsr,
+                    hit.orbit,
+                    hit.cut,
+                )
+                .with_adsr_timing(sr, hit.len_samples);
                 self.alloc_voice(VoiceKind::Sample(v));
             }
         }
@@ -231,33 +304,28 @@ impl Deck {
             while self.next_event < self.scheduled.len()
                 && self.scheduled[self.next_event].at_sample <= now
             {
-                // clone fields needed; avoid holding borrow across spawn
-                let hit = ScheduledHit {
-                    at_sample: self.scheduled[self.next_event].at_sample,
-                    len_samples: self.scheduled[self.next_event].len_samples,
-                    sound: self.scheduled[self.next_event].sound.clone(),
-                    freq: self.scheduled[self.next_event].freq,
-                    gain: self.scheduled[self.next_event].gain,
-                    lpf: self.scheduled[self.next_event].lpf,
-                    adsr: self.scheduled[self.next_event].adsr,
-                    is_note: self.scheduled[self.next_event].is_note,
-                    begin: self.scheduled[self.next_event].begin,
-                    end: self.scheduled[self.next_event].end,
-                    sample_speed: self.scheduled[self.next_event].sample_speed,
-                    sample_n: self.scheduled[self.next_event].sample_n,
-                };
+                let hit = self.scheduled[self.next_event].clone();
                 self.next_event += 1;
                 self.spawn_hit(&hit, samples, sr);
             }
 
-            let mut mix = 0f32;
+            let mut acc = [0.0f32; NUM_ORBITS];
             for slot in self.voices.iter_mut() {
                 if let Some(voice) = slot {
                     match voice.next_sample(sr) {
-                        Some(x) => mix += x,
+                        Some(x) => {
+                            let oi = voice.orbit_index();
+                            acc[oi] += x;
+                        }
                         None => *slot = None,
                     }
                 }
+            }
+
+            let mut mix = 0.0f32;
+            for (o, sample) in acc.iter().enumerate() {
+                let g = self.ducks[o].advance();
+                mix += sample * g;
             }
             *frame = mix * self.gain;
         }
@@ -322,5 +390,68 @@ kick: s("bd*4").gain(0.9)
         assert!(bank.has("bd"), "expected samples/bd");
         assert!(bank.has("sd"));
         assert!(bank.has("hh"));
+    }
+
+    #[test]
+    fn duck_lowers_target_orbit_energy() {
+        // Continuous tone on orbit 2; kick-like trigger ducks orbit 2 every beat.
+        // Compare first 10ms after a duck trigger vs late recovery window.
+        let song = parse_song(
+            r#"---
+pad: note("c4").s("sine").gain(0.8).orbit(2).sustain(1).attack(0.001).release(0.01)
+kick: s("sine").gain(0.01).duckorbit(2).duckattack(0.05).duckdepth(1).fast(4)
+"#,
+            "t",
+        )
+        .unwrap();
+        // kick uses s("sine") which is a wave not sample - good
+        let mut d = Deck::new("A");
+        d.load(song);
+        let t = Transport::new(48_000, 120.0);
+        let bank = SampleBank::empty();
+        let mut buf = vec![0f32; 24_000];
+        d.process(&mut buf, &t, &bank);
+
+        // energy in early window (after first duck) vs later
+        let early: f32 = buf[100..600].iter().map(|x| x.abs()).sum();
+        let late: f32 = buf[3000..3500].iter().map(|x| x.abs()).sum();
+        // After recovery, energy should be higher than deep-duck window
+        assert!(
+            late > early * 1.2 || late > 10.0,
+            "early={early} late={late}"
+        );
+    }
+
+    #[test]
+    fn clip_shortens_notes() {
+        let song_long = parse_song(
+            r#"---
+n: note("c4").s("sine").gain(0.9).attack(0.001).sustain(1).release(0.001)
+"#,
+            "t",
+        )
+        .unwrap();
+        let song_clip = parse_song(
+            r#"---
+n: note("c4").s("sine").gain(0.9).attack(0.001).sustain(1).release(0.001).clip(0.1)
+"#,
+            "t",
+        )
+        .unwrap();
+        let bank = SampleBank::empty();
+        let t = Transport::new(48_000, 120.0);
+
+        let mut d = Deck::new("A");
+        d.load(song_long);
+        let mut a = vec![0f32; 48_000];
+        d.process(&mut a, &t, &bank);
+        let ea: f32 = a.iter().map(|x| x.abs()).sum();
+
+        let mut d = Deck::new("A");
+        d.load(song_clip);
+        let mut b = vec![0f32; 48_000];
+        d.process(&mut b, &t, &bank);
+        let eb: f32 = b.iter().map(|x| x.abs()).sum();
+        assert!(eb < ea * 0.5, "clip energy {eb} vs full {ea}");
     }
 }
