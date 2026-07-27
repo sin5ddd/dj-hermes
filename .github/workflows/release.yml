@@ -26,7 +26,7 @@ jobs:
             bin: strudel-rs.exe
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
       - name: Install ALSA dev
         if: runner.os == 'Linux'
