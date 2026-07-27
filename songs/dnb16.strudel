@@ -1,5 +1,6 @@
-// title: dnb16
-// 16-bar drum & bass loop @ 174 BPM
+// @title dnb16
+// @genre drum and bass
+// @details 16-bar loop @ 174 BPM
 setcpm(174/4)
 // kick
 $: s("<[bd ~ ~ bd ~ ~ bd ~] [bd ~ ~ bd ~ bd ~ ~] [bd ~ ~ bd ~ ~ bd ~] [bd ~ bd ~ ~ ~ bd ~] [bd ~ ~ bd ~ ~ bd ~] [bd ~ ~ bd ~ bd ~ ~] [bd ~ ~ bd ~ ~ bd ~] [bd ~ bd ~ ~ bd ~ ~] [bd ~ ~ ~ ~ ~ ~ ~] [~ ~ ~ bd ~ ~ bd ~] [bd ~ ~ bd ~ ~ bd ~] [bd ~ ~ bd ~ bd ~ ~] [bd ~ ~ bd ~ ~ bd ~] [bd ~ bd ~ ~ ~ bd ~] [bd ~ ~ bd ~ ~ bd ~] [bd bd ~ bd ~ bd ~ bd]>").gain(0.88)

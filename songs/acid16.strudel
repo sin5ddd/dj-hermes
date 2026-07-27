@@ -1,5 +1,6 @@
-// title: acid16
-// 16-bar acid / minimal techno @ 130 BPM
+// @title acid16
+// @genre acid, minimal techno
+// @details 16-bar loop @ 130 BPM
 setcpm(130/4)
 // kick
 $: s("<[bd ~ ~ ~] [bd ~ ~ bd] [bd ~ ~ ~] [bd ~ bd ~] [bd ~ ~ ~] [bd ~ ~ bd] [bd ~ ~ ~] [bd ~ bd bd] [bd ~ ~ ~] [~ ~ ~ bd] [bd ~ ~ ~] [bd ~ ~ bd] [bd ~ ~ ~] [bd ~ bd ~] [bd ~ ~ ~] [bd bd ~ bd]>").gain(0.9)

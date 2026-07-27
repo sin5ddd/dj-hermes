@@ -132,6 +132,7 @@ fn song_from_code(code: &str) -> Result<Song, String> {
     let pattern = parse_code(code)?;
     Ok(Song {
         title: "api".into(),
+        meta: Default::default(),
         bpm: None,
         path: String::new(),
         source: code.to_string(),

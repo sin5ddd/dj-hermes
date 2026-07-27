@@ -1,5 +1,6 @@
-// title: garage16
-// 16-bar UK garage / 2-step loop @ 132 BPM
+// @title garage16
+// @genre uk garage, 2-step
+// @details 16-bar loop @ 132 BPM
 setcpm(132/4)
 // kick
 $: s("<[bd ~ ~ ~ bd ~ bd ~] [bd ~ ~ ~ bd ~ ~ ~] [bd ~ ~ ~ bd ~ bd ~] [bd ~ bd ~ bd ~ ~ ~] [bd ~ ~ ~ bd ~ bd ~] [bd ~ ~ ~ bd ~ ~ ~] [bd ~ ~ ~ bd ~ bd ~] [bd ~ bd ~ ~ bd ~ ~] [bd ~ ~ ~ ~ ~ ~ ~] [~ ~ ~ ~ bd ~ bd ~] [bd ~ ~ ~ bd ~ bd ~] [bd ~ ~ ~ bd ~ ~ ~] [bd ~ ~ ~ bd ~ bd ~] [bd ~ bd ~ bd ~ ~ ~] [bd ~ ~ ~ bd ~ bd ~] [bd ~ bd ~ bd ~ bd ~]>").gain(0.88)

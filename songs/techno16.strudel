@@ -1,5 +1,6 @@
-// title: techno16
-// 16-bar dark techno loop @ 128 BPM
+// @title techno16
+// @genre techno
+// @details 16-bar dark techno loop @ 128 BPM
 setcpm(128/4)
 // kick
 $: s("<[bd*4] [bd*4] [bd*4] [bd*4] [bd*4] [bd*4] [bd*4] [bd*4] [bd bd ~ bd] [bd ~ bd bd] [bd*4] [bd*4] [bd*4] [bd*4] [bd*4] [bd*4]>").gain(0.92)
