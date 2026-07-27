@@ -193,11 +193,21 @@ pub fn parse_song(text: &str, path: &str) -> Result<Song, String> {
     let mut anon_idx = 0usize;
     let mut block_buf: Option<String> = None;
 
-    // Walk by lines while tracking byte offsets in `text`.
-    let mut offset = 0usize;
-    for (lineno, raw) in text.split_inclusive('\n').enumerate() {
-        let line_start = offset;
-        offset += raw.len();
+    // Index lines with absolute byte offsets so multi-line track code keeps
+    // correct mini-notation spans for live highlight.
+    let mut line_starts: Vec<(usize, &str)> = Vec::new();
+    {
+        let mut offset = 0usize;
+        for raw in text.split_inclusive('\n') {
+            line_starts.push((offset, raw));
+            offset += raw.len();
+        }
+    }
+
+    let mut i = 0usize;
+    while i < line_starts.len() {
+        let (line_start, raw) = line_starts[i];
+        let lineno = i;
         // Strip trailing newline for parsing (keep line_start for absolute offsets).
         let line_no_nl = raw.trim_end_matches(['\r', '\n']);
         let line = line_no_nl.trim();
@@ -216,10 +226,12 @@ pub fn parse_song(text: &str, path: &str) -> Result<Song, String> {
                 buf.push_str(line_no_nl);
                 buf.push('\n');
             }
+            i += 1;
             continue;
         }
 
         if line.is_empty() {
+            i += 1;
             continue;
         }
 
@@ -234,26 +246,31 @@ pub fn parse_song(text: &str, path: &str) -> Result<Song, String> {
                     b.push('\n');
                 }
             }
+            i += 1;
             continue;
         }
 
         // Line comments: Strudel @tags, legacy title:, or label for the next `$:` track.
         if let Some(comment) = strip_line_comment(line) {
             handle_comment_body(comment, &mut title, &mut meta, &mut pending_label);
+            i += 1;
             continue;
         }
 
         if line == "---" {
+            i += 1;
             continue;
         }
 
         // Tempo: setcpm / setcps (Strudel) or bpm: / title: (legacy header).
         if let Some(cpm) = parse_setcpm(line) {
             bpm = Some(cpm * 4.0);
+            i += 1;
             continue;
         }
         if let Some(cps) = parse_setcps(line) {
             bpm = Some(cps * 240.0);
+            i += 1;
             continue;
         }
         if let Some(v) = line.strip_prefix("bpm:") {
@@ -262,6 +279,7 @@ pub fn parse_song(text: &str, path: &str) -> Result<Song, String> {
                     .parse()
                     .map_err(|_| format!("line {}: bad bpm", lineno + 1))?,
             );
+            i += 1;
             continue;
         }
         if let Some(v) = line.strip_prefix("title:") {
@@ -269,10 +287,12 @@ pub fn parse_song(text: &str, path: &str) -> Result<Song, String> {
             if !t.is_empty() {
                 title = Some(t.to_string());
             }
+            i += 1;
             continue;
         }
 
         // Track: `$:` (anonymous / comment-labeled) or `name: code`.
+        // Code may span multiple lines (newlines inside `"..."` or `.method` continuations).
         let colon = line_no_nl
             .find(':')
             .ok_or_else(|| format!("line {}: expected 'name: code' or '$: code'", lineno + 1))?;
@@ -293,9 +313,10 @@ pub fn parse_song(text: &str, path: &str) -> Result<Song, String> {
             name_part.to_string()
         };
 
-        let code_raw = &line_no_nl[colon + 1..];
         // Absolute start of the code portion in the full source.
-        let code_abs = line_start + line_no_nl[..colon + 1].len();
+        let code_abs = line_start + colon + 1;
+        let (code_end, last_line) = find_track_code_end(text, code_abs, &line_starts, i)?;
+        let code_raw = &text[code_abs..code_end];
         let code = parse_code(code_raw)
             .map_err(|e| format!("line {} ({}): {}", lineno + 1, name, e))?
             .with_source_base(code_abs);
@@ -304,6 +325,7 @@ pub fn parse_song(text: &str, path: &str) -> Result<Song, String> {
             code,
             muted: false,
         });
+        i = last_line + 1;
     }
 
     if block_buf.is_some() {
@@ -328,6 +350,84 @@ pub fn parse_song(text: &str, path: &str) -> Result<Song, String> {
         path: path.to_string(),
         source: text.to_string(),
     })
+}
+
+/// End offset (exclusive) of line content without trailing `\r`/`\n`.
+fn line_content_end(line_starts: &[(usize, &str)], idx: usize) -> usize {
+    let (start, raw) = line_starts[idx];
+    start + raw.trim_end_matches(['\r', '\n']).len()
+}
+
+/// True when `s` has balanced `()` outside of `"..."` and no open string.
+fn expr_balanced(s: &str) -> bool {
+    let mut in_str = false;
+    let mut depth = 0i32;
+    for c in s.chars() {
+        if in_str {
+            if c == '"' {
+                in_str = false;
+            }
+            continue;
+        }
+        match c {
+            '"' => in_str = true,
+            '(' => depth += 1,
+            ')' => {
+                depth -= 1;
+                if depth < 0 {
+                    return false;
+                }
+            }
+            _ => {}
+        }
+    }
+    !in_str && depth == 0
+}
+
+/// Line at `from` if non-empty; `None` if out of range or blank (blank breaks continuation).
+fn next_significant_line<'a>(
+    line_starts: &[(usize, &'a str)],
+    from: usize,
+) -> Option<(usize, &'a str)> {
+    let raw = line_starts.get(from)?.1;
+    let t = raw.trim_end_matches(['\r', '\n']).trim();
+    if t.is_empty() {
+        None
+    } else {
+        Some((from, t))
+    }
+}
+
+/// Span of track code starting at `code_start` on `start_line`.
+/// Continues while quotes/parens are open, or the next significant line is a `.method(...)`.
+fn find_track_code_end(
+    text: &str,
+    code_start: usize,
+    line_starts: &[(usize, &str)],
+    start_line: usize,
+) -> Result<(usize, usize), String> {
+    let mut last_line = start_line;
+    loop {
+        let end = line_content_end(line_starts, last_line);
+        let frag = &text[code_start..end];
+        if !expr_balanced(frag) {
+            if last_line + 1 >= line_starts.len() {
+                return Err(format!(
+                    "line {}: unclosed string or parenthesis in track code",
+                    start_line + 1
+                ));
+            }
+            last_line += 1;
+            continue;
+        }
+        // Balanced: absorb following lines that continue the method chain with `.…`.
+        match next_significant_line(line_starts, last_line + 1) {
+            Some((idx, trimmed)) if trimmed.starts_with('.') => {
+                last_line = idx;
+            }
+            _ => return Ok((end, last_line)),
+        }
+    }
 }
 
 fn strip_line_comment(line: &str) -> Option<&str> {
@@ -730,6 +830,41 @@ kick: s("bd")
         let pc = &s.tracks[0].code;
         let base = pc.mini_base;
         assert_eq!(&s.source[base..base + 4], "bd*4");
+    }
+
+    #[test]
+    fn multiline_mini_string_and_method_chain() {
+        let text = r#"// kick
+$: s("<
+[bd*4]
+[bd*4]
+[bd bd bd ~]
+>")
+.gain(0.9)
+// hat
+$: s("hh*8")
+.gain(0.3)
+"#;
+        let s = parse_song(text, "t").unwrap();
+        assert_eq!(s.tracks.len(), 2);
+        assert_eq!(s.tracks[0].name, "kick");
+        assert!((s.tracks[0].code.gain - 0.9).abs() < 1e-9);
+        assert_eq!(s.tracks[1].name, "hat");
+        assert!((s.tracks[1].code.gain - 0.3).abs() < 1e-9);
+        // Mini source keeps newlines; tokenizer treats them as whitespace.
+        assert!(s.tracks[0].code.mini_src.contains('\n'));
+        assert!(s.tracks[0].code.mini_src.contains("[bd*4]"));
+        let base = s.tracks[0].code.mini_base;
+        assert_eq!(&s.source[base..base + 1], "<");
+        // Stack has 3 cycle items.
+        let n = &s.tracks[0].code.pattern;
+        match n {
+            crate::mini::Node::Seq(v) => match &v[0] {
+                crate::mini::Node::Stack(items) => assert_eq!(items.len(), 3),
+                other => panic!("expected Stack, got {other:?}"),
+            },
+            other => panic!("expected Seq, got {other:?}"),
+        }
     }
 
     #[test]

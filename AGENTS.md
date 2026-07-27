@@ -10,11 +10,11 @@
 
 **strudel-rs** は、Strudel 記法で書かれた曲ファイルをリアルタイム演奏する Rust 製 CLI です。
 
-| 利用者 | 操作手段 |
-| --- | --- |
+| 利用者       | 操作手段                                                                          |
+| ------------ | --------------------------------------------------------------------------------- |
 | 人間（編集） | エディタで `songs/*.strudel` を保存 → ファイル監視が検知 → **次の小節境界**で反映 |
-| 人間（操作） | REPL（rustyline）でデッキ操作・即時コマンド |
-| LLM / Hermes | HTTP API（axum, REST + SSE）および MCP server（`strudel-rs mcp`, stdio） |
+| 人間（操作） | REPL（rustyline）でデッキ操作・即時コマンド                                       |
+| LLM / Hermes | HTTP API（axum, REST + SSE）および MCP server（`strudel-rs mcp`, stdio）          |
 
 主な体験:
 
@@ -60,9 +60,9 @@ Song をロードして鳴らす再生ユニット ×2。両デッキは同一 T
 
 曲A/B の上に乗る第3層。担当:
 
-1. A/B それぞれの音量フェーダー  
-2. EQ・フィルター  
-3. A/B クロスフェードおよび曲切替  
+1. A/B それぞれの音量フェーダー
+2. EQ・フィルター
+3. A/B クロスフェードおよび曲切替
 
 デッキは「何を鳴らすか」、ミキサーは「どう混ぜて出すか」。
 
@@ -140,16 +140,16 @@ strudel-rust/                 # このリポジトリのルート
 
 ## 技術スタック
 
-| 領域 | 選択 |
-| --- | --- |
-| 言語 | Rust stable, edition 2021 |
-| 音声 I/O | cpal（Linux では ALSA。システム依存は ALSA のみ想定） |
-| コマンド | crossbeam |
-| ファイル監視 | notify |
-| REPL | rustyline |
-| HTTP | axum + tokio + serde_json 等 |
-| MCP | rmcp（server + transport-io）、ブリッジ用に reqwest |
-| パーサ | 自前（依存を増やさない） |
+| 領域         | 選択                                                  |
+| ------------ | ----------------------------------------------------- |
+| 言語         | Rust stable, edition 2021                             |
+| 音声 I/O     | cpal（Linux では ALSA。システム依存は ALSA のみ想定） |
+| コマンド     | crossbeam                                             |
+| ファイル監視 | notify                                                |
+| REPL         | rustyline                                             |
+| HTTP         | axum + tokio + serde_json 等                          |
+| MCP          | rmcp（server + transport-io）、ブリッジ用に reqwest   |
+| パーサ       | 自前（依存を増やさない）                              |
 
 Release プロファイル目安（プラン）: `opt-level = 3`, `lto = true`, `strip = true`。
 目標リソース: release バイナリ < 8MB、RSS < 60MB、演奏中 CPU < 8%（1 コア）程度。
@@ -201,20 +201,20 @@ Hermes 登録例:
 
 ```yaml
 mcp_servers:
-  strudel:
-    command: /path/to/strudel-rs
-    args: ["mcp"]
+    strudel:
+        command: /path/to/strudel-rs
+        args: ["mcp"]
 ```
 
 ---
 
 ## テスト方針
 
-| 種類 | 手段 |
-| --- | --- |
-| 単体 | 各モジュールの `#[cfg(test)]`（tokenize, transport, mini, song 等） |
-| バークオンタイズ | バー頭以外で状態が変わらないことの自動テスト |
-| E2E | `tests/e2e.rs` を NullBackend で駆動。クリッピング無し、DJ 切替シナリオ |
+| 種類             | 手段                                                                    |
+| ---------------- | ----------------------------------------------------------------------- |
+| 単体             | 各モジュールの `#[cfg(test)]`（tokenize, transport, mini, song 等）     |
+| バークオンタイズ | バー頭以外で状態が変わらないことの自動テスト                            |
+| E2E              | `tests/e2e.rs` を NullBackend で駆動。クリッピング無し、DJ 切替シナリオ |
 
 実機音出し確認（Task 1 のサイン波、最終デモ）は Linux + ALSA 環境で行う。
 Windows 上では `cargo test`（NullBackend 経路）を優先する。
@@ -226,11 +226,12 @@ Rust の build/test/clippy 実行時は、利用可能なら `cargo-runner` ス�
 ## 作業ルール（このリポジトリ）
 
 1. **プラン正本:** `docs/plans/2026-07-27_020000-strudel-rs-final.md`。タスクを飛ばしたり、未承認のスコープ拡大をしない。
-2. **コミット:** ユーザーが明示的に依頼するまで commit / stage しない（グローバル規則）。このリポジトリは **git と jj（Jujutsu）コロケート**。`.jj/` はローカルのみ（gitignore）。エージェントはユーザー指示がない限り `git` で操作してよい。jj を使う場合は `jj bookmark track master --remote=origin` 済み想定。
-3. **品質:** 触ったモジュールのテストを通す。audio スレッド内でアロケーションやロック待ちを増やさないよう注意する。PR 前は CI 相当をローカルで通す（下記 **fmt 必須**）。
-4. **エラー:** パース失敗で演奏を止めない。API/REPL の両方で失敗理由を返す。
-5. **ドキュメント:** コードコメントと README は標準の平易な文章。造語や曖昧な断定を避ける。
-6. **セキュリティ:** ローカル bind（127.0.0.1）前提の API。公開 bind や認証は現スコープ外だが、パス traversal（曲ロード）や無制限入力には注意する。
+2. **コミット:** ユーザーが明示的に依頼するまで **git の** commit / stage / push をしない（グローバル規則）。このリポジトリは **git と jj（Jujutsu）コロケート**。`.jj/` はローカルのみ（gitignore）。git 操作はユーザー指示があるまで避ける。jj のチェックポイント作成（下記）は毎回行う。jj を使う場合は `jj bookmark track master --remote=origin` 済み想定。
+3. jjを活用し修正前後の差がわかるようにする
+4. **品質:** 触ったモジュールのテストを通す。audio スレッド内でアロケーションやロック待ちを増やさないよう注意する。PR 前は CI 相当をローカルで通す（下記 **fmt 必須**）。
+5. **エラー:** パース失敗で演奏を止めない。API/REPL の両方で失敗理由を返す。
+6. **ドキュメント:** コードコメントと README は標準の平易な文章。造語や曖昧な断定を避ける。
+7. **セキュリティ:** ローカル bind（127.0.0.1）前提の API。公開 bind や認証は現スコープ外だが、パス traversal（曲ロード）や無制限入力には注意する。
 
 ### rustfmt（CI で繰り返し落ちやすい）
 
@@ -257,11 +258,11 @@ cargo test
 
 ## 現状と次の一手
 
-| 項目 | 状態 |
-| --- | --- |
-| リポジトリ | GitHub private（`sin5ddd/strudel-rust`）+ CI/CD 基盤 |
+| 項目               | 状態                                                   |
+| ------------------ | ------------------------------------------------------ |
+| リポジトリ         | GitHub private（`sin5ddd/strudel-rust`）+ CI/CD 基盤   |
 | cargo プロジェクト | Task 1–19 + Task 21 + Task 23 + Task 24 + Task 26 完了 |
-| 実装タスク | Task 20 任意 → Task 22 計測 → Task 25 viz（任意） |
+| 実装タスク         | Task 20 任意 → Task 22 計測 → Task 25 viz（任意）      |
 
 次に実装する場合の入口:
 

@@ -245,6 +245,22 @@ pub struct Event {
     pub span: Option<Span>,
 }
 
+/// Shift all atom spans by `delta` bytes (for multi-string `cat` etc.).
+pub fn offset_spans(node: &mut Node, delta: usize) {
+    match node {
+        Node::Atom { span, .. } => {
+            *span = span.offset(delta);
+        }
+        Node::Rest => {}
+        Node::Seq(items) | Node::Stack(items) => {
+            for it in items {
+                offset_spans(it, delta);
+            }
+        }
+        Node::Fast(inner, _) | Node::Slow(inner, _) => offset_spans(inner, delta),
+    }
+}
+
 /// Evaluate AST for one cycle into timed events. One cycle = one bar.
 pub fn events(node: &Node, cycle: u64) -> Vec<Event> {
     let mut out = Vec::new();

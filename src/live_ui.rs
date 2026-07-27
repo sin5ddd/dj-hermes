@@ -23,7 +23,7 @@ use crossterm::{cursor, execute, queue, terminal};
 use crate::cmd;
 use crate::engine::{Command, Engine};
 use crate::highlight::{active_spans, bar_index, bar_pos, render_ansi_ex, HighlightModel};
-use crate::watcher::DeckPaths;
+use crate::watcher::{DeckPaths, UiLogBuffer};
 
 const HELP_LINE: &str = "drag xf/EQ  a load  b head 33  x 4  bpm 128  hush  status  help  quit";
 
@@ -35,6 +35,9 @@ const MAX_SLIDER_TRACK: usize = 10;
 
 /// Fixed change-log lines under the mixer (always reserved, even when empty).
 const LOG_LINES: usize = 3;
+
+/// Dim SGR for the change-log area.
+const LOG_DIM: &str = "\x1b[2m";
 
 /// EQ band labels (Hi / Mid / Lo).
 const EQ_BANDS: [&str; 3] = ["Hi", "Mid", "Lo"];
@@ -90,7 +93,10 @@ struct LiveState {
     input: String,
     history: Vec<String>,
     history_idx: Option<usize>,
+    /// Rolling change log; only the last `LOG_LINES` entries are kept / drawn.
     log: VecDeque<String>,
+    /// Centered help overlay (not written into the log).
+    help_open: bool,
     /// Last painted frame (line strings) — skip rewrite when unchanged.
     prev_lines: Vec<String>,
     prev_cols: u16,
@@ -111,10 +117,20 @@ impl LiveState {
     }
 
     fn push_log(&mut self, msg: impl Into<String>) {
-        self.log.push_back(msg.into());
+        let msg = msg.into();
+        // Collapse multi-line blobs into a single log row (keep first line only).
+        let one_line = msg.lines().next().unwrap_or("").to_string();
+        if one_line.is_empty() {
+            return;
+        }
+        self.log.push_back(one_line);
         while self.log.len() > LOG_LINES {
             self.log.pop_front();
         }
+    }
+
+    fn invalidate_frame(&mut self) {
+        self.prev_lines.clear();
     }
 }
 
@@ -122,6 +138,8 @@ impl LiveState {
 /// Returns when the user quits.
 ///
 /// `initial_a` / `initial_b` seed deck highlight models (e.g. songs passed to `dj`).
+/// `ui_log` receives watcher / external status lines into the 3-line footer log.
+#[allow(clippy::too_many_arguments)]
 pub fn run(
     tx: Sender<Command>,
     deck_paths: DeckPaths,
@@ -130,6 +148,7 @@ pub fn run(
     sample_rate: u32,
     initial_a: Option<HighlightModel>,
     initial_b: Option<HighlightModel>,
+    ui_log: Option<UiLogBuffer>,
 ) -> Result<(), String> {
     let zero_hit = SliderHit {
         row: 0,
@@ -147,6 +166,7 @@ pub fn run(
         history: Vec::new(),
         history_idx: None,
         log: VecDeque::new(),
+        help_open: false,
         prev_lines: Vec::new(),
         prev_cols: 0,
         prev_rows: 0,
@@ -180,6 +200,27 @@ pub fn run(
                 match event::read() {
                     Ok(Event::Key(key)) => {
                         if key.kind != KeyEventKind::Press {
+                            continue;
+                        }
+                        // Help modal: Esc / Enter / Space close it (do not quit).
+                        if state.help_open {
+                            match key.code {
+                                KeyCode::Esc
+                                | KeyCode::Enter
+                                | KeyCode::Char(' ')
+                                | KeyCode::Char('q')
+                                | KeyCode::Char('Q') => {
+                                    state.help_open = false;
+                                    state.invalidate_frame();
+                                }
+                                KeyCode::Char('c')
+                                    if key.modifiers.contains(KeyModifiers::CONTROL) =>
+                                {
+                                    let _ = tx.send(Command::Hush);
+                                    return Ok(());
+                                }
+                                _ => {}
+                            }
                             continue;
                         }
                         match key.code {
@@ -247,6 +288,14 @@ pub fn run(
                         }
                     }
                     Ok(Event::Mouse(m)) => {
+                        if state.help_open {
+                            // Click anywhere dismisses the help window.
+                            if matches!(m.kind, MouseEventKind::Down(MouseButton::Left)) {
+                                state.help_open = false;
+                                state.invalidate_frame();
+                            }
+                            continue;
+                        }
                         handle_mouse(&mut state, &tx, m);
                     }
                     Ok(Event::Resize(_, _)) => {
@@ -257,6 +306,8 @@ pub fn run(
                     _ => {}
                 }
             }
+
+            drain_ui_log(&mut state, &ui_log);
 
             if let Ok(eng) = engine.try_lock() {
                 sync_models_from_engine(&mut state, &eng, sample_rate);
@@ -455,13 +506,25 @@ fn draw_frame(
         lines.push(xf_line);
     }
 
-    // Change log: always exactly LOG_LINES rows (empty lines reserved from the start).
+    // Change log: always exactly LOG_LINES rows (newest at bottom; empty rows reserved).
+    // Show only the last LOG_LINES entries — older messages are dropped in push_log.
+    let log_len = state.log.len();
+    let log_start = log_len.saturating_sub(LOG_LINES);
     for i in 0..LOG_LINES {
         if lines.len() >= rows.saturating_sub(2) {
             break;
         }
-        let msg = state.log.get(i).map(String::as_str).unwrap_or("");
-        lines.push(pad_clip_ansi(msg, cols));
+        let msg = state
+            .log
+            .get(log_start + i)
+            .map(String::as_str)
+            .unwrap_or("");
+        let styled = if msg.is_empty() {
+            String::new()
+        } else {
+            format!("{LOG_DIM}{msg}\x1b[0m")
+        };
+        lines.push(pad_clip_ansi(&styled, cols));
     }
 
     if rows >= 2 {
@@ -473,6 +536,10 @@ fn draw_frame(
         lines.push(pad_clip_ansi("", cols));
     }
     lines.truncate(rows);
+
+    if state.help_open {
+        overlay_help_modal(&mut lines, cols, rows);
+    }
 
     let size_changed = state.prev_cols != cols_u || state.prev_rows != rows_u;
     if size_changed {
@@ -493,18 +560,144 @@ fn draw_frame(
     }
 
     if rows >= 1 {
-        let cursor_col = (2 + state.input.chars().count()).min(cols.saturating_sub(1)) as u16;
-        queue!(
-            out,
-            cursor::MoveTo(cursor_col, (rows - 1) as u16),
-            cursor::Show
-        )
-        .map_err(|e| format!("draw: {e}"))?;
+        if state.help_open {
+            // Hide cursor while the help window is up.
+            queue!(out, cursor::Hide).map_err(|e| format!("draw: {e}"))?;
+        } else {
+            let cursor_col = (2 + state.input.chars().count()).min(cols.saturating_sub(1)) as u16;
+            queue!(
+                out,
+                cursor::MoveTo(cursor_col, (rows - 1) as u16),
+                cursor::Show
+            )
+            .map_err(|e| format!("draw: {e}"))?;
+        }
     }
 
     out.flush().map_err(|e| format!("draw: {e}"))?;
     state.prev_lines = lines;
     Ok(())
+}
+
+/// Pull watcher / external messages into the fixed 3-line log.
+fn drain_ui_log(state: &mut LiveState, ui_log: &Option<UiLogBuffer>) {
+    let Some(buf) = ui_log else {
+        return;
+    };
+    let Ok(mut q) = buf.lock() else {
+        return;
+    };
+    if q.is_empty() {
+        return;
+    }
+    while let Some(msg) = q.pop_front() {
+        state.push_log(msg);
+    }
+    // New log lines must repaint even if only the log region changed.
+    state.invalidate_frame();
+}
+
+/// Centered help window overlaid on the current frame (does not use the log area).
+fn overlay_help_modal(lines: &mut [String], cols: usize, rows: usize) {
+    if cols < 12 || rows < 6 {
+        return;
+    }
+    let body: Vec<&str> = cmd::HELP.trim_end().lines().collect();
+    let footer = "Esc / Enter / Space で閉じる";
+    let title = " help ";
+
+    let content_w = body
+        .iter()
+        .map(|l| visible_width(l))
+        .chain(std::iter::once(visible_width(footer)))
+        .chain(std::iter::once(visible_width(title) + 2))
+        .max()
+        .unwrap_or(24);
+    // Inner text width, then full box including borders: "│ " + text + " │"
+    let inner = content_w.min(cols.saturating_sub(4)).max(16);
+    let box_w = (inner + 4).min(cols);
+    let inner = box_w.saturating_sub(4);
+
+    // top + body + blank + footer + bottom
+    let box_h = (1 + body.len() + 1 + 1 + 1).min(rows);
+    let body_show = box_h.saturating_sub(4).min(body.len());
+
+    let row0 = rows.saturating_sub(box_h) / 2;
+    let col0 = cols.saturating_sub(box_w) / 2;
+
+    let hline = "─".repeat(box_w.saturating_sub(2));
+    let bot = format!("└{hline}┘");
+    // Title on top border: ┌─ help ────────┐
+    let top = title_border(&hline, title, box_w);
+
+    let mut box_lines: Vec<String> = Vec::with_capacity(box_h);
+    box_lines.push(top);
+    for line in body.iter().take(body_show) {
+        box_lines.push(box_content_row(line, inner));
+    }
+    // Pad if body was truncated by height.
+    while box_lines.len() < box_h.saturating_sub(3) {
+        box_lines.push(box_content_row("", inner));
+    }
+    box_lines.push(box_content_row("", inner));
+    box_lines.push(box_content_row(footer, inner));
+    box_lines.push(bot);
+    box_lines.truncate(box_h);
+
+    for (i, bline) in box_lines.iter().enumerate() {
+        let r = row0 + i;
+        if r >= lines.len() {
+            break;
+        }
+        // Reverse-video / bold-ish frame: leave base content under left/right padding.
+        let left = " ".repeat(col0);
+        let mid = pad_clip_ansi(bline, box_w);
+        // Rebuild full-width line: left pad + box + right pad.
+        let right_pad = cols.saturating_sub(col0 + box_w);
+        let right = " ".repeat(right_pad);
+        // Dim the side gutters slightly so the window reads as a floating panel.
+        let composed = format!("{LOG_DIM}{left}\x1b[0m\x1b[1m{mid}\x1b[0m{LOG_DIM}{right}\x1b[0m");
+        lines[r] = pad_clip_ansi(&composed, cols);
+    }
+}
+
+fn title_border(hline: &str, title: &str, box_w: usize) -> String {
+    // Prefer: ┌─ help ────────┐
+    let title_vis = visible_width(title);
+    if title_vis + 2 >= box_w.saturating_sub(2) {
+        return format!("┌{hline}┐");
+    }
+    let rest = box_w.saturating_sub(2 + 1 + title_vis); // after "┌─" and title
+    format!("┌─{title}{}┐", "─".repeat(rest))
+}
+
+fn box_content_row(text: &str, inner: usize) -> String {
+    let clipped = pad_clip_visible(text, inner);
+    format!("│ {clipped} │")
+}
+
+/// Visible-column pad/clip without ANSI (help text is plain).
+fn pad_clip_visible(s: &str, width: usize) -> String {
+    if width == 0 {
+        return String::new();
+    }
+    let mut out = String::new();
+    let mut n = 0usize;
+    for c in s.chars() {
+        if n >= width {
+            break;
+        }
+        out.push(c);
+        n += 1;
+    }
+    if n < width {
+        out.push_str(&" ".repeat(width - n));
+    }
+    out
+}
+
+fn visible_width(s: &str) -> usize {
+    s.chars().count()
 }
 
 /// Build a short slider track (≤ `MAX_SLIDER_TRACK`) with white-bg thumb.
@@ -682,25 +875,29 @@ fn dispatch_line(
     sample_rate: u32,
     state: &mut LiveState,
 ) -> bool {
+    // Help opens a centered modal; do not dump the multi-line text into the log.
+    if is_help_command(line) {
+        state.help_open = true;
+        state.invalidate_frame();
+        return true;
+    }
+
     let result = cmd::exec(line, tx, deck_paths, Some(engine));
     if let Some((deck, song)) = result.loaded {
         let model = HighlightModel::from_song(&song, sample_rate);
         state.set_model(deck, model);
     }
     for m in result.messages {
-        let lines: Vec<&str> = m.lines().collect();
-        if lines.len() > 1 {
-            for part in lines.iter().take(2) {
-                state.push_log(*part);
-            }
-            if lines.len() > 2 {
-                state.push_log("… (type help / see README)");
-            }
-        } else {
-            state.push_log(m);
-        }
+        // One log row per message; multi-line payloads keep the first line only
+        // (see LiveState::push_log). Cap at LOG_LINES via the deque.
+        state.push_log(m);
     }
     !result.quit
+}
+
+fn is_help_command(line: &str) -> bool {
+    let line = line.trim().strip_prefix(':').unwrap_or(line.trim());
+    matches!(line, "help" | "h" | "?")
 }
 
 #[cfg(test)]
@@ -746,5 +943,102 @@ mod tests {
         let _ = vis;
         let t10 = format_track(1.0, 10);
         assert!(t10.contains("\x1b[47m"));
+    }
+
+    #[test]
+    fn push_log_keeps_only_three_lines() {
+        let mut state = LiveState {
+            model_a: None,
+            model_b: None,
+            cycle_offset_a: 0,
+            cycle_offset_b: 0,
+            xfade_pos: 0.0,
+            eq: [[0.5; 2]; 3],
+            input: String::new(),
+            history: Vec::new(),
+            history_idx: None,
+            log: VecDeque::new(),
+            help_open: false,
+            prev_lines: Vec::new(),
+            prev_cols: 0,
+            prev_rows: 0,
+            xf_hit: SliderHit {
+                row: 0,
+                col0: 0,
+                cols: 0,
+            },
+            eq_hits: [[SliderHit {
+                row: 0,
+                col0: 0,
+                cols: 0,
+            }; 2]; 3],
+            drag: DragTarget::None,
+        };
+        for i in 0..10 {
+            state.push_log(format!("msg {i}"));
+        }
+        assert_eq!(state.log.len(), LOG_LINES);
+        assert_eq!(state.log.front().map(String::as_str), Some("msg 7"));
+        assert_eq!(state.log.back().map(String::as_str), Some("msg 9"));
+    }
+
+    #[test]
+    fn push_log_collapses_multiline_to_first_line() {
+        let mut state = LiveState {
+            model_a: None,
+            model_b: None,
+            cycle_offset_a: 0,
+            cycle_offset_b: 0,
+            xfade_pos: 0.0,
+            eq: [[0.5; 2]; 3],
+            input: String::new(),
+            history: Vec::new(),
+            history_idx: None,
+            log: VecDeque::new(),
+            help_open: false,
+            prev_lines: Vec::new(),
+            prev_cols: 0,
+            prev_rows: 0,
+            xf_hit: SliderHit {
+                row: 0,
+                col0: 0,
+                cols: 0,
+            },
+            eq_hits: [[SliderHit {
+                row: 0,
+                col0: 0,
+                cols: 0,
+            }; 2]; 3],
+            drag: DragTarget::None,
+        };
+        state.push_log("first\nsecond\nthird");
+        assert_eq!(state.log.len(), 1);
+        assert_eq!(state.log[0], "first");
+    }
+
+    #[test]
+    fn help_modal_draws_box_with_commands() {
+        let cols = 80usize;
+        let rows = 24usize;
+        let mut lines: Vec<String> = (0..rows).map(|_| pad_clip_ansi("", cols)).collect();
+        overlay_help_modal(&mut lines, cols, rows);
+        let joined = lines.join("\n");
+        assert!(joined.contains("help"), "{joined}");
+        assert!(joined.contains("a|b load"), "{joined}");
+        assert!(joined.contains("┌") && joined.contains("┐"), "{joined}");
+        assert!(
+            joined.contains("閉じる") || joined.contains("Esc"),
+            "{joined}"
+        );
+    }
+
+    #[test]
+    fn is_help_command_variants() {
+        assert!(is_help_command("help"));
+        assert!(is_help_command(" h "));
+        assert!(is_help_command("?"));
+        assert!(is_help_command(":help"));
+        assert!(!is_help_command("status"));
+        assert!(!is_help_command("a load x"));
     }
 }

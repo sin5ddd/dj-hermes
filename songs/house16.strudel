@@ -1,16 +1,59 @@
 // @title house16
 // @genre house
 // @details 16-bar classic house loop @ 122 BPM
+// cat() = one cycle (bar) per arg — same as mini "<a b c>"
 setcpm(122/4)
-// kick
-$: s("<[bd*4] [bd*4] [bd*4] [bd*4] [bd*4] [bd*4] [bd*4] [bd*4] [bd*4] [bd*4] [bd*4] [bd*4] [bd*4] [bd*4] [bd*4] [bd bd bd ~]>").gain(0.9)
-// hat
-$: s("<[hh*8] [hh*8] [hh*8] [hh*8] [hh*8] [hh*8] [hh*8] [hh*8] [hh*4] [hh*8] [hh*8] [hh*8] [hh*8] [hh*8] [hh*8] [hh*16]>").gain(0.26)
-// openhat
-$: s("<[~ oh ~ oh] [~ oh ~ oh] [~ oh ~ oh] [~ oh ~ oh] [~ oh ~ oh] [~ oh ~ oh] [~ oh ~ oh] [~ oh ~ oh] [~ ~ ~ oh] [~ oh ~ oh] [~ oh ~ oh] [~ oh ~ oh] [~ oh ~ oh] [~ oh ~ oh] [~ oh ~ oh] [~ oh oh oh]>").gain(0.38)
-// snare
-$: s("<[~ sd ~ sd] [~ sd ~ sd] [~ sd ~ sd] [~ sd ~ sd] [~ sd ~ sd] [~ sd ~ sd] [~ sd ~ sd] [~ sd ~ [sd ~]] [~ ~ ~ sd] [~ sd ~ sd] [~ sd ~ sd] [~ sd ~ sd] [~ sd ~ sd] [~ sd ~ sd] [~ sd ~ sd] [~ sd sd sd]>").gain(0.72)
-// bass
-$: note("<[c2 c2 g2 c2] [c2 c2 g2 bb1] [f2 f2 c2 f2] [f2 f2 eb2 f2] [c2 c2 g2 c2] [c2 c2 g2 bb1] [f2 f2 c2 f2] [g2 g2 f2 g2] [c2 ~ ~ ~] [~ ~ g2 c2] [c2 c2 g2 c2] [c2 c2 g2 bb1] [f2 f2 c2 f2] [f2 f2 eb2 f2] [c2 c2 g2 c2] [g2 f2 eb2 c2]>").s("triangle").lpf(520).gain(0.58).attack(0.01).decay(0.15).sustain(0.5).release(0.1)
-// pad
-$: note("<[c3 ~ ~ ~] [c3 ~ ~ ~] [f3 ~ ~ ~] [f3 ~ ~ ~] [c3 ~ ~ ~] [c3 ~ ~ ~] [f3 ~ ~ ~] [g3 ~ ~ ~] [~ ~ ~ ~] [~ ~ ~ ~] [c3 ~ ~ ~] [c3 ~ ~ ~] [f3 ~ ~ ~] [f3 ~ ~ ~] [c3 ~ ~ ~] [g3 ~ f3 ~]>").s("sine").lpf(900).gain(0.18).attack(0.08).decay(0.2).sustain(0.7).release(0.25)
+
+// kick — four-on-floor, end fill
+$: s(cat(
+  cat("bd*4", "bd*4", "bd*4", "bd*4", "bd*4", "bd*4", "bd*4", "bd*4"),
+  cat("bd*4", "bd*4", "bd*4", "bd*4", "bd*4", "bd*4", "bd*4", "bd bd bd ~")
+)).gain(0.9)
+
+// hat — 8ths, half-time dip, 16th end
+$: s(cat(
+  cat("hh*8", "hh*8", "hh*8", "hh*8", "hh*8", "hh*8", "hh*8", "hh*8"),
+  "hh*4",
+  cat("hh*8", "hh*8", "hh*8", "hh*8", "hh*8", "hh*8", "hh*16")
+)).gain(0.26)
+
+// openhat — offbeat, break, end fill
+$: s(cat(
+  cat("[~ oh ~ oh]", "[~ oh ~ oh]", "[~ oh ~ oh]", "[~ oh ~ oh]",
+      "[~ oh ~ oh]", "[~ oh ~ oh]", "[~ oh ~ oh]", "[~ oh ~ oh]"),
+  "[~ ~ ~ oh]",
+  cat("[~ oh ~ oh]", "[~ oh ~ oh]", "[~ oh ~ oh]", "[~ oh ~ oh]",
+      "[~ oh ~ oh]", "[~ oh ~ oh]", "[~ oh oh oh]")
+)).gain(0.38)
+
+// snare — classic 2/4, fill, break, rebuild
+$: s(cat(
+  cat("[~ sd ~ sd]", "[~ sd ~ sd]", "[~ sd ~ sd]", "[~ sd ~ sd]",
+      "[~ sd ~ sd]", "[~ sd ~ sd]", "[~ sd ~ sd]", "[~ sd ~ [sd ~]]"),
+  "[~ ~ ~ sd]",
+  cat("[~ sd ~ sd]", "[~ sd ~ sd]", "[~ sd ~ sd]", "[~ sd ~ sd]",
+      "[~ sd ~ sd]", "[~ sd ~ sd]", "[~ sd sd sd]")
+)).gain(0.72)
+
+// bass — C / F / break / return
+$: note(cat(
+  cat(
+    "c2 c2 g2 c2", "c2 c2 g2 bb1", "f2 f2 c2 f2", "f2 f2 eb2 f2",
+    "c2 c2 g2 c2", "c2 c2 g2 bb1", "f2 f2 c2 f2", "g2 g2 f2 g2"
+  ),
+  "c2 ~ ~ ~", "~ ~ g2 c2",
+  cat(
+    "c2 c2 g2 c2", "c2 c2 g2 bb1", "f2 f2 c2 f2",
+    "f2 f2 eb2 f2", "c2 c2 g2 c2", "g2 f2 eb2 c2"
+  )
+))
+.s("triangle").lpf(520).gain(0.58).attack(0.01).decay(0.15).sustain(0.5).release(0.1)
+
+// pad — held chords, rest break, resolve
+$: note(cat(
+  cat("c3 ~ ~ ~", "c3 ~ ~ ~", "f3 ~ ~ ~", "f3 ~ ~ ~",
+      "c3 ~ ~ ~", "c3 ~ ~ ~", "f3 ~ ~ ~", "g3 ~ ~ ~"),
+  "~", "~",
+  cat("c3 ~ ~ ~", "c3 ~ ~ ~", "f3 ~ ~ ~", "f3 ~ ~ ~", "c3 ~ ~ ~", "g3 ~ f3 ~")
+))
+.s("sine").lpf(900).gain(0.18).attack(0.08).decay(0.2).sustain(0.7).release(0.25)
