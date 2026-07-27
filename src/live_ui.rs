@@ -138,12 +138,11 @@ pub fn run(
                                 }
                             }
                         }
-                        KeyCode::Char(c) => {
+                        KeyCode::Char(c)
                             if !key.modifiers.contains(KeyModifiers::CONTROL)
-                                && !key.modifiers.contains(KeyModifiers::ALT)
-                            {
-                                state.input.push(c);
-                            }
+                                && !key.modifiers.contains(KeyModifiers::ALT) =>
+                        {
+                            state.input.push(c);
                         }
                         _ => {}
                     }
