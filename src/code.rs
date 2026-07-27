@@ -40,18 +40,28 @@ pub struct PatternCode {
     pub sample_speed: f32,
     pub sample_n: Option<i32>,
     /// Original source text (for display / error context).
-    #[allow(dead_code)]
     pub raw: String,
+    /// Mini-notation string (contents of the first `"..."`).
+    pub mini_src: String,
+    /// Absolute byte offset of `mini_src` in the song file (set by song parser).
+    /// Relative to the code input until `with_source_base` is applied.
+    pub mini_base: usize,
 }
 
 impl PatternCode {
-    #[allow(dead_code)]
     pub fn effective_gain(&self) -> f32 {
         self.gain * self.velocity
+    }
+
+    /// Shift mini_base from code-relative to absolute song source offset.
+    pub fn with_source_base(mut self, code_abs_start: usize) -> Self {
+        self.mini_base = code_abs_start.saturating_add(self.mini_base);
+        self
     }
 }
 
 pub fn parse_code(input: &str) -> Result<PatternCode, String> {
+    let trim_start = leading_ws_bytes(input);
     let input = input.trim();
     let mut pc = PatternCode {
         pattern: Node::Rest,
@@ -67,6 +77,8 @@ pub fn parse_code(input: &str) -> Result<PatternCode, String> {
         sample_speed: 1.0,
         sample_n: None,
         raw: input.to_string(),
+        mini_src: String::new(),
+        mini_base: 0,
     };
 
     let open = input.find('(').ok_or_else(|| "missing (".to_string())?;
@@ -80,7 +92,10 @@ pub fn parse_code(input: &str) -> Result<PatternCode, String> {
         return Err("unbalanced parens".into());
     }
 
-    let first_str = extract_first_string(&input[open..])?;
+    let (first_str, content_start_in_tail) = extract_first_string(&input[open..])?;
+    // mini content offset within the untrimmed code string (for song absolute base).
+    pc.mini_base = trim_start + open + content_start_in_tail;
+    pc.mini_src = first_str.clone();
     pc.pattern = mini::parse(&first_str)?;
     pc.is_note = matches!(head, "note" | "n");
     if matches!(head, "s" | "sound") {
@@ -142,14 +157,20 @@ fn first_word(s: &str) -> String {
     s.split_whitespace().next().unwrap_or("sine").to_string()
 }
 
-fn extract_first_string(s: &str) -> Result<String, String> {
+fn leading_ws_bytes(s: &str) -> usize {
+    s.len() - s.trim_start().len()
+}
+
+/// Returns (string contents, byte offset of first content char within `s`).
+fn extract_first_string(s: &str) -> Result<(String, usize), String> {
     let start = s.find('"').ok_or_else(|| "missing \"".to_string())?;
     let end = s[start + 1..]
         .find('"')
         .ok_or_else(|| "missing closing \"".to_string())?
         + start
         + 1;
-    Ok(s[start + 1..end].to_string())
+    let content_start = start + 1;
+    Ok((s[content_start..end].to_string(), content_start))
 }
 
 fn parse_num(a: &str) -> Result<f64, String> {
@@ -460,5 +481,16 @@ mod tests {
     #[test]
     fn expand_unknown_quality() {
         assert!(expand_chord("c3'foo").is_err());
+    }
+
+    #[test]
+    fn mini_src_and_relative_base() {
+        let code = r#"s("bd*4").gain(0.9)"#;
+        let pc = parse_code(code).unwrap();
+        assert_eq!(pc.mini_src, "bd*4");
+        assert_eq!(
+            &code[pc.mini_base..pc.mini_base + pc.mini_src.len()],
+            "bd*4"
+        );
     }
 }

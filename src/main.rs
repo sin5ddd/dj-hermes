@@ -1,11 +1,21 @@
-//! strudel-rs — play .strudel songs through cpal (Tasks 1–12 + play wiring).
+//! strudel-rs — play .strudel songs through cpal (Tasks 1–12 + highlight TUI).
 
+use std::io::{stdout, Write};
 use std::path::{Path, PathBuf};
+use std::sync::atomic::Ordering;
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
+use crossterm::event::{self, Event, KeyCode, KeyEventKind};
+use crossterm::terminal::{
+    disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
+};
+use crossterm::{cursor, execute, terminal, QueueableCommand};
 use strudel_rs::engine::Engine;
+use strudel_rs::highlight::{
+    active_spans, bar_index, bar_pos, format_header, render_ansi, HighlightModel,
+};
 use strudel_rs::sample::SampleBank;
 use strudel_rs::song::parse_song;
 
@@ -21,7 +31,6 @@ fn main() {
         "play" => {
             if let Err(e) = cmd_play(&args) {
                 eprintln!("strudel-rs play: {e}");
-                // Device / path errors: non-zero so scripts notice; still fine for interactive use.
                 std::process::exit(1);
             }
         }
@@ -40,14 +49,17 @@ fn print_usage() {
 strudel-rs — Strudel live CLI
 
 Usage:
-  strudel-rs play [SONG] [--seconds N]
+  strudel-rs play [SONG] [--seconds N] [--headless]
 
-  SONG       path to .strudel (default: songs/smoke.strudel)
-  --seconds  play duration (default: 30; use 0 for 600s)
+  SONG          path to .strudel (default: songs/smoke.strudel)
+  --seconds N   play duration (default: 30; use 0 for 600s)
+  --headless    no TUI: meta log only (for scripts / non-TTY)
+  --highlight   explicit highlight TUI (default; also: --hl)
 
 Examples:
   cargo run -- play songs/smoke.strudel
   cargo run -- play songs/smoke.strudel --seconds 15
+  cargo run -- play songs/smoke.strudel --headless
 
 Samples: ./samples (or <song>/../samples). CC0 kit docs in samples/LICENSE.md.
 "
@@ -57,6 +69,8 @@ Samples: ./samples (or <song>/../samples). CC0 kit docs in samples/LICENSE.md.
 fn cmd_play(args: &[String]) -> Result<(), String> {
     let mut song_path = PathBuf::from("songs/smoke.strudel");
     let mut seconds: u64 = 30;
+    // Default: live mini-notation highlight TUI. Opt out with --headless.
+    let mut highlight = true;
     let mut i = 0;
     while i < args.len() {
         match args[i].as_str() {
@@ -69,6 +83,12 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
                 if seconds == 0 {
                     seconds = 600;
                 }
+            }
+            "--headless" => {
+                highlight = false;
+            }
+            "--highlight" | "--hl" => {
+                highlight = true;
             }
             "--help" | "-h" => {
                 print_usage();
@@ -97,7 +117,6 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
         .default_output_config()
         .map_err(|e| format!("output config: {e}"))?;
 
-    // cpal 0.18: sample_rate() is u32 on SupportedStreamConfig
     let sample_rate = supported.sample_rate() as u32;
     let channels = supported.channels() as usize;
     let stream_config: cpal::StreamConfig = supported.into();
@@ -114,28 +133,36 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
 
     let bpm = song.bpm.unwrap_or(120.0);
     let title = song.title.clone();
+    let highlight_model = if highlight {
+        Some(HighlightModel::from_song(&song, sample_rate))
+    } else {
+        None
+    };
+
     let mut engine = Engine::new(sample_rate, bpm);
+    let playhead = engine.playhead_handle();
     engine.load_song_immediate(0, song);
 
-    eprintln!("strudel-rs play");
-    eprintln!("  song:    {}", song_path.display());
-    eprintln!("  title:   {title}");
-    eprintln!("  bpm:     {bpm}");
-    eprintln!(
-        "  samples: {} ({} sounds)",
-        samples_dir.display(),
-        names.len()
-    );
-    if !names.is_empty() {
-        eprintln!("            {}", names.join(", "));
+    if !highlight {
+        eprintln!("strudel-rs play");
+        eprintln!("  song:    {}", song_path.display());
+        eprintln!("  title:   {title}");
+        eprintln!("  bpm:     {bpm}");
+        eprintln!(
+            "  samples: {} ({} sounds)",
+            samples_dir.display(),
+            names.len()
+        );
+        if !names.is_empty() {
+            eprintln!("            {}", names.join(", "));
+        }
+        eprintln!("  device:  {sample_rate} Hz, {channels} ch");
+        eprintln!("  duration:{seconds}s");
+        eprintln!("playing…");
     }
-    eprintln!("  device:  {sample_rate} Hz, {channels} ch");
-    eprintln!("  duration:{seconds}s");
-    eprintln!("playing…");
 
     let engine = Arc::new(Mutex::new(engine));
     let bank = Arc::new(bank);
-    // mono scratch reused inside callback via thread-local-ish Vec on the closure
     let mut mono = Vec::<f32>::new();
 
     let engine_cb = Arc::clone(&engine);
@@ -172,9 +199,73 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
         .map_err(|e| format!("build stream: {e}"))?;
 
     stream.play().map_err(|e| format!("play stream: {e}"))?;
-    std::thread::sleep(Duration::from_secs(seconds));
-    eprintln!("done.");
+
+    if let Some(model) = highlight_model {
+        run_highlight_loop(&model, &playhead, seconds)?;
+    } else {
+        std::thread::sleep(Duration::from_secs(seconds));
+        eprintln!("done.");
+    }
     Ok(())
+}
+
+fn run_highlight_loop(
+    model: &HighlightModel,
+    playhead: &std::sync::atomic::AtomicU64,
+    seconds: u64,
+) -> Result<(), String> {
+    enable_raw_mode().map_err(|e| format!("raw mode: {e}"))?;
+    let mut out = stdout();
+    execute!(out, EnterAlternateScreen, cursor::Hide)
+        .map_err(|e| format!("enter alternate screen: {e}"))?;
+
+    let started = Instant::now();
+    let limit = Duration::from_secs(seconds);
+    let frame = Duration::from_millis(33); // ~30 fps
+    let result = (|| -> Result<(), String> {
+        loop {
+            if started.elapsed() >= limit {
+                break;
+            }
+            // Drain key events (non-blocking)
+            while event::poll(Duration::from_millis(0)).unwrap_or(false) {
+                if let Ok(Event::Key(key)) = event::read() {
+                    if key.kind == KeyEventKind::Press
+                        && (key.code == KeyCode::Char('q')
+                            || key.code == KeyCode::Char('Q')
+                            || key.code == KeyCode::Esc)
+                    {
+                        return Ok(());
+                    }
+                }
+            }
+
+            let gs = playhead.load(Ordering::Relaxed);
+            let bar = bar_index(gs, model.sample_rate, model.bpm);
+            let pos = bar_pos(gs, model.sample_rate, model.bpm);
+            let spans = active_spans(model, bar, pos);
+            let header = format_header(model, gs, bar, pos);
+            let frame_text = render_ansi(model, &spans, &header);
+
+            out.queue(cursor::MoveTo(0, 0))
+                .map_err(|e| format!("draw: {e}"))?;
+            out.queue(terminal::Clear(terminal::ClearType::FromCursorDown))
+                .map_err(|e| format!("draw: {e}"))?;
+            out.write_all(frame_text.as_bytes())
+                .map_err(|e| format!("draw: {e}"))?;
+            out.flush().map_err(|e| format!("draw: {e}"))?;
+
+            std::thread::sleep(frame);
+        }
+        Ok(())
+    })();
+
+    let _ = execute!(out, cursor::Show, LeaveAlternateScreen);
+    let _ = disable_raw_mode();
+    if result.is_ok() {
+        eprintln!("done.");
+    }
+    result
 }
 
 fn resolve_samples_dir(song_path: &Path) -> Result<PathBuf, String> {
@@ -193,7 +284,6 @@ fn resolve_samples_dir(song_path: &Path) -> Result<PathBuf, String> {
     ];
     for c in &candidates {
         if c.is_dir() {
-            // normalize for display
             return Ok(c.components().collect());
         }
     }

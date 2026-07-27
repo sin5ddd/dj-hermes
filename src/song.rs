@@ -15,6 +15,8 @@ pub struct Song {
     pub bpm: Option<f64>,
     pub tracks: Vec<Track>,
     pub path: String,
+    /// Full original file text (for live highlight display).
+    pub source: String,
 }
 
 /// Format:
@@ -32,8 +34,14 @@ pub fn parse_song(text: &str, path: &str) -> Result<Song, String> {
     let mut tracks = Vec::new();
     let mut in_header = true;
 
-    for (lineno, raw) in text.lines().enumerate() {
-        let line = raw.trim();
+    // Walk by lines while tracking byte offsets in `text`.
+    let mut offset = 0usize;
+    for (lineno, raw) in text.split_inclusive('\n').enumerate() {
+        let line_start = offset;
+        offset += raw.len();
+        // Strip trailing newline for parsing (keep line_start for absolute offsets).
+        let line_no_nl = raw.trim_end_matches(['\r', '\n']);
+        let line = line_no_nl.trim();
         if line.is_empty() || line.starts_with("//") || line.starts_with('#') {
             continue;
         }
@@ -58,19 +66,22 @@ pub fn parse_song(text: &str, path: &str) -> Result<Song, String> {
             in_header = false;
         }
 
-        let (name, code_str) = line
-            .split_once(':')
+        let colon = line_no_nl
+            .find(':')
             .ok_or_else(|| format!("line {}: expected 'name: code'", lineno + 1))?;
-        let name = name.trim().to_string();
-        if name.is_empty() {
+        // name/code on the raw line (not fully trimmed) so offsets stay correct.
+        let name_part = line_no_nl[..colon].trim();
+        if name_part.is_empty() {
             return Err(format!("line {}: empty track name", lineno + 1));
         }
-        // Avoid treating `bpm:` / `title:` as tracks if they appear after tracks started
-        // (already handled in header). Proceed with pattern parse.
-        let code = parse_code(code_str.trim())
-            .map_err(|e| format!("line {} ({}): {}", lineno + 1, name, e))?;
+        let code_raw = &line_no_nl[colon + 1..];
+        // Absolute start of the code portion in the full source.
+        let code_abs = line_start + line_no_nl[..colon + 1].len();
+        let code = parse_code(code_raw)
+            .map_err(|e| format!("line {} ({}): {}", lineno + 1, name_part, e))?
+            .with_source_base(code_abs);
         tracks.push(Track {
-            name,
+            name: name_part.to_string(),
             code,
             muted: false,
         });
@@ -91,6 +102,7 @@ pub fn parse_song(text: &str, path: &str) -> Result<Song, String> {
         bpm,
         tracks,
         path: path.to_string(),
+        source: text.to_string(),
     })
 }
 
@@ -123,6 +135,7 @@ bass: note("c2 eb2 g2 bb2").s("sawtooth").lpf(400).gain(0.7)
         assert_eq!(s.tracks[0].name, "kick");
         assert!(!s.tracks[0].code.is_note);
         assert!(s.tracks[1].code.is_note);
+        assert_eq!(s.source, text);
     }
 
     #[test]
@@ -141,5 +154,21 @@ kick: s("bd")
         )
         .unwrap();
         assert_eq!(s.title, "foo.strudel");
+    }
+
+    #[test]
+    fn absolute_mini_span_matches_source() {
+        let text = "bpm: 120\n---\nkick: s(\"bd*4\").gain(0.9)\n";
+        let s = parse_song(text, "t").unwrap();
+        let pc = &s.tracks[0].code;
+        assert_eq!(pc.mini_src, "bd*4");
+        let base = pc.mini_base;
+        assert_eq!(&s.source[base..base + 4], "bd*4");
+
+        // Atom span relative + base → absolute in file
+        let ev = crate::mini::events(&pc.pattern, 0);
+        let sp = ev[0].span.unwrap();
+        let abs = sp.offset(base);
+        assert_eq!(&s.source[abs.start..abs.end], "bd");
     }
 }

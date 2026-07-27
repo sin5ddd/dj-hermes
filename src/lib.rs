@@ -4,6 +4,7 @@ pub mod backend;
 pub mod code;
 pub mod deck;
 pub mod engine;
+pub mod highlight;
 pub mod mini;
 pub mod sample;
 pub mod song;
