@@ -1,8 +1,10 @@
-// Minimal smoke song for Task 12 / CI
-bpm: 120
-title: smoke
----
-kick: s("bd*4").gain(0.9)
-hat: s("hh*8").gain(0.3)
-snare: s("~ sd ~ sd").gain(0.8)
-bass: note("c2 eb2 g2 bb2").s("sawtooth").lpf(400).gain(0.55)
+// title: smoke
+setcpm(120/4)
+// kick
+$: s("bd*4").gain(0.9)
+// hat
+$: s("hh*8").gain(0.3)
+// snare
+$: s("~ sd ~ sd").gain(0.8)
+// bass
+$: note("c2 eb2 g2 bb2").s("sawtooth").lpf(400).gain(0.55)
