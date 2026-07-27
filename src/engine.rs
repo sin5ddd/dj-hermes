@@ -80,6 +80,19 @@ impl Engine {
         self.transport.bar_index().saturating_add(1)
     }
 
+    /// Load a song on a deck immediately (no bar wait). For CLI play / startup UX.
+    /// Live hot-swap should keep using `push_command(LoadSong { .. })`.
+    pub fn load_song_immediate(&mut self, deck: usize, song: Song) {
+        if deck >= 2 {
+            return;
+        }
+        if let Some(bpm) = song.bpm {
+            self.transport.set_bpm(bpm);
+        }
+        self.decks[deck].load(song);
+        self.decks[deck].gain = 1.0;
+    }
+
     pub fn push_command(&mut self, cmd: Command) {
         match cmd {
             Command::Hush => {
