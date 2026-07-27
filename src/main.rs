@@ -23,7 +23,7 @@ use strudel_rs::mcp;
 use strudel_rs::repl;
 use strudel_rs::sample::SampleBank;
 use strudel_rs::song::{parse_song, resolve_song_path};
-use strudel_rs::watcher::{self, DeckPaths};
+use strudel_rs::watcher::{self, DeckPaths, UiLogBuffer};
 
 fn main() {
     let mut args: Vec<String> = std::env::args().skip(1).collect();
@@ -454,6 +454,12 @@ fn cmd_live_session(opts: LiveSessionOpts) -> Result<(), String> {
     let playhead = engine.playhead_handle();
     let engine = Arc::new(Mutex::new(engine));
     let bank = Arc::new(bank);
+    // Live UI routes watcher messages into the 3-line log; text REPL keeps stderr.
+    let ui_log: Option<UiLogBuffer> = if with_highlight {
+        Some(Arc::new(Mutex::new(std::collections::VecDeque::new())))
+    } else {
+        None
+    };
 
     let _api = maybe_start_api(api_enabled, api_port, cmd_tx.clone(), Arc::clone(&engine));
 
@@ -469,7 +475,12 @@ fn cmd_live_session(opts: LiveSessionOpts) -> Result<(), String> {
 
     // Keep watcher alive for the live session.
     let _watcher = if songs_dir.is_dir() {
-        match watcher::watch_songs(&songs_dir, cmd_tx.clone(), Arc::clone(&deck_paths)) {
+        match watcher::watch_songs(
+            &songs_dir,
+            cmd_tx.clone(),
+            Arc::clone(&deck_paths),
+            ui_log.clone(),
+        ) {
             Ok(w) => {
                 if !with_highlight {
                     eprintln!("watching {} for .strudel saves", songs_dir.display());
@@ -498,6 +509,7 @@ fn cmd_live_session(opts: LiveSessionOpts) -> Result<(), String> {
             sample_rate,
             initial_a,
             initial_b,
+            ui_log,
         )?;
     } else {
         eprintln!(
