@@ -96,7 +96,7 @@ Song をロードして鳴らす再生ユニット ×2。両デッキは同一 T
 ```
 
 - コマンド経路: `crossbeam` のチャネル（SPSC 想定）
-- **演奏 CLI は手動起動**。MCP は **別プロセス**（stdio）で本体 HTTP（`127.0.0.1:7878`）へ中継。stdio 直結で audio を多重起動しない
+- **演奏 CLI は手動起動**。MCP は **別プロセス**（stdio）で本体 HTTP（`127.0.0.1:17878`）へ中継。stdio 直結で audio を多重起動しない
 - 単一バイナリ + サブコマンド（`play` / `mcp` / `list` 等）。別 crate の workspace 分割はしない
 
 ---
@@ -178,7 +178,7 @@ Release プロファイル目安（プラン）: `opt-level = 3`, `lto = true`, 
 ### CLI / REPL 例
 
 ```
-./strudel-rs                          # play: REPL + API(:7878) + watcher
+./strudel-rs play --repl              # play: REPL + API(:17878) + watcher
 :load A songs/techno1.strudel
 :load B songs/ambient1.strudel
 :xfade B 8
@@ -235,13 +235,13 @@ Rust の build/test/clippy 実行時は、利用可能なら `cargo-runner` ス�
 | 項目 | 状態 |
 | --- | --- |
 | リポジトリ | GitHub private（`sin5ddd/strudel-rust`）+ CI/CD 基盤 |
-| cargo プロジェクト | Task 1–16 + Task 26 完了（Mixer / watcher / REPL / ハイライト） |
-| 実装タスク | Task 17 以降（HTTP → MCP → …） |
+| cargo プロジェクト | Task 1–19 + Task 26 完了（HTTP API / MCP ブリッジ / エラー報告） |
+| 実装タスク | Task 20 任意（クライアント連携ドキュメント）→ Task 21 E2E 以降 |
 
 次に実装する場合の入口:
 
-1. Task 17: HTTP API（REST + SSE）
-2. Task 18: MCP server（stdio → HTTP ブリッジ）
-3. 以降: エラー総仕上げ / Hermes / E2E
+1. Task 21: サンプル曲 + E2E
+2. Task 20（任意）: 汎用 ctl スクリプト + MCP クライアント設定例（Hermes 専用ランタイムは作らない）
+3. Task 22: リソース計測 + README 展示手順
 
 詰まった点・設計判断はプラン末尾の「詰まりログ」「追加メモ」「Risks / Open Questions」に追記する。
