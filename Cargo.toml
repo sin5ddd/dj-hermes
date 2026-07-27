@@ -1,0 +1,15 @@
+[package]
+name = "strudel-rs"
+version = "0.1.0"
+edition = "2021"
+description = "Strudel notation live-performance CLI (dual deck, bar-quantize)"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+cpal = "0.15"
+crossbeam = "0.8"
+
+[profile.release]
+opt-level = 3
+lto = true
+strip = true
