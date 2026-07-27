@@ -309,4 +309,25 @@ kick: s("bd")
         let base = pc.mini_base;
         assert_eq!(&s.source[base..base + 4], "bd*4");
     }
+
+    #[test]
+    fn bundled_songs_parse() {
+        let dir = concat!(env!("CARGO_MANIFEST_DIR"), "/songs");
+        let mut found = 0usize;
+        for ent in std::fs::read_dir(dir).expect("songs/") {
+            let ent = ent.unwrap();
+            let path = ent.path();
+            if path.extension().and_then(|s| s.to_str()) != Some("strudel") {
+                continue;
+            }
+            found += 1;
+            let text = std::fs::read_to_string(&path).unwrap();
+            let s = parse_song(&text, path.to_str().unwrap()).unwrap_or_else(|e| {
+                panic!("parse {}: {e}", path.display());
+            });
+            assert!(!s.tracks.is_empty(), "{}", path.display());
+            assert!(s.bpm.unwrap_or(0.0) > 0.0, "{}", path.display());
+        }
+        assert!(found >= 5, "expected demo songs, found {found}");
+    }
 }

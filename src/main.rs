@@ -52,9 +52,11 @@ Usage:
   strudel-rs play [SONG] [--seconds N] [--headless]
 
   SONG          path to .strudel (default: songs/smoke.strudel)
-  --seconds N   play duration (default: 30; use 0 for 600s)
+  --seconds N   stop after N seconds (omit to loop until quit)
   --headless    no TUI: meta log only (for scripts / non-TTY)
   --highlight   explicit highlight TUI (default; also: --hl)
+
+  Default play loops forever (TUI: q / Esc to quit; headless: Ctrl+C).
 
 Examples:
   cargo run -- play songs/smoke.strudel
@@ -68,7 +70,8 @@ Samples: ./samples (or <song>/../samples). CC0 kit docs in samples/LICENSE.md.
 
 fn cmd_play(args: &[String]) -> Result<(), String> {
     let mut song_path = PathBuf::from("songs/smoke.strudel");
-    let mut seconds: u64 = 30;
+    // None = loop until quit; Some(n) = stop after n seconds.
+    let mut seconds: Option<u64> = None;
     // Default: live mini-notation highlight TUI. Opt out with --headless.
     let mut highlight = true;
     let mut i = 0;
@@ -79,9 +82,12 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
                 let s = args
                     .get(i)
                     .ok_or_else(|| "--seconds needs a number".to_string())?;
-                seconds = s.parse().map_err(|_| format!("bad --seconds value: {s}"))?;
-                if seconds == 0 {
-                    seconds = 600;
+                let n: u64 = s.parse().map_err(|_| format!("bad --seconds value: {s}"))?;
+                if n == 0 {
+                    // 0 still means "no time limit" (same as omitting the flag).
+                    seconds = None;
+                } else {
+                    seconds = Some(n);
                 }
             }
             "--headless" => {
@@ -157,7 +163,10 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
             eprintln!("            {}", names.join(", "));
         }
         eprintln!("  device:  {sample_rate} Hz, {channels} ch");
-        eprintln!("  duration:{seconds}s");
+        match seconds {
+            Some(n) => eprintln!("  duration:{n}s"),
+            None => eprintln!("  duration:loop (Ctrl+C to stop)"),
+        }
         eprintln!("playing…");
     }
 
@@ -203,8 +212,18 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
     if let Some(model) = highlight_model {
         run_highlight_loop(&model, &playhead, seconds)?;
     } else {
-        std::thread::sleep(Duration::from_secs(seconds));
-        eprintln!("done.");
+        match seconds {
+            Some(n) => {
+                std::thread::sleep(Duration::from_secs(n));
+                eprintln!("done.");
+            }
+            None => {
+                // Block until the process is interrupted (Ctrl+C).
+                loop {
+                    std::thread::sleep(Duration::from_secs(3600));
+                }
+            }
+        }
     }
     Ok(())
 }
@@ -212,7 +231,7 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
 fn run_highlight_loop(
     model: &HighlightModel,
     playhead: &std::sync::atomic::AtomicU64,
-    seconds: u64,
+    seconds: Option<u64>,
 ) -> Result<(), String> {
     enable_raw_mode().map_err(|e| format!("raw mode: {e}"))?;
     let mut out = stdout();
@@ -220,12 +239,14 @@ fn run_highlight_loop(
         .map_err(|e| format!("enter alternate screen: {e}"))?;
 
     let started = Instant::now();
-    let limit = Duration::from_secs(seconds);
+    let limit = seconds.map(Duration::from_secs);
     let frame = Duration::from_millis(33); // ~30 fps
     let result = (|| -> Result<(), String> {
         loop {
-            if started.elapsed() >= limit {
-                break;
+            if let Some(lim) = limit {
+                if started.elapsed() >= lim {
+                    break;
+                }
             }
             // Drain key events (non-blocking)
             while event::poll(Duration::from_millis(0)).unwrap_or(false) {

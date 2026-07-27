@@ -1,0 +1,15 @@
+// title: dnb16
+// 16-bar drum & bass loop @ 174 BPM
+setcpm(174/4)
+// kick
+$: s("<[bd ~ ~ bd ~ ~ bd ~] [bd ~ ~ bd ~ bd ~ ~] [bd ~ ~ bd ~ ~ bd ~] [bd ~ bd ~ ~ ~ bd ~] [bd ~ ~ bd ~ ~ bd ~] [bd ~ ~ bd ~ bd ~ ~] [bd ~ ~ bd ~ ~ bd ~] [bd ~ bd ~ ~ bd ~ ~] [bd ~ ~ ~ ~ ~ ~ ~] [~ ~ ~ bd ~ ~ bd ~] [bd ~ ~ bd ~ ~ bd ~] [bd ~ ~ bd ~ bd ~ ~] [bd ~ ~ bd ~ ~ bd ~] [bd ~ bd ~ ~ ~ bd ~] [bd ~ ~ bd ~ ~ bd ~] [bd bd ~ bd ~ bd ~ bd]>").gain(0.88)
+// snare
+$: s("<[~ ~ sd ~ ~ ~ sd ~] [~ ~ sd ~ ~ ~ sd ~] [~ ~ sd ~ ~ ~ sd ~] [~ ~ sd ~ ~ sd sd ~] [~ ~ sd ~ ~ ~ sd ~] [~ ~ sd ~ ~ ~ sd ~] [~ ~ sd ~ ~ ~ sd ~] [~ ~ sd ~ sd ~ sd sd] [~ ~ ~ ~ ~ ~ sd ~] [~ ~ sd ~ ~ ~ ~ ~] [~ ~ sd ~ ~ ~ sd ~] [~ ~ sd ~ ~ ~ sd ~] [~ ~ sd ~ ~ ~ sd ~] [~ ~ sd ~ ~ sd sd ~] [~ ~ sd ~ ~ ~ sd ~] [sd ~ sd sd ~ sd sd ~]>").gain(0.82)
+// hat
+$: s("<[hh*16] [hh*16] [hh*16] [hh*16] [hh*16] [hh*16] [hh*16] [hh*16] [hh*8] [hh*8] [hh*16] [hh*16] [hh*16] [hh*16] [hh*16] [hh*16]>").gain(0.24)
+// openhat
+$: s("<[~ ~ ~ ~ ~ oh ~ ~] [~ ~ ~ ~ ~ ~ oh ~] [~ ~ ~ ~ ~ oh ~ ~] [~ ~ ~ ~ oh ~ ~ ~] [~ ~ ~ ~ ~ oh ~ ~] [~ ~ ~ ~ ~ ~ oh ~] [~ ~ ~ ~ ~ oh ~ ~] [~ ~ ~ ~ oh ~ oh ~] [~ ~ ~ ~ ~ ~ ~ ~] [~ ~ ~ ~ ~ oh ~ ~] [~ ~ ~ ~ ~ oh ~ ~] [~ ~ ~ ~ ~ ~ oh ~] [~ ~ ~ ~ ~ oh ~ ~] [~ ~ ~ ~ oh ~ ~ ~] [~ ~ ~ ~ ~ oh ~ ~] [~ oh ~ oh ~ oh ~ oh]>").gain(0.32)
+// reese
+$: note("<[a1 a1 a1 a1] [a1 a1 c2 a1] [a1 a1 a1 a1] [g1 g1 a1 a1] [a1 a1 a1 a1] [a1 a1 c2 d2] [a1 a1 a1 a1] [g1 g1 e1 g1] [a1 ~ ~ ~] [~ ~ ~ a1] [a1 a1 a1 a1] [a1 a1 c2 a1] [a1 a1 a1 a1] [g1 g1 a1 a1] [a1 a1 c2 d2] [a1 g1 e1 a1]>").s("sawtooth").lpf(280).gain(0.52).attack(0.02).decay(0.18).sustain(0.55).release(0.12)
+// sub
+$: note("<[a1 ~ a1 ~] [a1 ~ a1 ~] [a1 ~ a1 ~] [g1 ~ a1 ~] [a1 ~ a1 ~] [a1 ~ a1 ~] [a1 ~ a1 ~] [g1 ~ e1 ~] [a1 ~ ~ ~] [~ ~ ~ ~] [a1 ~ a1 ~] [a1 ~ a1 ~] [a1 ~ a1 ~] [g1 ~ a1 ~] [a1 ~ a1 ~] [a1 g1 a1 ~]>").s("sine").gain(0.35).attack(0.01).decay(0.1).sustain(0.6).release(0.1)

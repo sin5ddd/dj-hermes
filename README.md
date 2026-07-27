@@ -24,11 +24,30 @@ cargo run -- play songs/smoke.strudel --seconds 15
 cargo run -- play songs/smoke.strudel --headless
 ```
 
-- 既定で約 30 秒再生（`--seconds 0` は 600 秒）
-- **既定はミニ記法ライブハイライト TUI**（曲ソース表示・再生中 atom を ANSI 強調、`q` で終了）
+- **既定はループ再生**（終了: TUI なら `q` / Esc、`--headless` なら Ctrl+C）
+- `--seconds N`: N 秒で自動停止（スクリプト向け）
+- **既定はミニ記法ライブハイライト TUI**（曲ソース表示・再生中 atom を ANSI 強調）
 - `--headless`: 旧来のメタログのみ（TTY 不要・CI / パイプ向け）
 - サンプルは `./samples`（Sonic Pi 由来 CC0）。曲は `songs/*.strudel`
 - 出力デバイスが無い環境ではエラー終了（`cargo test` / build はデバイス不要）
+
+### 同梱デモ曲（16 小節ループ）
+
+| ファイル | ジャンル | テンポ |
+| --- | --- | --- |
+| `songs/techno16.strudel` | ダークテクノ | 128 BPM |
+| `songs/house16.strudel` | ハウス | 122 BPM |
+| `songs/dnb16.strudel` | DnB | 174 BPM |
+| `songs/acid16.strudel` | アシッド / ミニマル | 130 BPM |
+| `songs/garage16.strudel` | UK ガレージ / 2-step | 132 BPM |
+| `songs/smoke.strudel` | スモーク（短め） | 120 BPM |
+
+```bash
+cargo run -- play songs/techno16.strudel
+cargo run -- play songs/house16.strudel --seconds 45
+```
+
+各曲は `<...>` で 16 サイクル分の展開を持ち、そのままループする。Strudel 記法（`setcpm` / `$:`）で書いているので REPL からのコピペ改造もしやすい。
 
 ## 開発メモ
 
