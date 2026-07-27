@@ -219,7 +219,7 @@ cargo run -- play songs/techno16.strudel
 cargo run -- play songs/house16.strudel --seconds 45
 ```
 
-各曲は `<...>` で 16 サイクル分の展開を持ち、そのままループする。Strudel 記法（`setcpm` / `$:`）で書いているので REPL からのコピペ改造もしやすい。
+各曲は `<...>` で 16 サイクル分の展開を持ち、そのままループする。Strudel 記法（`setcpm` / `$:` / `// @title` メタデータ）で書いているので REPL からのコピペ改造もしやすい。メタデータの書き方は [Strudel: Music metadata](https://strudel.cc/learn/metadata/) に合わせている。
 
 ## 開発メモ
 

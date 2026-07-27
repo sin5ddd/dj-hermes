@@ -33,7 +33,8 @@
 `.strudel` ファイル 1 つ = 1 曲。**Strudel REPL からコピペしやすい記法**を優先する。
 
 ```
-// title: smoke
+// @title smoke
+// @by strudel-rs
 setcpm(30)
 // kick
 $: s("bd*4").gain(0.9)
@@ -46,8 +47,8 @@ $: s("hh*8").gain(0.3)
 - `setcpm(N)` / `setcpm(120/4)`: cycles per minute（Strudel と同じ）。1 cycle = 1 bar（4 beats）なのでエンジン BPM は `N * 4`
 - `setcps(x)` も可（BPM = `x * 240`）
 - `$:` の直前コメント（`// kick`）をトラック名にする。コメント無しは `$0`, `$1`, …
-- `// title: …` で曲名。`//` と `#` コメント可
-- レガシー互換: `bpm:` / `title:` / `name: code` / `---` も引き続きパース可能
+- メタデータは [Strudel 流のコメントタグ](https://strudel.cc/learn/metadata/): `// @title …` / `// @by …` / `// @license …` など（`/* … */` ブロックや 1 行複数タグも可）
+- レガシー互換: `// title: …` / `bpm:` / `title:` / `name: code` / `---` も引き続きパース可能
 - 独自ミニパーサで読む（serde/toml は使わない）
 
 ### Deck（デッキ）= 曲A / 曲B

@@ -1,4 +1,5 @@
-// title: smoke
+// @title smoke
+// @details short smoke demo
 setcpm(120/4)
 // kick
 $: s("bd*4").gain(0.9)

@@ -1,5 +1,6 @@
-// title: house16
-// 16-bar classic house loop @ 122 BPM
+// @title house16
+// @genre house
+// @details 16-bar classic house loop @ 122 BPM
 setcpm(122/4)
 // kick
 $: s("<[bd*4] [bd*4] [bd*4] [bd*4] [bd*4] [bd*4] [bd*4] [bd*4] [bd*4] [bd*4] [bd*4] [bd*4] [bd*4] [bd*4] [bd*4] [bd bd bd ~]>").gain(0.9)
