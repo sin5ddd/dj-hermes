@@ -119,9 +119,10 @@ strudel-rust/                 # このリポジトリのルート
 │   ├── deck.rs               # 曲A/B: トラック集合 + ボイスプール
 │   ├── mixer.rs              # フェーダー / EQ・フィルター / xfade・切替
 │   ├── engine.rs             # Scheduler / Command
+│   ├── mixer.rs              # フェーダー / EQ・フィルター / xfade（Task 14）
 │   ├── highlight.rs          # ミニ記法ライブハイライト（Task 26）
-│   ├── watcher.rs            # notify → Command
-│   ├── repl.rs
+│   ├── watcher.rs            # notify → Command（Task 15）
+│   ├── repl.rs               # rustyline REPL（Task 16）
 │   ├── api.rs                # REST + SSE
 │   └── mcp.rs                # rmcp, stdio → HTTP ブリッジ
 ├── songs/                    # デモ曲 (.strudel)
@@ -234,13 +235,13 @@ Rust の build/test/clippy 実行時は、利用可能なら `cargo-runner` ス�
 | 項目 | 状態 |
 | --- | --- |
 | リポジトリ | GitHub private（`sin5ddd/strudel-rust`）+ CI/CD 基盤 |
-| cargo プロジェクト | Task 1–12 + Task 26 完了（lib `strudel_rs` + bin、`play` 既定ハイライト / `--headless`） |
-| 実装タスク | Task 13 以降（プラン Progress を更新しながら進める） |
+| cargo プロジェクト | Task 1–16 + Task 26 完了（Mixer / watcher / REPL / ハイライト） |
+| 実装タスク | Task 17 以降（HTTP → MCP → …） |
 
 次に実装する場合の入口:
 
-1. Task 13: バークオンタイズ検証テスト
-2. Task 14: デュアルデッキ + Mixer
-3. 以降: watcher → REPL → HTTP → MCP
+1. Task 17: HTTP API（REST + SSE）
+2. Task 18: MCP server（stdio → HTTP ブリッジ）
+3. 以降: エラー総仕上げ / Hermes / E2E
 
 詰まった点・設計判断はプラン末尾の「詰まりログ」「追加メモ」「Risks / Open Questions」に追記する。

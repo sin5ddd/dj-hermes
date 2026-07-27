@@ -28,6 +28,7 @@ struct ScheduledHit {
 pub struct Deck {
     pub name: String,
     song: Option<Song>,
+    /// Pre-mixer level (Engine normally leaves this at 1.0; Mixer owns faders).
     pub gain: f32,
     voices: Vec<Option<VoiceKind>>,
     /// Round-robin steal index when pool is full.
@@ -68,6 +69,10 @@ impl Deck {
 
     pub fn song_title(&self) -> Option<&str> {
         self.song.as_ref().map(|s| s.title.as_str())
+    }
+
+    pub fn song_ref(&self) -> Option<&Song> {
+        self.song.as_ref()
     }
 
     pub fn song_mut(&mut self) -> Option<&mut Song> {

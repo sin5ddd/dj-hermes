@@ -1,4 +1,4 @@
-//! strudel-rs — play .strudel songs through cpal (Tasks 1–12 + highlight TUI).
+//! strudel-rs — play .strudel songs (highlight TUI, headless, or --repl live).
 
 use std::io::{stdout, Write};
 use std::path::{Path, PathBuf};
@@ -7,17 +7,21 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
+use crossbeam::channel::{unbounded, Receiver};
 use crossterm::event::{self, Event, KeyCode, KeyEventKind};
 use crossterm::terminal::{
     disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
 };
 use crossterm::{cursor, execute, terminal, QueueableCommand};
-use strudel_rs::engine::Engine;
+use strudel_rs::engine::{Command, Engine};
 use strudel_rs::highlight::{
     active_spans, bar_index, bar_pos, format_header, render_ansi, HighlightModel,
 };
+use strudel_rs::live_ui;
+use strudel_rs::repl;
 use strudel_rs::sample::SampleBank;
 use strudel_rs::song::parse_song;
+use strudel_rs::watcher::{self, DeckPaths};
 
 fn main() {
     let mut args: Vec<String> = std::env::args().skip(1).collect();
@@ -50,18 +54,25 @@ strudel-rs — Strudel live CLI
 
 Usage:
   strudel-rs play [SONG] [--seconds N] [--headless]
+  strudel-rs play --repl [SONG] [--songs-dir DIR]
 
-  SONG          path to .strudel (default: songs/smoke.strudel)
-  --seconds N   stop after N seconds (omit to loop until quit)
+  SONG          path to .strudel (default without --repl: songs/smoke.strudel)
+  --seconds N   stop after N seconds (omit to loop until quit; not for --repl)
   --headless    no TUI: meta log only (for scripts / non-TTY)
   --highlight   explicit highlight TUI (default; also: --hl)
+  --repl        live UI: mini-notation highlight + command line + watcher
+  --repl-text   text-only REPL (no highlight; rustyline) + watcher
+  --songs-dir   directory to watch for .strudel saves (default: songs/)
 
-  Default play loops forever (TUI: q / Esc to quit; headless: Ctrl+C).
+  Default play loops forever (TUI: q / Esc; headless: Ctrl+C).
+  --repl: left=A / right=B highlight, » prompt at bottom.
+  Commands (no colon):  a load <file>  |  x 4  |  b mute kick  |  bpm 128  |  quit
 
 Examples:
   cargo run -- play songs/smoke.strudel
-  cargo run -- play songs/smoke.strudel --seconds 15
-  cargo run -- play songs/smoke.strudel --headless
+  cargo run -- play --repl songs/techno16.strudel
+  # then:  b load songs/house16.strudel
+  #        x 4
 
 Samples: ./samples (or <song>/../samples). CC0 kit docs in samples/LICENSE.md.
 "
@@ -69,11 +80,12 @@ Samples: ./samples (or <song>/../samples). CC0 kit docs in samples/LICENSE.md.
 }
 
 fn cmd_play(args: &[String]) -> Result<(), String> {
-    let mut song_path = PathBuf::from("songs/smoke.strudel");
-    // None = loop until quit; Some(n) = stop after n seconds.
+    let mut song_path: Option<PathBuf> = None;
     let mut seconds: Option<u64> = None;
-    // Default: live mini-notation highlight TUI. Opt out with --headless.
     let mut highlight = true;
+    let mut repl_mode = false;
+    let mut repl_text = false;
+    let mut songs_dir = PathBuf::from("songs");
     let mut i = 0;
     while i < args.len() {
         match args[i].as_str() {
@@ -83,18 +95,27 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
                     .get(i)
                     .ok_or_else(|| "--seconds needs a number".to_string())?;
                 let n: u64 = s.parse().map_err(|_| format!("bad --seconds value: {s}"))?;
-                if n == 0 {
-                    // 0 still means "no time limit" (same as omitting the flag).
-                    seconds = None;
-                } else {
-                    seconds = Some(n);
-                }
+                seconds = if n == 0 { None } else { Some(n) };
             }
             "--headless" => {
                 highlight = false;
             }
             "--highlight" | "--hl" => {
                 highlight = true;
+            }
+            "--repl" => {
+                repl_mode = true;
+            }
+            "--repl-text" => {
+                repl_mode = true;
+                repl_text = true;
+            }
+            "--songs-dir" => {
+                i += 1;
+                let d = args
+                    .get(i)
+                    .ok_or_else(|| "--songs-dir needs a path".to_string())?;
+                songs_dir = PathBuf::from(d);
             }
             "--help" | "-h" => {
                 print_usage();
@@ -104,12 +125,17 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
                 return Err(format!("unknown flag: {flag}"));
             }
             path => {
-                song_path = PathBuf::from(path);
+                song_path = Some(PathBuf::from(path));
             }
         }
         i += 1;
     }
 
+    if repl_mode {
+        return cmd_play_repl(song_path, songs_dir, !repl_text);
+    }
+
+    let song_path = song_path.unwrap_or_else(|| PathBuf::from("songs/smoke.strudel"));
     let text = std::fs::read_to_string(&song_path)
         .map_err(|e| format!("read {}: {e}", song_path.display()))?;
     let path_str = song_path.to_string_lossy().into_owned();
@@ -127,7 +153,7 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
     let channels = supported.channels() as usize;
     let stream_config: cpal::StreamConfig = supported.into();
 
-    let samples_dir = resolve_samples_dir(&song_path)?;
+    let samples_dir = resolve_samples_dir(Some(&song_path))?;
     let bank = SampleBank::load_dir(&samples_dir, sample_rate);
     let names = bank.names();
     if names.is_empty() {
@@ -172,10 +198,146 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
 
     let engine = Arc::new(Mutex::new(engine));
     let bank = Arc::new(bank);
-    let mut mono = Vec::<f32>::new();
+    let stream = build_stream(
+        &device,
+        stream_config,
+        channels,
+        Arc::clone(&engine),
+        Arc::clone(&bank),
+        None,
+    )?;
+    stream.play().map_err(|e| format!("play stream: {e}"))?;
 
-    let engine_cb = Arc::clone(&engine);
-    let bank_cb = Arc::clone(&bank);
+    if let Some(model) = highlight_model {
+        run_highlight_loop(&model, &playhead, seconds)?;
+    } else {
+        match seconds {
+            Some(n) => {
+                std::thread::sleep(Duration::from_secs(n));
+                eprintln!("done.");
+            }
+            None => loop {
+                std::thread::sleep(Duration::from_secs(3600));
+            },
+        }
+    }
+    Ok(())
+}
+
+fn cmd_play_repl(
+    song_path: Option<PathBuf>,
+    songs_dir: PathBuf,
+    with_highlight: bool,
+) -> Result<(), String> {
+    let host = cpal::default_host();
+    let device = host
+        .default_output_device()
+        .ok_or_else(|| "no default output device".to_string())?;
+    let supported = device
+        .default_output_config()
+        .map_err(|e| format!("output config: {e}"))?;
+    let sample_rate = supported.sample_rate() as u32;
+    let channels = supported.channels() as usize;
+    let stream_config: cpal::StreamConfig = supported.into();
+
+    let samples_dir = resolve_samples_dir(song_path.as_deref())?;
+    let bank = SampleBank::load_dir(&samples_dir, sample_rate);
+    if bank.names().is_empty() {
+        eprintln!(
+            "warning: no WAV samples from {} (synth-only still works)",
+            samples_dir.display()
+        );
+    }
+
+    let mut bpm = 120.0;
+    let mut engine = Engine::new(sample_rate, bpm);
+    let deck_paths: DeckPaths = watcher::new_deck_paths();
+    let mut initial_hl: Option<(usize, HighlightModel)> = None;
+
+    if let Some(ref path) = song_path {
+        let text =
+            std::fs::read_to_string(path).map_err(|e| format!("read {}: {e}", path.display()))?;
+        let song = parse_song(&text, &path.to_string_lossy())?;
+        bpm = song.bpm.unwrap_or(120.0);
+        engine.transport.set_bpm(bpm);
+        if with_highlight {
+            initial_hl = Some((0, HighlightModel::from_song(&song, sample_rate)));
+        }
+        engine.load_song_immediate(0, song);
+        if let Ok(mut dp) = deck_paths.lock() {
+            dp[0] = Some(path.clone());
+        }
+        if !with_highlight {
+            eprintln!("loaded deck A: {}", path.display());
+        }
+    }
+
+    let (cmd_tx, cmd_rx) = unbounded::<Command>();
+    let playhead = engine.playhead_handle();
+    let engine = Arc::new(Mutex::new(engine));
+    let bank = Arc::new(bank);
+
+    let stream = build_stream(
+        &device,
+        stream_config,
+        channels,
+        Arc::clone(&engine),
+        Arc::clone(&bank),
+        Some(cmd_rx),
+    )?;
+    stream.play().map_err(|e| format!("play stream: {e}"))?;
+
+    // Keep watcher alive for the REPL session.
+    let _watcher = if songs_dir.is_dir() {
+        match watcher::watch_songs(&songs_dir, cmd_tx.clone(), Arc::clone(&deck_paths)) {
+            Ok(w) => {
+                if !with_highlight {
+                    eprintln!("watching {} for .strudel saves", songs_dir.display());
+                }
+                Some(w)
+            }
+            Err(e) => {
+                eprintln!("warning: watcher not started: {e}");
+                None
+            }
+        }
+    } else {
+        eprintln!(
+            "warning: songs dir {} missing — watcher disabled",
+            songs_dir.display()
+        );
+        None
+    };
+
+    if with_highlight {
+        live_ui::run(
+            cmd_tx,
+            deck_paths,
+            Arc::clone(&engine),
+            playhead,
+            sample_rate,
+            initial_hl,
+        )?;
+    } else {
+        eprintln!(
+            "strudel-rs play --repl-text  |  {sample_rate} Hz, {channels} ch  |  samples {}",
+            samples_dir.display()
+        );
+        repl::run(cmd_tx, deck_paths, Some(Arc::clone(&engine)));
+    }
+    eprintln!("bye.");
+    Ok(())
+}
+
+fn build_stream(
+    device: &cpal::Device,
+    stream_config: cpal::StreamConfig,
+    channels: usize,
+    engine: Arc<Mutex<Engine>>,
+    bank: Arc<SampleBank>,
+    cmd_rx: Option<Receiver<Command>>,
+) -> Result<cpal::Stream, String> {
+    let mut mono = Vec::<f32>::new();
     let stream = device
         .build_output_stream(
             stream_config,
@@ -187,8 +349,13 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
                 let mono_buf = &mut mono[..frames];
                 mono_buf.fill(0.0);
 
-                if let Ok(mut eng) = engine_cb.try_lock() {
-                    eng.process(mono_buf, &bank_cb);
+                if let Ok(mut eng) = engine.try_lock() {
+                    if let Some(rx) = &cmd_rx {
+                        while let Ok(cmd) = rx.try_recv() {
+                            eng.push_command(cmd);
+                        }
+                    }
+                    eng.process(mono_buf, &bank);
                 }
 
                 if channels <= 1 {
@@ -206,26 +373,7 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
             None,
         )
         .map_err(|e| format!("build stream: {e}"))?;
-
-    stream.play().map_err(|e| format!("play stream: {e}"))?;
-
-    if let Some(model) = highlight_model {
-        run_highlight_loop(&model, &playhead, seconds)?;
-    } else {
-        match seconds {
-            Some(n) => {
-                std::thread::sleep(Duration::from_secs(n));
-                eprintln!("done.");
-            }
-            None => {
-                // Block until the process is interrupted (Ctrl+C).
-                loop {
-                    std::thread::sleep(Duration::from_secs(3600));
-                }
-            }
-        }
-    }
-    Ok(())
+    Ok(stream)
 }
 
 fn run_highlight_loop(
@@ -248,7 +396,6 @@ fn run_highlight_loop(
                     break;
                 }
             }
-            // Drain key events (non-blocking)
             while event::poll(Duration::from_millis(0)).unwrap_or(false) {
                 if let Ok(Event::Key(key)) = event::read() {
                     if key.kind == KeyEventKind::Press
@@ -289,20 +436,24 @@ fn run_highlight_loop(
     result
 }
 
-fn resolve_samples_dir(song_path: &Path) -> Result<PathBuf, String> {
-    let candidates = [
-        PathBuf::from("samples"),
-        song_path
-            .parent()
-            .unwrap_or_else(|| Path::new("."))
-            .join("..")
-            .join("samples"),
-        song_path
-            .parent()
-            .and_then(|p| p.parent())
-            .unwrap_or_else(|| Path::new("."))
-            .join("samples"),
-    ];
+fn resolve_samples_dir(song_path: Option<&Path>) -> Result<PathBuf, String> {
+    let mut candidates = vec![PathBuf::from("samples")];
+    if let Some(song_path) = song_path {
+        candidates.push(
+            song_path
+                .parent()
+                .unwrap_or_else(|| Path::new("."))
+                .join("..")
+                .join("samples"),
+        );
+        candidates.push(
+            song_path
+                .parent()
+                .and_then(|p| p.parent())
+                .unwrap_or_else(|| Path::new("."))
+                .join("samples"),
+        );
+    }
     for c in &candidates {
         if c.is_dir() {
             return Ok(c.components().collect());
