@@ -25,7 +25,7 @@
 - orbit は **デッキ単位 1..4**（A/B 非共有）
 - duck: トリガ時に対象 orbit を depth まで下げ、attack 秒で 1.0 へ線形回復
 - wt_sine / wt_bright / wt_organ（手続き生成 1 周期）
-- delay/room は未実装 → Task 24
+- delay/room は Task 24 で実装済み → [task-24](./2026-07-27-task-24-orbit-delay-room.md)
 
 ## 完了条件（実績）
 

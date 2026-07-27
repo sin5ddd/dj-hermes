@@ -192,7 +192,10 @@ Release プロファイル目安（プラン）: `opt-level = 3`, `lto = true`, 
 
 ### MCP ツール（予定）
 
-`set_code` / `load_song` / `xfade` / `set_bpm` / `mute` / `head` / `hush` / `status` など（`strudel_*` プレフィックス）。
+Mixer: `mixer_eq` / `mixer_filter` / `mixer_crossfader` / `xfade` / `set_bpm`  
+Deck: `load_song` / `mute` / `head`  
+Transport: `hush` / `status`  
+（いずれも `strudel_*` プレフィックス。コード直書きの `set_code` は MCP から削除済み。曲は `load_song`）
 
 Hermes 登録例:
 
@@ -257,13 +260,13 @@ cargo test
 | 項目 | 状態 |
 | --- | --- |
 | リポジトリ | GitHub private（`sin5ddd/strudel-rust`）+ CI/CD 基盤 |
-| cargo プロジェクト | Task 1–19 + Task 21 + Task 23 + Task 26 完了 |
-| 実装タスク | Task 20 任意 → Task 22 計測 → Task 24（delay/room on orbit） |
+| cargo プロジェクト | Task 1–19 + Task 21 + Task 23 + Task 24 + Task 26 完了 |
+| 実装タスク | Task 20 任意 → Task 22 計測 → Task 25 viz（任意） |
 
 次に実装する場合の入口:
 
 1. Task 22: リソース計測 + README 展示手順
 2. Task 20（任意）: 汎用 ctl スクリプト + MCP クライアント設定例（Hermes 専用ランタイムは作らない）
-3. Task 24: orbit 共有 delay / room
+3. Task 25（任意）: Punchcard / Pianoroll 端末 TUI
 
 詰まった点・設計判断はプラン末尾の「詰まりログ」「追加メモ」「Risks / Open Questions」に追記する。

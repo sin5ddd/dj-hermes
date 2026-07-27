@@ -33,6 +33,34 @@ pub struct AppState {
     pub engine: Arc<Mutex<Engine>>,
 }
 
+/// Channel EQ slider positions (0..=1, 0.5 = flat).
+#[derive(Clone, Debug, Serialize, PartialEq)]
+pub struct EqBands {
+    pub hi: f32,
+    pub mid: f32,
+    pub lo: f32,
+}
+
+impl Default for EqBands {
+    fn default() -> Self {
+        Self {
+            hi: 0.5,
+            mid: 0.5,
+            lo: 0.5,
+        }
+    }
+}
+
+impl EqBands {
+    fn from_arr(p: [f32; 3]) -> Self {
+        Self {
+            hi: p[0],
+            mid: p[1],
+            lo: p[2],
+        }
+    }
+}
+
 #[derive(Clone, Debug, Default, Serialize, PartialEq)]
 pub struct StatusInfo {
     pub deck_a: Option<String>,
@@ -46,6 +74,14 @@ pub struct StatusInfo {
     pub song_bar_b: u64,
     pub gain_a: f32,
     pub gain_b: f32,
+    pub eq_a: EqBands,
+    pub eq_b: EqBands,
+    /// Master LPF cutoff Hz; `null` = bypass.
+    pub lpf_hz: Option<f32>,
+    /// Master HPF cutoff Hz; `null` = bypass.
+    pub hpf_hz: Option<f32>,
+    /// Equal-power crossfader 0=A … 1=B.
+    pub crossfader: f32,
 }
 
 #[derive(Deserialize)]
@@ -85,6 +121,86 @@ pub struct HeadReq {
     pub bar: u64,
 }
 
+/// Partial EQ update. At least one of hi/mid/lo required. Values 0..=1 (0.5 = flat).
+#[derive(Deserialize)]
+pub struct MixerEqReq {
+    pub deck: String,
+    pub hi: Option<f32>,
+    pub mid: Option<f32>,
+    pub lo: Option<f32>,
+}
+
+/// Master filter field: omit = no change; `null` = bypass; number = Hz.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub enum FilterField {
+    #[default]
+    Absent,
+    Bypass,
+    Hz(f32),
+}
+
+impl<'de> Deserialize<'de> for FilterField {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::de::{self, Visitor};
+        use std::fmt;
+
+        struct Fv;
+        impl<'de> Visitor<'de> for Fv {
+            type Value = FilterField;
+
+            fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                f.write_str("a positive Hz number or null")
+            }
+
+            fn visit_unit<E: de::Error>(self) -> Result<Self::Value, E> {
+                Ok(FilterField::Bypass)
+            }
+
+            fn visit_none<E: de::Error>(self) -> Result<Self::Value, E> {
+                Ok(FilterField::Bypass)
+            }
+
+            fn visit_f64<E: de::Error>(self, v: f64) -> Result<Self::Value, E> {
+                let hz = v as f32;
+                if !(hz.is_finite() && hz > 0.0) {
+                    return Err(E::custom(format!(
+                        "filter Hz must be positive finite, got {v}"
+                    )));
+                }
+                Ok(FilterField::Hz(hz))
+            }
+
+            fn visit_i64<E: de::Error>(self, v: i64) -> Result<Self::Value, E> {
+                self.visit_f64(v as f64)
+            }
+
+            fn visit_u64<E: de::Error>(self, v: u64) -> Result<Self::Value, E> {
+                self.visit_f64(v as f64)
+            }
+        }
+
+        deserializer.deserialize_any(Fv)
+    }
+}
+
+/// Master filter. Field absent = leave unchanged; JSON `null` = bypass; number = set Hz.
+#[derive(Deserialize)]
+pub struct MixerFilterReq {
+    #[serde(default)]
+    pub lpf: FilterField,
+    #[serde(default)]
+    pub hpf: FilterField,
+}
+
+#[derive(Deserialize)]
+pub struct MixerCrossfaderReq {
+    /// 0 = full A, 1 = full B (immediate; cancels multi-bar xfade).
+    pub pos: f32,
+}
+
 #[derive(Serialize)]
 pub struct ErrRes {
     pub error: String,
@@ -112,6 +228,11 @@ fn snapshot(engine: &Arc<Mutex<Engine>>) -> StatusInfo {
         song_bar_b: e.decks[1].song_bar_1based(bar),
         gain_a: e.mixer.gain_a,
         gain_b: e.mixer.gain_b,
+        eq_a: EqBands::from_arr(e.mixer.deck_eq(0)),
+        eq_b: EqBands::from_arr(e.mixer.deck_eq(1)),
+        lpf_hz: e.mixer.lpf_hz,
+        hpf_hz: e.mixer.hpf_hz,
+        crossfader: e.mixer.crossfader_pos(),
     }
 }
 
@@ -251,6 +372,74 @@ async fn hush(State(s): State<AppState>) -> StatusCode {
     StatusCode::NO_CONTENT
 }
 
+async fn mixer_eq(
+    State(s): State<AppState>,
+    Json(r): Json<MixerEqReq>,
+) -> Result<StatusCode, (StatusCode, Json<ErrRes>)> {
+    let deck = deck_idx(&r.deck).map_err(bad)?;
+    let bands: [(u8, Option<f32>); 3] = [(0, r.hi), (1, r.mid), (2, r.lo)];
+    if bands.iter().all(|(_, v)| v.is_none()) {
+        return Err(bad("provide at least one of hi, mid, lo (0..=1, 0.5=flat)"));
+    }
+    for (band, val) in bands {
+        let Some(v) = val else { continue };
+        if !v.is_finite() {
+            return Err(bad(format!("eq band {band} must be finite")));
+        }
+        s.tx.send(Command::SetDeckEq {
+            deck,
+            band,
+            value: v.clamp(0.0, 1.0),
+        })
+        .map_err(|e| bad(e.to_string()))?;
+    }
+    Ok(StatusCode::NO_CONTENT)
+}
+
+async fn mixer_filter(
+    State(s): State<AppState>,
+    Json(r): Json<MixerFilterReq>,
+) -> Result<StatusCode, (StatusCode, Json<ErrRes>)> {
+    if r.lpf == FilterField::Absent && r.hpf == FilterField::Absent {
+        return Err(bad("provide lpf and/or hpf (Hz number, or null to bypass)"));
+    }
+    match r.lpf {
+        FilterField::Absent => {}
+        FilterField::Bypass => {
+            s.tx.send(Command::SetMixerLpf(None))
+                .map_err(|e| bad(e.to_string()))?;
+        }
+        FilterField::Hz(hz) => {
+            s.tx.send(Command::SetMixerLpf(Some(hz)))
+                .map_err(|e| bad(e.to_string()))?;
+        }
+    }
+    match r.hpf {
+        FilterField::Absent => {}
+        FilterField::Bypass => {
+            s.tx.send(Command::SetMixerHpf(None))
+                .map_err(|e| bad(e.to_string()))?;
+        }
+        FilterField::Hz(hz) => {
+            s.tx.send(Command::SetMixerHpf(Some(hz)))
+                .map_err(|e| bad(e.to_string()))?;
+        }
+    }
+    Ok(StatusCode::NO_CONTENT)
+}
+
+async fn mixer_crossfader(
+    State(s): State<AppState>,
+    Json(r): Json<MixerCrossfaderReq>,
+) -> Result<StatusCode, (StatusCode, Json<ErrRes>)> {
+    if !r.pos.is_finite() {
+        return Err(bad(format!("pos must be finite: {}", r.pos)));
+    }
+    s.tx.send(Command::SetCrossfader(r.pos.clamp(0.0, 1.0)))
+        .map_err(|e| bad(e.to_string()))?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
 async fn get_status(State(s): State<AppState>) -> Json<StatusInfo> {
     Json(snapshot(&s.engine))
 }
@@ -288,6 +477,9 @@ pub fn router(state: AppState) -> Router {
         .route("/mute", post(mute))
         .route("/head", post(head))
         .route("/hush", post(hush))
+        .route("/mixer/eq", post(mixer_eq))
+        .route("/mixer/filter", post(mixer_filter))
+        .route("/mixer/crossfader", post(mixer_crossfader))
         .route("/status", get(get_status))
         .route("/events", get(events))
         .with_state(state)
@@ -585,6 +777,110 @@ mod tests {
             .unwrap();
         assert_eq!(res.status(), StatusCode::BAD_REQUEST);
         assert!(rx.try_recv().is_err());
+    }
+
+    #[tokio::test]
+    async fn mixer_eq_queues_set_deck_eq() {
+        let (state, rx) = test_state();
+        let app = router(state);
+        let body = r#"{"deck":"B","lo":0.2,"hi":0.8}"#;
+        let res = app
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/mixer/eq")
+                    .header("content-type", "application/json")
+                    .body(Body::from(body))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(res.status(), StatusCode::NO_CONTENT);
+        let mut got = Vec::new();
+        while let Ok(c) = rx.try_recv() {
+            got.push(c);
+        }
+        assert_eq!(got.len(), 2);
+        match &got[0] {
+            Command::SetDeckEq { deck, band, value } => {
+                assert_eq!(*deck, 1);
+                assert_eq!(*band, 0); // hi first in send order
+                assert!((*value - 0.8).abs() < 1e-5);
+            }
+            _ => panic!("expected SetDeckEq hi"),
+        }
+        match &got[1] {
+            Command::SetDeckEq { deck, band, value } => {
+                assert_eq!(*deck, 1);
+                assert_eq!(*band, 2); // lo
+                assert!((*value - 0.2).abs() < 1e-5);
+            }
+            _ => panic!("expected SetDeckEq lo"),
+        }
+    }
+
+    #[tokio::test]
+    async fn mixer_eq_requires_a_band() {
+        let (state, rx) = test_state();
+        let app = router(state);
+        let body = r#"{"deck":"A"}"#;
+        let res = app
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/mixer/eq")
+                    .header("content-type", "application/json")
+                    .body(Body::from(body))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(res.status(), StatusCode::BAD_REQUEST);
+        assert!(rx.try_recv().is_err());
+    }
+
+    #[tokio::test]
+    async fn mixer_filter_and_crossfader() {
+        let (state, rx) = test_state();
+        let app = router(state.clone());
+        let res = app
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/mixer/filter")
+                    .header("content-type", "application/json")
+                    .body(Body::from(r#"{"lpf":4000,"hpf":null}"#))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(res.status(), StatusCode::NO_CONTENT);
+        match rx.try_recv().unwrap() {
+            Command::SetMixerLpf(Some(hz)) => assert!((hz - 4000.0).abs() < 1e-3),
+            _ => panic!("expected SetMixerLpf"),
+        }
+        match rx.try_recv().unwrap() {
+            Command::SetMixerHpf(None) => {}
+            _ => panic!("expected SetMixerHpf(None)"),
+        }
+
+        let app = router(state);
+        let res = app
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/mixer/crossfader")
+                    .header("content-type", "application/json")
+                    .body(Body::from(r#"{"pos":0.35}"#))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(res.status(), StatusCode::NO_CONTENT);
+        match rx.try_recv().unwrap() {
+            Command::SetCrossfader(p) => assert!((p - 0.35).abs() < 1e-5),
+            _ => panic!("expected SetCrossfader"),
+        }
     }
 
     #[test]

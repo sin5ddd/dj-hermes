@@ -1,7 +1,7 @@
 //! Deck: schedule song tracks for one bar, orbit buses, duck, voice pool.
 
 use crate::code::{note_to_hz, Adsr, DuckParams, FilterParams, ModParams, PatternCode};
-use crate::dsp::{orbit_index, CompressorParams, DuckState, NUM_ORBITS};
+use crate::dsp::{orbit_index, CompressorParams, DuckState, OrbitFx, NUM_ORBITS};
 use crate::mini;
 use crate::sample::{SampleBank, SampleVoice, VoiceKind, SAMPLE_ROOT_HZ};
 use crate::song::Song;
@@ -31,6 +31,11 @@ struct ScheduledHit {
     duck: DuckParams,
     cut: Option<i32>,
     compressor: Option<CompressorParams>,
+    delay: f32,
+    delaytime: f32,
+    delayfeedback: f32,
+    room: f32,
+    roomsize: f32,
 }
 
 pub struct Deck {
@@ -48,6 +53,8 @@ pub struct Deck {
     /// Set by head/cue so a deck can play a different song bar while transport stays locked.
     cycle_offset: i64,
     ducks: [DuckState; NUM_ORBITS],
+    /// Per-orbit global delay / room (Deck-local; not shared across A/B).
+    orbit_fx: [OrbitFx; NUM_ORBITS],
     /// Last compressor params seen on a spawned hit (Engine may promote to Mixer).
     pub pending_compressor: Option<CompressorParams>,
 }
@@ -65,6 +72,7 @@ impl Deck {
             scheduled_bar: u64::MAX,
             cycle_offset: 0,
             ducks: [DuckState::default(); NUM_ORBITS],
+            orbit_fx: std::array::from_fn(|_| OrbitFx::new()),
             pending_compressor: None,
         }
     }
@@ -73,6 +81,9 @@ impl Deck {
         self.song = Some(song);
         self.scheduled_bar = u64::MAX;
         self.cycle_offset = 0;
+        for fx in &mut self.orbit_fx {
+            fx.clear();
+        }
     }
 
     pub fn unload(&mut self) {
@@ -85,6 +96,9 @@ impl Deck {
         self.scheduled_bar = u64::MAX;
         self.cycle_offset = 0;
         self.ducks = [DuckState::default(); NUM_ORBITS];
+        for fx in &mut self.orbit_fx {
+            fx.clear();
+        }
         self.pending_compressor = None;
     }
 
@@ -208,6 +222,11 @@ fn schedule_track_into(
             duck: pc.duck,
             cut: pc.cut,
             compressor: pc.compressor,
+            delay: pc.delay,
+            delaytime: pc.delaytime,
+            delayfeedback: pc.delayfeedback,
+            room: pc.room,
+            roomsize: pc.roomsize,
         });
     }
 }
@@ -250,6 +269,18 @@ impl Deck {
         }
         if let Some(c) = hit.compressor {
             self.pending_compressor = Some(c);
+        }
+        // Last-write-wins orbit FX params (only when pattern uses delay/room).
+        if hit.delay > 1e-6 || hit.room > 1e-6 {
+            let oi = orbit_index(hit.orbit);
+            self.orbit_fx[oi].set_from_hit(
+                hit.delay,
+                hit.delaytime,
+                hit.delayfeedback,
+                hit.room,
+                hit.roomsize,
+                sr,
+            );
         }
 
         let bank_ref = hit.bank.as_deref();
@@ -332,6 +363,9 @@ impl Deck {
     /// Render into `out` (mono). Does not advance transport.
     pub fn process(&mut self, out: &mut [f32], transport: &Transport, samples: &SampleBank) {
         let sr = transport.sample_rate as f32;
+        for fx in &mut self.orbit_fx {
+            fx.ensure_sr(sr);
+        }
         let global_bar = transport.bar_index();
         if global_bar != self.scheduled_bar {
             self.schedule_bar(global_bar, transport);
@@ -363,7 +397,8 @@ impl Deck {
             let mut mix = 0.0f32;
             for (o, sample) in acc.iter().enumerate() {
                 let g = self.ducks[o].advance();
-                mix += sample * g;
+                let dry = sample * g;
+                mix += self.orbit_fx[o].process(dry);
             }
             *frame = mix * self.gain;
         }
@@ -515,5 +550,46 @@ n: note("c4").s("sine").gain(0.9).attack(0.001).sustain(1).release(0.001).clip(0
         d.process(&mut b, &t, &bank);
         let eb: f32 = b.iter().map(|x| x.abs()).sum();
         assert!(eb < ea * 0.5, "clip energy {eb} vs full {ea}");
+    }
+
+    #[test]
+    fn delay_leaves_tail_after_note() {
+        // Short click + delay; energy should remain after the dry note ends.
+        let song = parse_song(
+            r#"---
+hit: note("c5").s("sine").gain(0.9).attack(0.001).decay(0.01).sustain(0).release(0.01).delay(0.7).delaytime(0.05).delayfeedback(0.6)
+"#,
+            "t",
+        )
+        .unwrap();
+        let mut d = Deck::new("A");
+        d.load(song);
+        let t = Transport::new(48_000, 60.0); // 1 bar = 4s at 60 BPM? Wait BPM 60 → 1 beat = 1s, bar = 4s
+        let bank = SampleBank::empty();
+        // Process ~0.15s so we pass the first delay bounce (~0.05s).
+        let mut buf = vec![0f32; 8_000];
+        d.process(&mut buf, &t, &bank);
+        // Dry note is very short; samples after 3000 (~62ms) should still have delay energy.
+        let late: f32 = buf[3000..6000].iter().map(|x| x * x).sum();
+        assert!(late > 1e-4, "expected delay tail energy, late={late}");
+    }
+
+    #[test]
+    fn room_leaves_tail_after_note() {
+        let song = parse_song(
+            r#"---
+hit: note("c5").s("sine").gain(0.9).attack(0.001).decay(0.01).sustain(0).release(0.01).room(0.8).roomsize(6)
+"#,
+            "t",
+        )
+        .unwrap();
+        let mut d = Deck::new("A");
+        d.load(song);
+        let t = Transport::new(48_000, 120.0);
+        let bank = SampleBank::empty();
+        let mut buf = vec![0f32; 12_000];
+        d.process(&mut buf, &t, &bank);
+        let late: f32 = buf[4000..10000].iter().map(|x| x * x).sum();
+        assert!(late > 1e-6, "expected room tail energy, late={late}");
     }
 }

@@ -140,6 +140,16 @@ pub struct PatternCode {
     pub orbit: u8,
     pub duck: DuckParams,
     pub compressor: Option<CompressorParams>,
+    /// Orbit delay wet level 0..=1 (global per orbit).
+    pub delay: f32,
+    /// Delay time in seconds.
+    pub delaytime: f32,
+    /// Delay feedback (clamped &lt; 1 at DSP).
+    pub delayfeedback: f32,
+    /// Orbit reverb wet level 0..=1.
+    pub room: f32,
+    /// Reverb size 0..=10 (Strudel-compatible range).
+    pub roomsize: f32,
     /// Original source text (for display / error context).
     pub raw: String,
     /// Mini-notation string (contents of the first `"..."`).
@@ -194,6 +204,11 @@ pub fn parse_code(input: &str) -> Result<PatternCode, String> {
         orbit: 1,
         duck: DuckParams::default(),
         compressor: None,
+        delay: 0.0,
+        delaytime: 0.25,
+        delayfeedback: 0.5,
+        room: 0.0,
+        roomsize: 1.0,
         raw: input.to_string(),
         mini_src: String::new(),
         mini_base: 0,
@@ -567,6 +582,44 @@ fn apply_method(pc: &mut PatternCode, name: &str, args: &str) -> Result<(), Stri
             pc.compressor = Some(CompressorParams::parse(args)?);
             Ok(())
         }
+        "delay" => {
+            let list = parse_colon_list(args);
+            if list.is_empty() {
+                return Err("delay expects level".into());
+            }
+            pc.delay = (list[0] as f32).clamp(0.0, 1.0);
+            if let Some(t) = list.get(1) {
+                pc.delaytime = (*t as f32).max(0.0);
+            }
+            if let Some(f) = list.get(2) {
+                pc.delayfeedback = (*f as f32).clamp(0.0, 0.95);
+            }
+            Ok(())
+        }
+        "delaytime" | "delayt" | "dt" => {
+            pc.delaytime = (parse_num(args)? as f32).max(0.0);
+            Ok(())
+        }
+        "delayfeedback" | "delayfb" | "dfb" => {
+            pc.delayfeedback = (parse_num(args)? as f32).clamp(0.0, 0.95);
+            Ok(())
+        }
+        "room" => {
+            let list = parse_colon_list(args);
+            if list.is_empty() {
+                return Err("room expects level".into());
+            }
+            pc.room = (list[0] as f32).clamp(0.0, 1.0);
+            if let Some(s) = list.get(1) {
+                pc.roomsize = (*s as f32).clamp(0.0, 10.0);
+            }
+            Ok(())
+        }
+        "roomsize" | "rsize" | "sz" | "size" => {
+            // `size` is Strudel synonym for roomsize; only used as room FX here.
+            pc.roomsize = (parse_num(args)? as f32).clamp(0.0, 10.0);
+            Ok(())
+        }
         "note" => Ok(()),
         "n" => {
             if let Ok(i) = parse_num(args) {
@@ -823,5 +876,24 @@ mod tests {
         let c = pc.compressor.unwrap();
         assert!((c.threshold_db + 20.0).abs() < 1e-5);
         assert!((c.ratio - 4.0).abs() < 1e-5);
+    }
+
+    #[test]
+    fn delay_room_parse() {
+        let pc = parse_code(r#"s("bd").delay("0.5:0.25:0.8").room(0.3).roomsize(2)"#).unwrap();
+        assert!((pc.delay - 0.5).abs() < 1e-6);
+        assert!((pc.delaytime - 0.25).abs() < 1e-6);
+        assert!((pc.delayfeedback - 0.8).abs() < 1e-6);
+        assert!((pc.room - 0.3).abs() < 1e-6);
+        assert!((pc.roomsize - 2.0).abs() < 1e-6);
+
+        let pc2 =
+            parse_code(r#"s("hh").delay(0.4).delaytime(0.125).delayfeedback(0.6).room("0.9:4")"#)
+                .unwrap();
+        assert!((pc2.delay - 0.4).abs() < 1e-6);
+        assert!((pc2.delaytime - 0.125).abs() < 1e-6);
+        assert!((pc2.delayfeedback - 0.6).abs() < 1e-6);
+        assert!((pc2.room - 0.9).abs() < 1e-6);
+        assert!((pc2.roomsize - 4.0).abs() < 1e-6);
     }
 }

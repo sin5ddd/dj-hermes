@@ -1,7 +1,7 @@
 //! Combined highlight TUI + command line for `dj` / `play --repl` (demo-oriented).
 //!
 //! Drawing avoids full-screen clears (reduces flicker). Crossfader / EQ support click/drag.
-//! Per-deck Hi/Mid/Lo EQ is **visual for now** (channel EQ DSP not yet in Mixer).
+//! Per-deck Hi/Mid/Lo EQ is wired to Mixer channel EQ via `Command::SetDeckEq`.
 
 use std::collections::VecDeque;
 use std::io::{stdout, Write};
@@ -32,6 +32,9 @@ const XF_THUMB: &str = "\x1b[47m \x1b[0m";
 
 /// Max interactive track length for crossfader and EQ sliders (visible columns).
 const MAX_SLIDER_TRACK: usize = 10;
+
+/// Fixed change-log lines under the mixer (always reserved, even when empty).
+const LOG_LINES: usize = 3;
 
 /// EQ band labels (Hi / Mid / Lo).
 const EQ_BANDS: [&str; 3] = ["Hi", "Mid", "Lo"];
@@ -81,7 +84,7 @@ struct LiveState {
     cycle_offset_b: i64,
     /// Equal-power crossfader 0=A … 1=B (mirrored from mixer for display).
     xfade_pos: f32,
-    /// Per-deck EQ sliders 0..=1 (0.5 = flat). **Visual only** until Mixer channel EQ exists.
+    /// Per-deck EQ sliders 0..=1 (0.5 = flat). Synced with Mixer channel EQ.
     /// Index: [band][deck] with band 0=Hi,1=Mid,2=Lo ; deck 0=A,1=B.
     eq: [[f32; 2]; 3],
     input: String,
@@ -109,7 +112,7 @@ impl LiveState {
 
     fn push_log(&mut self, msg: impl Into<String>) {
         self.log.push_back(msg.into());
-        while self.log.len() > 2 {
+        while self.log.len() > LOG_LINES {
             self.log.pop_front();
         }
     }
@@ -157,7 +160,7 @@ pub fn run(
     if let Some(model) = initial_b {
         state.set_model(1, model);
     }
-    state.push_log("live UI · EQ visual-only · drag xfader / Hi Mid Lo");
+    state.push_log("live UI · drag xfader / Hi Mid Lo EQ (wired to mixer)");
 
     enable_raw_mode().map_err(|e| format!("raw mode: {e}"))?;
     let mut out = stdout();
@@ -317,7 +320,11 @@ fn apply_drag(state: &mut LiveState, tx: &Sender<Command>, col: u16) {
         DragTarget::Eq { band, deck } => {
             let pos = state.eq_hits[band][deck].pos_from_col(col);
             state.eq[band][deck] = pos;
-            // Visual only — channel EQ DSP not wired yet.
+            let _ = tx.send(Command::SetDeckEq {
+                deck,
+                band: band as u8,
+                value: pos,
+            });
         }
     }
 }
@@ -327,6 +334,22 @@ fn sync_models_from_engine(state: &mut LiveState, eng: &Engine, sample_rate: u32
     state.cycle_offset_b = eng.decks[1].cycle_offset();
     if state.drag != DragTarget::Xf {
         state.xfade_pos = eng.mixer.crossfader_pos();
+    }
+    // Mirror mixer EQ unless the user is dragging that band/deck.
+    for band in 0..3 {
+        for deck in 0..2 {
+            let dragging = matches!(
+                state.drag,
+                DragTarget::Eq {
+                    band: b,
+                    deck: d
+                } if b == band && d == deck
+            );
+            if !dragging {
+                let eq = eng.mixer.deck_eq(deck);
+                state.eq[band][deck] = eq[band];
+            }
+        }
     }
     for (deck, model_slot) in [(0, &mut state.model_a), (1, &mut state.model_b)] {
         let Some(model) = model_slot.as_mut() else {
@@ -367,8 +390,8 @@ fn draw_frame(
         return Ok(());
     }
 
-    // Footer: EQ×3 + xfade + log×2 + help + prompt  (= 8)
-    let footer_rows = 8.min(rows.saturating_sub(2));
+    // Footer: EQ×3 + xfade + log×3 (reserved) + help + prompt  (= 9)
+    let footer_rows = (3 + 1 + LOG_LINES + 2).min(rows.saturating_sub(2));
     let body_rows = rows.saturating_sub(footer_rows);
     let gs = playhead.load(Ordering::Relaxed);
 
@@ -432,16 +455,13 @@ fn draw_frame(
         lines.push(xf_line);
     }
 
-    // Log
-    let used_after_controls = lines.len();
-    let log_budget = rows.saturating_sub(used_after_controls).saturating_sub(2);
-    let mut log_iter = state.log.iter();
-    for _ in 0..log_budget {
-        let msg = log_iter.next().map(String::as_str).unwrap_or("");
+    // Change log: always exactly LOG_LINES rows (empty lines reserved from the start).
+    for i in 0..LOG_LINES {
+        if lines.len() >= rows.saturating_sub(2) {
+            break;
+        }
+        let msg = state.log.get(i).map(String::as_str).unwrap_or("");
         lines.push(pad_clip_ansi(msg, cols));
-    }
-    while lines.len() < rows.saturating_sub(2) {
-        lines.push(pad_clip_ansi("", cols));
     }
 
     if rows >= 2 {
@@ -507,7 +527,8 @@ fn format_track(pos: f32, track_w: usize) -> String {
     track
 }
 
-/// One EQ row: `Hi  A ──□──  B ──□──` (center = flat).
+/// One EQ row: A track left, B track **right-aligned**.
+/// e.g. `Hi  A ──□──                              B ──□──`
 fn format_eq_band_line(
     band: &str,
     pos_a: f32,
@@ -516,19 +537,21 @@ fn format_eq_band_line(
     row: u16,
 ) -> (String, SliderHit, SliderHit) {
     let track_w = MAX_SLIDER_TRACK.min(10);
-    // "Hi  A " + track + "  B " + track
     let band_pad = format!("{band:<3}");
     let left_lab = format!("{band_pad} A ");
-    let mid_lab = "  B ";
+    let right_lab = "B ";
     let track_a = format_track(pos_a, track_w);
     let track_b = format_track(pos_b, track_w);
-    let raw = format!("{left_lab}{track_a}{mid_lab}{track_b}");
+
+    let left_vis = left_lab.chars().count() + track_w;
+    let right_vis = right_lab.chars().count() + track_w;
+    let gap = cols.saturating_sub(left_vis + right_vis);
+    let raw = format!("{left_lab}{track_a}{}{right_lab}{track_b}", " ".repeat(gap));
     let line = pad_clip_ansi(&raw, cols);
 
     let col_a = left_lab.chars().count();
-    // Visible length of track is track_w (ANSI not counted in chars() for prefix only —
-    // left_lab has no ANSI, so col_a is correct. mid_lab after track: need visible offset.
-    let col_b = col_a + track_w + mid_lab.chars().count();
+    // B track starts after left block + gap + "B "
+    let col_b = left_vis + gap + right_lab.chars().count();
     let hit_a = SliderHit {
         row,
         col0: col_a as u16,
@@ -694,7 +717,8 @@ mod tests {
 
     #[test]
     fn eq_band_line_has_a_and_b_tracks() {
-        let (line, ha, hb) = format_eq_band_line("Hi", 0.5, 0.5, 80, 3);
+        let cols = 80usize;
+        let (line, ha, hb) = format_eq_band_line("Hi", 0.5, 0.5, cols, 3);
         assert!(line.contains("Hi"), "{line}");
         assert!(line.contains("A "), "{line}");
         assert!(line.contains("B "), "{line}");
@@ -702,6 +726,12 @@ mod tests {
         assert_eq!(hb.cols, MAX_SLIDER_TRACK as u16);
         assert!(ha.col0 < hb.col0);
         assert_eq!(ha.row, 3);
+        // B track is right-aligned: ends at terminal width.
+        assert_eq!(
+            hb.col0 as usize + hb.cols as usize,
+            cols,
+            "B slider should end at right edge"
+        );
         // Center (0.5) → thumb roughly mid-track
         assert!((ha.pos_from_col(ha.col0 + ha.cols / 2) - 0.5).abs() < 0.2);
     }
