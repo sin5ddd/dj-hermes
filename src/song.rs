@@ -1,4 +1,6 @@
 //! Song file format: Strudel-oriented patterns (+ legacy named tracks).
+//!
+//! Metadata follows Strudel's comment tags: https://strudel.cc/learn/metadata/
 
 use crate::code::{parse_code, PatternCode};
 
@@ -9,9 +11,23 @@ pub struct Track {
     pub muted: bool,
 }
 
+/// Optional music metadata from Strudel-style `@tag` comments.
+/// Fields are best-effort; malformed values never fail the parse.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct SongMeta {
+    pub by: Vec<String>,
+    pub license: Vec<String>,
+    pub details: Option<String>,
+    pub url: Vec<String>,
+    pub genre: Vec<String>,
+    pub album: Option<String>,
+    pub tag: Vec<String>,
+}
+
 #[derive(Debug, Clone)]
 pub struct Song {
     pub title: String,
+    pub meta: SongMeta,
     pub bpm: Option<f64>,
     pub tracks: Vec<Track>,
     pub path: String,
@@ -21,13 +37,19 @@ pub struct Song {
 
 /// Preferred Strudel-like format (copy-paste friendly):
 /// ```text
-/// // title: smoke
+/// // @title smoke
+/// // @by strudel-rs
 /// setcpm(30)
 /// // kick
 /// $: s("bd*4").gain(0.9)
 /// // hat
 /// $: s("hh*8").gain(0.3)
 /// ```
+///
+/// Metadata tags (see https://strudel.cc/learn/metadata/):
+/// `@title`, `@by`, `@license`, `@details`, `@url`, `@genre`, `@album`, `@tag`.
+/// Also supported: block comments `/* … */`, multi-tag lines, and
+/// `// "Quoted Title" @by …` at the start of a comment.
 ///
 /// `setcpm(N)` is cycles-per-minute (Strudel). With 1 cycle = 1 bar of 4 beats,
 /// engine BPM is `N * 4`. `setcpm(120/4)` is accepted. `setcps(x)` is also accepted
@@ -40,12 +62,15 @@ pub struct Song {
 /// ---
 /// kick: s("bd*4").gain(0.9)
 /// ```
+/// Also: `// title: …` (pre-@tag comment form).
 pub fn parse_song(text: &str, path: &str) -> Result<Song, String> {
     let mut bpm = None;
     let mut title: Option<String> = None;
+    let mut meta = SongMeta::default();
     let mut tracks = Vec::new();
     let mut pending_label: Option<String> = None;
     let mut anon_idx = 0usize;
+    let mut block_buf: Option<String> = None;
 
     // Walk by lines while tracking byte offsets in `text`.
     let mut offset = 0usize;
@@ -55,22 +80,45 @@ pub fn parse_song(text: &str, path: &str) -> Result<Song, String> {
         // Strip trailing newline for parsing (keep line_start for absolute offsets).
         let line_no_nl = raw.trim_end_matches(['\r', '\n']);
         let line = line_no_nl.trim();
+
+        // Inside `/* … */` block comment: accumulate and apply metadata on close.
+        if let Some(ref mut buf) = block_buf {
+            if let Some(end) = line_no_nl.find("*/") {
+                buf.push_str(&line_no_nl[..end]);
+                let body = buf.clone();
+                block_buf = None;
+                apply_metadata_text(&body, &mut title, &mut meta);
+                pending_label = None;
+                // Trailing code after `*/` on the same line is not supported.
+                let _ = end;
+            } else {
+                buf.push_str(line_no_nl);
+                buf.push('\n');
+            }
+            continue;
+        }
+
         if line.is_empty() {
             continue;
         }
 
-        // Comments: // title: …, # title: …, or label for the next `$:` track.
-        if let Some(comment) = strip_comment(line) {
-            if let Some(t) = comment.strip_prefix("title:") {
-                let t = t.trim();
-                if !t.is_empty() {
-                    title = Some(t.to_string());
-                }
+        // Start of block comment (full-line or line beginning with /*).
+        if let Some(rest) = line.strip_prefix("/*") {
+            if let Some(end) = rest.find("*/") {
+                apply_metadata_text(&rest[..end], &mut title, &mut meta);
                 pending_label = None;
-            } else if !comment.is_empty() {
-                // Immediate previous non-title comment becomes `$:` track name.
-                pending_label = Some(comment.to_string());
+            } else {
+                block_buf = Some(rest.to_string());
+                if let Some(b) = block_buf.as_mut() {
+                    b.push('\n');
+                }
             }
+            continue;
+        }
+
+        // Line comments: Strudel @tags, legacy title:, or label for the next `$:` track.
+        if let Some(comment) = strip_line_comment(line) {
+            handle_comment_body(comment, &mut title, &mut meta, &mut pending_label);
             continue;
         }
 
@@ -96,7 +144,10 @@ pub fn parse_song(text: &str, path: &str) -> Result<Song, String> {
             continue;
         }
         if let Some(v) = line.strip_prefix("title:") {
-            title = Some(v.trim().to_string());
+            let t = v.trim();
+            if !t.is_empty() {
+                title = Some(t.to_string());
+            }
             continue;
         }
 
@@ -134,6 +185,10 @@ pub fn parse_song(text: &str, path: &str) -> Result<Song, String> {
         });
     }
 
+    if block_buf.is_some() {
+        // Unclosed block comment: ignore remainder (do not fail the song).
+    }
+
     if tracks.is_empty() {
         return Err("no tracks".into());
     }
@@ -146,6 +201,7 @@ pub fn parse_song(text: &str, path: &str) -> Result<Song, String> {
 
     Ok(Song {
         title,
+        meta,
         bpm,
         tracks,
         path: path.to_string(),
@@ -153,7 +209,7 @@ pub fn parse_song(text: &str, path: &str) -> Result<Song, String> {
     })
 }
 
-fn strip_comment(line: &str) -> Option<&str> {
+fn strip_line_comment(line: &str) -> Option<&str> {
     if let Some(rest) = line.strip_prefix("//") {
         return Some(rest.trim());
     }
@@ -161,6 +217,184 @@ fn strip_comment(line: &str) -> Option<&str> {
         return Some(rest.trim());
     }
     None
+}
+
+/// Apply one comment body: metadata tags and/or track label for the next `$:`.
+fn handle_comment_body(
+    comment: &str,
+    title: &mut Option<String>,
+    meta: &mut SongMeta,
+    pending_label: &mut Option<String>,
+) {
+    if comment.is_empty() {
+        return;
+    }
+
+    // Legacy: `// title: My Song`
+    if let Some(t) = comment.strip_prefix("title:") {
+        let t = t.trim();
+        if !t.is_empty() {
+            *title = Some(t.to_string());
+        }
+        *pending_label = None;
+        return;
+    }
+
+    let had_meta = apply_metadata_text(comment, title, meta);
+    if had_meta {
+        // Pure metadata (or metadata + free prefix) is not a track label.
+        *pending_label = None;
+    } else if !comment.is_empty() {
+        // Immediate previous non-meta comment becomes `$:` track name.
+        *pending_label = Some(comment.to_string());
+    }
+}
+
+/// Parse Strudel metadata from free text (comment line or block body).
+/// Returns true if any recognized `@tag` or quoted title was applied.
+fn apply_metadata_text(text: &str, title: &mut Option<String>, meta: &mut SongMeta) -> bool {
+    let text = text.trim();
+    if text.is_empty() {
+        return false;
+    }
+
+    let mut applied = false;
+    let mut rest = text;
+
+    // Alternative title: `"My Cool Song" @by …` at the very beginning.
+    if let Some(stripped) = rest.strip_prefix('"') {
+        if let Some(end) = stripped.find('"') {
+            let t = stripped[..end].trim();
+            if !t.is_empty() {
+                *title = Some(t.to_string());
+                applied = true;
+            }
+            rest = stripped[end + 1..].trim();
+        }
+    }
+
+    // Collect `@tag` start positions (known tags only, word-boundary style).
+    let tags = find_meta_tag_spans(rest);
+    if tags.is_empty() {
+        return applied;
+    }
+    applied = true;
+
+    for (i, (pos, tag)) in tags.iter().enumerate() {
+        let value_start = pos + 1 + tag.len(); // skip '@' + name
+        let value_end = tags.get(i + 1).map(|(p, _)| *p).unwrap_or(rest.len());
+        if value_start > value_end {
+            continue;
+        }
+        let raw = rest[value_start..value_end].trim();
+        apply_tag(tag, raw, title, meta);
+    }
+    applied
+}
+
+const META_TAGS: &[&str] = &[
+    "title", "by", "license", "details", "url", "genre", "album", "tag",
+];
+
+/// Find `@tag` occurrences; longer tag names win if overlapping (none do today).
+fn find_meta_tag_spans(text: &str) -> Vec<(usize, &'static str)> {
+    let mut found: Vec<(usize, &'static str)> = Vec::new();
+    let bytes = text.as_bytes();
+    let mut i = 0usize;
+    while i < bytes.len() {
+        if bytes[i] == b'@' {
+            let after = &text[i + 1..];
+            let mut matched: Option<&'static str> = None;
+            for tag in META_TAGS {
+                if let Some(rest) = after.strip_prefix(tag) {
+                    let boundary = rest.chars().next();
+                    let ok = match boundary {
+                        None => true,
+                        Some(c) => c.is_whitespace() || c == ',' || c == '\r' || c == '\n',
+                    };
+                    if ok {
+                        // Prefer longer match if several match (not needed for current set).
+                        if matched.map(|m| tag.len() > m.len()).unwrap_or(true) {
+                            matched = Some(*tag);
+                        }
+                    }
+                }
+            }
+            if let Some(tag) = matched {
+                // Only accept if previous char is start/whitespace (avoid email-like noise).
+                let prev_ok = i == 0
+                    || text[..i]
+                        .chars()
+                        .next_back()
+                        .map(|c| c.is_whitespace())
+                        .unwrap_or(true);
+                if prev_ok {
+                    found.push((i, tag));
+                    i += 1 + tag.len();
+                    continue;
+                }
+            }
+        }
+        i += 1;
+    }
+    found
+}
+
+fn apply_tag(tag: &str, value: &str, title: &mut Option<String>, meta: &mut SongMeta) {
+    match tag {
+        "title" => {
+            let v = first_line_value(value);
+            if !v.is_empty() {
+                *title = Some(v);
+            }
+        }
+        "by" => push_list_values(&mut meta.by, value),
+        "license" => push_list_values(&mut meta.license, value),
+        "details" => {
+            let v = collapse_ws_multiline(value);
+            if !v.is_empty() {
+                meta.details = Some(v);
+            }
+        }
+        "url" => push_list_values(&mut meta.url, value),
+        "genre" => push_list_values(&mut meta.genre, value),
+        "album" => {
+            let v = first_line_value(value);
+            if !v.is_empty() {
+                meta.album = Some(v);
+            }
+        }
+        "tag" => push_list_values(&mut meta.tag, value),
+        _ => {}
+    }
+}
+
+fn first_line_value(value: &str) -> String {
+    value
+        .lines()
+        .map(str::trim)
+        .find(|l| !l.is_empty())
+        .unwrap_or("")
+        .to_string()
+}
+
+fn collapse_ws_multiline(value: &str) -> String {
+    value
+        .lines()
+        .map(str::trim)
+        .filter(|l| !l.is_empty())
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
+/// Comma- or newline-separated list values (Strudel multi-value tags).
+fn push_list_values(out: &mut Vec<String>, value: &str) {
+    for part in value.split(&[',', '\n', '\r'][..]) {
+        let p = part.trim();
+        if !p.is_empty() {
+            out.push(p.to_string());
+        }
+    }
 }
 
 /// Parse `setcpm(30)`, `setcpm(120/4)`, optional trailing `;`.
@@ -230,7 +464,7 @@ bass: note("c2 eb2 g2 bb2").s("sawtooth").lpf(400).gain(0.7)
     #[test]
     fn parses_strudel_style() {
         let text = r#"
-// title: smoke
+// @title smoke
 setcpm(30)
 // kick
 $: s("bd*4").gain(0.9)
@@ -249,6 +483,73 @@ $: note("c2 eb2 g2 bb2").s("sawtooth").lpf(400).gain(0.55)
         assert_eq!(s.tracks[2].name, "bass");
         assert!(s.tracks[2].code.is_note);
         assert_eq!(s.tracks[0].code.mini_src, "bd*4");
+    }
+
+    #[test]
+    fn parses_strudel_metadata_tags() {
+        let text = r#"
+// @title My Cool Song
+// @by John Doe <https://example.com>
+// @license CC-BY-SA-4.0
+// @genre techno, ambient
+setcpm(30)
+$: s("bd")
+"#;
+        let s = parse_song(text, "t").unwrap();
+        assert_eq!(s.title, "My Cool Song");
+        assert_eq!(s.meta.by, vec!["John Doe <https://example.com>"]);
+        assert_eq!(s.meta.license, vec!["CC-BY-SA-4.0"]);
+        assert_eq!(s.meta.genre, vec!["techno", "ambient"]);
+    }
+
+    #[test]
+    fn multi_tag_one_line_and_quoted_title() {
+        let text = r#"
+// "My Cool Song" @by John Doe @license CC0-1.0
+setcpm(30)
+$: s("bd")
+"#;
+        let s = parse_song(text, "t").unwrap();
+        assert_eq!(s.title, "My Cool Song");
+        assert_eq!(s.meta.by, vec!["John Doe"]);
+        assert_eq!(s.meta.license, vec!["CC0-1.0"]);
+    }
+
+    #[test]
+    fn block_comment_metadata() {
+        let text = r#"
+/*
+@title Block Title
+@by Jane Doe
+@details Line one.
+         Line two.
+*/
+setcpm(30)
+$: s("bd")
+"#;
+        let s = parse_song(text, "t").unwrap();
+        assert_eq!(s.title, "Block Title");
+        assert_eq!(s.meta.by, vec!["Jane Doe"]);
+        assert_eq!(s.meta.details.as_deref(), Some("Line one. Line two."));
+    }
+
+    #[test]
+    fn metadata_comment_is_not_track_label() {
+        let text = r#"
+// @title t
+// @by author
+$: s("bd")
+"#;
+        let s = parse_song(text, "t").unwrap();
+        assert_eq!(s.tracks[0].name, "$0");
+        assert_eq!(s.title, "t");
+    }
+
+    #[test]
+    fn legacy_comment_title_still_works() {
+        let text = "// title: legacy\nsetcpm(30)\n$: s(\"bd\")\n";
+        let s = parse_song(text, "t").unwrap();
+        assert_eq!(s.title, "legacy");
     }
 
     #[test]
@@ -327,6 +628,13 @@ kick: s("bd")
             });
             assert!(!s.tracks.is_empty(), "{}", path.display());
             assert!(s.bpm.unwrap_or(0.0) > 0.0, "{}", path.display());
+            // Bundled demos use Strudel `// @title …` (not path fallback).
+            assert!(
+                !s.title.ends_with(".strudel"),
+                "expected @title on {}: got {}",
+                path.display(),
+                s.title
+            );
         }
         assert!(found >= 5, "expected demo songs, found {found}");
     }

@@ -50,7 +50,10 @@ pub fn watch_songs(
                 Ok(text) => match parse_song(&text, &path.to_string_lossy()) {
                     Ok(song) => {
                         eprintln!("↻ {} → deck {} (次の小節から反映)", song.title, deck);
-                        let _ = tx.send(Command::LoadSong { deck, song });
+                        let _ = tx.send(Command::LoadSong {
+                            deck,
+                            song: Box::new(song),
+                        });
                     }
                     Err(e) => {
                         eprintln!("⚠ {}: parse error (現行の曲を継続): {e}", path.display());

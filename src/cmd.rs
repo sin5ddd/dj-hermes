@@ -194,7 +194,7 @@ fn load_song(
                 let title = song.title.clone();
                 let _ = tx.send(Command::LoadSong {
                     deck,
-                    song: song.clone(),
+                    song: Box::new(song.clone()),
                 });
                 ExecResult {
                     quit: false,

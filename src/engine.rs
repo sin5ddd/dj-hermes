@@ -12,7 +12,8 @@ use crate::transport::Transport;
 pub enum Command {
     LoadSong {
         deck: usize,
-        song: Song,
+        /// Boxed: `Song` is large (source + tracks); keep the enum small for clippy.
+        song: Box<Song>,
     },
     UnloadDeck {
         deck: usize,
@@ -41,7 +42,7 @@ pub enum Command {
 enum Pending {
     LoadSong {
         deck: usize,
-        song: Song,
+        song: Box<Song>,
     },
     SetBpm(f64),
     XFade {
@@ -199,7 +200,7 @@ impl Engine {
                     if let Some(bpm) = song.bpm {
                         self.transport.set_bpm(bpm);
                     }
-                    self.decks[deck].load(song);
+                    self.decks[deck].load(*song);
                     // Ensure loaded deck is audible if its fader is zero and the other is also silent.
                     if self.mixer.deck_gain(deck) <= 0.0 {
                         let other = 1 - deck;
@@ -288,7 +289,7 @@ b: note("{n}").s("sawtooth").gain(0.8)
 
         e.push_command(Command::LoadSong {
             deck: 0,
-            song: test_song("c3"),
+            song: Box::new(test_song("c3")),
         });
 
         // Still in bar 0: pending targets bar 1 → silent.
@@ -349,7 +350,10 @@ b: note("{n}").s("sawtooth").gain(0.8)
         let mut e = Engine::new(48_000, 120.0);
         let bank = SampleBank::empty();
         let song = parse_song("---\nb: note(\"c3\").s(\"sawtooth\").gain(0.8)", "t").unwrap();
-        e.push_command(Command::LoadSong { deck: 0, song });
+        e.push_command(Command::LoadSong {
+            deck: 0,
+            song: Box::new(song),
+        });
         // Apply load at bar 1.
         let mut buf = vec![0f32; 96_000];
         e.process(&mut buf, &bank);
@@ -394,7 +398,7 @@ b: note("{n}").s("sawtooth").gain(0.8)
 
         e.push_command(Command::LoadSong {
             deck: 0,
-            song: test_song("c3"),
+            song: Box::new(test_song("c3")),
         });
         // Reach bar 1 head and apply load A.
         let mut buf = vec![0f32; bar];
@@ -406,7 +410,7 @@ b: note("{n}").s("sawtooth").gain(0.8)
 
         e.push_command(Command::LoadSong {
             deck: 1,
-            song: test_song("g3"),
+            song: Box::new(test_song("g3")),
         });
         e.push_command(Command::XFade {
             to_deck: 1,
@@ -464,11 +468,11 @@ b: note("{n}").s("sawtooth").gain(0.8)
         e.mixer.gain_b = 1.0;
         e.push_command(Command::LoadSong {
             deck: 0,
-            song: test_song("c3"),
+            song: Box::new(test_song("c3")),
         });
         e.push_command(Command::LoadSong {
             deck: 1,
-            song: test_song("c3"),
+            song: Box::new(test_song("c3")),
         });
         let mut buf = vec![0f32; 96_000];
         e.process(&mut buf, &bank); // apply at bar 1
@@ -501,7 +505,10 @@ bass: note("c2").s("sawtooth").lpf(400).gain(0.5)
         )
         .unwrap();
         let mut e = Engine::new(48_000, 120.0);
-        e.push_command(Command::LoadSong { deck: 0, song });
+        e.push_command(Command::LoadSong {
+            deck: 0,
+            song: Box::new(song),
+        });
         // Skip bar 0, play bar 1.
         let mut buf = vec![0f32; 96_000];
         e.process(&mut buf, &bank);
