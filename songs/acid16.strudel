@@ -1,14 +1,66 @@
 // @title acid16
 // @genre acid, minimal techno
 // @details 16-bar loop @ 130 BPM
+// cat() = one cycle (bar) per arg — same as mini "<a b c>"
 setcpm(130/4)
-// kick
-$: s("<[bd ~ ~ ~] [bd ~ ~ bd] [bd ~ ~ ~] [bd ~ bd ~] [bd ~ ~ ~] [bd ~ ~ bd] [bd ~ ~ ~] [bd ~ bd bd] [bd ~ ~ ~] [~ ~ ~ bd] [bd ~ ~ ~] [bd ~ ~ bd] [bd ~ ~ ~] [bd ~ bd ~] [bd ~ ~ ~] [bd bd ~ bd]>").gain(0.9)
-// hat
-$: s("<[~ hh ~ hh] [~ hh ~ hh] [~ hh ~ hh] [~ hh hh hh] [~ hh ~ hh] [~ hh ~ hh] [~ hh ~ hh] [hh ~ hh hh] [~ ~ ~ hh] [~ hh ~ ~] [~ hh ~ hh] [~ hh ~ hh] [~ hh ~ hh] [~ hh hh hh] [~ hh ~ hh] [hh hh ~ hh]>").gain(0.3)
-// snare
-$: s("<[~ ~ sd ~] [~ ~ sd ~] [~ ~ sd ~] [~ ~ sd sd] [~ ~ sd ~] [~ ~ sd ~] [~ ~ sd ~] [~ sd ~ sd] [~ ~ ~ ~] [~ ~ sd ~] [~ ~ sd ~] [~ ~ sd ~] [~ ~ sd ~] [~ ~ sd sd] [~ ~ sd ~] [sd ~ sd ~]>").gain(0.7)
-// acid
-$: note("<[c2 eb2 c2 f2 c2 eb2 g2 eb2] [c2 eb2 c2 f2 c2 g2 eb2 f2] [c2 eb2 c2 f2 c2 eb2 g2 bb2] [c2 f2 eb2 g2 c2 eb2 f2 g2] [c2 eb2 c2 f2 c2 eb2 g2 eb2] [c2 eb2 c2 f2 c2 g2 eb2 f2] [c2 eb2 c2 f2 c2 eb2 g2 bb2] [c2 f2 g2 bb2 c3 bb2 g2 f2] [c2 ~ ~ ~ ~ ~ ~ ~] [~ ~ ~ ~ c2 eb2 f2 g2] [c2 eb2 c2 f2 c2 eb2 g2 eb2] [c2 eb2 c2 f2 c2 g2 eb2 f2] [c2 eb2 c2 f2 c2 eb2 g2 bb2] [c2 f2 eb2 g2 c2 eb2 f2 g2] [c2 eb2 c2 f2 c2 g2 bb2 c3] [c3 bb2 g2 f2 eb2 f2 g2 c2]>").s("sawtooth").lpf(650).gain(0.5).attack(0.001).decay(0.06).sustain(0.15).release(0.04)
-// high
-$: note("<[~ ~ ~ ~ ~ ~ ~ ~] [~ ~ ~ ~ ~ ~ g3 ~] [~ ~ ~ ~ ~ ~ ~ ~] [~ ~ ~ ~ bb3 ~ ~ ~] [~ ~ ~ ~ ~ ~ ~ ~] [~ ~ ~ ~ ~ ~ g3 ~] [~ ~ ~ ~ ~ ~ ~ ~] [~ ~ c4 ~ ~ bb3 ~ g3] [~ ~ ~ ~ ~ ~ ~ ~] [~ ~ ~ ~ ~ ~ ~ ~] [~ ~ ~ ~ ~ ~ ~ ~] [~ ~ ~ ~ ~ ~ g3 ~] [~ ~ ~ ~ ~ ~ ~ ~] [~ ~ ~ ~ bb3 ~ ~ ~] [~ ~ ~ ~ ~ ~ g3 ~] [c4 ~ bb3 ~ g3 ~ f3 ~]>").s("square").lpf(3200).gain(0.16).attack(0.001).decay(0.05).sustain(0.1).release(0.03)
+
+// kick — A(4) / A'(4) / break(2) / A''(6)
+$: s(cat(
+  cat("bd ~ ~ ~", "bd ~ ~ bd","bd ~ ~ ~","bd ~ bd ~"),
+  cat("bd ~ ~ ~", "bd ~ ~ bd", "bd ~ ~ ~","bd ~ bd bd"),
+  "bd ~ ~ ~","~ ~ ~ bd",
+  cat("bd ~ ~ ~", "bd ~ ~ bd", "bd ~ ~ ~", "bd ~ bd ~", "bd ~ ~ ~", "bd bd ~ bd"))
+).gain(0.9)
+
+// hat — groove + open fills
+$: s(cat(
+  cat("[~ hh ~ hh]", "[~ hh ~ hh]", "[~ hh ~ hh]", "[~ hh hh hh]"),
+  cat("[~ hh ~ hh]", "[~ hh ~ hh]", "[~ hh ~ hh]", "[hh ~ hh hh]"),
+  "[~ ~ ~ hh]", "[~ hh ~ ~]",
+  cat("[~ hh ~ hh]", "[~ hh ~ hh]", "[~ hh ~ hh]", "[~ hh hh hh]", "[~ hh ~ hh]", "[hh hh ~ hh]"))
+).gain(0.3)
+
+// snare — backbeat with fills
+$: s(cat(
+  cat("[~ ~ sd ~]", "[~ ~ sd ~]", "[~ ~ sd ~]", "[~ ~ sd sd]"),
+  cat( "[~ ~ sd ~]", "[~ ~ sd ~]", "[~ ~ sd ~]", "[~ sd ~ sd]"),
+  "[~ ~ ~ ~]","[~ ~ sd ~]",
+  cat("[~ ~ sd ~]", "[~ ~ sd ~]", "[~ ~ sd ~]", "[~ ~ sd sd]", "[~ ~ sd ~]", "[sd ~ sd ~]"))
+).gain(0.7)
+
+// acid — TB-ish 16ths, A / A' / break / B
+$: note(cat(
+  cat(
+    "c2 eb2 c2 f2 c2 eb2 g2 eb2",
+    "c2 eb2 c2 f2 c2 g2 eb2 f2",
+    "c2 eb2 c2 f2 c2 eb2 g2 bb2",
+    "c2 f2 eb2 g2 c2 eb2 f2 g2"
+  ),
+  cat(
+    "c2 eb2 c2 f2 c2 eb2 g2 eb2",
+    "c2 eb2 c2 f2 c2 g2 eb2 f2",
+    "c2 eb2 c2 f2 c2 eb2 g2 bb2",
+    "c2 f2 g2 bb2 c3 bb2 g2 f2"
+  ),
+  "c2 ~ ~ ~ ~ ~ ~ ~",
+  "~ ~ ~ ~ c2 eb2 f2 g2",
+  cat(
+    "c2 eb2 c2 f2 c2 eb2 g2 eb2",
+    "c2 eb2 c2 f2 c2 g2 eb2 f2",
+    "c2 eb2 c2 f2 c2 eb2 g2 bb2",
+    "c2 f2 eb2 g2 c2 eb2 f2 g2",
+    "c2 eb2 c2 f2 c2 g2 bb2 c3",
+    "c3 bb2 g2 f2 eb2 f2 g2 c2"
+  )
+))
+.s("sawtooth").lpf(650).gain(0.5).attack(0.001).decay(0.06).sustain(0.15).release(0.04)
+
+// high — sparse stabs (silent bars = "~")
+$: note(cat(
+  cat("~", "~ ~ ~ ~ ~ ~ g3 ~", "~", "~ ~ ~ ~ bb3 ~ ~ ~"),
+  cat("~", "~ ~ ~ ~ ~ ~ g3 ~", "~", "~ ~ c4 ~ ~ bb3 ~ g3"),
+  "~","~",
+  cat("~", "~ ~ ~ ~ ~ ~ g3 ~", "~", "~ ~ ~ ~ bb3 ~ ~ ~", "~ ~ ~ ~ ~ ~ g3 ~", "c4 ~ bb3 ~ g3 ~ f3 ~")
+))
+.s("square")
+.lpf(3200).gain(0.16).attack(0.001).decay(0.05).sustain(0.1).release(0.03)

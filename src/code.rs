@@ -1,4 +1,8 @@
 //! Method-chain pattern code: `note("...").s("sawtooth").lpf(800)...`
+//!
+//! Also supports Strudel factories as the pattern argument:
+//! - `note(cat("a", "b"))` / `s(cat("bd ~", "sd ~"))` — one cycle per arg (`"<a b>"`)
+//! - nested `cat(cat(...), ...)` flattens to a longer cycle list
 
 use crate::dsp::CompressorParams;
 use crate::mini::{self, Node};
@@ -182,7 +186,8 @@ impl PatternCode {
 
 pub fn parse_code(input: &str) -> Result<PatternCode, String> {
     let trim_start = leading_ws_bytes(input);
-    let input = input.trim();
+    // Allow trailing `;` (JS/Strudel habit) and surrounding whitespace.
+    let input = input.trim().trim_end_matches(';').trim();
     let mut pc = PatternCode {
         pattern: Node::Rest,
         sound: "triangle".into(),
@@ -216,60 +221,204 @@ pub fn parse_code(input: &str) -> Result<PatternCode, String> {
 
     let open = input.find('(').ok_or_else(|| "missing (".to_string())?;
     let head = input[..open].trim();
-    if !matches!(head, "note" | "n" | "s" | "sound") {
-        return Err(format!("unknown head: {head} (use note/s)"));
+    if !matches!(head, "note" | "n" | "s" | "sound" | "cat" | "slowcat") {
+        return Err(format!("unknown head: {head} (use note/s/cat)"));
     }
 
     if !parens_balanced(input) {
         return Err("unbalanced parens".into());
     }
 
-    let (first_str, content_start_in_tail) = extract_first_string(&input[open..])?;
-    pc.mini_base = trim_start + open + content_start_in_tail;
-    pc.mini_src = first_str.clone();
-    pc.pattern = mini::parse(&first_str)?;
-    pc.is_note = matches!(head, "note" | "n");
-    if matches!(head, "s" | "sound") {
-        pc.sound = first_word(&first_str);
-        pc.is_note = false;
+    let (head_args, after_head) =
+        match_parens(&input[open..]).ok_or_else(|| "unbalanced parens in head".to_string())?;
+    // `open + 1` is the absolute index of head_args inside trimmed `input`.
+    let args_abs = open + 1;
+
+    match head {
+        "cat" | "slowcat" => {
+            let (pat, mini_src, span_base) = parse_cat_call(head_args, args_abs)?;
+            pc.pattern = pat;
+            pc.mini_src = mini_src;
+            // Spans are relative to trimmed input; mini_base is 0 within trimmed,
+            // adjusted by leading whitespace of the original code slice.
+            pc.mini_base = trim_start + span_base;
+        }
+        "note" | "n" | "s" | "sound" => {
+            let (pat, mini_src, content_abs) = parse_pattern_arg(head_args, args_abs)?;
+            pc.pattern = pat;
+            pc.mini_src = mini_src.clone();
+            pc.mini_base = trim_start + content_abs;
+            pc.is_note = matches!(head, "note" | "n");
+            if matches!(head, "s" | "sound") {
+                pc.sound = first_sound(&pc.pattern, &mini_src);
+                pc.is_note = false;
+            }
+        }
+        _ => unreachable!(),
     }
 
-    let mut cur = &input[open..];
-    while let Some(dot) = cur.find('.') {
-        let after = &cur[dot + 1..];
+    // Method chain: `.s("saw").gain(0.5)` after the head call.
+    let mut cur = after_head;
+    while let Some(dot_rel) = cur.find('.') {
+        let after = &cur[dot_rel + 1..];
         let paren = after
             .find('(')
             .ok_or_else(|| "missing ( in method".to_string())?;
         let name = after[..paren].trim();
-        let mut depth = 0i32;
-        let mut end = paren;
-        for (i, ch) in after[paren..].char_indices() {
-            match ch {
-                '(' => depth += 1,
-                ')' => {
-                    depth -= 1;
-                    if depth == 0 {
-                        end = paren + i;
-                        break;
-                    }
-                }
-                _ => {}
-            }
-        }
-        if depth != 0 {
-            return Err("unbalanced parens".into());
-        }
-        let args = &after[paren + 1..end];
+        let (args, rest) = match_parens(&after[paren..])
+            .ok_or_else(|| "unbalanced parens in method".to_string())?;
         apply_method(&mut pc, name, args)?;
-        cur = &after[end + 1..];
+        cur = rest;
     }
     Ok(pc)
 }
 
+/// Parse a single pattern argument: `"mini"` or `cat(...)` / `slowcat(...)`.
+///
+/// Returns `(node, mini_src, span_base)` where `span_base` is the byte offset
+/// inside the trimmed code input that atom spans are relative to (0 for cat
+/// multi-arg patterns whose spans are already absolute within the trimmed input).
+fn parse_pattern_arg(args: &str, args_abs: usize) -> Result<(Node, String, usize), String> {
+    let args = args.trim();
+    if args.is_empty() {
+        return Err("empty pattern argument".into());
+    }
+    if let Some(inner) = call_inner(args, &["cat", "slowcat"]) {
+        let open = args.find('(').unwrap();
+        let inner_abs = args_abs + leading_ws_bytes(args) + open + 1;
+        let (pat, mini_src, _) = parse_cat_call(inner, inner_abs)?;
+        // Spans already absolute within trimmed input → base 0 relative to input start.
+        return Ok((pat, mini_src, 0));
+    }
+    // Plain mini string.
+    let (s, content_start) = extract_first_string(args)?;
+    let node = mini::parse(&s)?;
+    Ok((node, s, args_abs + leading_ws_bytes(args) + content_start))
+}
+
+/// `cat("a", "b", cat("c", "d"))` → `Stack` of one-cycle items (flattened).
+///
+/// Returns `(node, display_src, span_base)` where spans in `node` are relative to
+/// the trimmed code input (span_base is always 0 for the returned node).
+fn parse_cat_call(inner: &str, inner_abs: usize) -> Result<(Node, String, usize), String> {
+    let mut items: Vec<Node> = Vec::new();
+    let mut src_parts: Vec<String> = Vec::new();
+    for (rel, part) in split_args_with_pos(inner) {
+        let lead = leading_ws_bytes(part);
+        let part_trim = part.trim();
+        if part_trim.is_empty() {
+            continue;
+        }
+        if let Some(nested) = call_inner(part_trim, &["cat", "slowcat"]) {
+            let open = part_trim.find('(').unwrap();
+            let nested_abs = inner_abs + rel + lead + open + 1;
+            let (node, nested_src, _) = parse_cat_call(nested, nested_abs)?;
+            src_parts.push(nested_src);
+            match node {
+                Node::Stack(v) => items.extend(v),
+                other => items.push(other),
+            }
+            continue;
+        }
+        let (content, content_off) = extract_first_string(part_trim)?;
+        src_parts.push(content.clone());
+        let mut node = mini::parse(&content)?;
+        // Atom spans → absolute within trimmed code input.
+        let delta = inner_abs + rel + lead + content_off;
+        mini::offset_spans(&mut node, delta);
+        items.push(node);
+    }
+    if items.is_empty() {
+        return Err("cat() needs at least one argument".into());
+    }
+    Ok((Node::Stack(items), src_parts.join(" | "), 0))
+}
+
+/// If `s` is `name(...)` for one of `names`, return the inside of the outer parens.
+fn call_inner<'a>(s: &'a str, names: &[&str]) -> Option<&'a str> {
+    let s = s.trim();
+    for name in names {
+        if let Some(rest) = s.strip_prefix(name) {
+            let rest = rest.trim_start();
+            if let Some((inner, after)) = match_parens(rest) {
+                if after.trim().is_empty() {
+                    return Some(inner);
+                }
+            }
+        }
+    }
+    None
+}
+
+/// `s` starts with `(…)` — return `(inner, rest_after_closing)`.
+fn match_parens(s: &str) -> Option<(&str, &str)> {
+    if !s.starts_with('(') {
+        return None;
+    }
+    let mut depth = 0i32;
+    let mut in_str = false;
+    for (i, c) in s.char_indices() {
+        if in_str {
+            if c == '"' {
+                in_str = false;
+            }
+            continue;
+        }
+        match c {
+            '"' => in_str = true,
+            '(' => depth += 1,
+            ')' => {
+                depth -= 1;
+                if depth == 0 {
+                    return Some((&s[1..i], &s[i + 1..]));
+                }
+            }
+            _ => {}
+        }
+    }
+    None
+}
+
+/// Split top-level comma-separated args; each entry is `(byte_offset, slice)`.
+fn split_args_with_pos(s: &str) -> Vec<(usize, &str)> {
+    let mut out = Vec::new();
+    let mut start = 0usize;
+    let mut depth = 0i32;
+    let mut in_str = false;
+    for (i, c) in s.char_indices() {
+        if in_str {
+            if c == '"' {
+                in_str = false;
+            }
+            continue;
+        }
+        match c {
+            '"' => in_str = true,
+            '(' | '[' => depth += 1,
+            ')' | ']' => depth -= 1,
+            ',' if depth == 0 => {
+                out.push((start, &s[start..i]));
+                start = i + c.len_utf8();
+            }
+            _ => {}
+        }
+    }
+    out.push((start, &s[start..]));
+    out
+}
+
 fn parens_balanced(s: &str) -> bool {
     let mut depth = 0i32;
+    let mut in_str = false;
     for ch in s.chars() {
+        if in_str {
+            if ch == '"' {
+                in_str = false;
+            }
+            continue;
+        }
         match ch {
+            '"' => in_str = true,
             '(' => depth += 1,
             ')' => {
                 depth -= 1;
@@ -285,6 +434,24 @@ fn parens_balanced(s: &str) -> bool {
 
 fn first_word(s: &str) -> String {
     s.split_whitespace().next().unwrap_or("sine").to_string()
+}
+
+fn first_sound(pattern: &Node, mini_src: &str) -> String {
+    if let Some(v) = first_atom_value(pattern) {
+        if v != "~" {
+            return v;
+        }
+    }
+    first_word(mini_src)
+}
+
+fn first_atom_value(node: &Node) -> Option<String> {
+    match node {
+        Node::Atom { value, .. } => Some(value.clone()),
+        Node::Rest => None,
+        Node::Seq(items) | Node::Stack(items) => items.iter().find_map(first_atom_value),
+        Node::Fast(inner, _) | Node::Slow(inner, _) => first_atom_value(inner),
+    }
 }
 
 fn leading_ws_bytes(s: &str) -> usize {
@@ -620,8 +787,16 @@ fn apply_method(pc: &mut PatternCode, name: &str, args: &str) -> Result<(), Stri
             pc.roomsize = (parse_num(args)? as f32).clamp(0.0, 10.0);
             Ok(())
         }
-        "note" => Ok(()),
+        "note" => {
+            // `cat(...).note()` — values are pitches (Strudel factory chain).
+            pc.is_note = true;
+            Ok(())
+        }
         "n" => {
+            if args.trim().is_empty() {
+                pc.is_note = true;
+                return Ok(());
+            }
             if let Ok(i) = parse_num(args) {
                 pc.sample_n = Some(i as i32);
             }
@@ -800,6 +975,52 @@ mod tests {
         assert!(parse_code("stack(\"a\")").is_err());
         assert!(parse_code("note(\"c3\"").is_err());
         assert!(parse_code(r#"note("c3").unknown(1)"#).is_err());
+    }
+
+    #[test]
+    fn cat_factory_note_and_sound() {
+        let pc = parse_code(r#"note(cat("c2 eb2", "g2 bb2")).s("sawtooth").gain(0.5)"#).unwrap();
+        assert!(pc.is_note);
+        assert_eq!(pc.sound, "sawtooth");
+        match &pc.pattern {
+            Node::Stack(items) => assert_eq!(items.len(), 2),
+            other => panic!("expected Stack, got {other:?}"),
+        }
+        let e0 = mini::events(&pc.pattern, 0);
+        assert_eq!(e0[0].value, "c2");
+        let e1 = mini::events(&pc.pattern, 1);
+        assert_eq!(e1[0].value, "g2");
+
+        let drum = parse_code(r#"s(cat("bd ~ ~ ~", "bd ~ ~ bd")).gain(0.9)"#).unwrap();
+        assert!(!drum.is_note);
+        assert_eq!(drum.sound, "bd");
+        match &drum.pattern {
+            Node::Stack(items) => assert_eq!(items.len(), 2),
+            other => panic!("expected Stack, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn cat_nested_flattens() {
+        let pc = parse_code(r#"s(cat(cat("bd ~", "sd ~"), "hh ~", "oh ~"))"#).unwrap();
+        match &pc.pattern {
+            Node::Stack(items) => assert_eq!(items.len(), 4),
+            other => panic!("expected Stack, got {other:?}"),
+        }
+        assert_eq!(mini::events(&pc.pattern, 2)[0].value, "hh");
+    }
+
+    #[test]
+    fn cat_head_with_note_method() {
+        let pc = parse_code(r#"cat("c2", "e2").note().s("square")"#).unwrap();
+        assert!(pc.is_note);
+        assert_eq!(pc.sound, "square");
+    }
+
+    #[test]
+    fn trailing_semicolon_ok() {
+        let pc = parse_code(r#"s("bd*4").gain(0.9);"#).unwrap();
+        assert_eq!(pc.sound, "bd");
     }
 
     #[test]
