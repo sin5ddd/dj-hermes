@@ -151,8 +151,11 @@ async fn put_code(
 ) -> Result<StatusCode, (StatusCode, Json<ErrRes>)> {
     let deck = deck_idx(r.deck.as_deref().unwrap_or("A")).map_err(bad)?;
     let song = song_from_code(&r.code).map_err(bad)?;
-    s.tx.send(Command::LoadSong { deck, song })
-        .map_err(|e| bad(e.to_string()))?;
+    s.tx.send(Command::LoadSong {
+        deck,
+        song: Box::new(song),
+    })
+    .map_err(|e| bad(e.to_string()))?;
     Ok(StatusCode::ACCEPTED)
 }
 
@@ -165,8 +168,11 @@ async fn load_song(
     let text = std::fs::read_to_string(&path).map_err(|e| bad(format!("read: {e}")))?;
     let path_str = path.to_string_lossy();
     let song = parse_song(&text, &path_str).map_err(bad)?;
-    s.tx.send(Command::LoadSong { deck, song })
-        .map_err(|e| bad(e.to_string()))?;
+    s.tx.send(Command::LoadSong {
+        deck,
+        song: Box::new(song),
+    })
+    .map_err(|e| bad(e.to_string()))?;
     Ok(StatusCode::ACCEPTED)
 }
 
