@@ -25,8 +25,7 @@ use crate::engine::{Command, Engine};
 use crate::highlight::{active_spans, bar_index, bar_pos, render_ansi_ex, HighlightModel};
 use crate::watcher::DeckPaths;
 
-const HELP_LINE: &str =
-    "drag xf/EQ  a load  b head 33  x 4  bpm 128  hush  status  help  quit";
+const HELP_LINE: &str = "drag xf/EQ  a load  b head 33  x 4  bpm 128  hush  status  help  quit";
 
 /// White-background space used as the fader thumb (user-facing "□").
 const XF_THUMB: &str = "\x1b[47m \x1b[0m";
@@ -68,7 +67,10 @@ enum DragTarget {
     None,
     Xf,
     /// band 0=Hi,1=Mid,2=Lo ; deck 0=A,1=B
-    Eq { band: usize, deck: usize },
+    Eq {
+        band: usize,
+        deck: usize,
+    },
 }
 
 struct LiveState {

@@ -22,8 +22,7 @@ fn samples_dir() -> PathBuf {
 
 fn load_song_file(name: &str) -> strudel_rs::song::Song {
     let path = songs_dir().join(name);
-    let text = fs::read_to_string(&path)
-        .unwrap_or_else(|e| panic!("read {}: {e}", path.display()));
+    let text = fs::read_to_string(&path).unwrap_or_else(|e| panic!("read {}: {e}", path.display()));
     parse_song(&text, path.to_string_lossy().as_ref())
         .unwrap_or_else(|e| panic!("parse {}: {e}", path.display()))
 }
@@ -42,7 +41,9 @@ fn samples_available() -> bool {
     d.is_dir()
         && (d.join("bd.wav").is_file()
             || d.join("bd").is_dir()
-            || fs::read_dir(&d).map(|mut i| i.next().is_some()).unwrap_or(false))
+            || fs::read_dir(&d)
+                .map(|mut i| i.next().is_some())
+                .unwrap_or(false))
 }
 
 fn bar_len(bpm: f64) -> usize {
@@ -67,14 +68,8 @@ fn process_bars(engine: &mut Engine, bank: &SampleBank, bars: usize, bpm: f64) -
 
 fn assert_finite_bounded(buf: &[f32], label: &str) {
     for (i, &s) in buf.iter().enumerate() {
-        assert!(
-            s.is_finite(),
-            "{label}: non-finite sample at {i}: {s}"
-        );
-        assert!(
-            s.abs() <= 1.0 + 1e-5,
-            "{label}: |sample| > 1 at {i}: {s}"
-        );
+        assert!(s.is_finite(), "{label}: non-finite sample at {i}: {s}");
+        assert!(s.abs() <= 1.0 + 1e-5, "{label}: |sample| > 1 at {i}: {s}");
     }
 }
 
@@ -112,7 +107,10 @@ fn all_bundled_songs_parse() {
         assert!(!song.tracks.is_empty(), "{} has no tracks", path.display());
         count += 1;
     }
-    assert!(count >= 2, "expected at least techno1 + ambient1, got {count}");
+    assert!(
+        count >= 2,
+        "expected at least techno1 + ambient1, got {count}"
+    );
 }
 
 #[test]

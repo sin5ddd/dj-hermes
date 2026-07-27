@@ -700,7 +700,8 @@ mod tests {
 
     #[test]
     fn dj_args_rejects_three_songs() {
-        let err = parse_live_session_args(&s(&["a.strudel", "b.strudel", "c.strudel"])).unwrap_err();
+        let err =
+            parse_live_session_args(&s(&["a.strudel", "b.strudel", "c.strudel"])).unwrap_err();
         assert!(err.contains("too many"));
     }
 }
