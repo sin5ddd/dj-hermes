@@ -29,17 +29,25 @@
 
 ### Song（曲）
 
-`.strudel` ファイル 1 つ = 1 曲。ヘッダに `bpm`、本文は `名前: パターンコード`。
+`.strudel` ファイル 1 つ = 1 曲。**Strudel REPL からコピペしやすい記法**を優先する。
 
 ```
-bpm: 126
----
-kick:  s("bd*4").gain(0.9)
-bass:  note("c2 c2 eb2 g2").s("sawtooth").lpf(400).gain(0.7)
-hat:   s("hh*8").gain(0.3)
+// title: smoke
+setcpm(30)
+// kick
+$: s("bd*4").gain(0.9)
+// bass
+$: note("c2 c2 eb2 g2").s("sawtooth").lpf(400).gain(0.7)
+// hat
+$: s("hh*8").gain(0.3)
 ```
 
-`#` コメント可。独自ミニパーサで読む（serde/toml は使わない）。
+- `setcpm(N)` / `setcpm(120/4)`: cycles per minute（Strudel と同じ）。1 cycle = 1 bar（4 beats）なのでエンジン BPM は `N * 4`
+- `setcps(x)` も可（BPM = `x * 240`）
+- `$:` の直前コメント（`// kick`）をトラック名にする。コメント無しは `$0`, `$1`, …
+- `// title: …` で曲名。`//` と `#` コメント可
+- レガシー互換: `bpm:` / `title:` / `name: code` / `---` も引き続きパース可能
+- 独自ミニパーサで読む（serde/toml は使わない）
 
 ### Deck（デッキ）= 曲A / 曲B
 
