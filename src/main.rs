@@ -22,7 +22,7 @@ use strudel_rs::live_ui;
 use strudel_rs::mcp;
 use strudel_rs::repl;
 use strudel_rs::sample::SampleBank;
-use strudel_rs::song::parse_song;
+use strudel_rs::song::{parse_song, resolve_song_path};
 use strudel_rs::watcher::{self, DeckPaths};
 
 fn main() {
@@ -72,7 +72,8 @@ Usage:
   strudel-rs play --repl [SONG_A] [SONG_B]   (same live UI as dj; kept for compatibility)
   strudel-rs mcp
 
-  SONG          path to .strudel (default for play: songs/smoke.strudel)
+  SONG          song path or bare name (default dir: songs/; .strudel/.txt optional)
+                play default: songs/smoke.strudel
   SONG_A/B      optional decks for dj (A then B; omit both to start empty)
   --seconds N   stop after N seconds (play only; omit to loop until quit)
   --headless    no TUI: meta log only (for scripts / non-TTY)
@@ -89,7 +90,7 @@ Usage:
 
   Default play loops forever (TUI: q / Esc; headless: Ctrl+C).
   dj: left=A / right=B highlight, » prompt at bottom.
-  Commands (no colon):  a load <file>  |  b head 33  |  x 4  |  bpm 128  |  quit
+  Commands (no colon):  a load smoke  |  b head 33  |  x 4  |  bpm 128  |  quit
 
 Examples:
   cargo run -- play songs/smoke.strudel
@@ -274,7 +275,12 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
     }
     let song_path = song_paths.into_iter().next();
 
-    let song_path = song_path.unwrap_or_else(|| PathBuf::from("songs/smoke.strudel"));
+    let song_path = match song_path {
+        Some(p) => resolve_song_path(&p.to_string_lossy())?,
+        None => resolve_song_path("smoke")
+            .or_else(|_| resolve_song_path("songs/smoke.strudel"))
+            .map_err(|e| format!("default song: {e}"))?,
+    };
     let text = std::fs::read_to_string(&song_path)
         .map_err(|e| format!("read {}: {e}", song_path.display()))?;
     let path_str = song_path.to_string_lossy().into_owned();
@@ -403,9 +409,10 @@ fn cmd_live_session(opts: LiveSessionOpts) -> Result<(), String> {
     let mut initial_a: Option<HighlightModel> = None;
     let mut initial_b: Option<HighlightModel> = None;
 
-    if let Some(ref path) = song_a {
+    if let Some(ref path_in) = song_a {
+        let path = resolve_song_path(&path_in.to_string_lossy())?;
         let text =
-            std::fs::read_to_string(path).map_err(|e| format!("read {}: {e}", path.display()))?;
+            std::fs::read_to_string(&path).map_err(|e| format!("read {}: {e}", path.display()))?;
         let song = parse_song(&text, &path.to_string_lossy())?;
         let bpm = song.bpm.unwrap_or(120.0);
         engine.transport.set_bpm(bpm);
@@ -421,9 +428,10 @@ fn cmd_live_session(opts: LiveSessionOpts) -> Result<(), String> {
         }
     }
 
-    if let Some(ref path) = song_b {
+    if let Some(ref path_in) = song_b {
+        let path = resolve_song_path(&path_in.to_string_lossy())?;
         let text =
-            std::fs::read_to_string(path).map_err(|e| format!("read {}: {e}", path.display()))?;
+            std::fs::read_to_string(&path).map_err(|e| format!("read {}: {e}", path.display()))?;
         let song = parse_song(&text, &path.to_string_lossy())?;
         // Keep master BPM from A when both set; otherwise take B's tempo.
         if song_a.is_none() {

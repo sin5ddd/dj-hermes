@@ -3,7 +3,7 @@
 //! Binds to `127.0.0.1` only. Default port is [`DEFAULT_API_PORT`] (10000s range).
 
 use std::convert::Infallible;
-use std::path::{Component, Path, PathBuf};
+use std::path::Path;
 use std::sync::{Arc, Mutex};
 
 use axum::extract::State;
@@ -16,7 +16,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::code::parse_code;
 use crate::engine::{Command, Engine};
-use crate::song::{parse_song, Song, Track};
+use crate::song::{parse_song, resolve_song_path, Song, Track};
+
+// Re-export for callers/tests that used api::sanitize_song_path.
+pub use crate::song::sanitize_song_path;
 
 /// Default listen port (10000s; avoids commonly busy 7878).
 pub const DEFAULT_API_PORT: u16 = 17878;
@@ -244,25 +247,6 @@ pub fn deck_idx(s: &str) -> Result<usize, String> {
     }
 }
 
-/// Reject path traversal (`..`) while still allowing absolute paths under user control.
-///
-/// Backslashes are treated as separators too so Windows-style `..\x` is rejected on Linux CI.
-pub fn sanitize_song_path(path: &str) -> Result<PathBuf, String> {
-    if path.trim().is_empty() {
-        return Err("path is empty".into());
-    }
-    // Normalize separators for component walk (Unix PathBuf would keep `\` as a normal char).
-    let normalized = path.replace('\\', "/");
-    let p = Path::new(&normalized);
-    if p.components().any(|c| matches!(c, Component::ParentDir)) {
-        return Err("path must not contain '..'".into());
-    }
-    if normalized.split('/').any(|s| s == "..") {
-        return Err("path must not contain '..'".into());
-    }
-    Ok(PathBuf::from(path))
-}
-
 fn song_from_code(code: &str) -> Result<Song, String> {
     let pattern = parse_code(code)?;
     Ok(Song {
@@ -299,7 +283,7 @@ async fn load_song(
     Json(r): Json<LoadReq>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrRes>)> {
     let deck = deck_idx(&r.deck).map_err(bad)?;
-    let path = sanitize_song_path(&r.path).map_err(bad)?;
+    let path = resolve_song_path(&r.path).map_err(bad)?;
     let text = std::fs::read_to_string(&path).map_err(|e| bad(format!("read: {e}")))?;
     let path_str = path.to_string_lossy();
     let song = parse_song(&text, &path_str).map_err(bad)?;

@@ -150,11 +150,11 @@ fn tools_list() -> Value {
             },
             {
                 "name": "strudel_load_song",
-                "description": "Deck: load a .strudel song file onto a deck (next bar).",
+                "description": "Deck: load a song onto a deck (next bar). Bare name looks under songs/; .strudel/.txt optional (.strudel preferred).",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "path": { "type": "string" },
+                        "path": { "type": "string", "description": "e.g. smoke, songs/smoke.strudel" },
                         "deck": { "type": "string", "description": "A or B" }
                     },
                     "required": ["path", "deck"]
