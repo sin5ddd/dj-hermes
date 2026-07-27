@@ -149,6 +149,18 @@ fn tools_list() -> Value {
                 }
             },
             {
+                "name": "strudel_head",
+                "description": "Cue a deck to a 1-based song bar at the next transport bar boundary (DJ head-out). Alias concept of REPL `b head 33`.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "deck": { "type": "string", "description": "A or B" },
+                        "bar": { "type": "integer", "description": "Song bar number (1 = first bar)" }
+                    },
+                    "required": ["deck", "bar"]
+                }
+            },
+            {
                 "name": "strudel_hush",
                 "description": "Stop all sound immediately.",
                 "inputSchema": {
@@ -158,7 +170,7 @@ fn tools_list() -> Value {
             },
             {
                 "name": "strudel_status",
-                "description": "Get current decks, BPM, and mixer gains.",
+                "description": "Get current decks, BPM, transport bar, per-deck song bars, and mixer gains.",
                 "inputSchema": {
                     "type": "object",
                     "properties": {}
@@ -228,6 +240,21 @@ fn tools_call(
                 client,
                 &format!("{base}/mute"),
                 json!({ "deck": deck, "track": track, "muted": muted }),
+            )
+        }
+        "strudel_head" => {
+            let deck = arg_str(&args, "deck")?;
+            let bar = args
+                .get("bar")
+                .and_then(|v| v.as_u64())
+                .ok_or_else(|| rpc_error(-32602, "bar required (positive integer, 1-based)"))?;
+            if bar < 1 {
+                return Err(rpc_error(-32602, "bar must be >= 1 (1 = first bar)"));
+            }
+            http_post(
+                client,
+                &format!("{base}/head"),
+                json!({ "deck": deck, "bar": bar }),
             )
         }
         "strudel_hush" => http_post_empty(client, &format!("{base}/hush")),
@@ -373,12 +400,13 @@ mod tests {
     use std::io::Cursor;
 
     #[test]
-    fn tools_list_has_seven() {
+    fn tools_list_has_eight_including_head() {
         let v = tools_list();
         let tools = v["tools"].as_array().unwrap();
-        assert_eq!(tools.len(), 7);
+        assert_eq!(tools.len(), 8);
         let names: Vec<_> = tools.iter().filter_map(|t| t["name"].as_str()).collect();
         assert!(names.contains(&"strudel_set_code"));
+        assert!(names.contains(&"strudel_head"));
         assert!(names.contains(&"strudel_status"));
     }
 

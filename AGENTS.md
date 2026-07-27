@@ -180,10 +180,9 @@ Release プロファイル目安（プラン）: `opt-level = 3`, `lto = true`, 
 ### CLI / REPL 例
 
 ```
-./strudel-rs play --repl              # play: REPL + API(:17878) + watcher
-:load A songs/techno1.strudel
-:load B songs/ambient1.strudel
-:xfade B 8
+./strudel-rs dj songs/techno1.strudel songs/ambient1.strudel   # live UI + API(:17878) + watcher
+# または空起動: ./strudel-rs dj
+# プロンプト: a load … / b load … / x 4
 ```
 
 ### HTTP
@@ -193,7 +192,7 @@ Release プロファイル目安（プラン）: `opt-level = 3`, `lto = true`, 
 
 ### MCP ツール（予定）
 
-`set_code` / `load_song` / `switch_deck` / `xfade` / `hush` / `get_state` など（`strudel_*` プレフィックス）。
+`set_code` / `load_song` / `xfade` / `set_bpm` / `mute` / `head` / `hush` / `status` など（`strudel_*` プレフィックス）。
 
 Hermes 登録例:
 
@@ -225,10 +224,31 @@ Rust の build/test/clippy 実行時は、利用可能なら `cargo-runner` ス�
 
 1. **プラン正本:** `docs/plans/2026-07-27_020000-strudel-rs-final.md`。タスクを飛ばしたり、未承認のスコープ拡大をしない。
 2. **コミット:** ユーザーが明示的に依頼するまで commit / stage しない（グローバル規則）。このリポジトリは **git と jj（Jujutsu）コロケート**。`.jj/` はローカルのみ（gitignore）。エージェントはユーザー指示がない限り `git` で操作してよい。jj を使う場合は `jj bookmark track master --remote=origin` 済み想定。
-3. **品質:** 触ったモジュールのテストを通す。audio スレッド内でアロケーションやロック待ちを増やさないよう注意する。PR 前は CI 相当（`cargo fmt --check` / `clippy -D warnings` / `cargo test`）をローカルで通す。
+3. **品質:** 触ったモジュールのテストを通す。audio スレッド内でアロケーションやロック待ちを増やさないよう注意する。PR 前は CI 相当をローカルで通す（下記 **fmt 必須**）。
 4. **エラー:** パース失敗で演奏を止めない。API/REPL の両方で失敗理由を返す。
 5. **ドキュメント:** コードコメントと README は標準の平易な文章。造語や曖昧な断定を避ける。
 6. **セキュリティ:** ローカル bind（127.0.0.1）前提の API。公開 bind や認証は現スコープ外だが、パス traversal（曲ロード）や無制限入力には注意する。
+
+### rustfmt（CI で繰り返し落ちやすい）
+
+CI の `fmt` ジョブは `cargo fmt --all -- --check` のみで、**自動整形しない**。未整形のまま push すると毎回失敗する。
+
+**エージェント / 作業者は次を守る:**
+
+1. **Rust を編集したコミット・PR の直前に必ず** `cargo fmt --all` を実行する（確認だけでなく整形まで）。
+2. 続けて `cargo fmt --all -- --check` が exit 0 であることを確認してから push する。
+3. 実装完了の自己チェックや PR 作成フローでは、`cargo test` / `clippy` の**前または同列**で fmt を行う（後回しにしない）。
+4. Windows でも同じ。行末や差分が小さく見えても rustfmt は差分を出すことがある。
+
+```bash
+# PR / push 前の最小セット（この順を推奨）
+cargo fmt --all
+cargo fmt --all -- --check
+cargo clippy --all-targets -- -D warnings
+cargo test
+```
+
+`cargo-runner` フィルタは build/test/clippy 用。**fmt には使わない**（素の `cargo fmt` をそのまま実行）。
 
 ---
 
@@ -237,14 +257,13 @@ Rust の build/test/clippy 実行時は、利用可能なら `cargo-runner` ス�
 | 項目 | 状態 |
 | --- | --- |
 | リポジトリ | GitHub private（`sin5ddd/strudel-rust`）+ CI/CD 基盤 |
-| cargo プロジェクト | Task 1–19 + Task 23 + Task 26 完了 |
-| 実装タスク | Task 20 任意 → Task 21 E2E → Task 22 計測 → Task 24（delay/room on orbit） |
+| cargo プロジェクト | Task 1–19 + Task 21 + Task 23 + Task 26 完了 |
+| 実装タスク | Task 20 任意 → Task 22 計測 → Task 24（delay/room on orbit） |
 
 次に実装する場合の入口:
 
-1. Task 21: サンプル曲 + E2E
+1. Task 22: リソース計測 + README 展示手順
 2. Task 20（任意）: 汎用 ctl スクリプト + MCP クライアント設定例（Hermes 専用ランタイムは作らない）
-3. Task 22: リソース計測 + README 展示手順
-4. Task 24: orbit 共有 delay / room
+3. Task 24: orbit 共有 delay / room
 
 詰まった点・設計判断はプラン末尾の「詰まりログ」「追加メモ」「Risks / Open Questions」に追記する。

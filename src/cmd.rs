@@ -14,6 +14,7 @@ a|b load <file>     load song on deck (next bar)
 a|b mute <track>    mute track (next bar)
 a|b unmute <track>
 a|b gain <0..1>     fader (immediate)
+a|b head <bar>      cue song bar (1-based; applies next bar). alias: cue
 x [bars]            xfade to the other deck (default 4)
 a x [bars]          xfade to deck A
 b x [bars]          xfade to deck B
@@ -121,7 +122,7 @@ pub fn exec(
     // Deck-prefixed: `a load path`, `b mute kick`, `a x 4`, …
     if let Some(deck) = parse_deck(args[0]) {
         if args.len() < 2 {
-            return ExecResult::msg("usage: a|b <load|mute|unmute|gain|x> …");
+            return ExecResult::msg("usage: a|b <load|mute|unmute|gain|head|x> …");
         }
         let verb = args[1];
         match verb {
@@ -153,6 +154,19 @@ pub fn exec(
                     Err(_) => ExecResult::msg(format!("bad gain: {}", args[2])),
                 };
             }
+            "head" | "cue" if args.len() == 3 => {
+                return match args[2].parse::<u64>() {
+                    Ok(bar) if bar >= 1 => {
+                        let _ = tx.send(Command::Head { deck, bar });
+                        ExecResult::msg(format!(
+                            "head {} → bar {bar} (次の小節から同期)",
+                            if deck == 0 { "A" } else { "B" }
+                        ))
+                    }
+                    Ok(_) => ExecResult::msg("head bar must be >= 1 (1 = first bar)"),
+                    Err(_) => ExecResult::msg(format!("bad head bar: {}", args[2])),
+                };
+            }
             "x" | "xfade" => {
                 let bars = args
                     .get(2)
@@ -170,7 +184,7 @@ pub fn exec(
             }
             other => {
                 return ExecResult::msg(format!(
-                    "unknown verb '{other}' (try: load mute unmute gain x)"
+                    "unknown verb '{other}' (try: load mute unmute gain head x)"
                 ));
             }
         }
@@ -222,14 +236,20 @@ fn status(deck_paths: &DeckPaths, engine: Option<&Arc<Mutex<Engine>>>) -> ExecRe
     }
     if let Some(eng) = engine {
         if let Ok(e) = eng.try_lock() {
+            let gbar = e.transport.bar_index();
             messages.push(format!(
-                "bpm={:.1} bar={} gainA={:.2} gainB={:.2} songs={:?}/{:?}",
+                "bpm={:.1} transport_bar={} gainA={:.2} gainB={:.2} songs={:?}/{:?}",
                 e.transport.bpm,
-                e.transport.bar_index(),
+                gbar,
                 e.mixer.gain_a,
                 e.mixer.gain_b,
                 e.decks[0].song_title(),
                 e.decks[1].song_title()
+            ));
+            messages.push(format!(
+                "song_bar A={} B={} (1-based; head/cue offset)",
+                e.decks[0].song_bar_1based(gbar),
+                e.decks[1].song_bar_1based(gbar)
             ));
         } else {
             messages.push("(engine busy)".into());
@@ -309,5 +329,32 @@ mod tests {
             }
             _ => panic!("expected XFade"),
         }
+    }
+
+    #[test]
+    fn b_head_and_cue_alias() {
+        let (tx, rx) = unbounded();
+        let paths = crate::watcher::new_deck_paths();
+        let r = exec("b head 33", &tx, &paths, None);
+        assert!(r.messages[0].contains("33"));
+        match rx.try_recv().unwrap() {
+            Command::Head { deck, bar } => {
+                assert_eq!(deck, 1);
+                assert_eq!(bar, 33);
+            }
+            _ => panic!("expected Head"),
+        }
+        let r = exec("a cue 1", &tx, &paths, None);
+        assert!(r.messages[0].contains("bar 1"));
+        match rx.try_recv().unwrap() {
+            Command::Head { deck, bar } => {
+                assert_eq!(deck, 0);
+                assert_eq!(bar, 1);
+            }
+            _ => panic!("expected Head"),
+        }
+        let r = exec("b head 0", &tx, &paths, None);
+        assert!(r.messages[0].contains(">= 1"));
+        assert!(rx.try_recv().is_err());
     }
 }

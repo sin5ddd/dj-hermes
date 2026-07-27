@@ -34,6 +34,14 @@ pub enum Command {
         deck: usize,
         gain: f32,
     },
+    /// Equal-power crossfader 0=A … 1=B (immediate; cancels multi-bar xfade).
+    SetCrossfader(f32),
+    /// Jump a deck's pattern to 1-based bar `bar` at the next bar boundary (shared transport stays put).
+    Head {
+        deck: usize,
+        /// Human bar number (1 = first bar of the song).
+        bar: u64,
+    },
     /// Master LPF cutoff Hz; `None` via negative/NaN not used — use `SetMixerLpf(None)`.
     SetMixerLpf(Option<f32>),
     SetMixerHpf(Option<f32>),
@@ -53,6 +61,10 @@ enum Pending {
         deck: usize,
         track: String,
         muted: bool,
+    },
+    Head {
+        deck: usize,
+        bar: u64,
     },
 }
 
@@ -159,10 +171,21 @@ impl Engine {
                     });
                 }
             }
+            Command::Head { deck, bar } => {
+                if deck < 2 && bar >= 1 {
+                    self.pending.push(Queued {
+                        target_bar: self.next_bar(),
+                        kind: Pending::Head { deck, bar },
+                    });
+                }
+            }
             Command::SetDeckGain { deck, gain } => {
                 if deck < 2 {
                     self.mixer.set_deck_gain(deck, gain);
                 }
+            }
+            Command::SetCrossfader(pos) => {
+                self.mixer.set_crossfader(pos);
             }
             Command::SetMixerLpf(hz) => {
                 self.mixer.lpf_hz = hz;
@@ -217,6 +240,10 @@ impl Engine {
                     let start = self.transport.global_sample;
                     let len = (bars as f64 * self.transport.samples_per_bar()) as u64;
                     self.mixer.start_xfade(to_deck, start, len.max(1));
+                }
+                Pending::Head { deck, bar } => {
+                    // Apply at this global bar head so pattern_bar(apply) == bar-1.
+                    self.decks[deck].head_to_bar(bar, bar_now);
                 }
             }
         }
@@ -387,6 +414,51 @@ b: note("{n}").s("sawtooth").gain(0.8)
             buf.iter().all(|s| s.abs() < 1e-4),
             "should be silent after mute at bar boundary"
         );
+    }
+
+    #[test]
+    fn head_applies_at_next_bar_boundary() {
+        // 120 BPM @ 48k → 1 bar = 96000 samples.
+        let mut e = Engine::new(48_000, 120.0);
+        let bank = SampleBank::empty();
+        let bar = 96_000usize;
+        e.load_song_immediate(0, test_song("c3"));
+        assert_eq!(e.decks[0].song_bar_1based(0), 1);
+
+        // Advance into bar 1, then mid-bar queue head 10.
+        let mut buf = vec![0f32; bar];
+        e.process(&mut buf, &bank);
+        assert_eq!(e.transport.bar_index(), 1);
+
+        let mut buf = vec![0f32; bar / 2];
+        e.process(&mut buf, &bank);
+        e.push_command(Command::Head { deck: 0, bar: 10 });
+        assert_eq!(e.decks[0].cycle_offset(), 0, "pending until next bar");
+
+        // Cross next bar boundary so Head applies at buffer head.
+        let mut buf = vec![0f32; bar];
+        e.process(&mut buf, &bank);
+        if e.decks[0].cycle_offset() == 0 {
+            let mut buf = vec![0f32; bar];
+            e.process(&mut buf, &bank);
+        }
+
+        let offset = e.decks[0].cycle_offset();
+        assert_ne!(offset, 0, "head should set cycle_offset");
+        let g = e.transport.bar_index();
+        // offset = (10-1) - G_apply  ⇒  song_bar(g) = g + offset + 1
+        assert_eq!(
+            e.decks[0].song_bar_1based(g),
+            (g as i64 + offset + 1) as u64
+        );
+        assert!(e.decks[0].song_bar_1based(g) >= 10);
+
+        let song = e.decks[0].song_bar_1based(g);
+        let mut buf = vec![0f32; bar];
+        e.process(&mut buf, &bank);
+        let g2 = e.transport.bar_index();
+        assert_eq!(e.decks[0].song_bar_1based(g2), song + (g2 - g));
+        assert_eq!(e.decks[0].cycle_offset(), offset);
     }
 
     #[test]

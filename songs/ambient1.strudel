@@ -1,0 +1,10 @@
+// @title ambient1
+// @genre ambient
+// @details Task 21 demo: wavetable pad + vib lead @ 126 BPM
+setcpm(126/4)
+// pad
+$: note("<c3'maj g2'min>/2").s("wt_organ").lpf(1200).gain(0.4).attack(0.15).decay(0.3).sustain(0.7).release(0.4)
+// shimmer
+$: note("<c4 e4 g4 b4>/2").s("wt_bright").vib("5:8").gain(0.18).attack(0.08).release(0.3)
+// arp
+$: note("c4 e4 g4 b4 e5").s("sine").gain(0.15).fast(2)

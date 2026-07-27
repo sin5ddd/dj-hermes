@@ -80,6 +80,26 @@ impl Mixer {
         }
     }
 
+    /// Equal-power crossfader position in \[0, 1\] (0 = full A, 1 = full B).
+    /// Cancels any in-progress multi-bar xfade animation.
+    pub fn set_crossfader(&mut self, pos: f32) {
+        self.xfade = None;
+        let t = pos.clamp(0.0, 1.0) as f64;
+        let theta = t * std::f64::consts::FRAC_PI_2;
+        self.gain_a = theta.cos() as f32;
+        self.gain_b = theta.sin() as f32;
+    }
+
+    /// Inverse of equal-power mapping: `atan2(B, A) / (π/2)`.
+    pub fn crossfader_pos(&self) -> f32 {
+        let a = self.gain_a.max(0.0) as f64;
+        let b = self.gain_b.max(0.0) as f64;
+        if a + b < 1e-9 {
+            return 0.0;
+        }
+        ((b.atan2(a)) / std::f64::consts::FRAC_PI_2).clamp(0.0, 1.0) as f32
+    }
+
     pub fn set_compressor(&mut self, params: Option<CompressorParams>, sr: f32) {
         self.comp_sr = sr.max(1.0);
         self.compressor = params.map(|p| Compressor::new(p, self.comp_sr));
@@ -182,6 +202,29 @@ impl Mixer {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn set_crossfader_equal_power() {
+        let mut m = Mixer::new();
+        m.set_crossfader(0.0);
+        assert!((m.gain_a - 1.0).abs() < 1e-5);
+        assert!(m.gain_b.abs() < 1e-5);
+        assert!(m.crossfader_pos() < 0.01);
+
+        m.set_crossfader(1.0);
+        assert!(m.gain_a.abs() < 1e-5);
+        assert!((m.gain_b - 1.0).abs() < 1e-5);
+        assert!(m.crossfader_pos() > 0.99);
+
+        m.set_crossfader(0.5);
+        assert!((m.gain_a - m.gain_b).abs() < 1e-4);
+        assert!((m.crossfader_pos() - 0.5).abs() < 0.02);
+        // Manual set cancels animated xfade.
+        m.start_xfade(1, 0, 1000);
+        assert!(m.xfade().is_some());
+        m.set_crossfader(0.25);
+        assert!(m.xfade().is_none());
+    }
 
     #[test]
     fn equal_power_endpoints() {

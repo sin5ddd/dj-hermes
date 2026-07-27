@@ -42,7 +42,11 @@ pub struct Deck {
     steal_cursor: usize,
     scheduled: Vec<ScheduledHit>,
     next_event: usize,
+    /// Last *global* bar we scheduled against (not pattern cycle).
     scheduled_bar: u64,
+    /// Pattern cycle = (global_bar as i64 + cycle_offset).max(0).
+    /// Set by head/cue so a deck can play a different song bar while transport stays locked.
+    cycle_offset: i64,
     ducks: [DuckState; NUM_ORBITS],
     /// Last compressor params seen on a spawned hit (Engine may promote to Mixer).
     pub pending_compressor: Option<CompressorParams>,
@@ -59,6 +63,7 @@ impl Deck {
             scheduled: Vec::with_capacity(512),
             next_event: 0,
             scheduled_bar: u64::MAX,
+            cycle_offset: 0,
             ducks: [DuckState::default(); NUM_ORBITS],
             pending_compressor: None,
         }
@@ -67,6 +72,7 @@ impl Deck {
     pub fn load(&mut self, song: Song) {
         self.song = Some(song);
         self.scheduled_bar = u64::MAX;
+        self.cycle_offset = 0;
     }
 
     pub fn unload(&mut self) {
@@ -77,8 +83,38 @@ impl Deck {
         self.scheduled.clear();
         self.next_event = 0;
         self.scheduled_bar = u64::MAX;
+        self.cycle_offset = 0;
         self.ducks = [DuckState::default(); NUM_ORBITS];
         self.pending_compressor = None;
+    }
+
+    /// Offset added to the global bar index when choosing pattern content.
+    pub fn cycle_offset(&self) -> i64 {
+        self.cycle_offset
+    }
+
+    /// Pattern cycle (0-based) for a given global bar.
+    pub fn pattern_bar(&self, global_bar: u64) -> u64 {
+        (global_bar as i64 + self.cycle_offset).max(0) as u64
+    }
+
+    /// Human 1-based song bar for UI / status.
+    pub fn song_bar_1based(&self, global_bar: u64) -> u64 {
+        self.pattern_bar(global_bar).saturating_add(1)
+    }
+
+    /// Jump pattern content so that at `apply_global_bar` the deck plays 1-based `bar_1based`.
+    /// Clears ringing voices and forces reschedule.
+    pub fn head_to_bar(&mut self, bar_1based: u64, apply_global_bar: u64) {
+        let target_cycle = bar_1based.saturating_sub(1);
+        self.cycle_offset = target_cycle as i64 - apply_global_bar as i64;
+        for v in &mut self.voices {
+            *v = None;
+        }
+        self.scheduled.clear();
+        self.next_event = 0;
+        self.scheduled_bar = u64::MAX;
+        self.ducks = [DuckState::default(); NUM_ORBITS];
     }
 
     pub fn song_title(&self) -> Option<&str> {
@@ -104,11 +140,13 @@ impl Deck {
         }
     }
 
-    fn schedule_bar(&mut self, bar: u64, transport: &Transport) {
+    fn schedule_bar(&mut self, global_bar: u64, transport: &Transport) {
         self.scheduled.clear();
         self.next_event = 0;
         let spb = transport.samples_per_bar();
-        let bar_start = (bar as f64 * spb) as u64;
+        // Sample timestamps follow the shared transport; pattern content may be offset (head/cue).
+        let bar_start = (global_bar as f64 * spb) as u64;
+        let pattern_bar = self.pattern_bar(global_bar);
         let tracks: Vec<PatternCode> = self
             .song
             .as_ref()
@@ -121,10 +159,10 @@ impl Deck {
             })
             .unwrap_or_default();
         for pc in &tracks {
-            schedule_track_into(&mut self.scheduled, pc, bar, bar_start, spb);
+            schedule_track_into(&mut self.scheduled, pc, pattern_bar, bar_start, spb);
         }
         self.scheduled.sort_by_key(|e| e.at_sample);
-        self.scheduled_bar = bar;
+        self.scheduled_bar = global_bar;
     }
 }
 
@@ -294,9 +332,9 @@ impl Deck {
     /// Render into `out` (mono). Does not advance transport.
     pub fn process(&mut self, out: &mut [f32], transport: &Transport, samples: &SampleBank) {
         let sr = transport.sample_rate as f32;
-        let bar = transport.bar_index();
-        if bar != self.scheduled_bar {
-            self.schedule_bar(bar, transport);
+        let global_bar = transport.bar_index();
+        if global_bar != self.scheduled_bar {
+            self.schedule_bar(global_bar, transport);
         }
 
         for (i, frame) in out.iter_mut().enumerate() {
@@ -338,6 +376,30 @@ mod tests {
     use crate::sample::write_test_wav;
     use crate::song::parse_song;
     use std::path::Path;
+
+    #[test]
+    fn head_changes_pattern_cycle_not_global_time() {
+        // Angle alt: cycle 0 → c3, cycle 1 → e3 (approx via different freqs in energy windows).
+        let song = parse_song(
+            r#"---
+lead: note("<c3 e3>").s("sine").gain(0.9)
+"#,
+            "t",
+        )
+        .unwrap();
+        let mut d = Deck::new("A");
+        d.load(song);
+        assert_eq!(d.pattern_bar(0), 0);
+        assert_eq!(d.song_bar_1based(0), 1);
+
+        // At global bar 5, jump so song bar 2 (1-based) is playing.
+        d.head_to_bar(2, 5);
+        assert_eq!(d.pattern_bar(5), 1);
+        assert_eq!(d.song_bar_1based(5), 2);
+        // Offset stays fixed as transport advances.
+        assert_eq!(d.pattern_bar(6), 2);
+        assert_eq!(d.song_bar_1based(6), 3);
+    }
 
     #[test]
     fn deck_renders_synth_song() {

@@ -42,22 +42,30 @@ strudel-rs play songs/smoke.strudel
 strudel-rs play songs/smoke.strudel --seconds 15
 # TUI なし（メタログのみ・スクリプト向け）
 strudel-rs play songs/smoke.strudel --headless
-# REPL + 曲ファイル監視（バー量子化ロード / xfade など）
-strudel-rs play --repl songs/techno16.strudel
+# デュアルデッキ live UI（曲は省略可）
+strudel-rs dj songs/techno1.strudel songs/ambient1.strudel
+strudel-rs dj
+# 開発時
+cargo run -- dj songs/techno1.strudel songs/ambient1.strudel
 ```
 
 - **既定はループ再生**（終了: TUI なら `q` / Esc、`--headless` なら Ctrl+C）
 - `--seconds N`: N 秒で自動停止（スクリプト向け）
 - **既定はミニ記法ライブハイライト TUI**（曲ソース表示・再生中 atom を ANSI 強調）
 - `--headless`: 旧来のメタログのみ（TTY 不要・CI / パイプ向け）
-- **`--repl`**: **ハイライト + コマンド行**のライブ UI + `songs/` ウォッチャ（デモ向け）
+- **`dj [SONG_A] [SONG_B]`**: **ハイライト + コマンド行**のライブ UI + `songs/` ウォッチャ（デモ / DJ 向け）
   - 画面上段: **左 = デッキ A / 右 = デッキ B** のミニ記法ハイライト（同時表示）
+  - 中段: **A/B の Hi・Mid・Lo EQ**（各 3 行・短スライダー。現状は見た目＋ドラッグのみ／チャンネル EQ DSP は未接続）
+  - その下: **クロスフェーダー**（最大 10 文字幅 `XF A ──□── B`。□ は白背景。クリック／ドラッグ）
   - 下段: ログ + `»` プロンプト
+  - A のみ / B のみ / 両方省略も可（空デッキから `a load` / `b load`）
   - コマンド例（コロン不要）:
-    - `a load songs/techno16.strudel` / `b load songs/house16.strudel`
+    - `a load songs/techno1.strudel` / `b load songs/ambient1.strudel`
+    - `b head 33`（次の小節境界で B を曲の 33 小節目から再生。別名 `cue`。1 始まり）
     - `x 4`（反対側デッキへ 4 小節 xfade）/ `b x 4`（明示的に B へ）
     - `a mute kick` / `bpm 128` / `hush` / `status` / `quit`
-- **`--repl-text`**: ハイライトなしの rustyline テキスト REPL（同じコマンド体系）
+  - `--text`: ハイライトなしの rustyline テキスト REPL
+  - 互換: `play --repl` / `play --repl-text` も同じセッションを起動（A/B 2 曲可）
 - サンプルは `./samples`（Sonic Pi 由来 CC0）。曲は `songs/*.strudel`
 - 出力デバイスが無い環境ではエラー終了（`cargo test` / build はデバイス不要）
 
@@ -98,13 +106,14 @@ $: note("c3'maj").s("sawtooth").lpf(800).orbit(2).gain(0.4)
 | メソッド | パス | 内容 |
 | --- | --- | --- |
 | GET | `/health` | 生存確認 |
-| GET | `/status` | デッキ・BPM・ゲイン |
+| GET | `/status` | デッキ・BPM・曲内小節・ゲイン |
 | GET | `/events` | 状態 SSE |
 | PUT | `/code` | 単発パターンをデッキへ |
 | POST | `/song/load` | `.strudel` をロード |
 | POST | `/xfade` | クロスフェード |
 | POST | `/bpm` | マスター BPM |
 | POST | `/mute` | トラック mute/unmute |
+| POST | `/head` | デッキ頭出し（1 始まり小節、次バーで同期） |
 | POST | `/hush` | 全停止 |
 
 ```bash
@@ -123,7 +132,7 @@ curl -s -X PUT -H "Content-Type: application/json" \
 `strudel-rs mcp` は **stdio の薄いブリッジ**です。音声デバイスは開きません。  
 **先に** `strudel-rs play`（API 付き）を起動してから、MCP クライアントを繋いでください。本体未起動時はツールが接続エラーを返します（仕様）。
 
-提供ツール: `strudel_set_code` / `strudel_load_song` / `strudel_xfade` / `strudel_set_bpm` / `strudel_mute` / `strudel_hush` / `strudel_status`
+提供ツール: `strudel_set_code` / `strudel_load_song` / `strudel_xfade` / `strudel_set_bpm` / `strudel_mute` / `strudel_head` / `strudel_hush` / `strudel_status`
 
 ### 手順
 
@@ -134,8 +143,8 @@ curl -s -X PUT -H "Content-Type: application/json" \
 ```bash
 # ターミナル 1 — 演奏（API も同時に立つ）
 cd /path/to/strudel-rust
-strudel-rs play --repl songs/smoke.strudel
-# または headless:
+strudel-rs dj songs/smoke.strudel
+# または headless 単曲:
 # strudel-rs play --headless songs/smoke.strudel
 ```
 
@@ -201,9 +210,25 @@ printf '%s\n' \
   | strudel-rs mcp
 ```
 
-`tools/list` の応答に `strudel_set_code` など 7 ツールが出ればブリッジは生きています。
+`tools/list` の応答に `strudel_set_code` / `strudel_head` など 8 ツールが出ればブリッジは生きています。
 
-### 同梱デモ曲（16 小節ループ）
+### 同梱デモ曲
+
+#### Task 23 展示（DJ 切替デモ向け・短め）
+
+| ファイル | 内容 | テンポ |
+| --- | --- | --- |
+| `songs/techno1.strudel` | duck/orbit + FM ベース + compressor | 126 BPM |
+| `songs/ambient1.strudel` | `wt_organ` / `wt_bright` + vib + 和音（サンプル不要） | 126 BPM |
+
+```bash
+cargo run -- play songs/techno1.strudel
+cargo run -- dj songs/techno1.strudel songs/ambient1.strudel
+# 起動後: x 4 で A→B クロスフェード
+cargo test --test e2e
+```
+
+#### 16 小節ループ
 
 | ファイル | ジャンル | テンポ |
 | --- | --- | --- |
@@ -219,7 +244,7 @@ cargo run -- play songs/techno16.strudel
 cargo run -- play songs/house16.strudel --seconds 45
 ```
 
-各曲は `<...>` で 16 サイクル分の展開を持ち、そのままループする。Strudel 記法（`setcpm` / `$:` / `// @title` メタデータ）で書いているので REPL からのコピペ改造もしやすい。メタデータの書き方は [Strudel: Music metadata](https://strudel.cc/learn/metadata/) に合わせている。
+16 小節曲は `<...>` で 16 サイクル分の展開を持ち、そのままループする。Strudel 記法（`setcpm` / `$:` / `// @title` メタデータ）で書いているので REPL からのコピペ改造もしやすい。メタデータの書き方は [Strudel: Music metadata](https://strudel.cc/learn/metadata/) に合わせている。
 
 ## 開発メモ
 
