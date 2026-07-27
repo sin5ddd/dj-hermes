@@ -1,4 +1,4 @@
-//! strudel-rs — play .strudel songs (highlight TUI, headless, or --repl live).
+//! strudel-rs — play .strudel songs (highlight TUI, headless, or dj live).
 
 use std::io::{stdout, Write};
 use std::path::{Path, PathBuf};
@@ -40,6 +40,12 @@ fn main() {
                 std::process::exit(1);
             }
         }
+        "dj" => {
+            if let Err(e) = cmd_dj(&args) {
+                eprintln!("strudel-rs dj: {e}");
+                std::process::exit(1);
+            }
+        }
         "mcp" => {
             if let Err(e) = mcp::run() {
                 eprintln!("strudel-rs mcp: {e}");
@@ -62,31 +68,34 @@ strudel-rs — Strudel live CLI
 
 Usage:
   strudel-rs play [SONG] [--seconds N] [--headless] [--port N] [--no-api]
-  strudel-rs play --repl [SONG] [--songs-dir DIR] [--port N] [--no-api]
+  strudel-rs dj [SONG_A] [SONG_B] [--songs-dir DIR] [--port N] [--no-api] [--text]
+  strudel-rs play --repl [SONG_A] [SONG_B]   (same live UI as dj; kept for compatibility)
   strudel-rs mcp
 
-  SONG          path to .strudel (default without --repl: songs/smoke.strudel)
-  --seconds N   stop after N seconds (omit to loop until quit; not for --repl)
+  SONG          path to .strudel (default for play: songs/smoke.strudel)
+  SONG_A/B      optional decks for dj (A then B; omit both to start empty)
+  --seconds N   stop after N seconds (play only; omit to loop until quit)
   --headless    no TUI: meta log only (for scripts / non-TTY)
   --highlight   explicit highlight TUI (default; also: --hl)
-  --repl        live UI: mini-notation highlight + command line + watcher
-  --repl-text   text-only REPL (no highlight; rustyline) + watcher
+  --repl        alias path into live UI (prefer: strudel-rs dj …)
+  --repl-text   text-only REPL (same as: dj --text)
+  --text        with dj: rustyline text REPL instead of highlight live UI
   --songs-dir   directory to watch for .strudel saves (default: songs/)
   --port N      HTTP API port (default {DEFAULT_API_PORT}; env STRUDEL_API_PORT)
   --no-api      do not start HTTP API
 
   strudel-rs mcp
-                MCP stdio bridge → HTTP API (play process must be running)
+                MCP stdio bridge → HTTP API (play/dj process must be running)
 
   Default play loops forever (TUI: q / Esc; headless: Ctrl+C).
-  --repl: left=A / right=B highlight, » prompt at bottom.
-  Commands (no colon):  a load <file>  |  x 4  |  b mute kick  |  bpm 128  |  quit
+  dj: left=A / right=B highlight, » prompt at bottom.
+  Commands (no colon):  a load <file>  |  b head 33  |  x 4  |  bpm 128  |  quit
 
 Examples:
   cargo run -- play songs/smoke.strudel
-  cargo run -- play --repl songs/techno16.strudel
-  # then:  b load songs/house16.strudel
-  #        x 4
+  cargo run -- dj songs/techno1.strudel songs/ambient1.strudel
+  cargo run -- dj                          # empty decks; load from »
+  # then:  x 4
   # API: curl http://127.0.0.1:{DEFAULT_API_PORT}/status
 
 Samples: ./samples (or <song>/../samples). CC0 kit docs in samples/LICENSE.md.
@@ -94,8 +103,89 @@ Samples: ./samples (or <song>/../samples). CC0 kit docs in samples/LICENSE.md.
     );
 }
 
+/// Shared flags for live dual-deck session (`dj` / `play --repl`).
+#[derive(Debug)]
+struct LiveSessionOpts {
+    song_a: Option<PathBuf>,
+    song_b: Option<PathBuf>,
+    songs_dir: PathBuf,
+    with_highlight: bool,
+    api_enabled: bool,
+    api_port: u16,
+}
+
+/// Parse `dj` / live-session CLI. Returns `Ok(None)` when `--help` was printed.
+fn parse_live_session_args(args: &[String]) -> Result<Option<LiveSessionOpts>, String> {
+    let mut songs: Vec<PathBuf> = Vec::new();
+    let mut songs_dir = PathBuf::from("songs");
+    let mut with_highlight = true;
+    let mut api_enabled = true;
+    let mut cli_port: Option<u16> = None;
+    let mut i = 0;
+    while i < args.len() {
+        match args[i].as_str() {
+            "--songs-dir" => {
+                i += 1;
+                let d = args
+                    .get(i)
+                    .ok_or_else(|| "--songs-dir needs a path".to_string())?;
+                songs_dir = PathBuf::from(d);
+            }
+            "--port" => {
+                i += 1;
+                let s = args
+                    .get(i)
+                    .ok_or_else(|| "--port needs a number".to_string())?;
+                let p: u16 = s.parse().map_err(|_| format!("bad --port value: {s}"))?;
+                if p == 0 {
+                    return Err("--port must be 1..=65535".into());
+                }
+                cli_port = Some(p);
+            }
+            "--no-api" => {
+                api_enabled = false;
+            }
+            "--text" | "--repl-text" => {
+                with_highlight = false;
+            }
+            "--help" | "-h" => {
+                print_usage();
+                return Ok(None);
+            }
+            flag if flag.starts_with('-') => {
+                return Err(format!("unknown flag: {flag}"));
+            }
+            path => {
+                songs.push(PathBuf::from(path));
+            }
+        }
+        i += 1;
+    }
+
+    if songs.len() > 2 {
+        return Err("too many song paths (expected at most SONG_A SONG_B)".into());
+    }
+
+    let mut it = songs.into_iter();
+    Ok(Some(LiveSessionOpts {
+        song_a: it.next(),
+        song_b: it.next(),
+        songs_dir,
+        with_highlight,
+        api_enabled,
+        api_port: api::resolve_port(cli_port),
+    }))
+}
+
+fn cmd_dj(args: &[String]) -> Result<(), String> {
+    let Some(opts) = parse_live_session_args(args)? else {
+        return Ok(());
+    };
+    cmd_live_session(opts)
+}
+
 fn cmd_play(args: &[String]) -> Result<(), String> {
-    let mut song_path: Option<PathBuf> = None;
+    let mut song_paths: Vec<PathBuf> = Vec::new();
     let mut seconds: Option<u64> = None;
     let mut highlight = true;
     let mut repl_mode = false;
@@ -156,7 +246,7 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
                 return Err(format!("unknown flag: {flag}"));
             }
             path => {
-                song_path = Some(PathBuf::from(path));
+                song_paths.push(PathBuf::from(path));
             }
         }
         i += 1;
@@ -165,8 +255,24 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
     let api_port = api::resolve_port(cli_port);
 
     if repl_mode {
-        return cmd_play_repl(song_path, songs_dir, !repl_text, api_enabled, api_port);
+        if song_paths.len() > 2 {
+            return Err("play --repl accepts at most two song paths (A then B)".into());
+        }
+        let mut it = song_paths.into_iter();
+        return cmd_live_session(LiveSessionOpts {
+            song_a: it.next(),
+            song_b: it.next(),
+            songs_dir,
+            with_highlight: !repl_text,
+            api_enabled,
+            api_port,
+        });
     }
+
+    if song_paths.len() > 1 {
+        return Err("play accepts a single SONG (use `dj A B` for dual deck)".into());
+    }
+    let song_path = song_paths.into_iter().next();
 
     let song_path = song_path.unwrap_or_else(|| PathBuf::from("songs/smoke.strudel"));
     let text = std::fs::read_to_string(&song_path)
@@ -261,13 +367,17 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
     Ok(())
 }
 
-fn cmd_play_repl(
-    song_path: Option<PathBuf>,
-    songs_dir: PathBuf,
-    with_highlight: bool,
-    api_enabled: bool,
-    api_port: u16,
-) -> Result<(), String> {
+/// Dual-deck live session used by `dj` and `play --repl`.
+fn cmd_live_session(opts: LiveSessionOpts) -> Result<(), String> {
+    let LiveSessionOpts {
+        song_a,
+        song_b,
+        songs_dir,
+        with_highlight,
+        api_enabled,
+        api_port,
+    } = opts;
+
     let host = cpal::default_host();
     let device = host
         .default_output_device()
@@ -279,7 +389,7 @@ fn cmd_play_repl(
     let channels = supported.channels() as usize;
     let stream_config: cpal::StreamConfig = supported.into();
 
-    let samples_dir = resolve_samples_dir(song_path.as_deref())?;
+    let samples_dir = resolve_samples_dir(song_a.as_deref().or(song_b.as_deref()))?;
     let bank = SampleBank::load_dir(&samples_dir, sample_rate);
     if bank.names().is_empty() {
         eprintln!(
@@ -288,19 +398,19 @@ fn cmd_play_repl(
         );
     }
 
-    let mut bpm = 120.0;
-    let mut engine = Engine::new(sample_rate, bpm);
+    let mut engine = Engine::new(sample_rate, 120.0);
     let deck_paths: DeckPaths = watcher::new_deck_paths();
-    let mut initial_hl: Option<(usize, HighlightModel)> = None;
+    let mut initial_a: Option<HighlightModel> = None;
+    let mut initial_b: Option<HighlightModel> = None;
 
-    if let Some(ref path) = song_path {
+    if let Some(ref path) = song_a {
         let text =
             std::fs::read_to_string(path).map_err(|e| format!("read {}: {e}", path.display()))?;
         let song = parse_song(&text, &path.to_string_lossy())?;
-        bpm = song.bpm.unwrap_or(120.0);
+        let bpm = song.bpm.unwrap_or(120.0);
         engine.transport.set_bpm(bpm);
         if with_highlight {
-            initial_hl = Some((0, HighlightModel::from_song(&song, sample_rate)));
+            initial_a = Some(HighlightModel::from_song(&song, sample_rate));
         }
         engine.load_song_immediate(0, song);
         if let Ok(mut dp) = deck_paths.lock() {
@@ -308,6 +418,27 @@ fn cmd_play_repl(
         }
         if !with_highlight {
             eprintln!("loaded deck A: {}", path.display());
+        }
+    }
+
+    if let Some(ref path) = song_b {
+        let text =
+            std::fs::read_to_string(path).map_err(|e| format!("read {}: {e}", path.display()))?;
+        let song = parse_song(&text, &path.to_string_lossy())?;
+        // Keep master BPM from A when both set; otherwise take B's tempo.
+        if song_a.is_none() {
+            let bpm = song.bpm.unwrap_or(120.0);
+            engine.transport.set_bpm(bpm);
+        }
+        if with_highlight {
+            initial_b = Some(HighlightModel::from_song(&song, sample_rate));
+        }
+        engine.load_song_immediate(1, song);
+        if let Ok(mut dp) = deck_paths.lock() {
+            dp[1] = Some(path.clone());
+        }
+        if !with_highlight {
+            eprintln!("loaded deck B: {}", path.display());
         }
     }
 
@@ -328,7 +459,7 @@ fn cmd_play_repl(
     )?;
     stream.play().map_err(|e| format!("play stream: {e}"))?;
 
-    // Keep watcher alive for the REPL session.
+    // Keep watcher alive for the live session.
     let _watcher = if songs_dir.is_dir() {
         match watcher::watch_songs(&songs_dir, cmd_tx.clone(), Arc::clone(&deck_paths)) {
             Ok(w) => {
@@ -357,11 +488,12 @@ fn cmd_play_repl(
             Arc::clone(&engine),
             playhead,
             sample_rate,
-            initial_hl,
+            initial_a,
+            initial_b,
         )?;
     } else {
         eprintln!(
-            "strudel-rs play --repl-text  |  {sample_rate} Hz, {channels} ch  |  samples {}",
+            "strudel-rs dj --text  |  {sample_rate} Hz, {channels} ch  |  samples {}",
             samples_dir.display()
         );
         repl::run(cmd_tx, deck_paths, Some(Arc::clone(&engine)));
@@ -522,4 +654,53 @@ fn resolve_samples_dir(song_path: Option<&Path>) -> Result<PathBuf, String> {
             .collect::<Vec<_>>()
             .join(", ")
     ))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn s(args: &[&str]) -> Vec<String> {
+        args.iter().map(|a| (*a).to_string()).collect()
+    }
+
+    #[test]
+    fn dj_args_empty_ok() {
+        let opts = parse_live_session_args(&s(&[])).unwrap().unwrap();
+        assert!(opts.song_a.is_none());
+        assert!(opts.song_b.is_none());
+        assert!(opts.with_highlight);
+        assert!(opts.api_enabled);
+    }
+
+    #[test]
+    fn dj_args_two_songs_and_flags() {
+        let opts = parse_live_session_args(&s(&[
+            "songs/techno1.strudel",
+            "songs/ambient1.strudel",
+            "--no-api",
+            "--text",
+            "--songs-dir",
+            "songs",
+        ]))
+        .unwrap()
+        .unwrap();
+        assert_eq!(
+            opts.song_a.as_deref(),
+            Some(Path::new("songs/techno1.strudel"))
+        );
+        assert_eq!(
+            opts.song_b.as_deref(),
+            Some(Path::new("songs/ambient1.strudel"))
+        );
+        assert!(!opts.with_highlight);
+        assert!(!opts.api_enabled);
+        assert_eq!(opts.songs_dir, PathBuf::from("songs"));
+    }
+
+    #[test]
+    fn dj_args_rejects_three_songs() {
+        let err = parse_live_session_args(&s(&["a.strudel", "b.strudel", "c.strudel"])).unwrap_err();
+        assert!(err.contains("too many"));
+    }
 }

@@ -180,10 +180,9 @@ Release プロファイル目安（プラン）: `opt-level = 3`, `lto = true`, 
 ### CLI / REPL 例
 
 ```
-./strudel-rs play --repl              # play: REPL + API(:17878) + watcher
-:load A songs/techno1.strudel
-:load B songs/ambient1.strudel
-:xfade B 8
+./strudel-rs dj songs/techno1.strudel songs/ambient1.strudel   # live UI + API(:17878) + watcher
+# または空起動: ./strudel-rs dj
+# プロンプト: a load … / b load … / x 4
 ```
 
 ### HTTP
@@ -193,7 +192,7 @@ Release プロファイル目安（プラン）: `opt-level = 3`, `lto = true`, 
 
 ### MCP ツール（予定）
 
-`set_code` / `load_song` / `switch_deck` / `xfade` / `hush` / `get_state` など（`strudel_*` プレフィックス）。
+`set_code` / `load_song` / `xfade` / `set_bpm` / `mute` / `head` / `hush` / `status` など（`strudel_*` プレフィックス）。
 
 Hermes 登録例:
 
@@ -237,14 +236,13 @@ Rust の build/test/clippy 実行時は、利用可能なら `cargo-runner` ス�
 | 項目 | 状態 |
 | --- | --- |
 | リポジトリ | GitHub private（`sin5ddd/strudel-rust`）+ CI/CD 基盤 |
-| cargo プロジェクト | Task 1–19 + Task 23 + Task 26 完了 |
-| 実装タスク | Task 20 任意 → Task 21 E2E → Task 22 計測 → Task 24（delay/room on orbit） |
+| cargo プロジェクト | Task 1–19 + Task 21 + Task 23 + Task 26 完了 |
+| 実装タスク | Task 20 任意 → Task 22 計測 → Task 24（delay/room on orbit） |
 
 次に実装する場合の入口:
 
-1. Task 21: サンプル曲 + E2E
+1. Task 22: リソース計測 + README 展示手順
 2. Task 20（任意）: 汎用 ctl スクリプト + MCP クライアント設定例（Hermes 専用ランタイムは作らない）
-3. Task 22: リソース計測 + README 展示手順
-4. Task 24: orbit 共有 delay / room
+3. Task 24: orbit 共有 delay / room
 
 詰まった点・設計判断はプラン末尾の「詰まりログ」「追加メモ」「Risks / Open Questions」に追記する。

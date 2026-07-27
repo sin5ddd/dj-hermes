@@ -39,7 +39,11 @@ pub struct StatusInfo {
     pub deck_b: Option<String>,
     pub bpm: f64,
     pub playing: bool,
+    /// Shared transport bar index (0-based).
     pub bar: u64,
+    /// Per-deck song position (1-based; reflects head/cue offset).
+    pub song_bar_a: u64,
+    pub song_bar_b: u64,
     pub gain_a: f32,
     pub gain_b: f32,
 }
@@ -74,6 +78,13 @@ pub struct MuteReq {
     pub muted: bool,
 }
 
+#[derive(Deserialize)]
+pub struct HeadReq {
+    pub deck: String,
+    /// 1-based song bar (1 = first bar). Applies at next transport bar boundary.
+    pub bar: u64,
+}
+
 #[derive(Serialize)]
 pub struct ErrRes {
     pub error: String,
@@ -90,12 +101,15 @@ fn snapshot(engine: &Arc<Mutex<Engine>>) -> StatusInfo {
     let deck_a = e.decks[0].song_title().map(|s| s.to_string());
     let deck_b = e.decks[1].song_title().map(|s| s.to_string());
     let playing = deck_a.is_some() || deck_b.is_some();
+    let bar = e.transport.bar_index();
     StatusInfo {
         deck_a,
         deck_b,
         bpm: e.transport.bpm,
         playing,
-        bar: e.transport.bar_index(),
+        bar,
+        song_bar_a: e.decks[0].song_bar_1based(bar),
+        song_bar_b: e.decks[1].song_bar_1based(bar),
         gain_a: e.mixer.gain_a,
         gain_b: e.mixer.gain_b,
     }
@@ -219,6 +233,19 @@ async fn mute(
     Ok(StatusCode::ACCEPTED)
 }
 
+async fn head(
+    State(s): State<AppState>,
+    Json(r): Json<HeadReq>,
+) -> Result<StatusCode, (StatusCode, Json<ErrRes>)> {
+    let deck = deck_idx(&r.deck).map_err(bad)?;
+    if r.bar < 1 {
+        return Err(bad("bar must be >= 1 (1 = first bar of the song)"));
+    }
+    s.tx.send(Command::Head { deck, bar: r.bar })
+        .map_err(|e| bad(e.to_string()))?;
+    Ok(StatusCode::ACCEPTED)
+}
+
 async fn hush(State(s): State<AppState>) -> StatusCode {
     let _ = s.tx.send(Command::Hush);
     StatusCode::NO_CONTENT
@@ -259,6 +286,7 @@ pub fn router(state: AppState) -> Router {
         .route("/xfade", post(xfade))
         .route("/bpm", post(set_bpm))
         .route("/mute", post(mute))
+        .route("/head", post(head))
         .route("/hush", post(hush))
         .route("/status", get(get_status))
         .route("/events", get(events))
@@ -511,6 +539,52 @@ mod tests {
             .unwrap();
         assert_eq!(res.status(), StatusCode::NO_CONTENT);
         assert!(matches!(rx.try_recv().unwrap(), Command::Hush));
+    }
+
+    #[tokio::test]
+    async fn head_accepts_and_queues() {
+        let (state, rx) = test_state();
+        let app = router(state);
+        let body = r#"{"deck":"B","bar":33}"#;
+        let res = app
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/head")
+                    .header("content-type", "application/json")
+                    .body(Body::from(body))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(res.status(), StatusCode::ACCEPTED);
+        match rx.try_recv().unwrap() {
+            Command::Head { deck, bar } => {
+                assert_eq!(deck, 1);
+                assert_eq!(bar, 33);
+            }
+            _ => panic!("expected Head"),
+        }
+    }
+
+    #[tokio::test]
+    async fn head_rejects_bar_zero() {
+        let (state, rx) = test_state();
+        let app = router(state);
+        let body = r#"{"deck":"A","bar":0}"#;
+        let res = app
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/head")
+                    .header("content-type", "application/json")
+                    .body(Body::from(body))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(res.status(), StatusCode::BAD_REQUEST);
+        assert!(rx.try_recv().is_err());
     }
 
     #[test]
