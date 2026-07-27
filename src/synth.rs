@@ -120,8 +120,10 @@ pub struct Voice {
 
 impl Voice {
     pub fn new_wave(wave: Wave, freq: f32, gain: f32, len: u64, lpf: Option<f32>) -> Self {
-        let mut filter = FilterParams::default();
-        filter.lpf = lpf;
+        let filter = FilterParams {
+            lpf,
+            ..Default::default()
+        };
         Self::new(
             OscSource::Wave(wave),
             freq,
@@ -574,9 +576,11 @@ mod tests {
     #[test]
     fn lpf_reduces_energy() {
         let render = |lpf: Option<f32>| {
-            let mut filter = FilterParams::default();
-            filter.lpf = lpf;
-            filter.lpq = 0.707;
+            let filter = FilterParams {
+                lpf,
+                lpq: 0.707,
+                ..Default::default()
+            };
             let mut v = Voice::new(
                 OscSource::Wave(Wave::Square),
                 2000.0,
@@ -661,9 +665,11 @@ mod tests {
 
     #[test]
     fn fm_produces_energy() {
-        let mut mods = ModParams::default();
-        mods.fm = 4.0;
-        mods.fmh = 2.0;
+        let mods = ModParams {
+            fm: 4.0,
+            fmh: 2.0,
+            ..Default::default()
+        };
         let mut v = Voice::new(
             OscSource::Wave(Wave::Sine),
             220.0,

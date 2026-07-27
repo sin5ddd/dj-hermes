@@ -399,8 +399,9 @@ impl SampleVoice {
 }
 
 /// Synth or sample voice for the deck pool.
+/// `Voice` is large (filters/mod state); box it to keep the enum small.
 pub enum VoiceKind {
-    Synth(Voice),
+    Synth(Box<Voice>),
     Sample(SampleVoice),
 }
 

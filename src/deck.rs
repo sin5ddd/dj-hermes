@@ -232,7 +232,7 @@ impl Deck {
                     hit.cut,
                 )
                 .with_adsr_timing(sr, hit.len_samples);
-                self.alloc_voice(VoiceKind::Synth(v));
+                self.alloc_voice(VoiceKind::Synth(Box::new(v)));
             }
             ResolvedSound::Noise(n) => {
                 let v = Voice::new(
@@ -247,7 +247,7 @@ impl Deck {
                     hit.cut,
                 )
                 .with_adsr_timing(sr, hit.len_samples);
-                self.alloc_voice(VoiceKind::Synth(v));
+                self.alloc_voice(VoiceKind::Synth(Box::new(v)));
             }
             ResolvedSound::Wavetable(table) => {
                 let v = Voice::new(
@@ -262,7 +262,7 @@ impl Deck {
                     hit.cut,
                 )
                 .with_adsr_timing(sr, hit.len_samples);
-                self.alloc_voice(VoiceKind::Synth(v));
+                self.alloc_voice(VoiceKind::Synth(Box::new(v)));
             }
             ResolvedSound::Sample(name) => {
                 let Some(data) = samples.get(&name, hit.sample_n) else {
@@ -323,9 +323,9 @@ impl Deck {
             }
 
             let mut mix = 0.0f32;
-            for o in 0..NUM_ORBITS {
+            for (o, sample) in acc.iter().enumerate() {
                 let g = self.ducks[o].advance();
-                mix += acc[o] * g;
+                mix += sample * g;
             }
             *frame = mix * self.gain;
         }
