@@ -7,17 +7,19 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
-use crossbeam::channel::{unbounded, Receiver};
+use crossbeam::channel::{unbounded, Receiver, Sender};
 use crossterm::event::{self, Event, KeyCode, KeyEventKind};
 use crossterm::terminal::{
     disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
 };
 use crossterm::{cursor, execute, terminal, QueueableCommand};
+use strudel_rs::api::{self, AppState, DEFAULT_API_PORT};
 use strudel_rs::engine::{Command, Engine};
 use strudel_rs::highlight::{
     active_spans, bar_index, bar_pos, format_header, render_ansi, HighlightModel,
 };
 use strudel_rs::live_ui;
+use strudel_rs::mcp;
 use strudel_rs::repl;
 use strudel_rs::sample::SampleBank;
 use strudel_rs::song::parse_song;
@@ -38,6 +40,12 @@ fn main() {
                 std::process::exit(1);
             }
         }
+        "mcp" => {
+            if let Err(e) = mcp::run() {
+                eprintln!("strudel-rs mcp: {e}");
+                std::process::exit(1);
+            }
+        }
         "help" | "-h" | "--help" => print_usage(),
         other => {
             eprintln!("unknown command: {other}");
@@ -53,8 +61,9 @@ fn print_usage() {
 strudel-rs — Strudel live CLI
 
 Usage:
-  strudel-rs play [SONG] [--seconds N] [--headless]
-  strudel-rs play --repl [SONG] [--songs-dir DIR]
+  strudel-rs play [SONG] [--seconds N] [--headless] [--port N] [--no-api]
+  strudel-rs play --repl [SONG] [--songs-dir DIR] [--port N] [--no-api]
+  strudel-rs mcp
 
   SONG          path to .strudel (default without --repl: songs/smoke.strudel)
   --seconds N   stop after N seconds (omit to loop until quit; not for --repl)
@@ -63,6 +72,11 @@ Usage:
   --repl        live UI: mini-notation highlight + command line + watcher
   --repl-text   text-only REPL (no highlight; rustyline) + watcher
   --songs-dir   directory to watch for .strudel saves (default: songs/)
+  --port N      HTTP API port (default {DEFAULT_API_PORT}; env STRUDEL_API_PORT)
+  --no-api      do not start HTTP API
+
+  strudel-rs mcp
+                MCP stdio bridge → HTTP API (play process must be running)
 
   Default play loops forever (TUI: q / Esc; headless: Ctrl+C).
   --repl: left=A / right=B highlight, » prompt at bottom.
@@ -73,6 +87,7 @@ Examples:
   cargo run -- play --repl songs/techno16.strudel
   # then:  b load songs/house16.strudel
   #        x 4
+  # API: curl http://127.0.0.1:{DEFAULT_API_PORT}/status
 
 Samples: ./samples (or <song>/../samples). CC0 kit docs in samples/LICENSE.md.
 "
@@ -86,6 +101,8 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
     let mut repl_mode = false;
     let mut repl_text = false;
     let mut songs_dir = PathBuf::from("songs");
+    let mut api_enabled = true;
+    let mut cli_port: Option<u16> = None;
     let mut i = 0;
     while i < args.len() {
         match args[i].as_str() {
@@ -117,6 +134,20 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
                     .ok_or_else(|| "--songs-dir needs a path".to_string())?;
                 songs_dir = PathBuf::from(d);
             }
+            "--port" => {
+                i += 1;
+                let s = args
+                    .get(i)
+                    .ok_or_else(|| "--port needs a number".to_string())?;
+                let p: u16 = s.parse().map_err(|_| format!("bad --port value: {s}"))?;
+                if p == 0 {
+                    return Err("--port must be 1..=65535".into());
+                }
+                cli_port = Some(p);
+            }
+            "--no-api" => {
+                api_enabled = false;
+            }
             "--help" | "-h" => {
                 print_usage();
                 return Ok(());
@@ -131,8 +162,10 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
         i += 1;
     }
 
+    let api_port = api::resolve_port(cli_port);
+
     if repl_mode {
-        return cmd_play_repl(song_path, songs_dir, !repl_text);
+        return cmd_play_repl(song_path, songs_dir, !repl_text, api_enabled, api_port);
     }
 
     let song_path = song_path.unwrap_or_else(|| PathBuf::from("songs/smoke.strudel"));
@@ -196,15 +229,19 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
         eprintln!("playing…");
     }
 
+    let (cmd_tx, cmd_rx) = unbounded::<Command>();
     let engine = Arc::new(Mutex::new(engine));
     let bank = Arc::new(bank);
+
+    let _api = maybe_start_api(api_enabled, api_port, cmd_tx, Arc::clone(&engine));
+
     let stream = build_stream(
         &device,
         stream_config,
         channels,
         Arc::clone(&engine),
         Arc::clone(&bank),
-        None,
+        Some(cmd_rx),
     )?;
     stream.play().map_err(|e| format!("play stream: {e}"))?;
 
@@ -228,6 +265,8 @@ fn cmd_play_repl(
     song_path: Option<PathBuf>,
     songs_dir: PathBuf,
     with_highlight: bool,
+    api_enabled: bool,
+    api_port: u16,
 ) -> Result<(), String> {
     let host = cpal::default_host();
     let device = host
@@ -276,6 +315,8 @@ fn cmd_play_repl(
     let playhead = engine.playhead_handle();
     let engine = Arc::new(Mutex::new(engine));
     let bank = Arc::new(bank);
+
+    let _api = maybe_start_api(api_enabled, api_port, cmd_tx.clone(), Arc::clone(&engine));
 
     let stream = build_stream(
         &device,
@@ -327,6 +368,20 @@ fn cmd_play_repl(
     }
     eprintln!("bye.");
     Ok(())
+}
+
+/// Start HTTP API in a background thread when enabled. Keeps `Sender` alive via clone.
+fn maybe_start_api(
+    enabled: bool,
+    port: u16,
+    tx: Sender<Command>,
+    engine: Arc<Mutex<Engine>>,
+) -> Option<std::thread::JoinHandle<()>> {
+    if !enabled {
+        return None;
+    }
+    let state = AppState { tx, engine };
+    Some(api::spawn_server(state, port))
 }
 
 fn build_stream(
