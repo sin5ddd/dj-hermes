@@ -1,6 +1,6 @@
-//! Mixer layer: A/B faders, master 1-pole LPF/HPF, compressor, equal-power xfade.
+//! Mixer layer: A/B faders, per-deck 3-band EQ, master 1-pole LPF/HPF, compressor, equal-power xfade.
 
-use crate::dsp::{Compressor, CompressorParams};
+use crate::dsp::{eq_pos_to_db, Biquad, BiquadKind};
 
 /// Equal-power crossfade over N bars (sample range).
 #[derive(Debug, Clone)]
@@ -22,6 +22,80 @@ pub enum XFadeTick {
     },
 }
 
+/// Per-deck channel EQ: Hi (shelf) / Mid (peak) / Lo (shelf). Positions 0..=1, 0.5 = flat.
+#[derive(Clone, Debug)]
+struct ChannelEq {
+    /// [Hi, Mid, Lo] slider positions.
+    pos: [f32; 3],
+    hi: Biquad,
+    mid: Biquad,
+    lo: Biquad,
+    sr: f32,
+}
+
+impl ChannelEq {
+    fn new(sr: f32) -> Self {
+        let mut eq = Self {
+            pos: [0.5, 0.5, 0.5],
+            hi: Biquad::bypass(),
+            mid: Biquad::bypass(),
+            lo: Biquad::bypass(),
+            sr: sr.max(1.0),
+        };
+        eq.rebuild();
+        eq
+    }
+
+    fn ensure_sr(&mut self, sr: f32) {
+        let sr = sr.max(1.0);
+        if (sr - self.sr).abs() > 1.0 {
+            self.sr = sr;
+            self.rebuild();
+        }
+    }
+
+    fn set_band(&mut self, band: usize, value: f32) {
+        if band >= 3 {
+            return;
+        }
+        self.pos[band] = value.clamp(0.0, 1.0);
+        self.rebuild();
+    }
+
+    fn rebuild(&mut self) {
+        let sr = self.sr;
+        let q = 0.707;
+        // band 0 = Hi, 1 = Mid, 2 = Lo (matches live_ui)
+        self.hi.set_coeffs_gain(
+            BiquadKind::HighShelf,
+            6000.0,
+            q,
+            eq_pos_to_db(self.pos[0]),
+            sr,
+        );
+        self.mid.set_coeffs_gain(
+            BiquadKind::Peaking,
+            1000.0,
+            q,
+            eq_pos_to_db(self.pos[1]),
+            sr,
+        );
+        self.lo.set_coeffs_gain(
+            BiquadKind::LowShelf,
+            200.0,
+            q,
+            eq_pos_to_db(self.pos[2]),
+            sr,
+        );
+    }
+
+    #[inline]
+    fn process(&mut self, x: f32) -> f32 {
+        // Lo → Mid → Hi
+        self.hi.process(self.mid.process(self.lo.process(x)))
+    }
+}
+
 /// Third layer above decks: how A/B are mixed and filtered.
 pub struct Mixer {
     pub gain_a: f32,
@@ -34,8 +108,10 @@ pub struct Mixer {
     lpf_y: f32,
     hpf_y: f32,
     hpf_x_prev: f32,
-    compressor: Option<Compressor>,
+    compressor: Option<crate::dsp::Compressor>,
     comp_sr: f32,
+    eq_a: ChannelEq,
+    eq_b: ChannelEq,
 }
 
 impl Default for Mixer {
@@ -57,6 +133,8 @@ impl Mixer {
             hpf_x_prev: 0.0,
             compressor: None,
             comp_sr: 48_000.0,
+            eq_a: ChannelEq::new(48_000.0),
+            eq_b: ChannelEq::new(48_000.0),
         }
     }
 
@@ -80,6 +158,24 @@ impl Mixer {
         }
     }
 
+    /// Set one EQ band for a deck. `band`: 0=Hi, 1=Mid, 2=Lo. `value`: 0..=1 (0.5 = flat).
+    pub fn set_deck_eq(&mut self, deck: usize, band: usize, value: f32) {
+        match deck {
+            0 => self.eq_a.set_band(band, value),
+            1 => self.eq_b.set_band(band, value),
+            _ => {}
+        }
+    }
+
+    /// Slider positions [Hi, Mid, Lo] for a deck.
+    pub fn deck_eq(&self, deck: usize) -> [f32; 3] {
+        match deck {
+            0 => self.eq_a.pos,
+            1 => self.eq_b.pos,
+            _ => [0.5, 0.5, 0.5],
+        }
+    }
+
     /// Equal-power crossfader position in \[0, 1\] (0 = full A, 1 = full B).
     /// Cancels any in-progress multi-bar xfade animation.
     pub fn set_crossfader(&mut self, pos: f32) {
@@ -100,12 +196,12 @@ impl Mixer {
         ((b.atan2(a)) / std::f64::consts::FRAC_PI_2).clamp(0.0, 1.0) as f32
     }
 
-    pub fn set_compressor(&mut self, params: Option<CompressorParams>, sr: f32) {
+    pub fn set_compressor(&mut self, params: Option<crate::dsp::CompressorParams>, sr: f32) {
         self.comp_sr = sr.max(1.0);
-        self.compressor = params.map(|p| Compressor::new(p, self.comp_sr));
+        self.compressor = params.map(|p| crate::dsp::Compressor::new(p, self.comp_sr));
     }
 
-    pub fn compressor_params(&self) -> Option<CompressorParams> {
+    pub fn compressor_params(&self) -> Option<crate::dsp::CompressorParams> {
         self.compressor.as_ref().map(|c| c.params)
     }
 
@@ -160,12 +256,14 @@ impl Mixer {
         }
     }
 
-    /// Mix A/B mono buffers with faders + master EQ + optional compressor into `out`.
+    /// Mix A/B mono buffers with channel EQ, faders, master filter, optional compressor into `out`.
     pub fn mix(&mut self, out: &mut [f32], a: &[f32], b: &[f32], sample_rate: f32) {
         let n = out.len().min(a.len()).min(b.len());
         let ga = self.gain_a;
         let gb = self.gain_b;
         let sr = sample_rate.max(1.0);
+        self.eq_a.ensure_sr(sr);
+        self.eq_b.ensure_sr(sr);
 
         let lpf_k = self.lpf_hz.map(|cut| {
             let cut = cut.clamp(20.0, sr * 0.45);
@@ -177,7 +275,10 @@ impl Mixer {
         });
 
         for i in 0..n {
-            let mut x = a[i] * ga + b[i] * gb;
+            // Channel EQ then fader (DJ mixer style).
+            let ea = self.eq_a.process(a[i]) * ga;
+            let eb = self.eq_b.process(b[i]) * gb;
+            let mut x = ea + eb;
 
             if let Some(k) = hpf_k {
                 let y = k * (self.hpf_y + x - self.hpf_x_prev);
@@ -202,6 +303,7 @@ impl Mixer {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::dsp::CompressorParams;
 
     #[test]
     fn set_crossfader_equal_power() {
@@ -270,5 +372,91 @@ mod tests {
         m.mix(&mut out, &a, &b, 48_000.0);
         let peak = out.iter().map(|x| x.abs()).fold(0.0f32, f32::max);
         assert!(peak < 0.9, "peak={peak}");
+    }
+
+    #[test]
+    fn eq_flat_near_unity() {
+        let mut m = Mixer::new();
+        m.gain_a = 1.0;
+        m.gain_b = 0.0;
+        // 1 kHz tone at mid band center — flat EQ should pass nearly unchanged.
+        let sr = 48_000.0f32;
+        let n = 4000;
+        let mut a = vec![0.0f32; n];
+        for (i, s) in a.iter_mut().enumerate() {
+            *s = (2.0 * std::f32::consts::PI * 1000.0 * i as f32 / sr).sin() * 0.5;
+        }
+        let b = vec![0.0f32; n];
+        let mut out = vec![0.0f32; n];
+        m.mix(&mut out, &a, &b, sr);
+        // Skip filter settling; compare RMS.
+        let rms_in: f32 = a[1000..].iter().map(|x| x * x).sum::<f32>() / (n - 1000) as f32;
+        let rms_out: f32 = out[1000..].iter().map(|x| x * x).sum::<f32>() / (n - 1000) as f32;
+        let ratio = (rms_out / rms_in.max(1e-12)).sqrt();
+        assert!(
+            (ratio - 1.0).abs() < 0.15,
+            "flat EQ should be near unity, ratio={ratio}"
+        );
+    }
+
+    #[test]
+    fn eq_lo_cut_reduces_bass() {
+        let sr = 48_000.0f32;
+        let n = 8000;
+        // 100 Hz sine (below Lo shelf).
+        let mut a = vec![0.0f32; n];
+        for (i, s) in a.iter_mut().enumerate() {
+            *s = (2.0 * std::f32::consts::PI * 100.0 * i as f32 / sr).sin() * 0.5;
+        }
+        let b = vec![0.0f32; n];
+
+        let mut flat = Mixer::new();
+        flat.gain_a = 1.0;
+        let mut out_flat = vec![0.0f32; n];
+        flat.mix(&mut out_flat, &a, &b, sr);
+
+        let mut cut = Mixer::new();
+        cut.gain_a = 1.0;
+        cut.set_deck_eq(0, 2, 0.0); // Lo min (-12 dB)
+        let mut out_cut = vec![0.0f32; n];
+        cut.mix(&mut out_cut, &a, &b, sr);
+
+        let e_flat: f32 = out_flat[2000..].iter().map(|x| x * x).sum();
+        let e_cut: f32 = out_cut[2000..].iter().map(|x| x * x).sum();
+        assert!(
+            e_cut < e_flat * 0.5,
+            "Lo cut should reduce bass energy: cut={e_cut} flat={e_flat}"
+        );
+        assert_eq!(cut.deck_eq(0)[2], 0.0);
+    }
+
+    #[test]
+    fn eq_hi_boost_raises_treble() {
+        let sr = 48_000.0f32;
+        let n = 8000;
+        // 8 kHz sine (above Hi shelf).
+        let mut a = vec![0.0f32; n];
+        for (i, s) in a.iter_mut().enumerate() {
+            *s = (2.0 * std::f32::consts::PI * 8000.0 * i as f32 / sr).sin() * 0.3;
+        }
+        let b = vec![0.0f32; n];
+
+        let mut flat = Mixer::new();
+        flat.gain_a = 1.0;
+        let mut out_flat = vec![0.0f32; n];
+        flat.mix(&mut out_flat, &a, &b, sr);
+
+        let mut boost = Mixer::new();
+        boost.gain_a = 1.0;
+        boost.set_deck_eq(0, 0, 1.0); // Hi max (+12 dB)
+        let mut out_boost = vec![0.0f32; n];
+        boost.mix(&mut out_boost, &a, &b, sr);
+
+        let e_flat: f32 = out_flat[2000..].iter().map(|x| x * x).sum();
+        let e_boost: f32 = out_boost[2000..].iter().map(|x| x * x).sum();
+        assert!(
+            e_boost > e_flat * 1.5,
+            "Hi boost should raise treble: boost={e_boost} flat={e_flat}"
+        );
     }
 }

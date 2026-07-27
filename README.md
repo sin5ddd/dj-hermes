@@ -55,7 +55,7 @@ cargo run -- dj songs/techno1.strudel songs/ambient1.strudel
 - `--headless`: 旧来のメタログのみ（TTY 不要・CI / パイプ向け）
 - **`dj [SONG_A] [SONG_B]`**: **ハイライト + コマンド行**のライブ UI + `songs/` ウォッチャ（デモ / DJ 向け）
   - 画面上段: **左 = デッキ A / 右 = デッキ B** のミニ記法ハイライト（同時表示）
-  - 中段: **A/B の Hi・Mid・Lo EQ**（各 3 行・短スライダー。現状は見た目＋ドラッグのみ／チャンネル EQ DSP は未接続）
+  - 中段: **A/B の Hi・Mid・Lo EQ**（各 3 行・短スライダー。中央 0.5＝フラット、±12 dB。Mixer チャンネル EQ に連動）
   - その下: **クロスフェーダー**（最大 10 文字幅 `XF A ──□── B`。□ は白背景。クリック／ドラッグ）
   - 下段: ログ + `»` プロンプト
   - A のみ / B のみ / 両方省略も可（空デッキから `a load` / `b load`）
@@ -69,9 +69,9 @@ cargo run -- dj songs/techno1.strudel songs/ambient1.strudel
 - サンプルは `./samples`（Sonic Pi 由来 CC0）。曲は `songs/*.strudel`
 - 出力デバイスが無い環境ではエラー終了（`cargo test` / build はデバイス不要）
 
-## パターン記法の拡張（Task 23）
+## パターン記法の拡張（Task 23–24）
 
-ローカル FX・シンセ（パーボイス）と Deck 内 orbit をサポートしています。
+ローカル FX・シンセ（パーボイス）と Deck 内 orbit（delay / room 含む）をサポートしています。
 
 | 系統 | メソッド例 |
 | --- | --- |
@@ -81,15 +81,16 @@ cargo run -- dj songs/techno1.strudel songs/ambient1.strudel
 | フィルタ | `.lpf(800)` `.lpq(2)` `.hpf(200)` `.bpf(1000)` `.lpenv(4).lpa(0.01)` |
 | サンプル | `.bank("tr808")` `.clip(0.5)` `.legato(1.2)` `.cut(1)` `.n(0)` |
 | orbit / duck | `.orbit(2)` `.duckorbit(2).duckattack(0.15).duckdepth(0.9)` |
+| delay / room | `.delay(0.5)` `.delay("0.5:0.25:0.8")` `.delaytime(0.25)` `.delayfeedback(0.6)` `.room(0.4)` `.room("0.9:4")` `.roomsize(2)` |
 | ダイナミクス | `.compressor("-20:4:6:.003:.1")`（Mixer マスターへ last-write） |
 
 orbit は **デッキ単位で 4 本**（id 1..4）。Deck A と B の orbit は共有しません。  
-`delay` / `room` は未実装で、Task 24 で orbit バスへ接続予定です。
+`delay` / `room` は **orbit 共有の global FX**（同 orbit 上は last-write）。`delayfeedback` は 0.95 未満にクランプされます。
 
 ```
 // kick が pad の orbit を duck
 $: s("bd*4").gain(0.9).duckorbit(2).duckattack(0.15).duckdepth(0.9)
-$: note("c3'maj").s("sawtooth").lpf(800).orbit(2).gain(0.4)
+$: note("c3'maj").s("sawtooth").lpf(800).orbit(2).gain(0.4).room(0.35).roomsize(3)
 ```
 
 ## HTTP API
@@ -106,12 +107,15 @@ $: note("c3'maj").s("sawtooth").lpf(800).orbit(2).gain(0.4)
 | メソッド | パス | 内容 |
 | --- | --- | --- |
 | GET | `/health` | 生存確認 |
-| GET | `/status` | デッキ・BPM・曲内小節・ゲイン |
+| GET | `/status` | デッキ・BPM・曲内小節・ゲイン・EQ・filter・crossfader |
 | GET | `/events` | 状態 SSE |
-| PUT | `/code` | 単発パターンをデッキへ |
+| PUT | `/code` | 単発パターンをデッキへ（スクリプト向け） |
 | POST | `/song/load` | `.strudel` をロード |
-| POST | `/xfade` | クロスフェード |
+| POST | `/xfade` | N バー クロスフェード |
 | POST | `/bpm` | マスター BPM |
+| POST | `/mixer/eq` | A/B チャンネル EQ（hi/mid/lo、即時） |
+| POST | `/mixer/filter` | マスター LPF/HPF（即時、`null` でバイパス） |
+| POST | `/mixer/crossfader` | 即時クロスフェーダー位置 0..=1 |
 | POST | `/mute` | トラック mute/unmute |
 | POST | `/head` | デッキ頭出し（1 始まり小節、次バーで同期） |
 | POST | `/hush` | 全停止 |
@@ -122,9 +126,12 @@ strudel-rs play --headless songs/smoke.strudel
 
 # 操作例
 curl -s http://127.0.0.1:17878/status
-curl -s -X PUT -H "Content-Type: application/json" \
-  -d '{"code":"note(\"c3 e3 g3\").s(\"triangle\")","deck":"A"}' \
-  http://127.0.0.1:17878/code
+curl -s -X POST -H "Content-Type: application/json" \
+  -d '{"deck":"A","lo":0.3,"hi":0.7}' \
+  http://127.0.0.1:17878/mixer/eq
+curl -s -X POST -H "Content-Type: application/json" \
+  -d '{"pos":0.5}' \
+  http://127.0.0.1:17878/mixer/crossfader
 ```
 
 ## MCP 登録
@@ -132,13 +139,21 @@ curl -s -X PUT -H "Content-Type: application/json" \
 `strudel-rs mcp` は **stdio の薄いブリッジ**です。音声デバイスは開きません。  
 **先に** `strudel-rs play`（API 付き）を起動してから、MCP クライアントを繋いでください。本体未起動時はツールが接続エラーを返します（仕様）。
 
-提供ツール: `strudel_set_code` / `strudel_load_song` / `strudel_xfade` / `strudel_set_bpm` / `strudel_mute` / `strudel_head` / `strudel_hush` / `strudel_status`
+提供ツール（Mixer → Deck → Transport）:
+
+| グループ | ツール |
+| --- | --- |
+| Mixer | `strudel_mixer_eq` / `strudel_mixer_filter` / `strudel_mixer_crossfader` / `strudel_xfade` / `strudel_set_bpm` |
+| Deck | `strudel_load_song` / `strudel_mute` / `strudel_head` |
+| Transport | `strudel_hush` / `strudel_status` |
+
+曲の差し替えは **`strudel_load_song`**（`.strudel` ファイル）。パターン文字列を直接送る MCP ツールは用意していません（HTTP `PUT /code` はスクリプト用に残置）。
 
 ### 手順
 
 1. 演奏本体を起動する（API `:17878`）
 2. MCP クライアントに下記を登録する
-3. チャットから `strudel_status` や `strudel_set_code` を呼ぶ
+3. チャットから `strudel_status` や `strudel_mixer_eq` を呼ぶ
 
 ```bash
 # ターミナル 1 — 演奏（API も同時に立つ）
@@ -210,7 +225,7 @@ printf '%s\n' \
   | strudel-rs mcp
 ```
 
-`tools/list` の応答に `strudel_set_code` / `strudel_head` など 8 ツールが出ればブリッジは生きています。
+`tools/list` の応答に `strudel_mixer_eq` / `strudel_load_song` / `strudel_status` など **10 ツール**が出ればブリッジは生きています（`strudel_set_code` は含みません）。
 
 ### 同梱デモ曲
 

@@ -6,11 +6,11 @@ use std::sync::{Arc, Mutex};
 use crossbeam::channel::Sender;
 
 use crate::engine::{Command, Engine};
-use crate::song::{parse_song, Song};
+use crate::song::{parse_song, resolve_song_path, Song};
 use crate::watcher::DeckPaths;
 
 pub const HELP: &str = "\
-a|b load <file>     load song on deck (next bar)
+a|b load <file>     load song (bare name → songs/; .strudel/.txt optional)
 a|b mute <track>    mute track (next bar)
 a|b unmute <track>
 a|b gain <0..1>     fader (immediate)
@@ -199,6 +199,10 @@ fn load_song(
     tx: &Sender<Command>,
     deck_paths: &DeckPaths,
 ) -> ExecResult {
+    let path = match resolve_song_path(&path.to_string_lossy()) {
+        Ok(p) => p,
+        Err(e) => return ExecResult::msg(e),
+    };
     match std::fs::read_to_string(&path) {
         Ok(text) => match parse_song(&text, &path.to_string_lossy()) {
             Ok(song) => {
@@ -213,7 +217,8 @@ fn load_song(
                 ExecResult {
                     quit: false,
                     messages: vec![format!(
-                        "loaded {title} → deck {} (次の小節から)",
+                        "loaded {title} ({}) → deck {} (次の小節から)",
+                        path.display(),
                         if deck == 0 { "A" } else { "B" }
                     )],
                     loaded: Some((deck, song)),
@@ -221,7 +226,7 @@ fn load_song(
             }
             Err(e) => ExecResult::msg(format!("parse error: {e}")),
         },
-        Err(e) => ExecResult::msg(format!("read error: {e}")),
+        Err(e) => ExecResult::msg(format!("read error {}: {e}", path.display())),
     }
 }
 
@@ -303,7 +308,11 @@ mod tests {
         // load missing file → message, no panic
         let r = exec("a load no_such.strudel", &tx, &paths, None);
         assert!(!r.quit);
-        assert!(r.messages[0].contains("read error") || r.messages[0].contains("parse"));
+        let m = &r.messages[0];
+        assert!(
+            m.contains("song not found") || m.contains("read error") || m.contains("parse"),
+            "{m}"
+        );
 
         let r = exec("x 8", &tx, &paths, None);
         assert!(!r.quit);

@@ -45,6 +45,12 @@ pub enum Command {
     /// Master LPF cutoff Hz; `None` via negative/NaN not used — use `SetMixerLpf(None)`.
     SetMixerLpf(Option<f32>),
     SetMixerHpf(Option<f32>),
+    /// Per-deck channel EQ band (immediate). `band`: 0=Hi, 1=Mid, 2=Lo; `value`: 0..=1 (0.5=flat).
+    SetDeckEq {
+        deck: usize,
+        band: u8,
+        value: f32,
+    },
 }
 
 enum Pending {
@@ -192,6 +198,11 @@ impl Engine {
             }
             Command::SetMixerHpf(hz) => {
                 self.mixer.hpf_hz = hz;
+            }
+            Command::SetDeckEq { deck, band, value } => {
+                if deck < 2 && (band as usize) < 3 {
+                    self.mixer.set_deck_eq(deck, band as usize, value);
+                }
             }
         }
     }

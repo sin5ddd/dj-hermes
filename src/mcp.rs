@@ -86,35 +86,48 @@ fn initialize_result() -> Value {
 }
 
 fn tools_list() -> Value {
+    // Order: Mixer → Deck → Transport (no official MCP categories; order + prefixes group them).
     json!({
         "tools": [
             {
-                "name": "strudel_set_code",
-                "description": "Load a single mini-notation pattern onto a deck (next bar).",
+                "name": "strudel_mixer_eq",
+                "description": "Mixer: set deck A/B channel EQ (Hi/Mid/Lo). Values 0..=1, 0.5=flat (±12 dB). Immediate. Provide at least one of hi/mid/lo.",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "code": { "type": "string", "description": "Pattern code, e.g. note(\"c3 e3\").s(\"triangle\")" },
-                        "deck": { "type": "string", "description": "A or B (default A)" }
+                        "deck": { "type": "string", "description": "A or B" },
+                        "hi": { "type": "number", "description": "High shelf 0..=1 (0.5 flat)" },
+                        "mid": { "type": "number", "description": "Mid peak 0..=1 (0.5 flat)" },
+                        "lo": { "type": "number", "description": "Low shelf 0..=1 (0.5 flat)" }
                     },
-                    "required": ["code"]
+                    "required": ["deck"]
                 }
             },
             {
-                "name": "strudel_load_song",
-                "description": "Load a .strudel song file onto a deck (next bar).",
+                "name": "strudel_mixer_filter",
+                "description": "Mixer: master LPF/HPF. Pass Hz number to set, or null to bypass. Immediate. Provide at least one of lpf/hpf.",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "path": { "type": "string" },
-                        "deck": { "type": "string", "description": "A or B" }
+                        "lpf": { "description": "Low-pass cutoff Hz, or null to bypass", "anyOf": [ {"type": "number"}, {"type": "null"} ] },
+                        "hpf": { "description": "High-pass cutoff Hz, or null to bypass", "anyOf": [ {"type": "number"}, {"type": "null"} ] }
+                    }
+                }
+            },
+            {
+                "name": "strudel_mixer_crossfader",
+                "description": "Mixer: set equal-power crossfader position immediately (0=full A, 1=full B). Cancels multi-bar xfade animation.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "pos": { "type": "number", "description": "0..=1" }
                     },
-                    "required": ["path", "deck"]
+                    "required": ["pos"]
                 }
             },
             {
                 "name": "strudel_xfade",
-                "description": "Crossfade to deck A or B over N bars (starts next bar).",
+                "description": "Mixer: crossfade to deck A or B over N bars (starts next bar).",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
@@ -126,7 +139,7 @@ fn tools_list() -> Value {
             },
             {
                 "name": "strudel_set_bpm",
-                "description": "Set master BPM (applies next bar).",
+                "description": "Mixer: set master BPM (applies next bar).",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
@@ -136,8 +149,20 @@ fn tools_list() -> Value {
                 }
             },
             {
+                "name": "strudel_load_song",
+                "description": "Deck: load a song onto a deck (next bar). Bare name looks under songs/; .strudel/.txt optional (.strudel preferred).",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "path": { "type": "string", "description": "e.g. smoke, songs/smoke.strudel" },
+                        "deck": { "type": "string", "description": "A or B" }
+                    },
+                    "required": ["path", "deck"]
+                }
+            },
+            {
                 "name": "strudel_mute",
-                "description": "Mute or unmute a track on a deck (next bar).",
+                "description": "Deck: mute or unmute a track on a deck (next bar).",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
@@ -150,7 +175,7 @@ fn tools_list() -> Value {
             },
             {
                 "name": "strudel_head",
-                "description": "Cue a deck to a 1-based song bar at the next transport bar boundary (DJ head-out). Alias concept of REPL `b head 33`.",
+                "description": "Deck: cue a deck to a 1-based song bar at the next transport bar boundary (DJ head-out). REPL: `b head 33`.",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
@@ -162,7 +187,7 @@ fn tools_list() -> Value {
             },
             {
                 "name": "strudel_hush",
-                "description": "Stop all sound immediately.",
+                "description": "Transport: stop all sound immediately.",
                 "inputSchema": {
                     "type": "object",
                     "properties": {}
@@ -170,7 +195,7 @@ fn tools_list() -> Value {
             },
             {
                 "name": "strudel_status",
-                "description": "Get current decks, BPM, transport bar, per-deck song bars, and mixer gains.",
+                "description": "Transport: get decks, BPM, bars, mixer gains, EQ (eq_a/eq_b), filters, crossfader.",
                 "inputSchema": {
                     "type": "object",
                     "properties": {}
@@ -195,22 +220,47 @@ fn tools_call(
         .unwrap_or_else(|| json!({}));
 
     let outcome = match name {
-        "strudel_set_code" => {
-            let code = arg_str(&args, "code")?;
-            let deck = arg_str_opt(&args, "deck").unwrap_or_else(|| "A".into());
-            http_put(
-                client,
-                &format!("{base}/code"),
-                json!({ "code": code, "deck": deck }),
-            )
-        }
-        "strudel_load_song" => {
-            let path = arg_str(&args, "path")?;
+        "strudel_mixer_eq" => {
             let deck = arg_str(&args, "deck")?;
+            let mut body = Map::new();
+            body.insert("deck".into(), json!(deck));
+            for key in ["hi", "mid", "lo"] {
+                if let Some(v) = args.get(key) {
+                    body.insert(key.into(), v.clone());
+                }
+            }
+            if !["hi", "mid", "lo"].iter().any(|k| body.contains_key(*k)) {
+                return Err(rpc_error(
+                    -32602,
+                    "mixer_eq: provide at least one of hi, mid, lo",
+                ));
+            }
+            http_post(client, &format!("{base}/mixer/eq"), Value::Object(body))
+        }
+        "strudel_mixer_filter" => {
+            let mut body = Map::new();
+            for key in ["lpf", "hpf"] {
+                if let Some(v) = args.get(key) {
+                    body.insert(key.into(), v.clone());
+                }
+            }
+            if body.is_empty() {
+                return Err(rpc_error(
+                    -32602,
+                    "mixer_filter: provide lpf and/or hpf (number or null)",
+                ));
+            }
+            http_post(client, &format!("{base}/mixer/filter"), Value::Object(body))
+        }
+        "strudel_mixer_crossfader" => {
+            let pos = args
+                .get("pos")
+                .and_then(|v| v.as_f64())
+                .ok_or_else(|| rpc_error(-32602, "pos required (0..=1)"))?;
             http_post(
                 client,
-                &format!("{base}/song/load"),
-                json!({ "path": path, "deck": deck }),
+                &format!("{base}/mixer/crossfader"),
+                json!({ "pos": pos }),
             )
         }
         "strudel_xfade" => {
@@ -228,6 +278,15 @@ fn tools_call(
                 .and_then(|v| v.as_f64())
                 .ok_or_else(|| rpc_error(-32602, "bpm required"))?;
             http_post(client, &format!("{base}/bpm"), json!({ "bpm": bpm }))
+        }
+        "strudel_load_song" => {
+            let path = arg_str(&args, "path")?;
+            let deck = arg_str(&args, "deck")?;
+            http_post(
+                client,
+                &format!("{base}/song/load"),
+                json!({ "path": path, "deck": deck }),
+            )
         }
         "strudel_mute" => {
             let deck = arg_str(&args, "deck")?;
@@ -288,21 +347,6 @@ fn arg_str(args: &Value, key: &str) -> Result<String, Value> {
         .and_then(|v| v.as_str())
         .map(|s| s.to_string())
         .ok_or_else(|| rpc_error(-32602, format!("{key} required (string)")))
-}
-
-fn arg_str_opt(args: &Value, key: &str) -> Option<String> {
-    args.get(key)
-        .and_then(|v| v.as_str())
-        .map(|s| s.to_string())
-}
-
-fn http_put(client: &reqwest::blocking::Client, url: &str, body: Value) -> Result<String, String> {
-    let res = client
-        .put(url)
-        .json(&body)
-        .send()
-        .map_err(|e| e.to_string())?;
-    status_text(res)
 }
 
 fn http_post(client: &reqwest::blocking::Client, url: &str, body: Value) -> Result<String, String> {
@@ -400,14 +444,28 @@ mod tests {
     use std::io::Cursor;
 
     #[test]
-    fn tools_list_has_eight_including_head() {
+    fn tools_list_mixer_deck_transport_no_set_code() {
         let v = tools_list();
         let tools = v["tools"].as_array().unwrap();
-        assert_eq!(tools.len(), 8);
+        assert_eq!(tools.len(), 10);
         let names: Vec<_> = tools.iter().filter_map(|t| t["name"].as_str()).collect();
-        assert!(names.contains(&"strudel_set_code"));
+        assert!(!names.contains(&"strudel_set_code"));
+        assert_eq!(names[0], "strudel_mixer_eq");
+        assert_eq!(names[1], "strudel_mixer_filter");
+        assert_eq!(names[2], "strudel_mixer_crossfader");
+        assert!(names.contains(&"strudel_xfade"));
+        assert!(names.contains(&"strudel_set_bpm"));
+        assert!(names.contains(&"strudel_load_song"));
         assert!(names.contains(&"strudel_head"));
         assert!(names.contains(&"strudel_status"));
+        // Group prefixes in descriptions
+        let descs: Vec<_> = tools
+            .iter()
+            .filter_map(|t| t["description"].as_str())
+            .collect();
+        assert!(descs.iter().any(|d| d.starts_with("Mixer:")));
+        assert!(descs.iter().any(|d| d.starts_with("Deck:")));
+        assert!(descs.iter().any(|d| d.starts_with("Transport:")));
     }
 
     #[test]

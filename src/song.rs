@@ -2,7 +2,12 @@
 //!
 //! Metadata follows Strudel's comment tags: https://strudel.cc/learn/metadata/
 
+use std::path::{Component, Path, PathBuf};
+
 use crate::code::{parse_code, PatternCode};
+
+/// Default directory for bare song names (relative to process working directory).
+pub const DEFAULT_SONGS_DIR: &str = "songs";
 
 #[derive(Debug, Clone)]
 pub struct Track {
@@ -63,6 +68,122 @@ pub struct Song {
 /// kick: s("bd*4").gain(0.9)
 /// ```
 /// Also: `// title: …` (pre-@tag comment form).
+///
+/// # Path resolution
+/// See [`resolve_song_path`] for bare-name / extension rules used by CLI and API.
+///
+/// Reject path traversal (`..`). Backslashes count as separators too.
+pub fn sanitize_song_path(path: &str) -> Result<PathBuf, String> {
+    if path.trim().is_empty() {
+        return Err("path is empty".into());
+    }
+    let normalized = path.replace('\\', "/");
+    let p = Path::new(&normalized);
+    if p.components().any(|c| matches!(c, Component::ParentDir)) {
+        return Err("path must not contain '..'".into());
+    }
+    if normalized.split('/').any(|s| s == "..") {
+        return Err("path must not contain '..'".into());
+    }
+    Ok(PathBuf::from(path))
+}
+
+fn known_song_ext(path: &Path) -> Option<&'static str> {
+    match path
+        .extension()
+        .and_then(|e| e.to_str())
+        .map(|e| e.to_ascii_lowercase())
+        .as_deref()
+    {
+        Some("strudel") => Some("strudel"),
+        Some("txt") => Some("txt"),
+        _ => None,
+    }
+}
+
+fn has_dir_component(path: &Path) -> bool {
+    path.components().count() > 1
+}
+
+/// Candidate paths for a user-supplied song reference (order = preference).
+///
+/// - Bare names (no directory) are tried under [`DEFAULT_SONGS_DIR`] first, then cwd.
+/// - Missing `.strudel` / `.txt` is filled in; **`.strudel` before `.txt`**.
+pub fn song_path_candidates(input: &str) -> Result<Vec<PathBuf>, String> {
+    let _ = sanitize_song_path(input)?;
+    let p = Path::new(input.trim());
+    let mut out = Vec::new();
+
+    let push = |out: &mut Vec<PathBuf>, c: PathBuf| {
+        if !out.iter().any(|x| x == &c) {
+            out.push(c);
+        }
+    };
+
+    match known_song_ext(p) {
+        Some(_) => {
+            if has_dir_component(p) {
+                push(&mut out, p.to_path_buf());
+            } else {
+                // bare `smoke.strudel` → songs/ then cwd
+                push(&mut out, PathBuf::from(DEFAULT_SONGS_DIR).join(p));
+                push(&mut out, p.to_path_buf());
+            }
+        }
+        None if p.extension().is_some() => {
+            // Other extension: treat as literal path (still allow bare under songs/).
+            if has_dir_component(p) {
+                push(&mut out, p.to_path_buf());
+            } else {
+                push(&mut out, PathBuf::from(DEFAULT_SONGS_DIR).join(p));
+                push(&mut out, p.to_path_buf());
+            }
+        }
+        None => {
+            // No extension: try .strudel then .txt
+            if has_dir_component(p) {
+                push(&mut out, p.with_extension("strudel"));
+                push(&mut out, p.with_extension("txt"));
+            } else {
+                let name = p.as_os_str();
+                push(
+                    &mut out,
+                    PathBuf::from(DEFAULT_SONGS_DIR)
+                        .join(name)
+                        .with_extension("strudel"),
+                );
+                push(
+                    &mut out,
+                    PathBuf::from(DEFAULT_SONGS_DIR)
+                        .join(name)
+                        .with_extension("txt"),
+                );
+                push(&mut out, PathBuf::from(name).with_extension("strudel"));
+                push(&mut out, PathBuf::from(name).with_extension("txt"));
+            }
+        }
+    }
+    Ok(out)
+}
+
+/// Resolve a user song path to an existing file.
+///
+/// See [`song_path_candidates`] for rules (default `songs/`, optional extension).
+pub fn resolve_song_path(input: &str) -> Result<PathBuf, String> {
+    let candidates = song_path_candidates(input)?;
+    for c in &candidates {
+        if c.is_file() {
+            return Ok(c.clone());
+        }
+    }
+    let tried = candidates
+        .iter()
+        .map(|c| c.display().to_string())
+        .collect::<Vec<_>>()
+        .join(", ");
+    Err(format!("song not found: {input} (tried: {tried})"))
+}
+
 pub fn parse_song(text: &str, path: &str) -> Result<Song, String> {
     let mut bpm = None;
     let mut title: Option<String> = None;
@@ -637,5 +758,65 @@ kick: s("bd")
             );
         }
         assert!(found >= 5, "expected demo songs, found {found}");
+    }
+
+    #[test]
+    fn song_path_candidates_bare_name_prefers_songs_strudel() {
+        let c = song_path_candidates("smoke").unwrap();
+        assert_eq!(c[0], PathBuf::from("songs").join("smoke.strudel"), "{c:?}");
+        assert_eq!(c[1], PathBuf::from("songs").join("smoke.txt"));
+        assert!(c.iter().any(|p| p == &PathBuf::from("smoke.strudel")));
+    }
+
+    #[test]
+    fn song_path_candidates_strudel_before_txt_with_dir() {
+        let c = song_path_candidates("demos/pad").unwrap();
+        assert_eq!(c[0], PathBuf::from("demos/pad.strudel"));
+        assert_eq!(c[1], PathBuf::from("demos/pad.txt"));
+    }
+
+    #[test]
+    fn song_path_candidates_bare_with_ext_tries_songs_first() {
+        let c = song_path_candidates("smoke.strudel").unwrap();
+        assert_eq!(c[0], PathBuf::from("songs").join("smoke.strudel"));
+        assert_eq!(c[1], PathBuf::from("smoke.strudel"));
+    }
+
+    #[test]
+    fn resolve_rejects_parent_dir() {
+        assert!(resolve_song_path("../secret.strudel").is_err());
+        assert!(song_path_candidates("songs/../../x").is_err());
+    }
+
+    #[test]
+    fn resolve_bundled_smoke_by_bare_name() {
+        // Run from crate root in `cargo test`.
+        let p = resolve_song_path("smoke").expect("songs/smoke.strudel");
+        assert!(p.ends_with("smoke.strudel"), "{}", p.display());
+        assert!(p.is_file());
+    }
+
+    #[test]
+    fn resolve_prefers_strudel_when_both_exist() {
+        let dir = std::env::temp_dir().join("strudel_resolve_both");
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(dir.join("songs")).unwrap();
+        std::fs::write(
+            dir.join("songs").join("dup.strudel"),
+            "// @title d\nsetcpm(30)\n$: s(\"bd\")\n",
+        )
+        .unwrap();
+        std::fs::write(dir.join("songs").join("dup.txt"), "should not win").unwrap();
+        let prev = std::env::current_dir().unwrap();
+        std::env::set_current_dir(&dir).unwrap();
+        let r = resolve_song_path("dup");
+        std::env::set_current_dir(prev).unwrap();
+        let p = r.expect("dup");
+        assert!(
+            p.extension().and_then(|e| e.to_str()) == Some("strudel"),
+            "{}",
+            p.display()
+        );
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }
