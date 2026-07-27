@@ -1,0 +1,46 @@
+# Rust
+/target/
+**/*.rs.bk
+*.pdb
+
+# Cargo (binary プロジェクトのため Cargo.lock は追跡する)
+# Cargo.lock
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Editors / IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.vim/
+
+# Agent / local tooling
+.sqlew/
+.claude/settings.local.json
+.junie/
+.mcp.json
+mcps/
+terminals/
+agent-tools/
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Logs / temp
+*.log
+*.tmp
+tmp/
+temp/
+
+# Audio debug dumps (if any)
+*.wav.raw
+/out/
+/recordings/
