@@ -20,9 +20,13 @@ Strudel 記法の曲ファイルをリアルタイム演奏する Rust 製 CLI�
 ```bash
 cargo run -- play songs/smoke.strudel
 cargo run -- play songs/smoke.strudel --seconds 15
+# TUI なし（メタログのみ・スクリプト向け）
+cargo run -- play songs/smoke.strudel --headless
 ```
 
 - 既定で約 30 秒再生（`--seconds 0` は 600 秒）
+- **既定はミニ記法ライブハイライト TUI**（曲ソース表示・再生中 atom を ANSI 強調、`q` で終了）
+- `--headless`: 旧来のメタログのみ（TTY 不要・CI / パイプ向け）
 - サンプルは `./samples`（Sonic Pi 由来 CC0）。曲は `songs/*.strudel`
 - 出力デバイスが無い環境ではエラー終了（`cargo test` / build はデバイス不要）
 

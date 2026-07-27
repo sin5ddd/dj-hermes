@@ -1,68 +1,110 @@
 //! Mini-notation tokenizer, AST parser, and cycle evaluator.
+//! Tokens and atoms carry byte spans in the mini-notation source (Strudel withLoc-style).
+
+/// Byte range `[start, end)` within a mini-notation string (or absolute file after offset).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Span {
+    pub start: usize,
+    pub end: usize,
+}
+
+impl Span {
+    pub fn new(start: usize, end: usize) -> Self {
+        Self { start, end }
+    }
+
+    pub fn offset(self, base: usize) -> Self {
+        Self {
+            start: base + self.start,
+            end: base + self.end,
+        }
+    }
+}
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token {
-    Word(String),
-    Rest, // ~
-    OpenBracket,
-    CloseBracket, // [ ]
-    OpenAngle,
-    CloseAngle, // < >
-    Star,
-    Slash, // * /
-    Number(f64),
+    Word(String, Span),
+    Rest(Span), // ~
+    OpenBracket(Span),
+    CloseBracket(Span), // [ ]
+    OpenAngle(Span),
+    CloseAngle(Span), // < >
+    Star(Span),
+    Slash(Span), // * /
+    Number(f64, Span),
+}
+
+impl Token {
+    pub fn span(&self) -> Span {
+        match self {
+            Token::Word(_, s)
+            | Token::Rest(s)
+            | Token::OpenBracket(s)
+            | Token::CloseBracket(s)
+            | Token::OpenAngle(s)
+            | Token::CloseAngle(s)
+            | Token::Star(s)
+            | Token::Slash(s)
+            | Token::Number(_, s) => *s,
+        }
+    }
 }
 
 pub fn tokenize(input: &str) -> Result<Vec<Token>, String> {
     let mut out = Vec::new();
-    let mut chars = input.chars().peekable();
-    while let Some(&c) = chars.peek() {
+    let bytes = input.as_bytes();
+    let mut i = 0;
+    while i < bytes.len() {
+        let c = bytes[i] as char;
         match c {
             ' ' | '\t' | '\n' | ',' => {
-                chars.next();
+                i += 1;
             }
             '~' => {
-                out.push(Token::Rest);
-                chars.next();
+                out.push(Token::Rest(Span::new(i, i + 1)));
+                i += 1;
             }
             '[' => {
-                out.push(Token::OpenBracket);
-                chars.next();
+                out.push(Token::OpenBracket(Span::new(i, i + 1)));
+                i += 1;
             }
             ']' => {
-                out.push(Token::CloseBracket);
-                chars.next();
+                out.push(Token::CloseBracket(Span::new(i, i + 1)));
+                i += 1;
             }
             '<' => {
-                out.push(Token::OpenAngle);
-                chars.next();
+                out.push(Token::OpenAngle(Span::new(i, i + 1)));
+                i += 1;
             }
             '>' => {
-                out.push(Token::CloseAngle);
-                chars.next();
+                out.push(Token::CloseAngle(Span::new(i, i + 1)));
+                i += 1;
             }
             '*' => {
-                out.push(Token::Star);
-                chars.next();
+                out.push(Token::Star(Span::new(i, i + 1)));
+                i += 1;
             }
             '/' => {
-                out.push(Token::Slash);
-                chars.next();
+                out.push(Token::Slash(Span::new(i, i + 1)));
+                i += 1;
             }
             c if c.is_ascii_alphanumeric() || matches!(c, '.' | '#' | '-' | '_' | '\'') => {
-                let mut w = String::new();
-                while let Some(&c) = chars.peek() {
+                let start = i;
+                i += 1;
+                while i < bytes.len() {
+                    let c = bytes[i] as char;
                     if c.is_ascii_alphanumeric() || matches!(c, '.' | '#' | '-' | '_' | '\'') {
-                        w.push(c);
-                        chars.next();
+                        i += 1;
                     } else {
                         break;
                     }
                 }
+                let span = Span::new(start, i);
+                let w = &input[start..i];
                 if let Ok(n) = w.parse::<f64>() {
-                    out.push(Token::Number(n));
+                    out.push(Token::Number(n, span));
                 } else {
-                    out.push(Token::Word(w));
+                    out.push(Token::Word(w.to_string(), span));
                 }
             }
             other => return Err(format!("unexpected char: {other}")),
@@ -73,7 +115,7 @@ pub fn tokenize(input: &str) -> Result<Vec<Token>, String> {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Node {
-    Atom(String),
+    Atom { value: String, span: Span },
     Rest,
     /// `[a b]` / top-level: equal divisions of one cycle
     Seq(Vec<Node>),
@@ -83,6 +125,16 @@ pub enum Node {
     Fast(Box<Node>, f64),
     /// `node / n`
     Slow(Box<Node>, f64),
+}
+
+impl Node {
+    /// Convenience for tests and simple construction.
+    pub fn atom(value: impl Into<String>, span: Span) -> Self {
+        Node::Atom {
+            value: value.into(),
+            span,
+        }
+    }
 }
 
 pub fn parse(input: &str) -> Result<Node, String> {
@@ -98,27 +150,29 @@ pub fn parse(input: &str) -> Result<Node, String> {
     Ok(node)
 }
 
-fn parse_seq(t: &[Token], pos: &mut usize, closing: Option<Token>) -> Result<Node, String> {
+fn parse_seq(t: &[Token], pos: &mut usize, closing: Option<fn(&Token) -> bool>) -> Result<Node, String> {
     let mut items = Vec::new();
     while *pos < t.len() {
-        if closing.as_ref().is_some_and(|c| &t[*pos] == c) {
+        if closing.as_ref().is_some_and(|pred| pred(&t[*pos])) {
             *pos += 1;
             break;
         }
         let mut item = parse_item(t, pos)?;
         loop {
-            if *pos + 1 < t.len() && matches!(t[*pos], Token::Star) {
-                if let Token::Number(n) = t[*pos + 1] {
-                    item = Node::Fast(Box::new(item), n);
-                    *pos += 2;
-                    continue;
+            if *pos + 1 < t.len() {
+                if matches!(t[*pos], Token::Star(_)) {
+                    if let Token::Number(n, _) = t[*pos + 1] {
+                        item = Node::Fast(Box::new(item), n);
+                        *pos += 2;
+                        continue;
+                    }
                 }
-            }
-            if *pos + 1 < t.len() && matches!(t[*pos], Token::Slash) {
-                if let Token::Number(n) = t[*pos + 1] {
-                    item = Node::Slow(Box::new(item), n);
-                    *pos += 2;
-                    continue;
+                if matches!(t[*pos], Token::Slash(_)) {
+                    if let Token::Number(n, _) = t[*pos + 1] {
+                        item = Node::Slow(Box::new(item), n);
+                        *pos += 2;
+                        continue;
+                    }
                 }
             }
             break;
@@ -128,27 +182,41 @@ fn parse_seq(t: &[Token], pos: &mut usize, closing: Option<Token>) -> Result<Nod
     Ok(Node::Seq(items))
 }
 
+fn is_close_bracket(t: &Token) -> bool {
+    matches!(t, Token::CloseBracket(_))
+}
+
+fn is_close_angle(t: &Token) -> bool {
+    matches!(t, Token::CloseAngle(_))
+}
+
 fn parse_item(t: &[Token], pos: &mut usize) -> Result<Node, String> {
     match t.get(*pos) {
-        Some(Token::Word(w)) => {
+        Some(Token::Word(w, span)) => {
             *pos += 1;
-            Ok(Node::Atom(w.clone()))
+            Ok(Node::Atom {
+                value: w.clone(),
+                span: *span,
+            })
         }
-        Some(Token::Rest) => {
+        Some(Token::Rest(_)) => {
             *pos += 1;
             Ok(Node::Rest)
         }
-        Some(Token::Number(n)) => {
+        Some(Token::Number(n, span)) => {
             *pos += 1;
-            Ok(Node::Atom(n.to_string()))
+            Ok(Node::Atom {
+                value: n.to_string(),
+                span: *span,
+            })
         }
-        Some(Token::OpenBracket) => {
+        Some(Token::OpenBracket(_)) => {
             *pos += 1;
-            parse_seq(t, pos, Some(Token::CloseBracket))
+            parse_seq(t, pos, Some(is_close_bracket))
         }
-        Some(Token::OpenAngle) => {
+        Some(Token::OpenAngle(_)) => {
             *pos += 1;
-            let s = parse_seq(t, pos, Some(Token::CloseAngle))?;
+            let s = parse_seq(t, pos, Some(is_close_angle))?;
             if let Node::Seq(v) = s {
                 Ok(Node::Stack(v))
             } else {
@@ -166,6 +234,8 @@ pub struct Event {
     /// Duration in bar units
     pub dur: f64,
     pub value: String,
+    /// Byte span of the atom inside the mini-notation string (if known).
+    pub span: Option<Span>,
 }
 
 /// Evaluate AST for one cycle into timed events. One cycle = one bar.
@@ -177,10 +247,11 @@ pub fn events(node: &Node, cycle: u64) -> Vec<Event> {
 
 fn emit(node: &Node, start: f64, span: f64, cycle: u64, out: &mut Vec<Event>) {
     match node {
-        Node::Atom(v) => out.push(Event {
+        Node::Atom { value, span: src } => out.push(Event {
             start,
             dur: span,
-            value: v.clone(),
+            value: value.clone(),
+            span: Some(*src),
         }),
         Node::Rest => {}
         Node::Seq(items) => {
@@ -222,24 +293,11 @@ mod tests {
     #[test]
     fn tokenizes_basic() {
         let t = tokenize("c3 [e3 g3]*2 ~ <a3 b3> bd_cp").unwrap();
-        assert_eq!(
-            t,
-            vec![
-                Token::Word("c3".into()),
-                Token::OpenBracket,
-                Token::Word("e3".into()),
-                Token::Word("g3".into()),
-                Token::CloseBracket,
-                Token::Star,
-                Token::Number(2.0),
-                Token::Rest,
-                Token::OpenAngle,
-                Token::Word("a3".into()),
-                Token::Word("b3".into()),
-                Token::CloseAngle,
-                Token::Word("bd_cp".into()),
-            ]
-        );
+        assert_eq!(t.len(), 13);
+        assert!(matches!(&t[0], Token::Word(w, s) if w == "c3" && s.start == 0 && s.end == 2));
+        assert!(matches!(&t[1], Token::OpenBracket(_)));
+        assert!(matches!(&t[2], Token::Word(w, _) if w == "e3"));
+        assert!(matches!(&t[12], Token::Word(w, _) if w == "bd_cp"));
     }
 
     #[test]
@@ -248,7 +306,6 @@ mod tests {
         assert!(matches!(n, Node::Seq(ref v) if v.len() == 3));
         let n = parse("c3/2").unwrap();
         assert!(matches!(n, Node::Seq(ref v) if matches!(v[0], Node::Slow(_, 2.0))));
-        // Top-level parse always wraps in Seq; angle groups become Stack inside.
         let n = parse("<c3 e3>").unwrap();
         assert!(matches!(n, Node::Seq(ref v) if matches!(v.first(), Some(Node::Stack(_)))));
     }
@@ -259,6 +316,8 @@ mod tests {
         let ev = events(&n, 0);
         assert_eq!(ev.len(), 2);
         assert!((ev[1].start - 0.5).abs() < 1e-9);
+        assert_eq!(ev[0].value, "c3");
+        assert_eq!(ev[1].value, "e3");
 
         let n = parse("<c3 e3>").unwrap();
         assert_eq!(events(&n, 0)[0].value, "c3");
@@ -271,6 +330,42 @@ mod tests {
     #[test]
     fn tokenizes_chord_word() {
         let t = tokenize("c3'maj").unwrap();
-        assert_eq!(t, vec![Token::Word("c3'maj".into())]);
+        assert!(matches!(&t[0], Token::Word(w, s) if w == "c3'maj" && s.start == 0 && s.end == 6));
+    }
+
+    #[test]
+    fn atom_spans_match_source() {
+        let src = "bd hh";
+        let n = parse(src).unwrap();
+        let ev = events(&n, 0);
+        assert_eq!(ev.len(), 2);
+        let s0 = ev[0].span.unwrap();
+        let s1 = ev[1].span.unwrap();
+        assert_eq!(&src[s0.start..s0.end], "bd");
+        assert_eq!(&src[s1.start..s1.end], "hh");
+    }
+
+    #[test]
+    fn fast_repeats_same_span() {
+        let src = "bd*4";
+        let n = parse(src).unwrap();
+        let ev = events(&n, 0);
+        assert_eq!(ev.len(), 4);
+        for e in &ev {
+            let s = e.span.unwrap();
+            assert_eq!(&src[s.start..s.end], "bd");
+        }
+    }
+
+    #[test]
+    fn stack_span_switches_per_cycle() {
+        let src = "<hh oh>";
+        let n = parse(src).unwrap();
+        let e0 = &events(&n, 0)[0];
+        let e1 = &events(&n, 1)[0];
+        assert_eq!(e0.value, "hh");
+        assert_eq!(e1.value, "oh");
+        assert_eq!(&src[e0.span.unwrap().start..e0.span.unwrap().end], "hh");
+        assert_eq!(&src[e1.span.unwrap().start..e1.span.unwrap().end], "oh");
     }
 }

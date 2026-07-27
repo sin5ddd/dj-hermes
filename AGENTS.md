@@ -111,6 +111,7 @@ strudel-rust/                 # このリポジトリのルート
 │   ├── deck.rs               # 曲A/B: トラック集合 + ボイスプール
 │   ├── mixer.rs              # フェーダー / EQ・フィルター / xfade・切替
 │   ├── engine.rs             # Scheduler / Command
+│   ├── highlight.rs          # ミニ記法ライブハイライト（Task 26）
 │   ├── watcher.rs            # notify → Command
 │   ├── repl.rs
 │   ├── api.rs                # REST + SSE
@@ -158,7 +159,8 @@ Release プロファイル目安（プラン）: `opt-level = 3`, `lto = true`, 
 6. **バッファまたぎ**はスプリットせず安全性優先（最大 1 バッファずれ許容）。
 7. **cpal は I/O のみ。** Synths/Effects/Samples 相当は自前 DSP。Strudel 全機能は目標にせず **ティアA** を Task 1–22 の完了条件とする（B/C は任意 Task 23–24）。
 8. **Punchcard/Pianoroll 可視化**は任意 Task 25。端末 TUI 近似で実現可能。エディタ埋め込みは非対応。音声コア完了後。
-9. 依存をむやみに増やさない。パーサジェネレータや重いシリアライズ層は避ける。ネット経由サンプルロードはデモ範囲外。
+9. **ミニ記法ライブハイライト**は任意 Task 26。`play` の**既定表示**（曲ソース + 再生中 atom の ANSI 強調）。旧メタログのみは `--headless`。audio スレッドでは span 計算しない（UI 再評価）。
+10. 依存をむやみに増やさない。パーサジェネレータや重いシリアライズ層は避ける。ネット経由サンプルロードはデモ範囲外。
 
 ---
 
@@ -224,13 +226,13 @@ Rust の build/test/clippy 実行時は、利用可能なら `cargo-runner` ス�
 | 項目 | 状態 |
 | --- | --- |
 | リポジトリ | GitHub private（`sin5ddd/strudel-rust`）+ CI/CD 基盤 |
-| cargo プロジェクト | Task 1–8 完了（lib `strudel_rs` + bin） |
-| 実装タスク | Task 9 以降（プラン Progress を更新しながら進める） |
+| cargo プロジェクト | Task 1–12 + Task 26 完了（lib `strudel_rs` + bin、`play` 既定ハイライト / `--headless`） |
+| 実装タスク | Task 13 以降（プラン Progress を更新しながら進める） |
 
 次に実装する場合の入口:
 
-1. Task 9: サンプル / sound フォールバック
-2. Task 10–12: Song / Deck / Engine
-3. 以降: Mixer → watcher → REPL → HTTP → MCP
+1. Task 13: バークオンタイズ検証テスト
+2. Task 14: デュアルデッキ + Mixer
+3. 以降: watcher → REPL → HTTP → MCP
 
 詰まった点・設計判断はプラン末尾の「詰まりログ」「追加メモ」「Risks / Open Questions」に追記する。

@@ -1,5 +1,8 @@
 //! Engine: dual decks, bar-quantized Command queue, mix to mono.
 
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
+
 use crate::deck::Deck;
 use crate::sample::SampleBank;
 use crate::song::Song;
@@ -62,6 +65,8 @@ pub struct Engine {
     xfade: Option<XFadeState>,
     scratch_a: Vec<f32>,
     scratch_b: Vec<f32>,
+    /// Lock-free playhead for UI highlight (UI re-evaluates patterns; audio only stores).
+    pub playhead: Arc<AtomicU64>,
 }
 
 impl Engine {
@@ -73,7 +78,13 @@ impl Engine {
             xfade: None,
             scratch_a: Vec::new(),
             scratch_b: Vec::new(),
+            playhead: Arc::new(AtomicU64::new(0)),
         }
+    }
+
+    /// Shared playhead for highlight / viz UI threads.
+    pub fn playhead_handle(&self) -> Arc<AtomicU64> {
+        Arc::clone(&self.playhead)
     }
 
     fn next_bar(&self) -> u64 {
@@ -222,6 +233,9 @@ impl Engine {
             *o = (a + b).clamp(-1.0, 1.0);
         }
         self.transport.advance(n);
+        // Publish after advance so UI sees the end-of-buffer position.
+        self.playhead
+            .store(self.transport.global_sample, Ordering::Relaxed);
     }
 }
 
