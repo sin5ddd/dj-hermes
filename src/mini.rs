@@ -115,7 +115,10 @@ pub fn tokenize(input: &str) -> Result<Vec<Token>, String> {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Node {
-    Atom { value: String, span: Span },
+    Atom {
+        value: String,
+        span: Span,
+    },
     Rest,
     /// `[a b]` / top-level: equal divisions of one cycle
     Seq(Vec<Node>),
@@ -150,7 +153,11 @@ pub fn parse(input: &str) -> Result<Node, String> {
     Ok(node)
 }
 
-fn parse_seq(t: &[Token], pos: &mut usize, closing: Option<fn(&Token) -> bool>) -> Result<Node, String> {
+fn parse_seq(
+    t: &[Token],
+    pos: &mut usize,
+    closing: Option<fn(&Token) -> bool>,
+) -> Result<Node, String> {
     let mut items = Vec::new();
     while *pos < t.len() {
         if closing.as_ref().is_some_and(|pred| pred(&t[*pos])) {

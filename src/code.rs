@@ -488,6 +488,9 @@ mod tests {
         let code = r#"s("bd*4").gain(0.9)"#;
         let pc = parse_code(code).unwrap();
         assert_eq!(pc.mini_src, "bd*4");
-        assert_eq!(&code[pc.mini_base..pc.mini_base + pc.mini_src.len()], "bd*4");
+        assert_eq!(
+            &code[pc.mini_base..pc.mini_base + pc.mini_src.len()],
+            "bd*4"
+        );
     }
 }

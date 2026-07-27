@@ -76,9 +76,7 @@ pub fn parse_song(text: &str, path: &str) -> Result<Song, String> {
         }
         let code_raw = &line_no_nl[colon + 1..];
         // Absolute start of the code portion in the full source.
-        let code_abs = line_start
-            + line_no_nl[..colon + 1]
-                .len();
+        let code_abs = line_start + line_no_nl[..colon + 1].len();
         let code = parse_code(code_raw)
             .map_err(|e| format!("line {} ({}): {}", lineno + 1, name_part, e))?
             .with_source_base(code_abs);
