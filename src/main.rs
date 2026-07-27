@@ -139,9 +139,7 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
                 let s = args
                     .get(i)
                     .ok_or_else(|| "--port needs a number".to_string())?;
-                let p: u16 = s
-                    .parse()
-                    .map_err(|_| format!("bad --port value: {s}"))?;
+                let p: u16 = s.parse().map_err(|_| format!("bad --port value: {s}"))?;
                 if p == 0 {
                     return Err("--port must be 1..=65535".into());
                 }

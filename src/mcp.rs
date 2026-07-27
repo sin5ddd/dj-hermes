@@ -269,11 +269,7 @@ fn arg_str_opt(args: &Value, key: &str) -> Option<String> {
         .map(|s| s.to_string())
 }
 
-fn http_put(
-    client: &reqwest::blocking::Client,
-    url: &str,
-    body: Value,
-) -> Result<String, String> {
+fn http_put(client: &reqwest::blocking::Client, url: &str, body: Value) -> Result<String, String> {
     let res = client
         .put(url)
         .json(&body)
@@ -282,11 +278,7 @@ fn http_put(
     status_text(res)
 }
 
-fn http_post(
-    client: &reqwest::blocking::Client,
-    url: &str,
-    body: Value,
-) -> Result<String, String> {
+fn http_post(client: &reqwest::blocking::Client, url: &str, body: Value) -> Result<String, String> {
     let res = client
         .post(url)
         .json(&body)
@@ -341,8 +333,7 @@ fn read_message(stdin: &mut impl BufRead) -> Result<Option<Value>, String> {
         }
         // Fallback: bare JSON line without headers
         if t.starts_with('{') {
-            let v: Value =
-                serde_json::from_str(t).map_err(|e| format!("json parse: {e}"))?;
+            let v: Value = serde_json::from_str(t).map_err(|e| format!("json parse: {e}"))?;
             return Ok(Some(v));
         }
         if let Some((k, v)) = t.split_once(':') {
@@ -368,12 +359,7 @@ fn read_message(stdin: &mut impl BufRead) -> Result<Option<Value>, String> {
 
 fn write_message(stdout: &mut impl Write, value: &Value) -> Result<(), String> {
     let body = serde_json::to_vec(value).map_err(|e| format!("json encode: {e}"))?;
-    write!(
-        stdout,
-        "Content-Length: {}\r\n\r\n",
-        body.len()
-    )
-    .map_err(|e| format!("stdout: {e}"))?;
+    write!(stdout, "Content-Length: {}\r\n\r\n", body.len()).map_err(|e| format!("stdout: {e}"))?;
     stdout
         .write_all(&body)
         .map_err(|e| format!("stdout body: {e}"))?;
@@ -391,10 +377,7 @@ mod tests {
         let v = tools_list();
         let tools = v["tools"].as_array().unwrap();
         assert_eq!(tools.len(), 7);
-        let names: Vec<_> = tools
-            .iter()
-            .filter_map(|t| t["name"].as_str())
-            .collect();
+        let names: Vec<_> = tools.iter().filter_map(|t| t["name"].as_str()).collect();
         assert!(names.contains(&"strudel_set_code"));
         assert!(names.contains(&"strudel_status"));
     }

@@ -80,10 +80,7 @@ pub struct ErrRes {
 }
 
 fn bad(e: impl Into<String>) -> (StatusCode, Json<ErrRes>) {
-    (
-        StatusCode::BAD_REQUEST,
-        Json(ErrRes { error: e.into() }),
-    )
+    (StatusCode::BAD_REQUEST, Json(ErrRes { error: e.into() }))
 }
 
 fn snapshot(engine: &Arc<Mutex<Engine>>) -> StatusInfo {
@@ -113,15 +110,22 @@ pub fn deck_idx(s: &str) -> Result<usize, String> {
 }
 
 /// Reject path traversal (`..`) while still allowing absolute paths under user control.
+///
+/// Backslashes are treated as separators too so Windows-style `..\x` is rejected on Linux CI.
 pub fn sanitize_song_path(path: &str) -> Result<PathBuf, String> {
     if path.trim().is_empty() {
         return Err("path is empty".into());
     }
-    let p = PathBuf::from(path);
+    // Normalize separators for component walk (Unix PathBuf would keep `\` as a normal char).
+    let normalized = path.replace('\\', "/");
+    let p = Path::new(&normalized);
     if p.components().any(|c| matches!(c, Component::ParentDir)) {
         return Err("path must not contain '..'".into());
     }
-    Ok(p)
+    if normalized.split('/').any(|s| s == "..") {
+        return Err("path must not contain '..'".into());
+    }
+    Ok(PathBuf::from(path))
 }
 
 fn song_from_code(code: &str) -> Result<Song, String> {
@@ -146,8 +150,7 @@ async fn put_code(
 ) -> Result<StatusCode, (StatusCode, Json<ErrRes>)> {
     let deck = deck_idx(r.deck.as_deref().unwrap_or("A")).map_err(bad)?;
     let song = song_from_code(&r.code).map_err(bad)?;
-    s.tx
-        .send(Command::LoadSong { deck, song })
+    s.tx.send(Command::LoadSong { deck, song })
         .map_err(|e| bad(e.to_string()))?;
     Ok(StatusCode::ACCEPTED)
 }
@@ -161,8 +164,7 @@ async fn load_song(
     let text = std::fs::read_to_string(&path).map_err(|e| bad(format!("read: {e}")))?;
     let path_str = path.to_string_lossy();
     let song = parse_song(&text, &path_str).map_err(bad)?;
-    s.tx
-        .send(Command::LoadSong { deck, song })
+    s.tx.send(Command::LoadSong { deck, song })
         .map_err(|e| bad(e.to_string()))?;
     Ok(StatusCode::ACCEPTED)
 }
@@ -173,8 +175,7 @@ async fn xfade(
 ) -> Result<StatusCode, (StatusCode, Json<ErrRes>)> {
     let to_deck = deck_idx(&r.to).map_err(bad)?;
     let bars = r.bars.unwrap_or(4).max(1);
-    s.tx
-        .send(Command::XFade { to_deck, bars })
+    s.tx.send(Command::XFade { to_deck, bars })
         .map_err(|e| bad(e.to_string()))?;
     Ok(StatusCode::ACCEPTED)
 }
@@ -184,10 +185,12 @@ async fn set_bpm(
     Json(r): Json<BpmReq>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrRes>)> {
     if !(r.bpm.is_finite() && r.bpm > 0.0) {
-        return Err(bad(format!("bpm must be a positive finite number: {}", r.bpm)));
+        return Err(bad(format!(
+            "bpm must be a positive finite number: {}",
+            r.bpm
+        )));
     }
-    s.tx
-        .send(Command::SetBpm(r.bpm))
+    s.tx.send(Command::SetBpm(r.bpm))
         .map_err(|e| bad(e.to_string()))?;
     Ok(StatusCode::ACCEPTED)
 }
@@ -200,13 +203,12 @@ async fn mute(
     if r.track.trim().is_empty() {
         return Err(bad("track name is empty"));
     }
-    s.tx
-        .send(Command::SetTrackMute {
-            deck,
-            track: r.track,
-            muted: r.muted,
-        })
-        .map_err(|e| bad(e.to_string()))?;
+    s.tx.send(Command::SetTrackMute {
+        deck,
+        track: r.track,
+        muted: r.muted,
+    })
+    .map_err(|e| bad(e.to_string()))?;
     Ok(StatusCode::ACCEPTED)
 }
 
@@ -343,7 +345,12 @@ mod tests {
         let (state, _) = test_state();
         let app = router(state);
         let res = app
-            .oneshot(Request::builder().uri("/health").body(Body::empty()).unwrap())
+            .oneshot(
+                Request::builder()
+                    .uri("/health")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
             .await
             .unwrap();
         assert_eq!(res.status(), StatusCode::OK);
@@ -502,7 +509,9 @@ mod tests {
     #[test]
     fn sanitize_path_ok() {
         assert!(sanitize_song_path("songs/smoke.strudel").is_ok());
-        assert!(sanitize_song_path("..\\x").is_err());
+        assert!(sanitize_song_path("../secret.strudel").is_err());
+        assert!(sanitize_song_path("..\\secret.strudel").is_err());
+        assert!(sanitize_song_path("songs/../../etc/passwd").is_err());
         assert!(sanitize_song_path("").is_err());
     }
 
