@@ -1,14 +1,17 @@
-//! strudel-rs — Strudel notation live-performance CLI (scaffold Tasks 1–8).
+//! strudel-rs — Strudel notation live-performance CLI (Tasks 1–12 foundation).
 
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 
 fn main() {
-    // Task 1 smoke: 440 Hz sine for 2 seconds when an output device is available.
+    // Device smoke: 440 Hz sine for 2 seconds when an output device is available.
     // Headless / missing device: print a message and exit successfully so CI can still build.
     if let Err(e) = play_sine_smoke() {
         eprintln!("strudel-rs: audio smoke skipped: {e}");
-        eprintln!("Library modules: backend, transport, mini, code, synth, sound.");
-        eprintln!("Run `cargo test` for headless verification (NullBackend).");
+        eprintln!(
+            "Library: backend, transport, mini, code, synth, sound, sample, song, deck, engine."
+        );
+        eprintln!("Run `cargo test` for headless verification (NullBackend path).");
+        eprintln!("Demo song: songs/smoke.strudel — samples/ is CC0 (Sonic Pi sourced).");
     }
 }
 
