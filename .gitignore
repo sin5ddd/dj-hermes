@@ -29,6 +29,9 @@ mcps/
 terminals/
 agent-tools/
 
+# Jujutsu (colocated with .git; local only — do not commit)
+.jj/
+
 # Env / secrets
 .env
 .env.*

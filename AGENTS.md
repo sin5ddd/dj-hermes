@@ -211,7 +211,7 @@ Rust の build/test/clippy 実行時は、利用可能なら `cargo-runner` ス�
 ## 作業ルール（このリポジトリ）
 
 1. **プラン正本:** `docs/plans/2026-07-27_020000-strudel-rs-final.md`。タスクを飛ばしたり、未承認のスコープ拡大をしない。
-2. **コミット:** ユーザーが明示的に依頼するまで commit / stage しない（グローバル規則）。
+2. **コミット:** ユーザーが明示的に依頼するまで commit / stage しない（グローバル規則）。このリポジトリは **git と jj（Jujutsu）コロケート**。`.jj/` はローカルのみ（gitignore）。エージェントはユーザー指示がない限り `git` で操作してよい。jj を使う場合は `jj bookmark track master --remote=origin` 済み想定。
 3. **品質:** 触ったモジュールのテストを通す。audio スレッド内でアロケーションやロック待ちを増やさないよう注意する。PR 前は CI 相当（`cargo fmt --check` / `clippy -D warnings` / `cargo test`）をローカルで通す。
 4. **エラー:** パース失敗で演奏を止めない。API/REPL の両方で失敗理由を返す。
 5. **ドキュメント:** コードコメントと README は標準の平易な文章。造語や曖昧な断定を避ける。

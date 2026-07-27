@@ -29,6 +29,21 @@ cargo test
 cargo build --release
 ```
 
+### Jujutsu (jj)
+
+このリポジトリは **git と jj をコロケート**している（`.git` + `.jj`）。通常の `git` コマンドもそのまま使える。
+
+```bash
+# 初回クローン後（まだ .jj が無い場合）
+jj git init --colocate
+jj bookmark track master --remote=origin
+
+jj status
+jj log -r '::@' --limit 10
+```
+
+`.jj/` は gitignore 対象。`git clean -xdf` すると `.jj` も消える点に注意。
+
 ### CI / CD
 
 | 経路 | 内容 |
