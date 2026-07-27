@@ -1,12 +1,5 @@
 //! strudel-rs — Strudel notation live-performance CLI (scaffold Tasks 1–8).
 
-mod backend;
-mod code;
-mod mini;
-mod sound;
-mod synth;
-mod transport;
-
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 
 fn main() {
@@ -14,7 +7,7 @@ fn main() {
     // Headless / missing device: print a message and exit successfully so CI can still build.
     if let Err(e) = play_sine_smoke() {
         eprintln!("strudel-rs: audio smoke skipped: {e}");
-        eprintln!("Modules available: backend, transport, mini, code, synth, sound.");
+        eprintln!("Library modules: backend, transport, mini, code, synth, sound.");
         eprintln!("Run `cargo test` for headless verification (NullBackend).");
     }
 }

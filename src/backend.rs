@@ -1,11 +1,14 @@
+/// Render callback invoked with a mono (or interleaved) sample buffer.
+pub type RenderCallback = Box<dyn FnMut(&mut [f32]) + Send>;
+
 /// Audio device abstraction. CPAL fills buffers; NullBackend drives headless tests.
 pub trait AudioBackend {
-    fn start(&mut self, sample_rate: u32, cb: Box<dyn FnMut(&mut [f32]) + Send>);
+    fn start(&mut self, sample_rate: u32, cb: RenderCallback);
     fn stop(&mut self);
 }
 
 pub struct NullBackend {
-    cb: Option<Box<dyn FnMut(&mut [f32]) + Send>>,
+    cb: Option<RenderCallback>,
 }
 
 impl NullBackend {
@@ -30,7 +33,7 @@ impl Default for NullBackend {
 }
 
 impl AudioBackend for NullBackend {
-    fn start(&mut self, _sample_rate: u32, cb: Box<dyn FnMut(&mut [f32]) + Send>) {
+    fn start(&mut self, _sample_rate: u32, cb: RenderCallback) {
         self.cb = Some(cb);
     }
 

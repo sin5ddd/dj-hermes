@@ -208,7 +208,7 @@ fn emit(node: &Node, start: f64, span: f64, cycle: u64, out: &mut Vec<Event>) {
         }
         Node::Slow(inner, n) => {
             let n_u = (*n).max(1.0) as u64;
-            if cycle % n_u == 0 {
+            if cycle.is_multiple_of(n_u) {
                 emit(inner, start, span, cycle, out);
             }
         }

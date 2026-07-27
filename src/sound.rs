@@ -5,15 +5,7 @@ use crate::synth::{NoiseKind, Wave};
 /// Tier-A built-in waveform / noise names.
 #[allow(dead_code)]
 pub const WAVEFORM_NAMES: &[&str] = &[
-    "sine",
-    "sawtooth",
-    "saw",
-    "square",
-    "triangle",
-    "tri",
-    "white",
-    "pink",
-    "brown",
+    "sine", "sawtooth", "saw", "square", "triangle", "tri", "white", "pink", "brown",
 ];
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -29,10 +21,10 @@ pub enum ResolvedSound {
 /// Sample fallback is Task 9; unknown names error with a clear message.
 pub fn resolve_sound(name: &str) -> Result<ResolvedSound, String> {
     let key = name.trim().to_ascii_lowercase();
-    if let Some(w) = Wave::from_str(&key) {
+    if let Some(w) = Wave::parse(&key) {
         return Ok(ResolvedSound::Wave(w));
     }
-    if let Some(n) = NoiseKind::from_str(&key) {
+    if let Some(n) = NoiseKind::parse(&key) {
         return Ok(ResolvedSound::Noise(n));
     }
     // Task 9: SampleBank lookup goes here.

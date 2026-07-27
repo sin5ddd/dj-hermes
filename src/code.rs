@@ -318,7 +318,7 @@ pub fn expand_chord(token: &str) -> Result<Vec<String>, String> {
     let mut out = Vec::with_capacity(intervals.len());
     for &iv in intervals {
         let total = root_semi + iv;
-        let pc = ((total % 12) + 12) % 12;
+        let pc = total.rem_euclid(12);
         let oct_off = total.div_euclid(12);
         out.push(format_note(pc, oct + oct_off));
     }
@@ -362,7 +362,7 @@ fn pitch_class(name: &str) -> Result<i32, String> {
         .next()
         .ok_or_else(|| "empty pitch".to_string())?
         .to_ascii_lowercase();
-    let mut semis = match letter {
+    let mut semis: i32 = match letter {
         'c' => 0,
         'd' => 2,
         'e' => 4,
@@ -379,14 +379,14 @@ fn pitch_class(name: &str) -> Result<i32, String> {
             _ => return Err(format!("bad pitch class: {name}")),
         }
     }
-    Ok(((semis % 12) + 12) % 12)
+    Ok(semis.rem_euclid(12))
 }
 
 fn format_note(pc: i32, oct: i32) -> String {
     let names = [
         "c", "c#", "d", "d#", "e", "f", "f#", "g", "g#", "a", "a#", "b",
     ];
-    let pc = ((pc % 12) + 12) % 12;
+    let pc = pc.rem_euclid(12);
     format!("{}{}", names[pc as usize], oct)
 }
 

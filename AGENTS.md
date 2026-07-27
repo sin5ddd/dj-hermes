@@ -212,7 +212,7 @@ Rust の build/test/clippy 実行時は、利用可能なら `cargo-runner` ス�
 
 1. **プラン正本:** `docs/plans/2026-07-27_020000-strudel-rs-final.md`。タスクを飛ばしたり、未承認のスコープ拡大をしない。
 2. **コミット:** ユーザーが明示的に依頼するまで commit / stage しない（グローバル規則）。
-3. **品質:** 触ったモジュールのテストを通す。audio スレッド内でアロケーションやロック待ちを増やさないよう注意する。
+3. **品質:** 触ったモジュールのテストを通す。audio スレッド内でアロケーションやロック待ちを増やさないよう注意する。PR 前は CI 相当（`cargo fmt --check` / `clippy -D warnings` / `cargo test`）をローカルで通す。
 4. **エラー:** パース失敗で演奏を止めない。API/REPL の両方で失敗理由を返す。
 5. **ドキュメント:** コードコメントと README は標準の平易な文章。造語や曖昧な断定を避ける。
 6. **セキュリティ:** ローカル bind（127.0.0.1）前提の API。公開 bind や認証は現スコープ外だが、パス traversal（曲ロード）や無制限入力には注意する。
@@ -223,14 +223,14 @@ Rust の build/test/clippy 実行時は、利用可能なら `cargo-runner` ス�
 
 | 項目 | 状態 |
 | --- | --- |
-| リポジトリ | 初期整備（gitignore / AGENTS.md / プラン） |
-| cargo プロジェクト | 未着手の場合は Task 1 から |
-| 実装タスク | Task 1〜22（プラン Progress を更新しながら進める） |
+| リポジトリ | GitHub private（`sin5ddd/strudel-rust`）+ CI/CD 基盤 |
+| cargo プロジェクト | Task 1–8 完了（lib `strudel_rs` + bin） |
+| 実装タスク | Task 9 以降（プラン Progress を更新しながら進める） |
 
 次に実装する場合の入口:
 
-1. Task 1: `Cargo.toml` + cpal サイン波疎通
-2. Task 2: `AudioBackend` + `NullBackend`（以降のテスト基盤）
-3. Task 3 以降: Transport → ミニ記法 → シンセ → Deck → Engine …
+1. Task 9: サンプル / sound フォールバック
+2. Task 10–12: Song / Deck / Engine
+3. 以降: Mixer → watcher → REPL → HTTP → MCP
 
 詰まった点・設計判断はプラン末尾の「詰まりログ」「追加メモ」「Risks / Open Questions」に追記する。

@@ -11,7 +11,7 @@ pub enum Wave {
 }
 
 impl Wave {
-    pub fn from_str(s: &str) -> Option<Self> {
+    pub fn parse(s: &str) -> Option<Self> {
         match s.to_ascii_lowercase().as_str() {
             "sine" => Some(Wave::Sine),
             "sawtooth" | "saw" => Some(Wave::Saw),
@@ -45,7 +45,7 @@ pub enum NoiseKind {
 }
 
 impl NoiseKind {
-    pub fn from_str(s: &str) -> Option<Self> {
+    pub fn parse(s: &str) -> Option<Self> {
         match s.to_ascii_lowercase().as_str() {
             "white" => Some(NoiseKind::White),
             "pink" => Some(NoiseKind::Pink),
@@ -259,12 +259,12 @@ impl Voice {
     /// Paul Kellet style pink-ish filter on white.
     fn pink(&mut self) -> f32 {
         let w = self.white();
-        self.pink_b[0] = 0.99886 * self.pink_b[0] + w * 0.0555179;
-        self.pink_b[1] = 0.99332 * self.pink_b[1] + w * 0.0750759;
-        self.pink_b[2] = 0.96900 * self.pink_b[2] + w * 0.1538520;
-        self.pink_b[3] = 0.86650 * self.pink_b[3] + w * 0.3104856;
-        self.pink_b[4] = 0.55000 * self.pink_b[4] + w * 0.5329522;
-        self.pink_b[5] = -0.7616 * self.pink_b[5] - w * 0.0168980;
+        self.pink_b[0] = 0.99886 * self.pink_b[0] + w * 0.055_517_9;
+        self.pink_b[1] = 0.99332 * self.pink_b[1] + w * 0.075_075_9;
+        self.pink_b[2] = 0.969 * self.pink_b[2] + w * 0.153_852;
+        self.pink_b[3] = 0.8665 * self.pink_b[3] + w * 0.310_485_6;
+        self.pink_b[4] = 0.55 * self.pink_b[4] + w * 0.532_952_2;
+        self.pink_b[5] = -0.7616 * self.pink_b[5] - w * 0.016_898;
         let pink = self.pink_b[0]
             + self.pink_b[1]
             + self.pink_b[2]
@@ -294,8 +294,8 @@ mod tests {
 
     #[test]
     fn voice_produces_sound_and_ends() {
-        let mut v = Voice::new_wave(Wave::Sine, 440.0, 0.5, 4800, None)
-            .with_adsr_timing(48_000.0, 4000);
+        let mut v =
+            Voice::new_wave(Wave::Sine, 440.0, 0.5, 4800, None).with_adsr_timing(48_000.0, 4000);
         let mut energy = 0f32;
         let mut n = 0;
         while let Some(s) = v.next_sample(48_000.0) {
