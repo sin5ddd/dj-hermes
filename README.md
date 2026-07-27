@@ -13,6 +13,19 @@ Strudel 記法の曲ファイルをリアルタイム演奏する Rust 製 CLI�
 # Hermes: strudel-rs mcp を MCP サーバとして登録
 ```
 
+## いま聴けるもの（最小 play）
+
+リポジトリルートで:
+
+```bash
+cargo run -- play songs/smoke.strudel
+cargo run -- play songs/smoke.strudel --seconds 15
+```
+
+- 既定で約 30 秒再生（`--seconds 0` は 600 秒）
+- サンプルは `./samples`（Sonic Pi 由来 CC0）。曲は `songs/*.strudel`
+- 出力デバイスが無い環境ではエラー終了（`cargo test` / build はデバイス不要）
+
 ## 開発メモ
 
 - 第一ターゲット: Linux + ALSA（`libasound2-dev`）

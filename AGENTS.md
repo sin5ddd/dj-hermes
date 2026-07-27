@@ -116,7 +116,7 @@ strudel-rust/                 # このリポジトリのルート
 │   ├── api.rs                # REST + SSE
 │   └── mcp.rs                # rmcp, stdio → HTTP ブリッジ
 ├── songs/                    # デモ曲 (.strudel)
-├── samples/                  # WAV (bd, sd, hh 等・CC0)
+├── samples/                  # WAV (bd, sd, hh 等・Sonic Pi 由来 CC0。カスタム追加可)
 ├── tests/                    # e2e 等（NullBackend 駆動）
 ├── docs/plans/               # 実装プラン（正本）
 └── hermes_push.sh            # Hermes 向け HTTP ラッパ（後段タスク）
