@@ -14,7 +14,7 @@ name = "strudel-rs"
 path = "src/main.rs"
 
 [dependencies]
-cpal = "0.15"
+cpal = "0.18"
 crossbeam = "0.8"
 
 [profile.release]

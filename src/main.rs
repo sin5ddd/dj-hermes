@@ -17,14 +17,16 @@ fn play_sine_smoke() -> Result<(), String> {
     let device = host
         .default_output_device()
         .ok_or_else(|| "no default output device".to_string())?;
+    // cpal 0.18+: sample_rate() is u32; build_output_stream takes StreamConfig by value.
     let config = device
         .default_output_config()
         .map_err(|e| format!("output config: {e}"))?;
-    let sr = config.sample_rate().0 as f32;
+    let sr = config.sample_rate() as f32;
+    let stream_config: cpal::StreamConfig = config.into();
     let mut phase = 0f32;
     let stream = device
         .build_output_stream(
-            &config.into(),
+            stream_config,
             move |data: &mut [f32], _| {
                 for s in data.iter_mut() {
                     *s = (phase * 2.0 * std::f32::consts::PI).sin() * 0.2;
