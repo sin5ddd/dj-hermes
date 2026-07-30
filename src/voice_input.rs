@@ -275,7 +275,7 @@ fn start_capture(config: &SttConfig) -> Result<ActiveCapture, String> {
     let stream = match sample_format {
         SampleFormat::F32 => build_input_stream::<f32>(
             &device,
-            stream_config.clone(),
+            stream_config,
             channels,
             samples_cb,
             max_samples,
@@ -283,7 +283,7 @@ fn start_capture(config: &SttConfig) -> Result<ActiveCapture, String> {
         )?,
         SampleFormat::I16 => build_input_stream::<i16>(
             &device,
-            stream_config.clone(),
+            stream_config,
             channels,
             samples_cb,
             max_samples,
