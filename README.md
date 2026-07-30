@@ -60,7 +60,7 @@ cargo run -- dj songs/techno1.strudel songs/ambient1.strudel
   - 下段: ログ + `»` プロンプト
   - A のみ / B のみ / 両方省略も可（空デッキから `/a load` / `/b load`）
   - **入力モデル（live TUI）**
-    - **自然文**（例: `暗くして`）→ Hermes（既定プロファイル `strudel-demo`、MCP 経由で操作）
+    - **自然文**（例: `暗くして`）→ Hermes（既定プロファイル `dj-hermes`、MCP 経由で操作）
     - **`/` 付き**（例: `/x 4` `/bpm 128` `/a load techno1`）→ ローカル即時コマンド
     - `--no-hermes` または Hermes 未検出時: 裸入力もローカル（従来どおり）
   - ローカルコマンド例:
@@ -172,7 +172,7 @@ strudel-rs dj songs/smoke.strudel
 
 ### Hermes（`config.yaml`）
 
-展示ブースでは **専用プロファイル `strudel-demo`** を使い、strudel MCP 以外のツールを無効にしてください（詳細: [docs/exhibit/README.md](./docs/exhibit/README.md)）。
+展示ブースでは **専用プロファイル `dj-hermes`** を使い、strudel MCP 以外のツールを無効にしてください（詳細: [docs/exhibit/README.md](./docs/exhibit/README.md)）。
 
 ```yaml
 mcp_servers:

@@ -1,16 +1,27 @@
-# Hermes profile sample: strudel-demo (exhibit-isolated)
-# Copy into a real profile after `hermes profile create strudel-demo --no-skills`
+# Hermes profile sample: dj-hermes (exhibit-isolated)
+# Copy into a real profile after `hermes profile create dj-hermes --no-skills`
 # — see README.md in this directory.
 #
 # Do NOT commit machine-local paths, API keys, or auth tokens here.
 
 _config_version: 33
 
-# No built-in toolsets on CLI. MCP tools still inject.
+# Only the skills toolset (read composition guides) + MCP tools.
 # Empty list alone is not enough on some Hermes versions: x_search can
 # auto-enable when xAI credentials exist. Keep agent.disabled_toolsets below.
 platform_toolsets:
-  cli: []
+  cli:
+    - skills
+
+# Strudel composition skills ship under skills/creative/ in this sample.
+# Optional: also scan a shared repo without re-copying (path is machine-local):
+# skills:
+#   external_dirs:
+#     - ${PUREDATA_HERMES}/skills
+#   write_approval: true
+skills:
+  # skill_manage create/edit stays staged until operator approves (exhibit safety).
+  write_approval: true
 
 mcp_servers:
   strudel:
@@ -35,10 +46,13 @@ agent:
   max_turns: 8
   system_prompt: |
     You are a live Strudel DJ assistant for a public exhibit booth.
-    Only use strudel MCP tools. Never use shell, files, browser, or web.
-    To create or keep a song, call strudel_save_song (user library only).
+    Use strudel MCP tools for the mix and strudel_save_song for new songs
+    (user library only). Load Strudel skills (composition / sound-design /
+    genre-*) via skill_view when writing patterns — never invent unsupported
+    Strudel features. Never use shell, files, browser, or web.
     Off-topic or unsafe requests: refuse briefly in Japanese and call no tools.
   # Final override so auto-enable (x_search etc.) cannot leak tools back in.
+  # Note: `skills` is intentionally NOT listed — progressive skill_view is allowed.
   disabled_toolsets:
     - web
     - browser
@@ -52,7 +66,6 @@ agent:
     - x_search
     - tts
     - stt
-    - skills
     - todo
     - memory
     - context_engine
@@ -67,7 +80,7 @@ agent:
     - kanban
 
 # Model / provider are machine-local. Set after install, e.g.:
-#   hermes --profile strudel-demo model
+#   hermes --profile dj-hermes model
 # Or uncomment and fill:
 # model:
 #   provider: <provider>

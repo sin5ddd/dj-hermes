@@ -18,7 +18,7 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use crossbeam::channel::{unbounded, Receiver, Sender, TryRecvError};
 
 /// Default Hermes profile for public-exhibit isolation.
-pub const DEFAULT_PROFILE: &str = "strudel-demo";
+pub const DEFAULT_PROFILE: &str = "dj-hermes";
 
 /// Default debug log path (cwd-relative) when `-d` is set.
 pub const DEFAULT_DEBUG_LOG: &str = "strudel-rs.debug.log";
@@ -727,14 +727,14 @@ mod tests {
     #[test]
     fn build_argv_has_profile_z_no_chat_only_flags() {
         let cfg = HermesConfig {
-            profile: "strudel-demo".into(),
+            profile: "dj-hermes".into(),
             max_turns: 8,
             skills: vec!["strudel-composition".into()],
             ..HermesConfig::default()
         };
         let argv = build_hermes_argv(&cfg, "wrapped");
         assert_eq!(argv[0], "--profile");
-        assert_eq!(argv[1], "strudel-demo");
+        assert_eq!(argv[1], "dj-hermes");
         assert_eq!(argv[2], "-z");
         assert_eq!(argv[3], "wrapped");
         // chat-only flags must not appear (they cause argparse exit 2).

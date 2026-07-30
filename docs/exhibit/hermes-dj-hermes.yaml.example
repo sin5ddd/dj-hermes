@@ -1,14 +1,14 @@
-# Exhibit profile snippet for Hermes (strudel-demo).
+# Exhibit profile snippet for Hermes (dj-hermes).
 # DEPRECATED as the primary sample — use the full sanitized profile tree:
-#   docs/profile/strudel-demo/   (config.yaml + SOUL.md + README)
+#   docs/profile/dj-hermes/   (config.yaml + SOUL.md + README)
 #
 # This file remains as a short MCP/agent fragment only.
 # Copy relevant sections into the profile's config.yaml — do NOT overwrite a
 # personal profile with this file wholesale.
 #
 # Create profile first:
-#   hermes profile create strudel-demo --no-skills
-# Then prefer copying docs/profile/strudel-demo/* into the profile dir.
+#   hermes profile create dj-hermes --no-skills
+# Then prefer copying docs/profile/dj-hermes/* into the profile dir.
 
 # Only strudel MCP — no other MCP servers on this profile.
 mcp_servers:

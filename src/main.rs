@@ -93,7 +93,7 @@ Usage:
   Default play loops forever (TUI: q / Esc; headless: Ctrl+C).
   dj: left=A / right=B highlight, » prompt at bottom.
   Live TUI input:
-    bare text     → Hermes (profile strudel-demo; needs API + MCP)
+    bare text     → Hermes (profile dj-hermes; needs API + MCP)
     /cmd …        → local (e.g. /a load smoke  /x 4  /bpm 128  /help)
     --no-hermes   → bare text is local again (text REPL always local)
   Flags: --no-hermes  --hermes-bin PATH  --hermes-profile NAME  -d/--debug
