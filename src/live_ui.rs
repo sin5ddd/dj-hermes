@@ -24,9 +24,13 @@ use crate::cmd::{self, LiveInput};
 use crate::engine::{Command, Engine};
 use crate::hermes::{HermesEvent, HermesHandle};
 use crate::highlight::{active_spans, bar_index, bar_pos, render_ansi_ex, HighlightModel};
+use crate::voice_input::{VoiceEvent, VoiceHandle};
 use crate::watcher::{DeckPaths, UiLogBuffer};
 
-const HELP_LINE: &str = "drag xf/EQ  自然文→Hermes  /a load  /x 4  /bpm  /help  (op: /hush /quit)";
+const HELP_LINE: &str =
+    "F12 音声  drag xf/EQ  自然文→Hermes  /a load  /x 4  /bpm  /help  (op: /hush /quit)";
+const HELP_LINE_REC: &str = "● REC  F12 で停止（最大7秒）";
+const HELP_LINE_STT: &str = "… STT  認識中…";
 
 /// White-background space used as the fader thumb (user-facing "□").
 const XF_THUMB: &str = "\x1b[47m \x1b[0m";
@@ -80,6 +84,14 @@ enum DragTarget {
     },
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
+enum VoicePhase {
+    #[default]
+    Idle,
+    Recording,
+    Stt,
+}
+
 struct LiveState {
     model_a: Option<HighlightModel>,
     model_b: Option<HighlightModel>,
@@ -98,6 +110,8 @@ struct LiveState {
     log: VecDeque<String>,
     /// Centered help overlay (not written into the log).
     help_open: bool,
+    /// Voice capture / STT status for the help footer line.
+    voice_phase: VoicePhase,
     /// Last painted frame (line strings) — skip rewrite when unchanged.
     prev_lines: Vec<String>,
     prev_cols: u16,
@@ -141,6 +155,7 @@ impl LiveState {
 /// `initial_a` / `initial_b` seed deck highlight models (e.g. songs passed to `dj`).
 /// `ui_log` receives watcher / external status lines into the 3-line footer log.
 /// `hermes` when `Some` routes bare natural language to Hermes (local cmds need `/`).
+/// `voice` when `Some` enables F12 push-to-talk (cloud STT → Hermes).
 #[allow(clippy::too_many_arguments)]
 pub fn run(
     tx: Sender<Command>,
@@ -152,6 +167,7 @@ pub fn run(
     initial_b: Option<HighlightModel>,
     ui_log: Option<UiLogBuffer>,
     hermes: Option<HermesHandle>,
+    voice: Option<VoiceHandle>,
 ) -> Result<(), String> {
     let zero_hit = SliderHit {
         row: 0,
@@ -170,6 +186,7 @@ pub fn run(
         history_idx: None,
         log: VecDeque::new(),
         help_open: false,
+        voice_phase: VoicePhase::Idle,
         prev_lines: Vec::new(),
         prev_cols: 0,
         prev_rows: 0,
@@ -184,7 +201,11 @@ pub fn run(
         state.set_model(1, model);
     }
     if hermes.is_some() {
-        state.push_log("live UI · 自然文→Hermes  /cmd ローカル  drag xf/EQ");
+        if voice.is_some() {
+            state.push_log("live UI · F12 音声→Hermes  /cmd ローカル  drag xf/EQ");
+        } else {
+            state.push_log("live UI · 自然文→Hermes  /cmd ローカル  drag xf/EQ");
+        }
     } else {
         state.push_log("live UI · drag xfader / Hi Mid Lo EQ (Hermes off)");
     }
@@ -235,11 +256,25 @@ pub fn run(
                                 let _ = tx.send(Command::Hush);
                                 return Ok(());
                             }
+                            KeyCode::F(12) => {
+                                if let Some(ref v) = voice {
+                                    v.toggle();
+                                } else if hermes.is_some() {
+                                    state.push_log(
+                                        "voice: 無効（XAI_API_KEY / STRUDEL_STT_API_KEY を設定）",
+                                    );
+                                } else {
+                                    state.push_log("voice: Hermes off では使えません");
+                                }
+                            }
                             KeyCode::Esc if state.input.is_empty() => {
                                 let _ = tx.send(Command::Hush);
                                 return Ok(());
                             }
                             KeyCode::Enter => {
+                                if state.voice_phase == VoicePhase::Recording {
+                                    continue;
+                                }
                                 let line = state.input.trim().to_string();
                                 state.input.clear();
                                 state.history_idx = None;
@@ -261,9 +296,14 @@ pub fn run(
                                 }
                             }
                             KeyCode::Backspace => {
-                                state.input.pop();
+                                if state.voice_phase != VoicePhase::Recording {
+                                    state.input.pop();
+                                }
                             }
                             KeyCode::Up => {
+                                if state.voice_phase == VoicePhase::Recording {
+                                    continue;
+                                }
                                 if state.history.is_empty() {
                                     continue;
                                 }
@@ -276,6 +316,9 @@ pub fn run(
                                 state.input = state.history[idx].clone();
                             }
                             KeyCode::Down => {
+                                if state.voice_phase == VoicePhase::Recording {
+                                    continue;
+                                }
                                 if let Some(i) = state.history_idx {
                                     if i + 1 >= state.history.len() {
                                         state.history_idx = None;
@@ -288,7 +331,8 @@ pub fn run(
                             }
                             KeyCode::Char(c)
                                 if !key.modifiers.contains(KeyModifiers::CONTROL)
-                                    && !key.modifiers.contains(KeyModifiers::ALT) =>
+                                    && !key.modifiers.contains(KeyModifiers::ALT)
+                                    && state.voice_phase != VoicePhase::Recording =>
                             {
                                 state.input.push(c);
                             }
@@ -316,6 +360,9 @@ pub fn run(
             }
 
             drain_ui_log(&mut state, &ui_log);
+            if let Some(ref v) = voice {
+                drain_voice_events(&mut state, v, hermes.as_ref());
+            }
             if let Some(ref h) = hermes {
                 drain_hermes_events(&mut state, h);
             }
@@ -539,7 +586,12 @@ fn draw_frame(
     }
 
     if rows >= 2 {
-        lines.push(pad_clip_ansi(HELP_LINE, cols));
+        let help = match state.voice_phase {
+            VoicePhase::Recording => HELP_LINE_REC,
+            VoicePhase::Stt => HELP_LINE_STT,
+            VoicePhase::Idle => HELP_LINE,
+        };
+        lines.push(pad_clip_ansi(help, cols));
         let prompt = format!("» {}", state.input);
         lines.push(pad_clip_ansi(&prompt, cols));
     }
@@ -959,6 +1011,49 @@ fn drain_hermes_events(state: &mut LiveState, hermes: &HermesHandle) {
     }
 }
 
+fn drain_voice_events(state: &mut LiveState, voice: &VoiceHandle, hermes: Option<&HermesHandle>) {
+    for ev in voice.drain_events() {
+        match ev {
+            VoiceEvent::RecordingStarted => {
+                state.voice_phase = VoicePhase::Recording;
+                state.invalidate_frame();
+                state.push_log("voice: ● REC（F12 で停止）");
+            }
+            VoiceEvent::RecordingStopped { secs } => {
+                state.push_log(format!("voice: 録音終了 ({secs:.1}s)"));
+            }
+            VoiceEvent::SttRunning => {
+                state.voice_phase = VoicePhase::Stt;
+                state.invalidate_frame();
+                state.push_log("voice: … STT");
+            }
+            VoiceEvent::Transcript { text } => {
+                state.voice_phase = VoicePhase::Idle;
+                state.invalidate_frame();
+                state.push_log(format!("voice: 「{text}」"));
+                if let Some(h) = hermes {
+                    match h.enqueue(&text) {
+                        Ok(()) => {
+                            let q = h.queue_len();
+                            state.push_log(format!("hermes: queued (n={q})"));
+                        }
+                        Err(reason) => {
+                            state.push_log(format!("hermes: {reason}"));
+                        }
+                    }
+                } else {
+                    state.push_log("voice: Hermes 未接続");
+                }
+            }
+            VoiceEvent::Failed { message } => {
+                state.voice_phase = VoicePhase::Idle;
+                state.invalidate_frame();
+                state.push_log(format!("voice: {message}"));
+            }
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1018,6 +1113,7 @@ mod tests {
             history_idx: None,
             log: VecDeque::new(),
             help_open: false,
+            voice_phase: VoicePhase::Idle,
             prev_lines: Vec::new(),
             prev_cols: 0,
             prev_rows: 0,
@@ -1055,6 +1151,7 @@ mod tests {
             history_idx: None,
             log: VecDeque::new(),
             help_open: false,
+            voice_phase: VoicePhase::Idle,
             prev_lines: Vec::new(),
             prev_cols: 0,
             prev_rows: 0,
