@@ -806,8 +806,9 @@ fn apply_method(pc: &mut PatternCode, name: &str, args: &str) -> Result<(), Stri
     }
 }
 
-/// Single note name → Hz (A4 = 440).
-pub fn note_to_hz(note: &str) -> Result<f32, String> {
+/// Parse a note name (optional chord suffix stripped) into MIDI number as `i32`.
+/// A4 = 69. Chord tokens like `c3'maj` use the root only (matches Deck scheduling).
+fn note_to_midi_i32(note: &str) -> Result<i32, String> {
     if note.is_empty() {
         return Err("empty note".into());
     }
@@ -843,7 +844,22 @@ pub fn note_to_hz(note: &str) -> Result<f32, String> {
     let oct: i32 = oct_str
         .parse()
         .map_err(|_| format!("bad octave in {note}"))?;
-    let midi = (oct + 1) * 12 + semis;
+    Ok((oct + 1) * 12 + semis)
+}
+
+/// Single note name → MIDI 0..=127 (A4 = 69). Chord suffix uses root only.
+pub fn note_to_midi(note: &str) -> Result<u8, String> {
+    let midi = note_to_midi_i32(note)?;
+    if (0..=127).contains(&midi) {
+        Ok(midi as u8)
+    } else {
+        Err(format!("midi out of range for {note}: {midi}"))
+    }
+}
+
+/// Single note name → Hz (A4 = 440).
+pub fn note_to_hz(note: &str) -> Result<f32, String> {
+    let midi = note_to_midi_i32(note)?;
     Ok(440.0 * 2f32.powf((midi - 69) as f32 / 12.0))
 }
 
@@ -968,6 +984,13 @@ mod tests {
         assert!((note_to_hz("a4").unwrap() - 440.0).abs() < 0.01);
         assert!((note_to_hz("c3").unwrap() - 130.81).abs() < 0.5);
         assert!((note_to_hz("c#4").unwrap() - 277.18).abs() < 0.5);
+    }
+
+    #[test]
+    fn note_midi_numbers() {
+        assert_eq!(note_to_midi("a4").unwrap(), 69);
+        assert_eq!(note_to_midi("c4").unwrap(), 60);
+        assert_eq!(note_to_midi("c3'maj").unwrap(), 48); // root only
     }
 
     #[test]

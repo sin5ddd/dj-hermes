@@ -27,10 +27,11 @@ hush                stop all (immediate)  [operator]
 status
 help
 quit / q            [operator]
+viz [on|off]        toggle body punchcard / highlight (live TUI)
 
 # live TUI + Hermes
 bare text           send to Hermes (DJ assistant)
-/…                  local command (e.g. /bpm 128, /a load techno1)
+/…                  local command (e.g. /bpm 128, /a load techno1, /viz)
 ";
 
 /// How live TUI should route a prompt line.

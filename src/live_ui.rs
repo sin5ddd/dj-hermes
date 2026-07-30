@@ -24,11 +24,13 @@ use crate::cmd::{self, LiveInput};
 use crate::engine::{Command, Engine};
 use crate::hermes::{HermesEvent, HermesHandle};
 use crate::highlight::{active_spans, bar_index, bar_pos, render_ansi_ex, HighlightModel};
+use crate::song::Song;
+use crate::viz::{self, VizModel};
 use crate::voice_input::{VoiceEvent, VoiceHandle};
 use crate::watcher::{DeckPaths, UiLogBuffer};
 
 const HELP_LINE: &str =
-    "F12 音声  drag xf/EQ  自然文→Hermes  /a load  /x 4  /bpm  /help  (op: /hush /quit)";
+    "F10 viz  F12音声  drag xf/EQ  自然文→Hermes  /a load  /x 4  /bpm  /help  (op: /hush /quit)";
 const HELP_LINE_REC: &str = "● REC  F12 で停止（最大7秒）";
 const HELP_LINE_STT: &str = "… STT  認識中…";
 
@@ -92,9 +94,20 @@ enum VoicePhase {
     Stt,
 }
 
+/// Body pane content: mini-notation highlight (default) or punchcard viz.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
+enum BodyMode {
+    #[default]
+    Highlight,
+    Viz,
+}
+
 struct LiveState {
     model_a: Option<HighlightModel>,
     model_b: Option<HighlightModel>,
+    viz_a: Option<VizModel>,
+    viz_b: Option<VizModel>,
+    body_mode: BodyMode,
     /// Per-deck pattern cycle offset (global_bar + offset → pattern cycle).
     cycle_offset_a: i64,
     cycle_offset_b: i64,
@@ -128,6 +141,42 @@ impl LiveState {
             self.model_a = Some(model);
         } else {
             self.model_b = Some(model);
+        }
+    }
+
+    fn set_viz(&mut self, deck: usize, model: VizModel) {
+        if deck == 0 {
+            self.viz_a = Some(model);
+        } else {
+            self.viz_b = Some(model);
+        }
+    }
+
+    fn set_from_song(&mut self, deck: usize, song: &Song, sample_rate: u32) {
+        self.set_model(deck, HighlightModel::from_song(song, sample_rate));
+        self.set_viz(deck, VizModel::from_song(song, sample_rate));
+    }
+
+    fn toggle_body_mode(&mut self) -> &'static str {
+        self.body_mode = match self.body_mode {
+            BodyMode::Highlight => BodyMode::Viz,
+            BodyMode::Viz => BodyMode::Highlight,
+        };
+        self.invalidate_frame();
+        match self.body_mode {
+            BodyMode::Highlight => "body: highlight",
+            BodyMode::Viz => "body: punchcard (viz)",
+        }
+    }
+
+    fn set_body_mode(&mut self, mode: BodyMode) -> &'static str {
+        if self.body_mode != mode {
+            self.body_mode = mode;
+            self.invalidate_frame();
+        }
+        match self.body_mode {
+            BodyMode::Highlight => "body: highlight",
+            BodyMode::Viz => "body: punchcard (viz)",
         }
     }
 
@@ -177,6 +226,9 @@ pub fn run(
     let mut state = LiveState {
         model_a: None,
         model_b: None,
+        viz_a: None,
+        viz_b: None,
+        body_mode: BodyMode::Highlight,
         cycle_offset_a: 0,
         cycle_offset_b: 0,
         xfade_pos: 0.0,
@@ -195,6 +247,7 @@ pub fn run(
         drag: DragTarget::None,
     };
     if let Some(model) = initial_a {
+        // Viz model is filled on first engine sync / load; seed highlight only here.
         state.set_model(0, model);
     }
     if let Some(model) = initial_b {
@@ -270,6 +323,11 @@ pub fn run(
                             KeyCode::Esc if state.input.is_empty() => {
                                 let _ = tx.send(Command::Hush);
                                 return Ok(());
+                            }
+                            // F10 toggles punchcard / highlight body (not a typeable char).
+                            KeyCode::F(10) if state.voice_phase != VoicePhase::Recording => {
+                                let msg = state.toggle_body_mode();
+                                state.push_log(msg);
                             }
                             KeyCode::Enter => {
                                 if state.voice_phase == VoicePhase::Recording {
@@ -460,26 +518,73 @@ fn sync_models_from_engine(state: &mut LiveState, eng: &Engine, sample_rate: u32
             }
         }
     }
-    for (deck, model_slot) in [(0, &mut state.model_a), (1, &mut state.model_b)] {
-        let Some(model) = model_slot.as_mut() else {
+    for deck in 0..2 {
+        // Unload: clear UI models when deck is empty.
+        if eng.decks[deck].song_ref().is_none() {
+            if deck == 0 {
+                state.model_a = None;
+                state.viz_a = None;
+            } else {
+                state.model_b = None;
+                state.viz_b = None;
+            }
+            continue;
+        }
+        let Some(s) = eng.decks[deck].song_ref() else {
             continue;
         };
-        model.bpm = eng.transport.bpm;
-        model.sample_rate = sample_rate;
-        if let Some(song) = eng.decks[deck].song_title() {
-            if song != model.title.as_str() {
-                if let Some(s) = eng.decks[deck].song_ref() {
-                    *model = HighlightModel::from_song(s, sample_rate);
+
+        let need_full = match if deck == 0 {
+            state.model_a.as_ref()
+        } else {
+            state.model_b.as_ref()
+        } {
+            None => true,
+            Some(m) => m.title != s.title || m.source != s.source,
+        };
+        let viz_missing = if deck == 0 {
+            state.viz_a.is_none()
+        } else {
+            state.viz_b.is_none()
+        };
+
+        if need_full || viz_missing {
+            let hl = HighlightModel::from_song(s, sample_rate);
+            let vz = VizModel::from_song(s, sample_rate);
+            if deck == 0 {
+                state.model_a = Some(hl);
+                state.viz_a = Some(vz);
+            } else {
+                state.model_b = Some(hl);
+                state.viz_b = Some(vz);
+            }
+            continue;
+        }
+
+        // Light update: BPM / mute only.
+        if let Some(model) = if deck == 0 {
+            state.model_a.as_mut()
+        } else {
+            state.model_b.as_mut()
+        } {
+            model.bpm = eng.transport.bpm;
+            model.sample_rate = sample_rate;
+            for (i, t) in s.tracks.iter().enumerate() {
+                if let Some(ht) = model.tracks.get_mut(i) {
+                    ht.muted = t.muted;
                 }
-            } else if let Some(s) = eng.decks[deck].song_ref() {
-                if s.source == model.source {
-                    for (i, t) in s.tracks.iter().enumerate() {
-                        if let Some(ht) = model.tracks.get_mut(i) {
-                            ht.muted = t.muted;
-                        }
-                    }
-                } else {
-                    *model = HighlightModel::from_song(s, sample_rate);
+            }
+        }
+        if let Some(viz) = if deck == 0 {
+            state.viz_a.as_mut()
+        } else {
+            state.viz_b.as_mut()
+        } {
+            viz.bpm = eng.transport.bpm;
+            viz.sample_rate = sample_rate;
+            for (i, t) in s.tracks.iter().enumerate() {
+                if let Some(vt) = viz.tracks.get_mut(i) {
+                    vt.muted = t.muted;
                 }
             }
         }
@@ -508,24 +613,28 @@ fn draw_frame(
     let half = cols.saturating_sub(gutter) / 2;
     let right_w = cols.saturating_sub(half + gutter);
 
-    let left_lines = pane_lines(
-        state.model_a.as_ref(),
-        "A",
+    let left_lines = pane_lines(PaneArgs {
+        mode: state.body_mode,
+        model: state.model_a.as_ref(),
+        viz: state.viz_a.as_ref(),
+        deck_label: "A",
         gs,
         sample_rate,
-        state.cycle_offset_a,
-        half,
-        body_rows,
-    );
-    let right_lines = pane_lines(
-        state.model_b.as_ref(),
-        "B",
+        cycle_offset: state.cycle_offset_a,
+        width: half,
+        height: body_rows,
+    });
+    let right_lines = pane_lines(PaneArgs {
+        mode: state.body_mode,
+        model: state.model_b.as_ref(),
+        viz: state.viz_b.as_ref(),
+        deck_label: "B",
         gs,
         sample_rate,
-        state.cycle_offset_b,
-        right_w,
-        body_rows,
-    );
+        cycle_offset: state.cycle_offset_b,
+        width: right_w,
+        height: body_rows,
+    });
 
     let mut lines: Vec<String> = Vec::with_capacity(rows);
 
@@ -855,44 +964,85 @@ fn format_crossfader_line(pos: f32, cols: usize, row: u16) -> (String, SliderHit
     (line, hit)
 }
 
-fn pane_lines(
-    model: Option<&HighlightModel>,
-    deck_label: &str,
+struct PaneArgs<'a> {
+    mode: BodyMode,
+    model: Option<&'a HighlightModel>,
+    viz: Option<&'a VizModel>,
+    deck_label: &'a str,
     gs: u64,
     sample_rate: u32,
     cycle_offset: i64,
     width: usize,
     height: usize,
-) -> Vec<String> {
-    let text = if let Some(model) = model {
-        let sr = model.sample_rate.max(sample_rate);
-        let global_bar = bar_index(gs, sr, model.bpm);
-        let pattern_bar = (global_bar as i64 + cycle_offset).max(0) as u64;
-        let song_bar = pattern_bar.saturating_add(1);
-        let pos = bar_pos(gs, sr, model.bpm);
-        let spans = active_spans(model, pattern_bar, pos);
-        let header = format!(
-            "[{}] {}  ·  {:.0} BPM  ·  bar {song_bar}  ·  pos {:.2}",
-            deck_label, model.title, model.bpm, pos
-        );
-        render_ansi_ex(model, &spans, &header, false)
-    } else {
-        format!(
-            "[{}] (empty)\n────────────────────────────────────────\n{} load songs/….strudel\n",
-            deck_label,
-            deck_label.to_ascii_lowercase()
-        )
-    };
+}
 
-    let mut lines: Vec<String> = text.lines().map(|s| s.to_string()).collect();
-    if lines.len() > height {
-        lines.truncate(height);
+fn pane_lines(args: PaneArgs<'_>) -> Vec<String> {
+    let PaneArgs {
+        mode,
+        model,
+        viz,
+        deck_label,
+        gs,
+        sample_rate,
+        cycle_offset,
+        width,
+        height,
+    } = args;
+    match mode {
+        BodyMode::Viz => {
+            if let Some(viz) = viz {
+                return viz::render_pane_lines_ex(
+                    viz,
+                    gs,
+                    cycle_offset,
+                    sample_rate,
+                    width,
+                    height,
+                    deck_label,
+                );
+            }
+            if model.is_none() {
+                return viz::empty_pane_lines(deck_label, width, height);
+            }
+            // Highlight present but viz not yet synced — brief placeholder.
+            let mut lines = vec![format!("[{deck_label}] (syncing viz…)"), String::new()];
+            while lines.len() < height {
+                lines.push(String::new());
+            }
+            lines.truncate(height);
+            lines
+        }
+        BodyMode::Highlight => {
+            let text = if let Some(model) = model {
+                let sr = model.sample_rate.max(sample_rate);
+                let global_bar = bar_index(gs, sr, model.bpm);
+                let pattern_bar = (global_bar as i64 + cycle_offset).max(0) as u64;
+                let song_bar = pattern_bar.saturating_add(1);
+                let pos = bar_pos(gs, sr, model.bpm);
+                let spans = active_spans(model, pattern_bar, pos);
+                let header = format!(
+                    "[{}] {}  ·  {:.0} BPM  ·  bar {song_bar}  ·  pos {:.2}",
+                    deck_label, model.title, model.bpm, pos
+                );
+                render_ansi_ex(model, &spans, &header, false)
+            } else {
+                format!(
+                    "[{}] (empty)\n────────────────────────────────────────\n{} load songs/….strudel\n",
+                    deck_label,
+                    deck_label.to_ascii_lowercase()
+                )
+            };
+
+            let mut lines: Vec<String> = text.lines().map(|s| s.to_string()).collect();
+            if lines.len() > height {
+                lines.truncate(height);
+            }
+            while lines.len() < height {
+                lines.push(String::new());
+            }
+            lines
+        }
     }
-    while lines.len() < height {
-        lines.push(String::new());
-    }
-    let _ = width;
-    lines
 }
 
 /// Clip/pad to `width` **visible** columns, preserving SGR (ANSI color) sequences.
@@ -977,15 +1127,39 @@ fn exec_local(
     sample_rate: u32,
     state: &mut LiveState,
 ) -> bool {
+    // UI-only: body highlight ⇔ punchcard (not sent to engine).
+    if let Some(msg) = apply_viz_command(body, state) {
+        state.push_log(msg);
+        return true;
+    }
     let result = cmd::exec(body, tx, deck_paths, Some(engine));
     if let Some((deck, song)) = result.loaded {
-        let model = HighlightModel::from_song(&song, sample_rate);
-        state.set_model(deck, model);
+        state.set_from_song(deck, &song, sample_rate);
     }
     for m in result.messages {
         state.push_log(m);
     }
     !result.quit
+}
+
+/// Handle `viz` / `viz on` / `viz off`. Returns log message when recognized.
+fn apply_viz_command(body: &str, state: &mut LiveState) -> Option<String> {
+    let mut parts = body.split_whitespace();
+    let head = parts.next()?;
+    if !matches!(head, "viz" | "punchcard" | "pianoroll") {
+        return None;
+    }
+    let msg = match parts.next() {
+        None | Some("toggle") => state.toggle_body_mode(),
+        Some("on") | Some("1") | Some("punchcard") => state.set_body_mode(BodyMode::Viz),
+        Some("off") | Some("0") | Some("highlight") | Some("hl") => {
+            state.set_body_mode(BodyMode::Highlight)
+        }
+        Some(other) => {
+            return Some(format!("viz: unknown arg `{other}` (on|off|toggle)"));
+        }
+    };
+    Some(msg.to_string())
 }
 
 fn drain_hermes_events(state: &mut LiveState, hermes: &HermesHandle) {
@@ -1099,11 +1273,13 @@ mod tests {
         assert!(t10.contains("\x1b[47m"));
     }
 
-    #[test]
-    fn push_log_keeps_only_three_lines() {
-        let mut state = LiveState {
+    fn empty_state() -> LiveState {
+        LiveState {
             model_a: None,
             model_b: None,
+            viz_a: None,
+            viz_b: None,
+            body_mode: BodyMode::Highlight,
             cycle_offset_a: 0,
             cycle_offset_b: 0,
             xfade_pos: 0.0,
@@ -1128,7 +1304,12 @@ mod tests {
                 cols: 0,
             }; 2]; 3],
             drag: DragTarget::None,
-        };
+        }
+    }
+
+    #[test]
+    fn push_log_keeps_only_three_lines() {
+        let mut state = empty_state();
         for i in 0..10 {
             state.push_log(format!("msg {i}"));
         }
@@ -1139,37 +1320,23 @@ mod tests {
 
     #[test]
     fn push_log_collapses_multiline_to_first_line() {
-        let mut state = LiveState {
-            model_a: None,
-            model_b: None,
-            cycle_offset_a: 0,
-            cycle_offset_b: 0,
-            xfade_pos: 0.0,
-            eq: [[0.5; 2]; 3],
-            input: String::new(),
-            history: Vec::new(),
-            history_idx: None,
-            log: VecDeque::new(),
-            help_open: false,
-            voice_phase: VoicePhase::Idle,
-            prev_lines: Vec::new(),
-            prev_cols: 0,
-            prev_rows: 0,
-            xf_hit: SliderHit {
-                row: 0,
-                col0: 0,
-                cols: 0,
-            },
-            eq_hits: [[SliderHit {
-                row: 0,
-                col0: 0,
-                cols: 0,
-            }; 2]; 3],
-            drag: DragTarget::None,
-        };
+        let mut state = empty_state();
         state.push_log("first\nsecond\nthird");
         assert_eq!(state.log.len(), 1);
         assert_eq!(state.log[0], "first");
+    }
+
+    #[test]
+    fn viz_command_toggles_body_mode() {
+        let mut state = empty_state();
+        assert_eq!(state.body_mode, BodyMode::Highlight);
+        let msg = apply_viz_command("viz", &mut state).unwrap();
+        assert!(msg.contains("punchcard"), "{msg}");
+        assert_eq!(state.body_mode, BodyMode::Viz);
+        let msg = apply_viz_command("viz off", &mut state).unwrap();
+        assert!(msg.contains("highlight"), "{msg}");
+        assert_eq!(state.body_mode, BodyMode::Highlight);
+        assert!(apply_viz_command("bpm 120", &mut state).is_none());
     }
 
     #[test]

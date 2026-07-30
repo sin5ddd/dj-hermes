@@ -95,7 +95,7 @@ Usage:
   Live TUI input:
     bare text     → Hermes (profile dj-hermes; needs API + MCP)
     F12           → voice (xAI STT → Hermes; needs XAI_API_KEY)
-    /cmd …        → local (e.g. /a load smoke  /x 4  /bpm 128  /help)
+    /cmd …        → local (e.g. /a load smoke  /x 4  /bpm 128  /viz  /help)
     --no-hermes   → bare text is local again (text REPL always local)
   Flags: --no-hermes  --no-voice  --hermes-bin PATH  --hermes-profile NAME  -d/--debug
 

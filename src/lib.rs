@@ -19,5 +19,6 @@ pub mod song;
 pub mod sound;
 pub mod synth;
 pub mod transport;
+pub mod viz;
 pub mod voice_input;
 pub mod watcher;
