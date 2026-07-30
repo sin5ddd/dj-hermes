@@ -58,14 +58,20 @@ cargo run -- dj songs/techno1.strudel songs/ambient1.strudel
   - 中段: **A/B の Hi・Mid・Lo EQ**（各 3 行・短スライダー。中央 0.5＝フラット、±12 dB。Mixer チャンネル EQ に連動）
   - その下: **クロスフェーダー**（最大 10 文字幅 `XF A ──□── B`。□ は白背景。クリック／ドラッグ）
   - 下段: ログ + `»` プロンプト
-  - A のみ / B のみ / 両方省略も可（空デッキから `a load` / `b load`）
-  - コマンド例（コロン不要）:
-    - `a load songs/techno1.strudel` / `b load songs/ambient1.strudel`
-    - `b head 33`（次の小節境界で B を曲の 33 小節目から再生。別名 `cue`。1 始まり）
-    - `x 4`（反対側デッキへ 4 小節 xfade）/ `b x 4`（明示的に B へ）
-    - `a mute kick` / `bpm 128` / `hush` / `status` / `quit`
-  - `--text`: ハイライトなしの rustyline テキスト REPL
+  - A のみ / B のみ / 両方省略も可（空デッキから `/a load` / `/b load`）
+  - **入力モデル（live TUI）**
+    - **自然文**（例: `暗くして`）→ Hermes（既定プロファイル `strudel-demo`、MCP 経由で操作）
+    - **`/` 付き**（例: `/x 4` `/bpm 128` `/a load techno1`）→ ローカル即時コマンド
+    - `--no-hermes` または Hermes 未検出時: 裸入力もローカル（従来どおり）
+  - ローカルコマンド例:
+    - `/a load songs/techno1.strudel` / `/b load songs/ambient1.strudel`
+    - `/b head 33`（次の小節境界で B を曲の 33 小節目から。別名 `cue`。1 始まり）
+    - `/x 4`（反対側デッキへ 4 小節 xfade）/ `/b x 4`
+    - `/a mute kick` / `/bpm 128` / `/status` / `/help`
+    - オペレータ: `/hush` `/quit`
+  - `--text`: ハイライトなしの rustyline テキスト REPL（**裸コマンドのまま**。Hermes は TUI のみ）
   - 互換: `play --repl` / `play --repl-text` も同じセッションを起動（A/B 2 曲可）
+  - 展示向け Hermes 手順・プロンプトインジェクション対策: [docs/exhibit/README.md](./docs/exhibit/README.md)
 - サンプルは `./samples`（Sonic Pi 由来 CC0）。曲は `songs/*.strudel`
 - 出力デバイスが無い環境ではエラー終了（`cargo test` / build はデバイス不要）
 
@@ -165,6 +171,8 @@ strudel-rs dj songs/smoke.strudel
 
 ### Hermes（`config.yaml`）
 
+展示ブースでは **専用プロファイル `strudel-demo`** を使い、strudel MCP 以外のツールを無効にしてください（詳細: [docs/exhibit/README.md](./docs/exhibit/README.md)）。
+
 ```yaml
 mcp_servers:
   strudel:
@@ -173,6 +181,8 @@ mcp_servers:
     # ポートを変えている場合:
     # env:
     #   STRUDEL_API: "http://127.0.0.1:17878"
+    tools:
+      exclude: [strudel_hush]   # 緊急停止は TUI の /hush
 ```
 
 `command` にフルパスを書く例:

@@ -1,4 +1,7 @@
 //! Shared live/REPL command parser (colon-free, deck-first).
+//!
+//! Live TUI (with Hermes): prefix local commands with `/` (e.g. `/x 4`).
+//! Bare natural language goes to Hermes. Text REPL (`--text`) still uses bare commands.
 
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
@@ -10,6 +13,7 @@ use crate::song::{parse_song, resolve_song_path, Song};
 use crate::watcher::DeckPaths;
 
 pub const HELP: &str = "\
+# local commands (live TUI: prefix with / )
 a|b load <file>     load song (bare name → songs/; .strudel/.txt optional)
 a|b mute <track>    mute track (next bar)
 a|b unmute <track>
@@ -19,11 +23,59 @@ x [bars]            xfade to the other deck (default 4)
 a x [bars]          xfade to deck A
 b x [bars]          xfade to deck B
 bpm <n>             BPM from next bar
-hush                stop all (immediate)
+hush                stop all (immediate)  [operator]
 status
 help
-quit / q
+quit / q            [operator]
+
+# live TUI + Hermes
+bare text           send to Hermes (DJ assistant)
+/…                  local command (e.g. /bpm 128, /a load techno1)
 ";
+
+/// How live TUI should route a prompt line.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum LiveInput {
+    Empty,
+    /// Local command body (no leading `/`).
+    LocalCommand(String),
+    /// Natural-language prompt for Hermes.
+    HermesPrompt(String),
+}
+
+/// Classify a live TUI input line.
+///
+/// When `hermes_enabled`, only lines starting with `/` (after optional `:`) are
+/// local commands; everything else is a Hermes prompt.
+/// When Hermes is off, bare lines are local (optional leading `/` still stripped).
+pub fn classify_live_input(line: &str, hermes_enabled: bool) -> LiveInput {
+    let line = line.trim();
+    if line.is_empty() {
+        return LiveInput::Empty;
+    }
+    // Legacy colon prefix (muscle memory).
+    let line = line.strip_prefix(':').unwrap_or(line).trim_start();
+    if line.is_empty() {
+        return LiveInput::Empty;
+    }
+    if hermes_enabled {
+        if let Some(rest) = line.strip_prefix('/') {
+            return LiveInput::LocalCommand(rest.trim_start().to_string());
+        }
+        return LiveInput::HermesPrompt(line.to_string());
+    }
+    // Offline / --no-hermes: bare commands; optional `/` still accepted.
+    let body = line.strip_prefix('/').unwrap_or(line).trim_start();
+    if body.is_empty() {
+        return LiveInput::Empty;
+    }
+    LiveInput::LocalCommand(body.to_string())
+}
+
+/// True if the local command body is help.
+pub fn is_help_body(body: &str) -> bool {
+    matches!(body.trim(), "help" | "h" | "?")
+}
 
 pub struct ExecResult {
     pub quit: bool,
@@ -300,6 +352,36 @@ fn parse_deck(s: &str) -> Option<usize> {
 mod tests {
     use super::*;
     use crossbeam::channel::unbounded;
+
+    #[test]
+    fn classify_slash_vs_hermes() {
+        assert_eq!(classify_live_input("", true), LiveInput::Empty);
+        assert_eq!(
+            classify_live_input("/bpm 128", true),
+            LiveInput::LocalCommand("bpm 128".into())
+        );
+        assert_eq!(
+            classify_live_input(":/x 4", true),
+            LiveInput::LocalCommand("x 4".into())
+        );
+        assert_eq!(
+            classify_live_input("暗くして", true),
+            LiveInput::HermesPrompt("暗くして".into())
+        );
+        assert_eq!(
+            classify_live_input("bpm 128", true),
+            LiveInput::HermesPrompt("bpm 128".into())
+        );
+        // Hermes off: bare is local
+        assert_eq!(
+            classify_live_input("bpm 128", false),
+            LiveInput::LocalCommand("bpm 128".into())
+        );
+        assert_eq!(
+            classify_live_input("/status", false),
+            LiveInput::LocalCommand("status".into())
+        );
+    }
 
     #[test]
     fn parses_a_load_and_x() {
