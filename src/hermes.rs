@@ -686,8 +686,7 @@ fn pump_pipe(
 fn last_useful_line(s: &str) -> Option<String> {
     s.lines()
         .map(str::trim)
-        .filter(|l| !l.is_empty())
-        .next_back()
+        .rfind(|l| !l.is_empty())
         .map(|s| s.to_string())
 }
 
