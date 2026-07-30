@@ -96,6 +96,8 @@ cargo run -- dj songs/techno1.strudel songs/ambient1.strudel
 orbit は **デッキ単位で 4 本**（id 1..4）。Deck A と B の orbit は共有しません。  
 `delay` / `room` は **orbit 共有の global FX**（同 orbit 上は last-write）。`delayfeedback` は 0.95 未満にクランプされます。
 
+本家 Strudel にあって **未実装のシンセ / FX 一覧**: [docs/strudel-gap-synths-fx.md](./docs/strudel-gap-synths-fx.md)
+
 ```
 // kick が pad の orbit を duck
 $: s("bd*4").gain(0.9).duckorbit(2).duckattack(0.15).duckdepth(0.9)
