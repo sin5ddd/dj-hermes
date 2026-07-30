@@ -55,6 +55,7 @@ cargo run -- dj songs/techno1.strudel songs/ambient1.strudel
 - `--headless`: 旧来のメタログのみ（TTY 不要・CI / パイプ向け）
 - **`dj [SONG_A] [SONG_B]`**: **ハイライト + コマンド行**のライブ UI + `songs/` ウォッチャ（デモ / DJ 向け）
   - 画面上段: **左 = デッキ A / 右 = デッキ B** のミニ記法ハイライト（同時表示）
+  - **`F10` または `/viz`**: 上段を **punchcard（ノート時系列）** 表示に切替（もう一度でハイライトに戻る）。`/viz on` / `/viz off` も可
   - 中段: **A/B の Hi・Mid・Lo EQ**（各 3 行・短スライダー。中央 0.5＝フラット、±12 dB。Mixer チャンネル EQ に連動）
   - その下: **クロスフェーダー**（最大 10 文字幅 `XF A ──□── B`。□ は白背景。クリック／ドラッグ）
   - 下段: ログ + `»` プロンプト
@@ -69,7 +70,7 @@ cargo run -- dj songs/techno1.strudel songs/ambient1.strudel
     - `/a load songs/techno1.strudel` / `/b load songs/ambient1.strudel`
     - `/b head 33`（次の小節境界で B を曲の 33 小節目から。別名 `cue`。1 始まり）
     - `/x 4`（反対側デッキへ 4 小節 xfade）/ `/b x 4`
-    - `/a mute kick` / `/bpm 128` / `/status` / `/help`
+    - `/a mute kick` / `/bpm 128` / `/status` / `/help` / `/viz`
     - オペレータ: `/hush` `/quit`
   - `--text`: ハイライトなしの rustyline テキスト REPL（**裸コマンドのまま**。Hermes は TUI のみ）
   - 互換: `play --repl` / `play --repl-text` も同じセッションを起動（A/B 2 曲可）

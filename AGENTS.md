@@ -169,7 +169,7 @@ Release プロファイル目安（プラン）: `opt-level = 3`, `lto = true`, 
 5. **3 層:** 曲A / 曲B / Mixer。フェーダー・EQ・切替は Mixer に寄せる。マスター BPM 共有。曲ごとの独立テンポはしない。
 6. **バッファまたぎ**はスプリットせず安全性優先（最大 1 バッファずれ許容）。
 7. **cpal は I/O のみ。** Synths/Effects/Samples 相当は自前 DSP。Strudel 全機能は目標にせず **ティアA** を Task 1–22 の完了条件とする（B/C は任意 Task 23–24）。
-8. **Punchcard/Pianoroll 可視化**は任意 Task 25。端末 TUI 近似で実現可能。エディタ埋め込みは非対応。音声コア完了後。
+8. **Punchcard/Pianoroll 可視化**は任意 Task 25（完了）。`dj` live UI で `F10` / `/viz` により body を highlight ⇔ punchcard 切替。エディタ埋め込みは非対応。
 9. **ミニ記法ライブハイライト**は任意 Task 26。`play` の**既定表示**（曲ソース + 再生中 atom の ANSI 強調）。旧メタログのみは `--headless`。audio スレッドでは span 計算しない（UI 再評価）。
 10. 依存をむやみに増やさない。パーサジェネレータや重いシリアライズ層は避ける。ネット経由サンプルロードはデモ範囲外。
 
@@ -261,13 +261,12 @@ cargo test
 | 項目               | 状態                                                   |
 | ------------------ | ------------------------------------------------------ |
 | リポジトリ         | GitHub private（`sin5ddd/strudel-rust`）+ CI/CD 基盤   |
-| cargo プロジェクト | Task 1–19 + Task 21 + Task 23 + Task 24 + Task 26 完了 |
-| 実装タスク         | Task 20 任意 → Task 22 計測 → Task 25 viz（任意）      |
+| cargo プロジェクト | Task 1–19 + Task 21 + Task 23–26 完了 |
+| 実装タスク         | Task 20 任意 → Task 22 計測（Task 25 viz 完了）      |
 
 次に実装する場合の入口:
 
 1. Task 22: リソース計測 + README 展示手順
 2. Task 20（任意）: 汎用 ctl スクリプト + MCP クライアント設定例（Hermes 専用ランタイムは作らない）
-3. Task 25（任意）: Punchcard / Pianoroll 端末 TUI
 
 詰まった点・設計判断はプラン末尾の「詰まりログ」「追加メモ」「Risks / Open Questions」に追記する。

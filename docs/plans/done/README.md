@@ -15,10 +15,10 @@
 | 21 | 展示曲 + E2E DJ 切替 | [task-21](./2026-07-27-task-21-songs-e2e.md) |
 | 23 | Synths/FX + orbit/duck/wt/compressor | [task-23](./2026-07-27-task-23-synths-orbit.md) |
 | 24 | orbit delay/room + Mixer EQ 連動 | [task-24](./2026-07-27-task-24-orbit-delay-room.md) |
+| 25 | Punchcard / Pianoroll（dj body トグル） | [task-25](./2026-07-27-task-25-viz.md) |
 | 26 | ミニ記法ライブハイライト | [task-26](./2026-07-27-task-26-live-highlight.md) |
 
 ## まだ正本に残っているタスク
 
 - Task 20（任意）クライアント連携ドキュメント
 - Task 22 リソース計測 + README 展示
-- Task 25 Punchcard/Pianoroll TUI
