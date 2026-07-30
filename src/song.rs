@@ -9,6 +9,13 @@ use crate::code::{parse_code, PatternCode};
 /// Default directory for bare song names (relative to process working directory).
 pub const DEFAULT_SONGS_DIR: &str = "songs";
 
+/// User song library under the home directory: `~/.config/strudel-rs/songs`.
+/// This is the **only** path where API/MCP may write songs.
+pub const USER_SONGS_REL: &str = ".config/strudel-rs/songs";
+
+/// Max UTF-8 byte size for song content accepted by save.
+pub const MAX_SONG_CONTENT_BYTES: usize = 256 * 1024;
+
 #[derive(Debug, Clone)]
 pub struct Track {
     pub name: String,
@@ -88,6 +95,96 @@ pub fn sanitize_song_path(path: &str) -> Result<PathBuf, String> {
     Ok(PathBuf::from(path))
 }
 
+/// Home directory for user config (`HOME`, then `USERPROFILE`).
+pub fn home_dir() -> Result<PathBuf, String> {
+    if let Some(h) = std::env::var_os("HOME").filter(|s| !s.is_empty()) {
+        return Ok(PathBuf::from(h));
+    }
+    if let Some(h) = std::env::var_os("USERPROFILE").filter(|s| !s.is_empty()) {
+        return Ok(PathBuf::from(h));
+    }
+    Err("cannot resolve home directory (HOME / USERPROFILE unset)".into())
+}
+
+/// Absolute path to `~/.config/strudel-rs/songs`.
+pub fn user_songs_dir() -> Result<PathBuf, String> {
+    Ok(home_dir()?.join(USER_SONGS_REL))
+}
+
+/// Create the user songs directory if missing.
+pub fn ensure_user_songs_dir() -> Result<PathBuf, String> {
+    let dir = user_songs_dir()?;
+    std::fs::create_dir_all(&dir).map_err(|e| format!("create user songs dir: {e}"))?;
+    Ok(dir)
+}
+
+/// Normalize a user-facing save name to a safe file name (`*.strudel`).
+///
+/// Accepts only a single path segment: `[A-Za-z0-9._-]+`, optional `.strudel` / `.txt`.
+/// Rejects path separators, `..`, absolute paths, and empty names.
+pub fn sanitize_user_song_name(name: &str) -> Result<String, String> {
+    let name = name.trim();
+    if name.is_empty() {
+        return Err("song name is empty".into());
+    }
+    if name.contains('/') || name.contains('\\') {
+        return Err("song name must be a basename (no path separators)".into());
+    }
+    if name == "." || name == ".." || name.contains("..") {
+        return Err("song name must not contain '..'".into());
+    }
+    // Windows drive / UNC style
+    if name.contains(':') {
+        return Err("song name must not contain ':'".into());
+    }
+    let (stem, ext) = match known_song_ext(Path::new(name)) {
+        Some(e) => {
+            let stem = Path::new(name)
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .unwrap_or("");
+            (stem, e)
+        }
+        None => {
+            if Path::new(name).extension().is_some() {
+                return Err("song name extension must be .strudel or .txt (or omit)".into());
+            }
+            (name, "strudel")
+        }
+    };
+    if stem.is_empty() || stem == "." || stem == ".." {
+        return Err("song name stem is empty".into());
+    }
+    if !stem
+        .chars()
+        .all(|c| c.is_ascii_alphanumeric() || c == '.' || c == '_' || c == '-')
+    {
+        return Err("song name may only use ASCII letters, digits, '.', '_' and '-'".into());
+    }
+    // Prefer .strudel for the user library; allow .txt if explicitly given.
+    Ok(format!("{stem}.{ext}"))
+}
+
+/// Resolve a save path under the user songs directory only.
+pub fn resolve_user_song_save_path(name: &str) -> Result<PathBuf, String> {
+    let file_name = sanitize_user_song_name(name)?;
+    let dir = user_songs_dir()?;
+    let path = dir.join(&file_name);
+    // Defense in depth: joined path must stay under user_songs_dir.
+    let dir_canon = dir.components().collect::<Vec<_>>();
+    let path_comps = path.components().collect::<Vec<_>>();
+    if path_comps.len() != dir_canon.len() + 1 {
+        return Err("refusing path outside user songs directory".into());
+    }
+    if path.file_name().and_then(|s| s.to_str()) != Some(file_name.as_str()) {
+        return Err("refusing path outside user songs directory".into());
+    }
+    if path.components().any(|c| matches!(c, Component::ParentDir)) {
+        return Err("refusing path outside user songs directory".into());
+    }
+    Ok(path)
+}
+
 fn known_song_ext(path: &Path) -> Option<&'static str> {
     match path
         .extension()
@@ -107,7 +204,8 @@ fn has_dir_component(path: &Path) -> bool {
 
 /// Candidate paths for a user-supplied song reference (order = preference).
 ///
-/// - Bare names (no directory) are tried under [`DEFAULT_SONGS_DIR`] first, then cwd.
+/// - Bare names (no directory): **user library** (`~/.config/strudel-rs/songs`) →
+///   [`DEFAULT_SONGS_DIR`] → cwd.
 /// - Missing `.strudel` / `.txt` is filled in; **`.strudel` before `.txt`**.
 pub fn song_path_candidates(input: &str) -> Result<Vec<PathBuf>, String> {
     let _ = sanitize_song_path(input)?;
@@ -120,12 +218,17 @@ pub fn song_path_candidates(input: &str) -> Result<Vec<PathBuf>, String> {
         }
     };
 
+    let user_dir = user_songs_dir().ok();
+
     match known_song_ext(p) {
         Some(_) => {
             if has_dir_component(p) {
                 push(&mut out, p.to_path_buf());
             } else {
-                // bare `smoke.strudel` → songs/ then cwd
+                // bare `smoke.strudel` → user lib → songs/ → cwd
+                if let Some(ref ud) = user_dir {
+                    push(&mut out, ud.join(p));
+                }
                 push(&mut out, PathBuf::from(DEFAULT_SONGS_DIR).join(p));
                 push(&mut out, p.to_path_buf());
             }
@@ -135,6 +238,9 @@ pub fn song_path_candidates(input: &str) -> Result<Vec<PathBuf>, String> {
             if has_dir_component(p) {
                 push(&mut out, p.to_path_buf());
             } else {
+                if let Some(ref ud) = user_dir {
+                    push(&mut out, ud.join(p));
+                }
                 push(&mut out, PathBuf::from(DEFAULT_SONGS_DIR).join(p));
                 push(&mut out, p.to_path_buf());
             }
@@ -146,6 +252,10 @@ pub fn song_path_candidates(input: &str) -> Result<Vec<PathBuf>, String> {
                 push(&mut out, p.with_extension("txt"));
             } else {
                 let name = p.as_os_str();
+                if let Some(ref ud) = user_dir {
+                    push(&mut out, ud.join(name).with_extension("strudel"));
+                    push(&mut out, ud.join(name).with_extension("txt"));
+                }
                 push(
                     &mut out,
                     PathBuf::from(DEFAULT_SONGS_DIR)
@@ -896,10 +1006,20 @@ $: s("hh*8")
     }
 
     #[test]
-    fn song_path_candidates_bare_name_prefers_songs_strudel() {
+    fn song_path_candidates_bare_name_prefers_user_then_songs_strudel() {
         let c = song_path_candidates("smoke").unwrap();
-        assert_eq!(c[0], PathBuf::from("songs").join("smoke.strudel"), "{c:?}");
-        assert_eq!(c[1], PathBuf::from("songs").join("smoke.txt"));
+        let songs_strudel = PathBuf::from("songs").join("smoke.strudel");
+        assert!(
+            c.iter().any(|p| p == &songs_strudel),
+            "expected songs/smoke.strudel in {c:?}"
+        );
+        if let Ok(ud) = user_songs_dir() {
+            assert_eq!(c[0], ud.join("smoke.strudel"), "{c:?}");
+            assert_eq!(c[1], ud.join("smoke.txt"), "{c:?}");
+            assert_eq!(c[2], songs_strudel, "{c:?}");
+        } else {
+            assert_eq!(c[0], songs_strudel, "{c:?}");
+        }
         assert!(c.iter().any(|p| p == &PathBuf::from("smoke.strudel")));
     }
 
@@ -911,10 +1031,45 @@ $: s("hh*8")
     }
 
     #[test]
-    fn song_path_candidates_bare_with_ext_tries_songs_first() {
+    fn song_path_candidates_bare_with_ext_tries_user_then_songs() {
         let c = song_path_candidates("smoke.strudel").unwrap();
-        assert_eq!(c[0], PathBuf::from("songs").join("smoke.strudel"));
-        assert_eq!(c[1], PathBuf::from("smoke.strudel"));
+        let songs = PathBuf::from("songs").join("smoke.strudel");
+        if let Ok(ud) = user_songs_dir() {
+            assert_eq!(c[0], ud.join("smoke.strudel"));
+            assert_eq!(c[1], songs);
+        } else {
+            assert_eq!(c[0], songs);
+        }
+        assert!(c.iter().any(|p| p == &PathBuf::from("smoke.strudel")));
+    }
+
+    #[test]
+    fn sanitize_user_song_name_ok_and_rejects() {
+        assert_eq!(
+            sanitize_user_song_name("visitor-dark").unwrap(),
+            "visitor-dark.strudel"
+        );
+        assert_eq!(
+            sanitize_user_song_name("foo.strudel").unwrap(),
+            "foo.strudel"
+        );
+        assert_eq!(sanitize_user_song_name("foo.txt").unwrap(), "foo.txt");
+        assert!(sanitize_user_song_name("../x").is_err());
+        assert!(sanitize_user_song_name("a/b").is_err());
+        assert!(sanitize_user_song_name("a\\b").is_err());
+        assert!(sanitize_user_song_name("C:foo").is_err());
+        assert!(sanitize_user_song_name("bad name").is_err());
+        assert!(sanitize_user_song_name("x.rs").is_err());
+    }
+
+    #[test]
+    fn resolve_user_song_save_path_stays_in_library() {
+        let p = resolve_user_song_save_path("my-track").unwrap();
+        let dir = user_songs_dir().unwrap();
+        assert_eq!(p, dir.join("my-track.strudel"));
+        assert_eq!(p.parent(), Some(dir.as_path()));
+        assert!(resolve_user_song_save_path("../escape").is_err());
+        assert!(resolve_user_song_save_path("sub/dir").is_err());
     }
 
     #[test]
