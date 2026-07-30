@@ -94,9 +94,10 @@ Usage:
   dj: left=A / right=B highlight, » prompt at bottom.
   Live TUI input:
     bare text     → Hermes (profile dj-hermes; needs API + MCP)
+    F12           → voice (xAI STT → Hermes; needs XAI_API_KEY)
     /cmd …        → local (e.g. /a load smoke  /x 4  /bpm 128  /help)
     --no-hermes   → bare text is local again (text REPL always local)
-  Flags: --no-hermes  --hermes-bin PATH  --hermes-profile NAME  -d/--debug
+  Flags: --no-hermes  --no-voice  --hermes-bin PATH  --hermes-profile NAME  -d/--debug
 
 Examples:
   cargo run -- play songs/smoke.strudel
@@ -124,6 +125,8 @@ struct LiveSessionOpts {
     hermes_enabled: bool,
     hermes_bin: Option<PathBuf>,
     hermes_profile: Option<String>,
+    /// When false, skip F12 voice capture even if STT keys are set.
+    voice_enabled: bool,
     /// Hermes spawn/wait I/O tracing (`-d` / `--debug`).
     debug: bool,
     /// Override debug log path (`--debug-log` / `STRUDEL_DEBUG_LOG`).
@@ -139,6 +142,7 @@ fn parse_live_session_args(args: &[String]) -> Result<Option<LiveSessionOpts>, S
     let mut hermes_enabled = true;
     let mut hermes_bin: Option<PathBuf> = None;
     let mut hermes_profile: Option<String> = None;
+    let mut voice_enabled = true;
     let mut debug = false;
     let mut debug_log: Option<PathBuf> = None;
     let mut cli_port: Option<u16> = None;
@@ -168,6 +172,9 @@ fn parse_live_session_args(args: &[String]) -> Result<Option<LiveSessionOpts>, S
             }
             "--no-hermes" => {
                 hermes_enabled = false;
+            }
+            "--no-voice" => {
+                voice_enabled = false;
             }
             "--hermes-bin" => {
                 i += 1;
@@ -226,6 +233,7 @@ fn parse_live_session_args(args: &[String]) -> Result<Option<LiveSessionOpts>, S
         hermes_enabled,
         hermes_bin,
         hermes_profile,
+        voice_enabled,
         debug,
         debug_log,
     }))
@@ -249,6 +257,7 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
     let mut hermes_enabled = true;
     let mut hermes_bin: Option<PathBuf> = None;
     let mut hermes_profile: Option<String> = None;
+    let mut voice_enabled = true;
     let mut debug = false;
     let mut debug_log: Option<PathBuf> = None;
     let mut cli_port: Option<u16> = None;
@@ -299,6 +308,9 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
             }
             "--no-hermes" => {
                 hermes_enabled = false;
+            }
+            "--no-voice" => {
+                voice_enabled = false;
             }
             "--hermes-bin" => {
                 i += 1;
@@ -356,6 +368,7 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
             hermes_enabled,
             hermes_bin,
             hermes_profile,
+            voice_enabled,
             debug,
             debug_log,
         });
@@ -476,6 +489,7 @@ fn cmd_live_session(opts: LiveSessionOpts) -> Result<(), String> {
         hermes_enabled,
         hermes_bin,
         hermes_profile,
+        voice_enabled,
         debug,
         debug_log,
     } = opts;
@@ -570,6 +584,15 @@ fn cmd_live_session(opts: LiveSessionOpts) -> Result<(), String> {
         None
     };
 
+    let voice_handle = if with_highlight && hermes_handle.is_some() && voice_enabled {
+        start_voice_for_tui()
+    } else {
+        if with_highlight && hermes_handle.is_some() && !voice_enabled {
+            eprintln!("voice: disabled (--no-voice)");
+        }
+        None
+    };
+
     let stream = build_stream(
         &device,
         stream_config,
@@ -618,6 +641,7 @@ fn cmd_live_session(opts: LiveSessionOpts) -> Result<(), String> {
             initial_b,
             ui_log,
             hermes_handle,
+            voice_handle,
         )?;
     } else {
         eprintln!(
@@ -628,6 +652,24 @@ fn cmd_live_session(opts: LiveSessionOpts) -> Result<(), String> {
     }
     eprintln!("bye.");
     Ok(())
+}
+
+/// Start voice capture worker when xAI STT credentials are present.
+fn start_voice_for_tui() -> Option<strudel_rs::voice_input::VoiceHandle> {
+    let Some(cfg) = strudel_rs::voice_input::SttConfig::from_env() else {
+        eprintln!("voice: disabled (set XAI_API_KEY or STRUDEL_STT_API_KEY for F12 STT → Hermes)");
+        return None;
+    };
+    match strudel_rs::voice_input::VoiceHandle::start(cfg) {
+        Ok(h) => {
+            eprintln!("voice: F12 push-to-talk (xAI STT → Hermes)");
+            Some(h)
+        }
+        Err(e) => {
+            eprintln!("voice: disabled ({e})");
+            None
+        }
+    }
 }
 
 /// Start Hermes worker for live TUI, or `None` if binary missing (bare → local fallback).
