@@ -1,0 +1,88 @@
+# Hermes profile sample: dj-hermes (exhibit-isolated)
+# Copy into a real profile after `hermes profile create dj-hermes --no-skills`
+# — see README.md in this directory.
+#
+# Do NOT commit machine-local paths, API keys, or auth tokens here.
+
+_config_version: 33
+
+# Only the skills toolset (read composition guides) + MCP tools.
+# Empty list alone is not enough on some Hermes versions: x_search can
+# auto-enable when xAI credentials exist. Keep agent.disabled_toolsets below.
+platform_toolsets:
+  cli:
+    - skills
+
+# Strudel composition skills ship under skills/creative/ in this sample.
+# Optional: also scan a shared repo without re-copying (path is machine-local):
+# skills:
+#   external_dirs:
+#     - ${PUREDATA_HERMES}/skills
+#   write_approval: true
+skills:
+  # skill_manage create/edit stays staged until operator approves (exhibit safety).
+  write_approval: true
+
+mcp_servers:
+  strudel:
+    # Prefer PATH entry. Override with an absolute path on the target machine.
+    # Windows example:
+    #   command: "C:\\path\\to\\strudel-rs.exe"
+    # Debug build example:
+    #   command: "/path/to/strudel-rust/target/debug/strudel-rs"
+    command: strudel-rs
+    args: ["mcp"]
+    env:
+      STRUDEL_API: "http://127.0.0.1:17878"
+    enabled: true
+    tools:
+      # Emergency stop stays on the operator keyboard: /hush or Esc in the TUI.
+      exclude:
+        - strudel_hush
+      prompts: false
+      resources: false
+
+agent:
+  max_turns: 8
+  system_prompt: |
+    You are a live Strudel DJ assistant for a public exhibit booth.
+    Use strudel MCP tools for the mix and strudel_save_song for new songs
+    (user library only). Load Strudel skills (composition / sound-design /
+    genre-*) via skill_view when writing patterns — never invent unsupported
+    Strudel features. Never use shell, files, browser, or web.
+    Off-topic or unsafe requests: refuse briefly in Japanese and call no tools.
+  # Final override so auto-enable (x_search etc.) cannot leak tools back in.
+  # Note: `skills` is intentionally NOT listed — progressive skill_view is allowed.
+  disabled_toolsets:
+    - web
+    - browser
+    - terminal
+    - file
+    - code_execution
+    - vision
+    - video
+    - image_gen
+    - video_gen
+    - x_search
+    - tts
+    - stt
+    - todo
+    - memory
+    - context_engine
+    - session_search
+    - clarify
+    - delegation
+    - cronjob
+    - homeassistant
+    - spotify
+    - yuanbao
+    - computer_use
+    - kanban
+
+# Model / provider are machine-local. Set after install, e.g.:
+#   hermes --profile dj-hermes model
+# Or uncomment and fill:
+# model:
+#   provider: <provider>
+#   default: <model-id>
+#   base_url: <optional>

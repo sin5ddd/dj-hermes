@@ -84,22 +84,29 @@ Usage:
   --songs-dir   directory to watch for .strudel saves (default: songs/)
   --port N      HTTP API port (default {DEFAULT_API_PORT}; env STRUDEL_API_PORT)
   --no-api      do not start HTTP API
+  -d, --debug   Hermes debug log to file (default: ./strudel-rs.debug.log)
+  --debug-log P path for -d (env: STRUDEL_DEBUG_LOG; e.g. C:\\temp\\strudel-debug.log)
 
   strudel-rs mcp
                 MCP stdio bridge → HTTP API (play/dj process must be running)
 
   Default play loops forever (TUI: q / Esc; headless: Ctrl+C).
   dj: left=A / right=B highlight, » prompt at bottom.
-  Commands (no colon):  a load smoke  |  b head 33  |  x 4  |  bpm 128  |  quit
+  Live TUI input:
+    bare text     → Hermes (profile dj-hermes; needs API + MCP)
+    /cmd …        → local (e.g. /a load smoke  /x 4  /bpm 128  /help)
+    --no-hermes   → bare text is local again (text REPL always local)
+  Flags: --no-hermes  --hermes-bin PATH  --hermes-profile NAME  -d/--debug
 
 Examples:
   cargo run -- play songs/smoke.strudel
   cargo run -- dj songs/techno1.strudel songs/ambient1.strudel
   cargo run -- dj                          # empty decks; load from »
-  # then:  x 4
+  # then:  暗くして   or   /x 4
   # API: curl http://127.0.0.1:{DEFAULT_API_PORT}/status
 
 Samples: ./samples (or <song>/../samples). CC0 kit docs in samples/LICENSE.md.
+Exhibit Hermes setup: docs/exhibit/README.md
 "
     );
 }
@@ -113,6 +120,14 @@ struct LiveSessionOpts {
     with_highlight: bool,
     api_enabled: bool,
     api_port: u16,
+    /// When false, live TUI treats bare input as local commands (no Hermes).
+    hermes_enabled: bool,
+    hermes_bin: Option<PathBuf>,
+    hermes_profile: Option<String>,
+    /// Hermes spawn/wait I/O tracing (`-d` / `--debug`).
+    debug: bool,
+    /// Override debug log path (`--debug-log` / `STRUDEL_DEBUG_LOG`).
+    debug_log: Option<PathBuf>,
 }
 
 /// Parse `dj` / live-session CLI. Returns `Ok(None)` when `--help` was printed.
@@ -121,6 +136,11 @@ fn parse_live_session_args(args: &[String]) -> Result<Option<LiveSessionOpts>, S
     let mut songs_dir = PathBuf::from("songs");
     let mut with_highlight = true;
     let mut api_enabled = true;
+    let mut hermes_enabled = true;
+    let mut hermes_bin: Option<PathBuf> = None;
+    let mut hermes_profile: Option<String> = None;
+    let mut debug = false;
+    let mut debug_log: Option<PathBuf> = None;
     let mut cli_port: Option<u16> = None;
     let mut i = 0;
     while i < args.len() {
@@ -145,6 +165,34 @@ fn parse_live_session_args(args: &[String]) -> Result<Option<LiveSessionOpts>, S
             }
             "--no-api" => {
                 api_enabled = false;
+            }
+            "--no-hermes" => {
+                hermes_enabled = false;
+            }
+            "--hermes-bin" => {
+                i += 1;
+                let p = args
+                    .get(i)
+                    .ok_or_else(|| "--hermes-bin needs a path".to_string())?;
+                hermes_bin = Some(PathBuf::from(p));
+            }
+            "--hermes-profile" => {
+                i += 1;
+                let p = args
+                    .get(i)
+                    .ok_or_else(|| "--hermes-profile needs a name".to_string())?;
+                hermes_profile = Some(p.clone());
+            }
+            "-d" | "--debug" => {
+                debug = true;
+            }
+            "--debug-log" => {
+                i += 1;
+                let p = args
+                    .get(i)
+                    .ok_or_else(|| "--debug-log needs a path".to_string())?;
+                debug_log = Some(PathBuf::from(p));
+                debug = true; // imply -d
             }
             "--text" | "--repl-text" => {
                 with_highlight = false;
@@ -175,6 +223,11 @@ fn parse_live_session_args(args: &[String]) -> Result<Option<LiveSessionOpts>, S
         with_highlight,
         api_enabled,
         api_port: api::resolve_port(cli_port),
+        hermes_enabled,
+        hermes_bin,
+        hermes_profile,
+        debug,
+        debug_log,
     }))
 }
 
@@ -193,6 +246,11 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
     let mut repl_text = false;
     let mut songs_dir = PathBuf::from("songs");
     let mut api_enabled = true;
+    let mut hermes_enabled = true;
+    let mut hermes_bin: Option<PathBuf> = None;
+    let mut hermes_profile: Option<String> = None;
+    let mut debug = false;
+    let mut debug_log: Option<PathBuf> = None;
     let mut cli_port: Option<u16> = None;
     let mut i = 0;
     while i < args.len() {
@@ -239,6 +297,34 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
             "--no-api" => {
                 api_enabled = false;
             }
+            "--no-hermes" => {
+                hermes_enabled = false;
+            }
+            "--hermes-bin" => {
+                i += 1;
+                let p = args
+                    .get(i)
+                    .ok_or_else(|| "--hermes-bin needs a path".to_string())?;
+                hermes_bin = Some(PathBuf::from(p));
+            }
+            "--hermes-profile" => {
+                i += 1;
+                let p = args
+                    .get(i)
+                    .ok_or_else(|| "--hermes-profile needs a name".to_string())?;
+                hermes_profile = Some(p.clone());
+            }
+            "-d" | "--debug" => {
+                debug = true;
+            }
+            "--debug-log" => {
+                i += 1;
+                let p = args
+                    .get(i)
+                    .ok_or_else(|| "--debug-log needs a path".to_string())?;
+                debug_log = Some(PathBuf::from(p));
+                debug = true;
+            }
             "--help" | "-h" => {
                 print_usage();
                 return Ok(());
@@ -267,6 +353,11 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
             with_highlight: !repl_text,
             api_enabled,
             api_port,
+            hermes_enabled,
+            hermes_bin,
+            hermes_profile,
+            debug,
+            debug_log,
         });
     }
 
@@ -382,6 +473,11 @@ fn cmd_live_session(opts: LiveSessionOpts) -> Result<(), String> {
         with_highlight,
         api_enabled,
         api_port,
+        hermes_enabled,
+        hermes_bin,
+        hermes_profile,
+        debug,
+        debug_log,
     } = opts;
 
     let host = cpal::default_host();
@@ -462,6 +558,17 @@ fn cmd_live_session(opts: LiveSessionOpts) -> Result<(), String> {
     };
 
     let _api = maybe_start_api(api_enabled, api_port, cmd_tx.clone(), Arc::clone(&engine));
+    if with_highlight && hermes_enabled && !api_enabled {
+        eprintln!(
+            "warning: Hermes needs HTTP API for MCP tools; --no-api will make tool calls fail"
+        );
+    }
+
+    let hermes_handle = if with_highlight && hermes_enabled {
+        start_hermes_for_tui(hermes_bin, hermes_profile, debug, debug_log)
+    } else {
+        None
+    };
 
     let stream = build_stream(
         &device,
@@ -510,6 +617,7 @@ fn cmd_live_session(opts: LiveSessionOpts) -> Result<(), String> {
             initial_a,
             initial_b,
             ui_log,
+            hermes_handle,
         )?;
     } else {
         eprintln!(
@@ -520,6 +628,69 @@ fn cmd_live_session(opts: LiveSessionOpts) -> Result<(), String> {
     }
     eprintln!("bye.");
     Ok(())
+}
+
+/// Start Hermes worker for live TUI, or `None` if binary missing (bare → local fallback).
+fn start_hermes_for_tui(
+    hermes_bin: Option<PathBuf>,
+    hermes_profile: Option<String>,
+    debug: bool,
+    debug_log: Option<PathBuf>,
+) -> Option<strudel_rs::hermes::HermesHandle> {
+    let mut cfg = strudel_rs::hermes::HermesConfig::from_env();
+    if let Some(bin) = hermes_bin {
+        cfg.bin = bin;
+    }
+    if let Some(profile) = hermes_profile {
+        cfg.profile = profile;
+    }
+    if debug {
+        cfg.debug = true;
+    }
+    if let Some(p) = debug_log {
+        cfg.debug = true;
+        cfg.debug_log_path = p;
+    }
+    if !strudel_rs::hermes::hermes_bin_available(&cfg.bin) {
+        eprintln!(
+            "warning: hermes binary not found ({}); bare input falls back to local commands",
+            cfg.bin.display()
+        );
+        eprintln!("         install Hermes or pass --hermes-bin / --no-hermes");
+        return None;
+    }
+    eprintln!(
+        "hermes: profile={} (exhibit-isolated)  bin={}",
+        cfg.profile,
+        cfg.bin.display()
+    );
+    eprintln!(
+        "        timeout={}s  (turns: profile agent.max_turns)  docs: docs/exhibit/README.md",
+        cfg.timeout.as_secs()
+    );
+    if cfg.debug {
+        match strudel_rs::hermes::init_debug_log(&cfg) {
+            Ok(abs) => {
+                cfg.debug_log_path = abs.clone();
+                eprintln!("        debug ON → file {}", abs.display());
+                strudel_rs::hermes::debug_log(
+                    &cfg,
+                    format!(
+                        "session start profile={} bin={} timeout={}s log={}",
+                        cfg.profile,
+                        cfg.bin.display(),
+                        cfg.timeout.as_secs(),
+                        abs.display()
+                    ),
+                );
+            }
+            Err(e) => {
+                eprintln!("        debug log init FAILED: {e}");
+                eprintln!("        (tried path: {})", cfg.debug_log_path.display());
+            }
+        }
+    }
+    Some(strudel_rs::hermes::HermesHandle::start(cfg))
 }
 
 /// Start HTTP API in a background thread when enabled. Keeps `Sender` alive via clone.

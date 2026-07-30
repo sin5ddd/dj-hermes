@@ -20,12 +20,13 @@ use crossterm::terminal::{
 };
 use crossterm::{cursor, execute, queue, terminal};
 
-use crate::cmd;
+use crate::cmd::{self, LiveInput};
 use crate::engine::{Command, Engine};
+use crate::hermes::{HermesEvent, HermesHandle};
 use crate::highlight::{active_spans, bar_index, bar_pos, render_ansi_ex, HighlightModel};
 use crate::watcher::{DeckPaths, UiLogBuffer};
 
-const HELP_LINE: &str = "drag xf/EQ  a load  b head 33  x 4  bpm 128  hush  status  help  quit";
+const HELP_LINE: &str = "drag xf/EQ  自然文→Hermes  /a load  /x 4  /bpm  /help  (op: /hush /quit)";
 
 /// White-background space used as the fader thumb (user-facing "□").
 const XF_THUMB: &str = "\x1b[47m \x1b[0m";
@@ -139,6 +140,7 @@ impl LiveState {
 ///
 /// `initial_a` / `initial_b` seed deck highlight models (e.g. songs passed to `dj`).
 /// `ui_log` receives watcher / external status lines into the 3-line footer log.
+/// `hermes` when `Some` routes bare natural language to Hermes (local cmds need `/`).
 #[allow(clippy::too_many_arguments)]
 pub fn run(
     tx: Sender<Command>,
@@ -149,6 +151,7 @@ pub fn run(
     initial_a: Option<HighlightModel>,
     initial_b: Option<HighlightModel>,
     ui_log: Option<UiLogBuffer>,
+    hermes: Option<HermesHandle>,
 ) -> Result<(), String> {
     let zero_hit = SliderHit {
         row: 0,
@@ -180,7 +183,11 @@ pub fn run(
     if let Some(model) = initial_b {
         state.set_model(1, model);
     }
-    state.push_log("live UI · drag xfader / Hi Mid Lo EQ (wired to mixer)");
+    if hermes.is_some() {
+        state.push_log("live UI · 自然文→Hermes  /cmd ローカル  drag xf/EQ");
+    } else {
+        state.push_log("live UI · drag xfader / Hi Mid Lo EQ (Hermes off)");
+    }
 
     enable_raw_mode().map_err(|e| format!("raw mode: {e}"))?;
     let mut out = stdout();
@@ -247,6 +254,7 @@ pub fn run(
                                     &engine,
                                     sample_rate,
                                     &mut state,
+                                    hermes.as_ref(),
                                 ) {
                                     let _ = tx.send(Command::Hush);
                                     return Ok(());
@@ -308,6 +316,9 @@ pub fn run(
             }
 
             drain_ui_log(&mut state, &ui_log);
+            if let Some(ref h) = hermes {
+                drain_hermes_events(&mut state, h);
+            }
 
             if let Ok(eng) = engine.try_lock() {
                 sync_models_from_engine(&mut state, &eng, sample_rate);
@@ -874,30 +885,78 @@ fn dispatch_line(
     engine: &Arc<Mutex<Engine>>,
     sample_rate: u32,
     state: &mut LiveState,
+    hermes: Option<&HermesHandle>,
 ) -> bool {
-    // Help opens a centered modal; do not dump the multi-line text into the log.
-    if is_help_command(line) {
-        state.help_open = true;
-        state.invalidate_frame();
-        return true;
+    let hermes_enabled = hermes.is_some();
+    match cmd::classify_live_input(line, hermes_enabled) {
+        LiveInput::Empty => true,
+        LiveInput::LocalCommand(body) => {
+            if cmd::is_help_body(&body) {
+                state.help_open = true;
+                state.invalidate_frame();
+                return true;
+            }
+            exec_local(&body, tx, deck_paths, engine, sample_rate, state)
+        }
+        LiveInput::HermesPrompt(prompt) => {
+            let Some(h) = hermes else {
+                // Should not happen: classify only returns Hermes when enabled.
+                return exec_local(&prompt, tx, deck_paths, engine, sample_rate, state);
+            };
+            match h.enqueue(&prompt) {
+                Ok(()) => {
+                    let q = h.queue_len();
+                    state.push_log(format!("hermes: queued (n={q})"));
+                }
+                Err(reason) => {
+                    state.push_log(format!("hermes: {reason}"));
+                }
+            }
+            true
+        }
     }
+}
 
-    let result = cmd::exec(line, tx, deck_paths, Some(engine));
+fn exec_local(
+    body: &str,
+    tx: &Sender<Command>,
+    deck_paths: &DeckPaths,
+    engine: &Arc<Mutex<Engine>>,
+    sample_rate: u32,
+    state: &mut LiveState,
+) -> bool {
+    let result = cmd::exec(body, tx, deck_paths, Some(engine));
     if let Some((deck, song)) = result.loaded {
         let model = HighlightModel::from_song(&song, sample_rate);
         state.set_model(deck, model);
     }
     for m in result.messages {
-        // One log row per message; multi-line payloads keep the first line only
-        // (see LiveState::push_log). Cap at LOG_LINES via the deque.
         state.push_log(m);
     }
     !result.quit
 }
 
-fn is_help_command(line: &str) -> bool {
-    let line = line.trim().strip_prefix(':').unwrap_or(line.trim());
-    matches!(line, "help" | "h" | "?")
+fn drain_hermes_events(state: &mut LiveState, hermes: &HermesHandle) {
+    for ev in hermes.drain_events() {
+        match ev {
+            HermesEvent::Queued { queue_len } => {
+                // enqueue already logs; keep a quiet refresh for status only.
+                let _ = queue_len;
+            }
+            HermesEvent::Running => {
+                state.push_log("hermes: running…");
+            }
+            HermesEvent::Done { summary } => {
+                state.push_log(format!("hermes: {summary}"));
+            }
+            HermesEvent::Failed { message } => {
+                state.push_log(format!("hermes: fail {message}"));
+            }
+            HermesEvent::Rejected { reason } => {
+                state.push_log(format!("hermes: {reason}"));
+            }
+        }
+    }
 }
 
 #[cfg(test)]
@@ -1033,12 +1092,23 @@ mod tests {
     }
 
     #[test]
-    fn is_help_command_variants() {
-        assert!(is_help_command("help"));
-        assert!(is_help_command(" h "));
-        assert!(is_help_command("?"));
-        assert!(is_help_command(":help"));
-        assert!(!is_help_command("status"));
-        assert!(!is_help_command("a load x"));
+    fn is_help_via_classify() {
+        // Hermes on: local help needs /
+        match cmd::classify_live_input("/help", true) {
+            LiveInput::LocalCommand(b) => assert!(cmd::is_help_body(&b)),
+            other => panic!("expected local help, got {other:?}"),
+        }
+        match cmd::classify_live_input("help", true) {
+            LiveInput::HermesPrompt(_) => {}
+            other => panic!("bare help should be Hermes when enabled: {other:?}"),
+        }
+        // Hermes off: bare help is local
+        match cmd::classify_live_input("help", false) {
+            LiveInput::LocalCommand(b) => assert!(cmd::is_help_body(&b)),
+            other => panic!("expected local help, got {other:?}"),
+        }
+        assert!(cmd::is_help_body("?"));
+        assert!(cmd::is_help_body("h"));
+        assert!(!cmd::is_help_body("status"));
     }
 }

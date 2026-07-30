@@ -13,8 +13,8 @@
 | 利用者       | 操作手段                                                                          |
 | ------------ | --------------------------------------------------------------------------------- |
 | 人間（編集） | エディタで `songs/*.strudel` を保存 → ファイル監視が検知 → **次の小節境界**で反映 |
-| 人間（操作） | REPL（rustyline）でデッキ操作・即時コマンド                                       |
-| LLM / Hermes | HTTP API（axum, REST + SSE）および MCP server（`strudel-rs mcp`, stdio）          |
+| 人間（操作） | live TUI: 自然文→Hermes、`/` 付きでローカルコマンド。`--text` は rustyline 裸コマンド |
+| LLM / Hermes | TUI から `hermes -z`（profile `dj-hermes`）+ MCP。HTTP API / `strudel-rs mcp` |
 
 主な体験:
 

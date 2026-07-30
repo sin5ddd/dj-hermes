@@ -58,14 +58,20 @@ cargo run -- dj songs/techno1.strudel songs/ambient1.strudel
   - 中段: **A/B の Hi・Mid・Lo EQ**（各 3 行・短スライダー。中央 0.5＝フラット、±12 dB。Mixer チャンネル EQ に連動）
   - その下: **クロスフェーダー**（最大 10 文字幅 `XF A ──□── B`。□ は白背景。クリック／ドラッグ）
   - 下段: ログ + `»` プロンプト
-  - A のみ / B のみ / 両方省略も可（空デッキから `a load` / `b load`）
-  - コマンド例（コロン不要）:
-    - `a load songs/techno1.strudel` / `b load songs/ambient1.strudel`
-    - `b head 33`（次の小節境界で B を曲の 33 小節目から再生。別名 `cue`。1 始まり）
-    - `x 4`（反対側デッキへ 4 小節 xfade）/ `b x 4`（明示的に B へ）
-    - `a mute kick` / `bpm 128` / `hush` / `status` / `quit`
-  - `--text`: ハイライトなしの rustyline テキスト REPL
+  - A のみ / B のみ / 両方省略も可（空デッキから `/a load` / `/b load`）
+  - **入力モデル（live TUI）**
+    - **自然文**（例: `暗くして`）→ Hermes（既定プロファイル `dj-hermes`、MCP 経由で操作）
+    - **`/` 付き**（例: `/x 4` `/bpm 128` `/a load techno1`）→ ローカル即時コマンド
+    - `--no-hermes` または Hermes 未検出時: 裸入力もローカル（従来どおり）
+  - ローカルコマンド例:
+    - `/a load songs/techno1.strudel` / `/b load songs/ambient1.strudel`
+    - `/b head 33`（次の小節境界で B を曲の 33 小節目から。別名 `cue`。1 始まり）
+    - `/x 4`（反対側デッキへ 4 小節 xfade）/ `/b x 4`
+    - `/a mute kick` / `/bpm 128` / `/status` / `/help`
+    - オペレータ: `/hush` `/quit`
+  - `--text`: ハイライトなしの rustyline テキスト REPL（**裸コマンドのまま**。Hermes は TUI のみ）
   - 互換: `play --repl` / `play --repl-text` も同じセッションを起動（A/B 2 曲可）
+  - 展示向け Hermes 手順・プロンプトインジェクション対策: [docs/exhibit/README.md](./docs/exhibit/README.md)
 - サンプルは `./samples`（Sonic Pi 由来 CC0）。曲は `songs/*.strudel`
 - 出力デバイスが無い環境ではエラー終了（`cargo test` / build はデバイス不要）
 
@@ -110,7 +116,8 @@ $: note("c3'maj").s("sawtooth").lpf(800).orbit(2).gain(0.4).room(0.35).roomsize(
 | GET | `/status` | デッキ・BPM・曲内小節・ゲイン・EQ・filter・crossfader |
 | GET | `/events` | 状態 SSE |
 | PUT | `/code` | 単発パターンをデッキへ（スクリプト向け） |
-| POST | `/song/load` | `.strudel` をロード |
+| POST | `/song/load` | `.strudel` をロード（bare 名は `~/.config/strudel-rs/songs/` → `songs/`） |
+| POST | `/song/save` | ユーザー曲ライブラリに保存（**のみ** `~/.config/strudel-rs/songs/`。basename 限定。任意で deck ロード） |
 | POST | `/xfade` | N バー クロスフェード |
 | POST | `/bpm` | マスター BPM |
 | POST | `/mixer/eq` | A/B チャンネル EQ（hi/mid/lo、即時） |
@@ -144,10 +151,10 @@ curl -s -X POST -H "Content-Type: application/json" \
 | グループ | ツール |
 | --- | --- |
 | Mixer | `strudel_mixer_eq` / `strudel_mixer_filter` / `strudel_mixer_crossfader` / `strudel_xfade` / `strudel_set_bpm` |
-| Deck | `strudel_load_song` / `strudel_mute` / `strudel_head` |
+| Deck | `strudel_load_song` / `strudel_save_song` / `strudel_mute` / `strudel_head` |
 | Transport | `strudel_hush` / `strudel_status` |
 
-曲の差し替えは **`strudel_load_song`**（`.strudel` ファイル）。パターン文字列を直接送る MCP ツールは用意していません（HTTP `PUT /code` はスクリプト用に残置）。
+曲の差し替えは **`strudel_load_song`**（`.strudel` ファイル）。新規作成・保存は **`strudel_save_song`**（書き込み先は `~/.config/strudel-rs/songs/` のみ）。パターン文字列を直接送る MCP ツールは用意していません（HTTP `PUT /code` はスクリプト用に残置）。
 
 ### 手順
 
@@ -165,6 +172,8 @@ strudel-rs dj songs/smoke.strudel
 
 ### Hermes（`config.yaml`）
 
+展示ブースでは **専用プロファイル `dj-hermes`** を使い、strudel MCP 以外のツールを無効にしてください（詳細: [docs/exhibit/README.md](./docs/exhibit/README.md)）。
+
 ```yaml
 mcp_servers:
   strudel:
@@ -173,6 +182,8 @@ mcp_servers:
     # ポートを変えている場合:
     # env:
     #   STRUDEL_API: "http://127.0.0.1:17878"
+    tools:
+      exclude: [strudel_hush]   # 緊急停止は TUI の /hush
 ```
 
 `command` にフルパスを書く例:
@@ -225,7 +236,7 @@ printf '%s\n' \
   | strudel-rs mcp
 ```
 
-`tools/list` の応答に `strudel_mixer_eq` / `strudel_load_song` / `strudel_status` など **10 ツール**が出ればブリッジは生きています（`strudel_set_code` は含みません）。
+`tools/list` の応答に `strudel_mixer_eq` / `strudel_load_song` / `strudel_save_song` / `strudel_status` など **11 ツール**が出ればブリッジは生きています（`strudel_set_code` は含みません）。
 
 ### 同梱デモ曲
 

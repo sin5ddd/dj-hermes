@@ -7,6 +7,7 @@ pub mod code;
 pub mod deck;
 pub mod dsp;
 pub mod engine;
+pub mod hermes;
 pub mod highlight;
 pub mod live_ui;
 pub mod mcp;

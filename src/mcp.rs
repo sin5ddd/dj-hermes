@@ -1,7 +1,15 @@
 //! MCP server (stdio) — thin HTTP bridge to the play process API.
 //!
 //! Does **not** open audio devices. Requires the main `play` process with API up.
-//! Protocol: JSON-RPC 2.0 over stdio with Content-Length framing (MCP transport).
+//! Protocol: JSON-RPC 2.0 over stdio.
+//!
+//! **Framing (dual support):**
+//! - **NDJSON** — one JSON object per line (`\n`). Used by current Hermes / MCP
+//!   Python SDK (`mcp` ≥ 1.x stdio client).
+//! - **Content-Length** — LSP-style headers + body. Kept for older clients and
+//!   hand-written bridges.
+//!
+//! The first inbound message selects the session framing; replies use the same.
 //!
 //! Implemented by hand (not `rmcp`) so the bridge stays small and independent of
 //! crate API churn. See plan Risk #6.
@@ -16,6 +24,15 @@ const PROTOCOL_VERSION: &str = "2024-11-05";
 const SERVER_NAME: &str = "strudel-rs";
 const SERVER_VERSION: &str = env!("CARGO_PKG_VERSION");
 
+/// Wire framing for one MCP stdio session.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Framing {
+    /// `{"jsonrpc":...}\n` (Hermes / modern MCP SDK).
+    Ndjson,
+    /// `Content-Length: N\r\n\r\n{...}` (LSP-style).
+    ContentLength,
+}
+
 /// Run MCP server until stdin EOF. Blocks the calling thread.
 pub fn run() -> Result<(), String> {
     let base = default_api_base();
@@ -28,7 +45,15 @@ pub fn run() -> Result<(), String> {
     let mut stdin = stdin.lock();
     let mut stdout = io::stdout();
 
-    while let Some(msg) = read_message(&mut stdin)? {
+    // Locked after first successfully framed message.
+    let mut framing: Option<Framing> = None;
+
+    while let Some((msg, detected)) = read_message(&mut stdin)? {
+        if framing.is_none() {
+            framing = Some(detected);
+        }
+        let mode = framing.unwrap_or(detected);
+
         // Notifications have no `id` — handle and do not reply (except we may ignore).
         let id = msg.get("id").cloned();
         let method = msg
@@ -67,7 +92,7 @@ pub fn run() -> Result<(), String> {
                 "error": err_obj,
             }),
         };
-        write_message(&mut stdout, &response)?;
+        write_message(&mut stdout, &response, mode)?;
     }
     Ok(())
 }
@@ -150,7 +175,7 @@ fn tools_list() -> Value {
             },
             {
                 "name": "strudel_load_song",
-                "description": "Deck: load a song onto a deck (next bar). Bare name looks under songs/; .strudel/.txt optional (.strudel preferred).",
+                "description": "Deck: load a song onto a deck (next bar). Bare name looks under ~/.config/strudel-rs/songs/ then songs/; .strudel/.txt optional (.strudel preferred).",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
@@ -158,6 +183,32 @@ fn tools_list() -> Value {
                         "deck": { "type": "string", "description": "A or B" }
                     },
                     "required": ["path", "deck"]
+                }
+            },
+            {
+                "name": "strudel_save_song",
+                "description": "Deck: save a .strudel song into the user library ONLY (~/.config/strudel-rs/songs/<name>.strudel). Basename only (no paths). Validates content before write. Optional deck loads after save (next bar). Use this when file tools are disabled (exhibit profile).",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "description": "Basename e.g. visitor-dark or visitor-dark.strudel (ASCII letters/digits/._- only)"
+                        },
+                        "content": {
+                            "type": "string",
+                            "description": "Full song source (setcpm / $: tracks, max 256KiB)"
+                        },
+                        "deck": {
+                            "type": "string",
+                            "description": "Optional A or B — load after save"
+                        },
+                        "overwrite": {
+                            "type": "boolean",
+                            "description": "Default true; false → fail if file exists"
+                        }
+                    },
+                    "required": ["name", "content"]
                 }
             },
             {
@@ -288,6 +339,20 @@ fn tools_call(
                 json!({ "path": path, "deck": deck }),
             )
         }
+        "strudel_save_song" => {
+            let name = arg_str(&args, "name")?;
+            let content = arg_str(&args, "content")?;
+            let mut body = Map::new();
+            body.insert("name".into(), json!(name));
+            body.insert("content".into(), json!(content));
+            if let Some(deck) = args.get("deck").and_then(|v| v.as_str()) {
+                body.insert("deck".into(), json!(deck));
+            }
+            if let Some(ow) = args.get("overwrite").and_then(|v| v.as_bool()) {
+                body.insert("overwrite".into(), json!(ow));
+            }
+            http_post(client, &format!("{base}/song/save"), Value::Object(body))
+        }
         "strudel_mute" => {
             let deck = arg_str(&args, "deck")?;
             let track = arg_str(&args, "track")?;
@@ -386,8 +451,8 @@ fn rpc_error(code: i64, message: impl Into<String>) -> Value {
     json!({ "code": code, "message": message.into() })
 }
 
-/// Read one MCP message (Content-Length framing, or a single JSON line as fallback).
-fn read_message(stdin: &mut impl BufRead) -> Result<Option<Value>, String> {
+/// Read one MCP message. Detects NDJSON (`{...}\n`) or Content-Length framing.
+fn read_message(stdin: &mut impl BufRead) -> Result<Option<(Value, Framing)>, String> {
     let mut headers = Map::new();
     let mut line = String::new();
     loop {
@@ -400,12 +465,13 @@ fn read_message(stdin: &mut impl BufRead) -> Result<Option<Value>, String> {
         }
         let t = line.trim_end_matches(['\r', '\n']);
         if t.is_empty() {
+            // End of Content-Length headers (blank line).
             break;
         }
-        // Fallback: bare JSON line without headers
+        // NDJSON: one JSON object per line (Hermes / modern MCP SDK).
         if t.starts_with('{') {
             let v: Value = serde_json::from_str(t).map_err(|e| format!("json parse: {e}"))?;
-            return Ok(Some(v));
+            return Ok(Some((v, Framing::Ndjson)));
         }
         if let Some((k, v)) = t.split_once(':') {
             headers.insert(k.trim().to_ascii_lowercase(), json!(v.trim()));
@@ -425,16 +491,27 @@ fn read_message(stdin: &mut impl BufRead) -> Result<Option<Value>, String> {
     let mut buf = vec![0u8; len];
     Read::read_exact(stdin, &mut buf).map_err(|e| format!("body read: {e}"))?;
     let v: Value = serde_json::from_slice(&buf).map_err(|e| format!("json body: {e}"))?;
-    Ok(Some(v))
+    Ok(Some((v, Framing::ContentLength)))
 }
 
-fn write_message(stdout: &mut impl Write, value: &Value) -> Result<(), String> {
-    let body = serde_json::to_vec(value).map_err(|e| format!("json encode: {e}"))?;
-    write!(stdout, "Content-Length: {}\r\n\r\n", body.len()).map_err(|e| format!("stdout: {e}"))?;
-    stdout
-        .write_all(&body)
-        .map_err(|e| format!("stdout body: {e}"))?;
-    stdout.flush().map_err(|e| format!("stdout flush: {e}"))?;
+fn write_message(stdout: &mut impl Write, value: &Value, framing: Framing) -> Result<(), String> {
+    match framing {
+        Framing::Ndjson => {
+            // Compact one-line JSON + newline (no pretty-print).
+            let body = serde_json::to_string(value).map_err(|e| format!("json encode: {e}"))?;
+            writeln!(stdout, "{body}").map_err(|e| format!("stdout: {e}"))?;
+            stdout.flush().map_err(|e| format!("stdout flush: {e}"))?;
+        }
+        Framing::ContentLength => {
+            let body = serde_json::to_vec(value).map_err(|e| format!("json encode: {e}"))?;
+            write!(stdout, "Content-Length: {}\r\n\r\n", body.len())
+                .map_err(|e| format!("stdout: {e}"))?;
+            stdout
+                .write_all(&body)
+                .map_err(|e| format!("stdout body: {e}"))?;
+            stdout.flush().map_err(|e| format!("stdout flush: {e}"))?;
+        }
+    }
     Ok(())
 }
 
@@ -447,7 +524,7 @@ mod tests {
     fn tools_list_mixer_deck_transport_no_set_code() {
         let v = tools_list();
         let tools = v["tools"].as_array().unwrap();
-        assert_eq!(tools.len(), 10);
+        assert_eq!(tools.len(), 11);
         let names: Vec<_> = tools.iter().filter_map(|t| t["name"].as_str()).collect();
         assert!(!names.contains(&"strudel_set_code"));
         assert_eq!(names[0], "strudel_mixer_eq");
@@ -456,6 +533,7 @@ mod tests {
         assert!(names.contains(&"strudel_xfade"));
         assert!(names.contains(&"strudel_set_bpm"));
         assert!(names.contains(&"strudel_load_song"));
+        assert!(names.contains(&"strudel_save_song"));
         assert!(names.contains(&"strudel_head"));
         assert!(names.contains(&"strudel_status"));
         // Group prefixes in descriptions
@@ -469,11 +547,12 @@ mod tests {
     }
 
     #[test]
-    fn read_json_line_fallback() {
+    fn read_ndjson_line() {
         let raw = r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}"#;
         let mut cur = Cursor::new(format!("{raw}\n"));
-        let msg = read_message(&mut cur).unwrap().unwrap();
+        let (msg, framing) = read_message(&mut cur).unwrap().unwrap();
         assert_eq!(msg["method"], "initialize");
+        assert_eq!(framing, Framing::Ndjson);
     }
 
     #[test]
@@ -481,7 +560,44 @@ mod tests {
         let body = r#"{"jsonrpc":"2.0","id":2,"method":"tools/list"}"#;
         let frame = format!("Content-Length: {}\r\n\r\n{}", body.len(), body);
         let mut cur = Cursor::new(frame);
-        let msg = read_message(&mut cur).unwrap().unwrap();
+        let (msg, framing) = read_message(&mut cur).unwrap().unwrap();
         assert_eq!(msg["method"], "tools/list");
+        assert_eq!(framing, Framing::ContentLength);
+    }
+
+    #[test]
+    fn write_ndjson_is_single_line_json() {
+        let v = json!({"jsonrpc":"2.0","id":1,"result":{}});
+        let mut out = Vec::new();
+        write_message(&mut out, &v, Framing::Ndjson).unwrap();
+        let s = String::from_utf8(out).unwrap();
+        assert!(s.ends_with('\n'));
+        assert!(!s.contains("Content-Length"));
+        let line = s.trim_end_matches('\n');
+        assert!(line.starts_with('{'));
+        let parsed: Value = serde_json::from_str(line).unwrap();
+        assert_eq!(parsed["id"], 1);
+    }
+
+    #[test]
+    fn write_content_length_has_header() {
+        let v = json!({"jsonrpc":"2.0","id":2,"result":{}});
+        let mut out = Vec::new();
+        write_message(&mut out, &v, Framing::ContentLength).unwrap();
+        let s = String::from_utf8(out).unwrap();
+        assert!(s.starts_with("Content-Length:"));
+        assert!(s.contains("\r\n\r\n"));
+    }
+
+    #[test]
+    fn roundtrip_ndjson_write_then_read() {
+        let v = json!({"jsonrpc":"2.0","id":9,"method":"ping"});
+        let mut buf = Vec::new();
+        write_message(&mut buf, &v, Framing::Ndjson).unwrap();
+        let mut cur = Cursor::new(buf);
+        let (msg, framing) = read_message(&mut cur).unwrap().unwrap();
+        assert_eq!(framing, Framing::Ndjson);
+        assert_eq!(msg["method"], "ping");
+        assert_eq!(msg["id"], 9);
     }
 }
