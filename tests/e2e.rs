@@ -52,7 +52,8 @@ fn bar_len(bpm: f64) -> usize {
 }
 
 fn process_n(engine: &mut Engine, bank: &SampleBank, frames: usize) -> Vec<f32> {
-    let mut buf = vec![0f32; frames];
+    // Engine expects interleaved stereo: len = frames * 2.
+    let mut buf = vec![0f32; frames * 2];
     engine.process(&mut buf, bank);
     buf
 }

@@ -197,6 +197,8 @@ pub struct SampleVoice {
     step: f64,
     end: f64,
     gain: f32,
+    /// Stereo pan 0=left … 1=right (applied at deck mix).
+    pub pan: f32,
     pub orbit: u8,
     pub cut: Option<i32>,
     // amp env
@@ -270,6 +272,7 @@ impl SampleVoice {
             step,
             end,
             gain,
+            pan: 0.5,
             orbit,
             cut,
             adsr,
@@ -307,6 +310,11 @@ impl SampleVoice {
         self.release_s = (self.adsr.release.max(0.0) * sr).max(1.0) as u64;
         self.gate_off = gate_samples;
         self.timed = true;
+        self
+    }
+
+    pub fn with_pan(mut self, pan: f32) -> Self {
+        self.pan = pan.clamp(0.0, 1.0);
         self
     }
 
@@ -425,6 +433,13 @@ impl VoiceKind {
         match self {
             VoiceKind::Synth(v) => v.cut,
             VoiceKind::Sample(v) => v.cut,
+        }
+    }
+
+    pub fn pan(&self) -> f32 {
+        match self {
+            VoiceKind::Synth(v) => v.pan,
+            VoiceKind::Sample(v) => v.pan,
         }
     }
 }

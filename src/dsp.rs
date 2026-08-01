@@ -18,6 +18,15 @@ pub fn orbit_index(orbit_1based: u8) -> usize {
     (id - 1).min(NUM_ORBITS - 1)
 }
 
+/// Equal-power pan: `pan` in \[0, 1\] (0=left, 0.5=center, 1=right).
+/// Returns `(gain_l, gain_r)` with `θ = pan · π/2`, `L=cosθ`, `R=sinθ`.
+#[inline]
+pub fn equal_power_pan(pan: f32) -> (f32, f32) {
+    let p = pan.clamp(0.0, 1.0);
+    let theta = p * std::f32::consts::FRAC_PI_2;
+    (theta.cos(), theta.sin())
+}
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum BiquadKind {
     LowPass,
@@ -372,7 +381,7 @@ impl SimpleReverb {
     }
 }
 
-/// Per-orbit global FX: dry + delay send + room send.
+/// Per-orbit global FX: dry + delay send + room send (dual-mono L/R).
 #[derive(Clone, Debug)]
 pub struct OrbitFx {
     pub delay_level: f32,
@@ -380,8 +389,10 @@ pub struct OrbitFx {
     pub delay_fb: f32,
     pub room_level: f32,
     pub room_size: f32,
-    delay: DelayLine,
-    reverb: SimpleReverb,
+    delay_l: DelayLine,
+    delay_r: DelayLine,
+    reverb_l: SimpleReverb,
+    reverb_r: SimpleReverb,
     sr: f32,
     ready: bool,
 }
@@ -400,8 +411,10 @@ impl OrbitFx {
             delay_fb: 0.5,
             room_level: 0.0,
             room_size: 1.0,
-            delay: DelayLine::new(2),
-            reverb: SimpleReverb::new(48_000.0),
+            delay_l: DelayLine::new(2),
+            delay_r: DelayLine::new(2),
+            reverb_l: SimpleReverb::new(48_000.0),
+            reverb_r: SimpleReverb::new(48_000.0),
             sr: 48_000.0,
             ready: false,
         }
@@ -413,17 +426,23 @@ impl OrbitFx {
             return;
         }
         let max_n = ((MAX_DELAY_SEC * sr).ceil() as usize).max(2);
-        self.delay = DelayLine::new(max_n);
-        self.delay.set_time_sec(self.delay_time, sr);
-        self.reverb = SimpleReverb::new(sr);
-        self.reverb.set_size(self.room_size);
+        self.delay_l = DelayLine::new(max_n);
+        self.delay_r = DelayLine::new(max_n);
+        self.delay_l.set_time_sec(self.delay_time, sr);
+        self.delay_r.set_time_sec(self.delay_time, sr);
+        self.reverb_l = SimpleReverb::new(sr);
+        self.reverb_r = SimpleReverb::new(sr);
+        self.reverb_l.set_size(self.room_size);
+        self.reverb_r.set_size(self.room_size);
         self.sr = sr;
         self.ready = true;
     }
 
     pub fn clear(&mut self) {
-        self.delay.clear();
-        self.reverb.clear();
+        self.delay_l.clear();
+        self.delay_r.clear();
+        self.reverb_l.clear();
+        self.reverb_r.clear();
         self.delay_level = 0.0;
         self.room_level = 0.0;
         self.delay_time = 0.25;
@@ -447,19 +466,33 @@ impl OrbitFx {
         self.delay_fb = delayfeedback.clamp(0.0, MAX_DELAY_FEEDBACK);
         self.room_level = room.clamp(0.0, 1.0);
         self.room_size = roomsize.clamp(0.0, 10.0);
-        self.delay.set_time_sec(self.delay_time, self.sr);
-        self.reverb.set_size(self.room_size);
+        self.delay_l.set_time_sec(self.delay_time, self.sr);
+        self.delay_r.set_time_sec(self.delay_time, self.sr);
+        self.reverb_l.set_size(self.room_size);
+        self.reverb_r.set_size(self.room_size);
     }
 
-    /// Process one dry sample: always advances FX state so tails continue.
+    /// Dual-mono process: shared params, independent L/R state (keeps pan).
+    #[inline]
+    pub fn process_stereo(&mut self, dry_l: f32, dry_r: f32) -> (f32, f32) {
+        if !self.ready {
+            return (dry_l, dry_r);
+        }
+        let delayed_l = self.delay_l.process(dry_l, self.delay_fb);
+        let delayed_r = self.delay_r.process(dry_r, self.delay_fb);
+        let room_l = self.reverb_l.process(dry_l);
+        let room_r = self.reverb_r.process(dry_r);
+        (
+            dry_l + delayed_l * self.delay_level + room_l * self.room_level,
+            dry_r + delayed_r * self.delay_level + room_r * self.room_level,
+        )
+    }
+
+    /// Mono convenience (center): both channels get `dry`, return mid of wet.
     #[inline]
     pub fn process(&mut self, dry: f32) -> f32 {
-        if !self.ready {
-            return dry;
-        }
-        let delayed = self.delay.process(dry, self.delay_fb);
-        let room = self.reverb.process(dry);
-        dry + delayed * self.delay_level + room * self.room_level
+        let (l, r) = self.process_stereo(dry, dry);
+        0.5 * (l + r)
     }
 }
 
@@ -556,9 +589,9 @@ impl Compressor {
         };
     }
 
+    /// Peak envelope + soft-knee gain reduction for a detector level.
     #[inline]
-    pub fn process(&mut self, x: f32) -> f32 {
-        let level = x.abs();
+    fn gain_for_level(&mut self, level: f32) -> f32 {
         if level > self.env {
             self.env = self.attack_coeff * self.env + (1.0 - self.attack_coeff) * level;
         } else {
@@ -586,8 +619,20 @@ impl Compressor {
             (t * t) / (2.0 * knee.max(1e-6)) * (1.0 - 1.0 / ratio)
         };
 
-        let gain = 10f32.powf(-gr_db / 20.0);
+        10f32.powf(-gr_db / 20.0)
+    }
+
+    #[inline]
+    pub fn process(&mut self, x: f32) -> f32 {
+        let gain = self.gain_for_level(x.abs());
         x * gain
+    }
+
+    /// Stereo-linked compressor: detector is `max(|L|,|R|)`, same gain on both channels.
+    #[inline]
+    pub fn process_stereo(&mut self, l: f32, r: f32) -> (f32, f32) {
+        let gain = self.gain_for_level(l.abs().max(r.abs()));
+        (l * gain, r * gain)
     }
 }
 
@@ -784,5 +829,30 @@ mod tests {
         assert!((eq_pos_to_db(0.5)).abs() < 1e-5);
         assert!((eq_pos_to_db(1.0) - 12.0).abs() < 1e-5);
         assert!((eq_pos_to_db(0.0) + 12.0).abs() < 1e-5);
+    }
+
+    #[test]
+    fn equal_power_pan_endpoints_and_center() {
+        let (l0, r0) = equal_power_pan(0.0);
+        assert!((l0 - 1.0).abs() < 1e-5);
+        assert!(r0.abs() < 1e-5);
+
+        let (l1, r1) = equal_power_pan(1.0);
+        assert!(l1.abs() < 1e-5);
+        assert!((r1 - 1.0).abs() < 1e-5);
+
+        let (lc, rc) = equal_power_pan(0.5);
+        assert!((lc - rc).abs() < 1e-4);
+        // equal-power center ≈ 1/√2
+        assert!((lc - std::f32::consts::FRAC_1_SQRT_2).abs() < 1e-4);
+    }
+
+    #[test]
+    fn orbit_fx_stereo_keeps_hard_pan() {
+        let mut fx = OrbitFx::new();
+        fx.set_from_hit(0.0, 0.25, 0.5, 0.0, 1.0, 48_000.0);
+        let (l, r) = fx.process_stereo(1.0, 0.0);
+        assert!((l - 1.0).abs() < 1e-5);
+        assert!(r.abs() < 1e-5);
     }
 }

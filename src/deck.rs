@@ -1,7 +1,7 @@
 //! Deck: schedule song tracks for one bar, orbit buses, duck, voice pool.
 
 use crate::code::{note_to_hz, Adsr, DuckParams, FilterParams, ModParams, PatternCode};
-use crate::dsp::{orbit_index, CompressorParams, DuckState, OrbitFx, NUM_ORBITS};
+use crate::dsp::{equal_power_pan, orbit_index, CompressorParams, DuckState, OrbitFx, NUM_ORBITS};
 use crate::mini;
 use crate::sample::{SampleBank, SampleVoice, VoiceKind, SAMPLE_ROOT_HZ};
 use crate::song::Song;
@@ -18,6 +18,7 @@ struct ScheduledHit {
     sound: String,
     freq: f32,
     gain: f32,
+    pan: f32,
     filter: FilterParams,
     adsr: Adsr,
     mods: ModParams,
@@ -209,6 +210,7 @@ fn schedule_track_into(
             sound,
             freq,
             gain: pc.effective_gain(),
+            pan: pc.pan.clamp(0.0, 1.0),
             filter: pc.filter,
             adsr: pc.adsr,
             mods: pc.mod_params,
@@ -300,7 +302,8 @@ impl Deck {
                     hit.orbit,
                     hit.cut,
                 )
-                .with_adsr_timing(sr, hit.len_samples);
+                .with_adsr_timing(sr, hit.len_samples)
+                .with_pan(hit.pan);
                 self.alloc_voice(VoiceKind::Synth(Box::new(v)));
             }
             ResolvedSound::Noise(n) => {
@@ -315,7 +318,8 @@ impl Deck {
                     hit.orbit,
                     hit.cut,
                 )
-                .with_adsr_timing(sr, hit.len_samples);
+                .with_adsr_timing(sr, hit.len_samples)
+                .with_pan(hit.pan);
                 self.alloc_voice(VoiceKind::Synth(Box::new(v)));
             }
             ResolvedSound::Wavetable(table) => {
@@ -330,7 +334,8 @@ impl Deck {
                     hit.orbit,
                     hit.cut,
                 )
-                .with_adsr_timing(sr, hit.len_samples);
+                .with_adsr_timing(sr, hit.len_samples)
+                .with_pan(hit.pan);
                 self.alloc_voice(VoiceKind::Synth(Box::new(v)));
             }
             ResolvedSound::Sample(name) => {
@@ -354,14 +359,21 @@ impl Deck {
                     hit.orbit,
                     hit.cut,
                 )
-                .with_adsr_timing(sr, hit.len_samples);
+                .with_adsr_timing(sr, hit.len_samples)
+                .with_pan(hit.pan);
                 self.alloc_voice(VoiceKind::Sample(v));
             }
         }
     }
 
-    /// Render into `out` (mono). Does not advance transport.
-    pub fn process(&mut self, out: &mut [f32], transport: &Transport, samples: &SampleBank) {
+    /// Render into stereo `out_l` / `out_r` (same length). Does not advance transport.
+    pub fn process(
+        &mut self,
+        out_l: &mut [f32],
+        out_r: &mut [f32],
+        transport: &Transport,
+        samples: &SampleBank,
+    ) {
         let sr = transport.sample_rate as f32;
         for fx in &mut self.orbit_fx {
             fx.ensure_sr(sr);
@@ -371,7 +383,8 @@ impl Deck {
             self.schedule_bar(global_bar, transport);
         }
 
-        for (i, frame) in out.iter_mut().enumerate() {
+        let n = out_l.len().min(out_r.len());
+        for i in 0..n {
             let now = transport.global_sample + i as u64;
             while self.next_event < self.scheduled.len()
                 && self.scheduled[self.next_event].at_sample <= now
@@ -381,26 +394,32 @@ impl Deck {
                 self.spawn_hit(&hit, samples, sr);
             }
 
-            let mut acc = [0.0f32; NUM_ORBITS];
+            let mut acc_l = [0.0f32; NUM_ORBITS];
+            let mut acc_r = [0.0f32; NUM_ORBITS];
             for slot in self.voices.iter_mut() {
                 if let Some(voice) = slot {
                     match voice.next_sample(sr) {
                         Some(x) => {
                             let oi = voice.orbit_index();
-                            acc[oi] += x;
+                            let (gl, gr) = equal_power_pan(voice.pan());
+                            acc_l[oi] += x * gl;
+                            acc_r[oi] += x * gr;
                         }
                         None => *slot = None,
                     }
                 }
             }
 
-            let mut mix = 0.0f32;
-            for (o, sample) in acc.iter().enumerate() {
+            let mut mix_l = 0.0f32;
+            let mut mix_r = 0.0f32;
+            for o in 0..NUM_ORBITS {
                 let g = self.ducks[o].advance();
-                let dry = sample * g;
-                mix += self.orbit_fx[o].process(dry);
+                let (l, r) = self.orbit_fx[o].process_stereo(acc_l[o] * g, acc_r[o] * g);
+                mix_l += l;
+                mix_r += r;
             }
-            *frame = mix * self.gain;
+            out_l[i] = mix_l * self.gain;
+            out_r[i] = mix_r * self.gain;
         }
     }
 }
@@ -411,6 +430,13 @@ mod tests {
     use crate::sample::write_test_wav;
     use crate::song::parse_song;
     use std::path::Path;
+
+    fn process_mid(d: &mut Deck, frames: usize, t: &Transport, bank: &SampleBank) -> Vec<f32> {
+        let mut l = vec![0f32; frames];
+        let mut r = vec![0f32; frames];
+        d.process(&mut l, &mut r, t, bank);
+        l.iter().zip(r.iter()).map(|(a, b)| 0.5 * (a + b)).collect()
+    }
 
     #[test]
     fn head_changes_pattern_cycle_not_global_time() {
@@ -449,9 +475,30 @@ bass: note("c3 e3 g3").s("sawtooth").gain(0.8)
         d.load(song);
         let t = Transport::new(48_000, 120.0);
         let bank = SampleBank::empty();
-        let mut buf = vec![0f32; 48_000];
-        d.process(&mut buf, &t, &bank);
+        let buf = process_mid(&mut d, 48_000, &t, &bank);
         assert!(buf.iter().any(|s| s.abs() > 0.01));
+    }
+
+    #[test]
+    fn deck_pan_hard_left_has_no_right() {
+        let song = parse_song(
+            r#"---
+bass: note("c3").s("sawtooth").gain(0.9).pan(0)
+"#,
+            "t",
+        )
+        .unwrap();
+        let mut d = Deck::new("A");
+        d.load(song);
+        let t = Transport::new(48_000, 120.0);
+        let bank = SampleBank::empty();
+        let mut l = vec![0f32; 24_000];
+        let mut r = vec![0f32; 24_000];
+        d.process(&mut l, &mut r, &t, &bank);
+        let el: f32 = l.iter().map(|x| x.abs()).sum();
+        let er: f32 = r.iter().map(|x| x.abs()).sum();
+        assert!(el > 1.0, "left energy={el}");
+        assert!(er < el * 0.01, "right should be near 0, L={el} R={er}");
     }
 
     #[test]
@@ -471,8 +518,7 @@ kick: s("bd*4").gain(0.9)
         let mut d = Deck::new("A");
         d.load(song);
         let t = Transport::new(48_000, 120.0);
-        let mut buf = vec![0f32; 48_000];
-        d.process(&mut buf, &t, &bank);
+        let buf = process_mid(&mut d, 48_000, &t, &bank);
         assert!(buf.iter().any(|s| s.abs() > 0.01));
         let _ = std::fs::remove_dir_all(&dir);
     }
@@ -506,8 +552,7 @@ kick: s("sine").gain(0.01).duckorbit(2).duckattack(0.05).duckdepth(1).fast(4)
         d.load(song);
         let t = Transport::new(48_000, 120.0);
         let bank = SampleBank::empty();
-        let mut buf = vec![0f32; 24_000];
-        d.process(&mut buf, &t, &bank);
+        let buf = process_mid(&mut d, 24_000, &t, &bank);
 
         // energy in early window (after first duck) vs later
         let early: f32 = buf[100..600].iter().map(|x| x.abs()).sum();
@@ -540,14 +585,12 @@ n: note("c4").s("sine").gain(0.9).attack(0.001).sustain(1).release(0.001).clip(0
 
         let mut d = Deck::new("A");
         d.load(song_long);
-        let mut a = vec![0f32; 48_000];
-        d.process(&mut a, &t, &bank);
+        let a = process_mid(&mut d, 48_000, &t, &bank);
         let ea: f32 = a.iter().map(|x| x.abs()).sum();
 
         let mut d = Deck::new("A");
         d.load(song_clip);
-        let mut b = vec![0f32; 48_000];
-        d.process(&mut b, &t, &bank);
+        let b = process_mid(&mut d, 48_000, &t, &bank);
         let eb: f32 = b.iter().map(|x| x.abs()).sum();
         assert!(eb < ea * 0.5, "clip energy {eb} vs full {ea}");
     }
@@ -567,8 +610,7 @@ hit: note("c5").s("sine").gain(0.9).attack(0.001).decay(0.01).sustain(0).release
         let t = Transport::new(48_000, 60.0); // 1 bar = 4s at 60 BPM? Wait BPM 60 → 1 beat = 1s, bar = 4s
         let bank = SampleBank::empty();
         // Process ~0.15s so we pass the first delay bounce (~0.05s).
-        let mut buf = vec![0f32; 8_000];
-        d.process(&mut buf, &t, &bank);
+        let buf = process_mid(&mut d, 8_000, &t, &bank);
         // Dry note is very short; samples after 3000 (~62ms) should still have delay energy.
         let late: f32 = buf[3000..6000].iter().map(|x| x * x).sum();
         assert!(late > 1e-4, "expected delay tail energy, late={late}");
@@ -587,8 +629,7 @@ hit: note("c5").s("sine").gain(0.9).attack(0.001).decay(0.01).sustain(0).release
         d.load(song);
         let t = Transport::new(48_000, 120.0);
         let bank = SampleBank::empty();
-        let mut buf = vec![0f32; 12_000];
-        d.process(&mut buf, &t, &bank);
+        let buf = process_mid(&mut d, 12_000, &t, &bank);
         let late: f32 = buf[4000..10000].iter().map(|x| x * x).sum();
         assert!(late > 1e-6, "expected room tail energy, late={late}");
     }

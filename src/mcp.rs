@@ -136,10 +136,8 @@ fn handle_rpc(msg: &Value, backend: &ToolBackend<'_>) -> Option<Value> {
         .unwrap_or("")
         .to_string();
 
-    if id.is_none() {
-        // notifications/initialized etc.
-        return None;
-    }
+    // notifications/initialized etc. — no response without id
+    id.as_ref()?;
 
     let result = match method.as_str() {
         "initialize" => {

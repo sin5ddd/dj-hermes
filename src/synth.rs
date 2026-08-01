@@ -79,6 +79,8 @@ pub struct Voice {
     pub source: OscSource,
     pub freq: f32,
     pub gain: f32,
+    /// Stereo pan 0=left … 1=right (applied at deck mix).
+    pub pan: f32,
     pub orbit: u8,
     pub cut: Option<i32>,
     phase: f32,
@@ -153,6 +155,7 @@ impl Voice {
             source,
             freq,
             gain,
+            pan: 0.5,
             orbit,
             cut,
             phase: 0.0,
@@ -212,6 +215,11 @@ impl Voice {
 
     pub fn with_adsr(mut self, adsr: Adsr) -> Self {
         self.adsr = adsr;
+        self
+    }
+
+    pub fn with_pan(mut self, pan: f32) -> Self {
+        self.pan = pan.clamp(0.0, 1.0);
         self
     }
 

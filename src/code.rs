@@ -123,6 +123,8 @@ pub struct PatternCode {
     pub gain: f32,
     /// Multiplier applied with gain (from velocity/vel).
     pub velocity: f32,
+    /// Stereo pan 0=left … 0.5=center … 1=right (equal-power).
+    pub pan: f32,
     pub filter: FilterParams,
     /// Accumulated slow/fast factor (slow divides, fast multiplies).
     pub speed: f64,
@@ -193,6 +195,7 @@ pub fn parse_code(input: &str) -> Result<PatternCode, String> {
         sound: "triangle".into(),
         gain: 0.5,
         velocity: 1.0,
+        pan: 0.5,
         filter: FilterParams::default(),
         speed: 1.0,
         is_note: false,
@@ -514,6 +517,10 @@ fn apply_method(pc: &mut PatternCode, name: &str, args: &str) -> Result<(), Stri
         }
         "velocity" | "vel" => {
             pc.velocity = parse_num(args)? as f32;
+            Ok(())
+        }
+        "pan" => {
+            pc.pan = (parse_num(args)? as f32).clamp(0.0, 1.0);
             Ok(())
         }
         "lpf" | "cutoff" | "lp" | "ctf" => {
@@ -971,6 +978,17 @@ mod tests {
         let pc = parse_code(r#"s("bd sd hh*2").gain(0.8)"#).unwrap();
         assert!(!pc.is_note);
         assert_eq!(pc.sound, "bd");
+        assert!((pc.pan - 0.5).abs() < 1e-6);
+    }
+
+    #[test]
+    fn parses_pan() {
+        let pc = parse_code(r#"s("bd").pan(0)"#).unwrap();
+        assert!((pc.pan - 0.0).abs() < 1e-6);
+        let pc = parse_code(r#"note("c3").s("sawtooth").pan(1)"#).unwrap();
+        assert!((pc.pan - 1.0).abs() < 1e-6);
+        let pc = parse_code(r#"s("hh").pan(0.25)"#).unwrap();
+        assert!((pc.pan - 0.25).abs() < 1e-6);
     }
 
     #[test]

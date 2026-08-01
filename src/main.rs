@@ -7,6 +7,7 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
+use cpal::{SampleFormat, StreamConfig};
 use crossbeam::channel::{unbounded, Receiver, Sender};
 use crossterm::event::{self, Event, KeyCode, KeyEventKind};
 use crossterm::terminal::{
@@ -395,13 +396,7 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
     let device = host
         .default_output_device()
         .ok_or_else(|| "no default output device".to_string())?;
-    let supported = device
-        .default_output_config()
-        .map_err(|e| format!("output config: {e}"))?;
-
-    let sample_rate = supported.sample_rate() as u32;
-    let channels = supported.channels() as usize;
-    let stream_config: cpal::StreamConfig = supported.into();
+    let (stream_config, sample_rate, channels, sample_format) = pick_output_config(&device)?;
 
     let samples_dir = resolve_samples_dir(Some(&song_path))?;
     let bank = SampleBank::load_dir(&samples_dir, sample_rate);
@@ -438,7 +433,7 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
         if !names.is_empty() {
             eprintln!("            {}", names.join(", "));
         }
-        eprintln!("  device:  {sample_rate} Hz, {channels} ch");
+        eprintln!("  device:  {sample_rate} Hz, {channels} ch, {sample_format:?}");
         match seconds {
             Some(n) => eprintln!("  duration:{n}s"),
             None => eprintln!("  duration:loop (Ctrl+C to stop)"),
@@ -499,12 +494,7 @@ fn cmd_live_session(opts: LiveSessionOpts) -> Result<(), String> {
     let device = host
         .default_output_device()
         .ok_or_else(|| "no default output device".to_string())?;
-    let supported = device
-        .default_output_config()
-        .map_err(|e| format!("output config: {e}"))?;
-    let sample_rate = supported.sample_rate() as u32;
-    let channels = supported.channels() as usize;
-    let stream_config: cpal::StreamConfig = supported.into();
+    let (stream_config, sample_rate, channels, sample_format) = pick_output_config(&device)?;
 
     let samples_dir = resolve_samples_dir(song_a.as_deref().or(song_b.as_deref()))?;
     let bank = SampleBank::load_dir(&samples_dir, sample_rate);
@@ -646,7 +636,7 @@ fn cmd_live_session(opts: LiveSessionOpts) -> Result<(), String> {
         )?;
     } else {
         eprintln!(
-            "strudel-rs dj --text  |  {sample_rate} Hz, {channels} ch  |  samples {}",
+            "strudel-rs dj --text  |  {sample_rate} Hz, {channels} ch, {sample_format:?}  |  samples {}",
             samples_dir.display()
         );
         repl::run(cmd_tx, deck_paths, Some(Arc::clone(&engine)));
@@ -750,25 +740,51 @@ fn maybe_start_api(
     Some(api::spawn_server(state, port))
 }
 
+/// Pick an output config that works in **WASAPI shared mode** (Windows).
+///
+/// Shared mode only accepts the device mix format (`default_output_config`).
+/// Scanning `supported_output_configs` often yields exclusive-only rates/formats
+/// and fails with "Stream configuration is not supported in shared mode".
+fn pick_output_config(
+    device: &cpal::Device,
+) -> Result<(StreamConfig, u32, usize, SampleFormat), String> {
+    let default = device
+        .default_output_config()
+        .map_err(|e| format!("output config: {e}"))?;
+    let sample_format = default.sample_format();
+    if sample_format != SampleFormat::F32 {
+        return Err(format!(
+            "output device sample format {sample_format:?} is not F32; \
+             shared-mode stream uses the default mix format only (engine needs F32)"
+        ));
+    }
+    let sample_rate = default.sample_rate();
+    let channels = default.channels() as usize;
+    // Keep buffer_size from SupportedStreamConfig → StreamConfig (Default).
+    let stream_config: StreamConfig = default.into();
+    Ok((stream_config, sample_rate, channels, sample_format))
+}
+
 fn build_stream(
     device: &cpal::Device,
-    stream_config: cpal::StreamConfig,
+    stream_config: StreamConfig,
     channels: usize,
     engine: Arc<Mutex<Engine>>,
     bank: Arc<SampleBank>,
     cmd_rx: Option<Receiver<Command>>,
 ) -> Result<cpal::Stream, String> {
-    let mut mono = Vec::<f32>::new();
+    let mut stereo = Vec::<f32>::new();
     let stream = device
         .build_output_stream(
             stream_config,
             move |data: &mut [f32], _| {
                 let frames = data.len() / channels.max(1);
-                if mono.len() < frames {
-                    mono.resize(frames, 0.0);
+                let need = frames * 2;
+                if stereo.len() < need {
+                    stereo.resize(need, 0.0);
                 }
-                let mono_buf = &mut mono[..frames];
-                mono_buf.fill(0.0);
+                let stereo_buf = &mut stereo[..need];
+                stereo_buf.fill(0.0);
 
                 if let Ok(mut eng) = engine.try_lock() {
                     if let Some(rx) = &cmd_rx {
@@ -776,16 +792,22 @@ fn build_stream(
                             eng.push_command(cmd);
                         }
                     }
-                    eng.process(mono_buf, &bank);
+                    eng.process(stereo_buf, &bank);
                 }
 
                 if channels <= 1 {
-                    data[..frames].copy_from_slice(mono_buf);
+                    // Downmix mid for rare mono devices.
+                    for i in 0..frames {
+                        data[i] = 0.5 * (stereo_buf[i * 2] + stereo_buf[i * 2 + 1]);
+                    }
                 } else {
-                    for (frame_i, &s) in mono_buf.iter().enumerate() {
+                    // ch0 = L, ch1 = R; extra channels silent (avoids multichannel bleed).
+                    for frame_i in 0..frames {
                         let base = frame_i * channels;
-                        for c in 0..channels {
-                            data[base + c] = s;
+                        data[base] = stereo_buf[frame_i * 2];
+                        data[base + 1] = stereo_buf[frame_i * 2 + 1];
+                        for c in 2..channels {
+                            data[base + c] = 0.0;
                         }
                     }
                 }

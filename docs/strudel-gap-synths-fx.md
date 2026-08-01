@@ -47,7 +47,7 @@
 
 ### メソッド（概略）
 
-`s`/`sound`, `note`/`n`, `gain`, `velocity`/`vel`, ADSR 一式, `lpf`/`hpf`/`bpf` + Q, `vib`/`vibmod`, `fm`/`fmh`/`fmattack`/`fmdecay`/`fmsustain`, `noise`(mix), `penv`/`pattack`/`pdecay`, `lpenv`/`lpattack`…`lprelease`, `begin`/`end`/`speed`/`bank`/`clip`/`legato`/`cut`, `fast`/`slow`, `orbit`, `duckorbit`/`duckattack`/`duckdepth`, `delay`/`delaytime`/`delayfeedback`, `room`/`roomsize`, `compressor`
+`s`/`sound`, `note`/`n`, `gain`, `velocity`/`vel`, `pan`（スカラー）, ADSR 一式, `lpf`/`hpf`/`bpf` + Q, `vib`/`vibmod`, `fm`/`fmh`/`fmattack`/`fmdecay`/`fmsustain`, `noise`(mix), `penv`/`pattack`/`pdecay`, `lpenv`/`lpattack`…`lprelease`, `begin`/`end`/`speed`/`bank`/`clip`/`legato`/`cut`, `fast`/`slow`, `orbit`, `duckorbit`/`duckattack`/`duckdepth`, `delay`/`delaytime`/`delayfeedback`, `room`/`roomsize`, `compressor`
 
 詳細は sound-design Skill を参照。
 
@@ -115,7 +115,7 @@
 | `shape` | **未** | ウェーブシェイプ |
 | `distort` / `dist` | **未** | |
 | `tremolo` / `tremolosync` / `tremolodepth` / `tremoloskew` / `tremolophase` / `tremoloshape` / `am` | **未** | 振幅変調 |
-| `pan` | **未** | ステレオ位置（出力がモノ寄りでも API 自体なし） |
+| `pan` | **実装済** | 0=左 … 0.5=中央 … 1=右。等パワー。**スカラー引数のみ**（`pan("0 1")` の Pattern 引数は未） |
 | `jux` / `juxBy` | **未** | パターン変換寄り |
 | `postgain` / `post` / `dry` | **未** | |
 | `phaser` / `phaserdepth` / `phasercenter` / `phasersweep` | **未** | |
@@ -164,7 +164,7 @@
 デモ品質で効きやすい順の **目安**（コミットメントではない）:
 
 1. **高:** メソッド引数の Pattern 化（またはよく使う LFO の固定セット）— 本家コピペの失敗要因 1 位
-2. **中:** `distort` / `crush` / `pan`、HPF/BPF filter env、`fmenv`、FM 多オペの一部
+2. **中:** `distort` / `crush`、HPF/BPF filter env、`fmenv`、FM 多オペの一部
 3. **中:** room 拡張（`rlp`/`rdim`）、`delayspeed`
 4. **低:** ZZFX、加算 `partials`、IR reverb、`phaser`、granular `chop`…
 5. **非目標寄:** ネットサンプル、DAW マルチアウト orbit、Web 専用 viz 関数

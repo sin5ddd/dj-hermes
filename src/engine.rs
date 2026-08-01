@@ -85,8 +85,12 @@ pub struct Engine {
     pub decks: [Deck; 2],
     pub mixer: Mixer,
     pending: Vec<Queued>,
-    scratch_a: Vec<f32>,
-    scratch_b: Vec<f32>,
+    scratch_a_l: Vec<f32>,
+    scratch_a_r: Vec<f32>,
+    scratch_b_l: Vec<f32>,
+    scratch_b_r: Vec<f32>,
+    scratch_out_l: Vec<f32>,
+    scratch_out_r: Vec<f32>,
     /// Lock-free playhead for UI highlight (UI re-evaluates patterns; audio only stores).
     pub playhead: Arc<AtomicU64>,
 }
@@ -98,8 +102,12 @@ impl Engine {
             decks: [Deck::new("A"), Deck::new("B")],
             mixer: Mixer::new(),
             pending: Vec::new(),
-            scratch_a: Vec::new(),
-            scratch_b: Vec::new(),
+            scratch_a_l: Vec::new(),
+            scratch_a_r: Vec::new(),
+            scratch_b_l: Vec::new(),
+            scratch_b_r: Vec::new(),
+            scratch_out_l: Vec::new(),
+            scratch_out_r: Vec::new(),
             playhead: Arc::new(AtomicU64::new(0)),
         }
     }
@@ -260,6 +268,8 @@ impl Engine {
         }
     }
 
+    /// Process `frames = out.len() / 2` of **interleaved stereo** into `out` (`[L,R,L,R,…]`).
+    /// Time advances by `frames` (not `out.len()`).
     pub fn process(&mut self, out: &mut [f32], samples: &SampleBank) {
         self.apply_pending_at_bar_boundary();
 
@@ -270,19 +280,38 @@ impl Engine {
             XFadeTick::Idle | XFadeTick::Active => {}
         }
 
-        let n = out.len();
-        if self.scratch_a.len() < n {
-            self.scratch_a.resize(n, 0.0);
-            self.scratch_b.resize(n, 0.0);
+        let frames = out.len() / 2;
+        if frames == 0 {
+            return;
         }
-        self.scratch_a[..n].fill(0.0);
-        self.scratch_b[..n].fill(0.0);
+        if self.scratch_a_l.len() < frames {
+            self.scratch_a_l.resize(frames, 0.0);
+            self.scratch_a_r.resize(frames, 0.0);
+            self.scratch_b_l.resize(frames, 0.0);
+            self.scratch_b_r.resize(frames, 0.0);
+            self.scratch_out_l.resize(frames, 0.0);
+            self.scratch_out_r.resize(frames, 0.0);
+        }
+        self.scratch_a_l[..frames].fill(0.0);
+        self.scratch_a_r[..frames].fill(0.0);
+        self.scratch_b_l[..frames].fill(0.0);
+        self.scratch_b_r[..frames].fill(0.0);
 
         // Deck outputs are pre-fader; mixer applies gain_a/gain_b.
         self.decks[0].gain = 1.0;
         self.decks[1].gain = 1.0;
-        self.decks[0].process(&mut self.scratch_a[..n], &self.transport, samples);
-        self.decks[1].process(&mut self.scratch_b[..n], &self.transport, samples);
+        self.decks[0].process(
+            &mut self.scratch_a_l[..frames],
+            &mut self.scratch_a_r[..frames],
+            &self.transport,
+            samples,
+        );
+        self.decks[1].process(
+            &mut self.scratch_b_l[..frames],
+            &mut self.scratch_b_r[..frames],
+            &self.transport,
+            samples,
+        );
 
         let sr = self.transport.sample_rate as f32;
         // Last-write-wins compressor params from either deck's pattern hits.
@@ -292,10 +321,22 @@ impl Engine {
         {
             self.mixer.set_compressor(Some(c), sr);
         }
-        self.mixer
-            .mix(out, &self.scratch_a[..n], &self.scratch_b[..n], sr);
+        self.mixer.mix(
+            &mut self.scratch_out_l[..frames],
+            &mut self.scratch_out_r[..frames],
+            &self.scratch_a_l[..frames],
+            &self.scratch_a_r[..frames],
+            &self.scratch_b_l[..frames],
+            &self.scratch_b_r[..frames],
+            sr,
+        );
 
-        self.transport.advance(n);
+        for i in 0..frames {
+            out[i * 2] = self.scratch_out_l[i];
+            out[i * 2 + 1] = self.scratch_out_r[i];
+        }
+
+        self.transport.advance(frames);
         // Publish after advance so UI sees the end-of-buffer position.
         self.playhead
             .store(self.transport.global_sample, Ordering::Relaxed);
@@ -319,9 +360,14 @@ b: note("{n}").s("sawtooth").gain(0.8)
         .unwrap()
     }
 
+    /// Interleaved stereo buffer for `frames` time samples.
+    fn stereo_buf(frames: usize) -> Vec<f32> {
+        vec![0f32; frames * 2]
+    }
+
     #[test]
     fn song_loads_and_plays_after_bar_boundary() {
-        // 120 BPM @ 48k → 1 bar = 96000 samples.
+        // 120 BPM @ 48k → 1 bar = 96000 frames.
         let mut e = Engine::new(48_000, 120.0);
         let bank = SampleBank::empty();
 
@@ -331,7 +377,7 @@ b: note("{n}").s("sawtooth").gain(0.8)
         });
 
         // Still in bar 0: pending targets bar 1 → silent.
-        let mut buf = vec![0f32; 9_600];
+        let mut buf = stereo_buf(9_600);
         e.process(&mut buf, &bank);
         assert!(
             buf.iter().all(|s| s.abs() < 1e-6),
@@ -339,7 +385,7 @@ b: note("{n}").s("sawtooth").gain(0.8)
         );
 
         // Finish bar 0 (remaining ~86400). Still bar 0 at buffer head → silent.
-        let mut buf = vec![0f32; 86_400];
+        let mut buf = stereo_buf(86_400);
         e.process(&mut buf, &bank);
         assert!(
             buf.iter().all(|s| s.abs() < 1e-6),
@@ -347,12 +393,16 @@ b: note("{n}").s("sawtooth").gain(0.8)
         );
 
         // Now global_sample == 96000 → bar_index == 1 → apply + sound.
-        let mut buf = vec![0f32; 48_000];
+        let mut buf = stereo_buf(48_000);
         e.process(&mut buf, &bank);
         assert!(
             buf.iter().any(|s| s.abs() > 0.001),
             "should sound after bar boundary"
         );
+        // Default pan center → both channels have energy.
+        let l: f32 = buf.iter().step_by(2).map(|s| s.abs()).sum();
+        let r: f32 = buf.iter().skip(1).step_by(2).map(|s| s.abs()).sum();
+        assert!(l > 0.01 && r > 0.01, "L={l} R={r}");
     }
 
     #[test]
@@ -360,21 +410,21 @@ b: note("{n}").s("sawtooth").gain(0.8)
         let mut e = Engine::new(48_000, 120.0);
         let bank = SampleBank::empty();
         e.push_command(Command::SetBpm(60.0));
-        let mut buf = vec![0f32; 4_800]; // mid-bar
+        let mut buf = stereo_buf(4_800); // mid-bar
         e.process(&mut buf, &bank);
         assert!(
             (e.transport.bpm - 120.0).abs() < 1e-9,
             "bpm must not change mid-bar"
         );
         // Finish the rest of bar 0 (still applied at buffer head = mid-bar → no change).
-        let mut buf = vec![0f32; 96_000 - 4_800];
+        let mut buf = stereo_buf(96_000 - 4_800);
         e.process(&mut buf, &bank);
         assert!(
             (e.transport.bpm - 120.0).abs() < 1e-9,
             "bpm still unchanged until a buffer starts on the next bar"
         );
         // Buffer head is now exactly at bar 1 → apply pending.
-        let mut buf = vec![0f32; 1_000];
+        let mut buf = stereo_buf(1_000);
         e.process(&mut buf, &bank);
         assert!(
             (e.transport.bpm - 60.0).abs() < 1e-9,
@@ -393,9 +443,9 @@ b: note("{n}").s("sawtooth").gain(0.8)
             song: Box::new(song),
         });
         // Apply load at bar 1.
-        let mut buf = vec![0f32; 96_000];
+        let mut buf = stereo_buf(96_000);
         e.process(&mut buf, &bank);
-        let mut buf = vec![0f32; 48_000];
+        let mut buf = stereo_buf(48_000);
         e.process(&mut buf, &bank);
         assert!(
             buf.iter().any(|s| s.abs() > 0.001),
@@ -408,7 +458,7 @@ b: note("{n}").s("sawtooth").gain(0.8)
             muted: true,
         });
         // Still same bar: mute pending for next bar → still sounding.
-        let mut buf = vec![0f32; 4_800];
+        let mut buf = stereo_buf(4_800);
         e.process(&mut buf, &bank);
         assert!(
             buf.iter().any(|s| s.abs() > 0.0),
@@ -416,10 +466,10 @@ b: note("{n}").s("sawtooth").gain(0.8)
         );
 
         // Cross bar boundary → muted (voices may tail; process full bars to drain).
-        let mut buf = vec![0f32; 96_000];
+        let mut buf = stereo_buf(96_000);
         e.process(&mut buf, &bank);
         // One more bar: no new notes.
-        let mut buf = vec![0f32; 96_000];
+        let mut buf = stereo_buf(96_000);
         e.process(&mut buf, &bank);
         assert!(
             buf.iter().all(|s| s.abs() < 1e-4),
@@ -429,7 +479,7 @@ b: note("{n}").s("sawtooth").gain(0.8)
 
     #[test]
     fn head_applies_at_next_bar_boundary() {
-        // 120 BPM @ 48k → 1 bar = 96000 samples.
+        // 120 BPM @ 48k → 1 bar = 96000 frames.
         let mut e = Engine::new(48_000, 120.0);
         let bank = SampleBank::empty();
         let bar = 96_000usize;
@@ -437,20 +487,20 @@ b: note("{n}").s("sawtooth").gain(0.8)
         assert_eq!(e.decks[0].song_bar_1based(0), 1);
 
         // Advance into bar 1, then mid-bar queue head 10.
-        let mut buf = vec![0f32; bar];
+        let mut buf = stereo_buf(bar);
         e.process(&mut buf, &bank);
         assert_eq!(e.transport.bar_index(), 1);
 
-        let mut buf = vec![0f32; bar / 2];
+        let mut buf = stereo_buf(bar / 2);
         e.process(&mut buf, &bank);
         e.push_command(Command::Head { deck: 0, bar: 10 });
         assert_eq!(e.decks[0].cycle_offset(), 0, "pending until next bar");
 
         // Cross next bar boundary so Head applies at buffer head.
-        let mut buf = vec![0f32; bar];
+        let mut buf = stereo_buf(bar);
         e.process(&mut buf, &bank);
         if e.decks[0].cycle_offset() == 0 {
-            let mut buf = vec![0f32; bar];
+            let mut buf = stereo_buf(bar);
             e.process(&mut buf, &bank);
         }
 
@@ -465,7 +515,7 @@ b: note("{n}").s("sawtooth").gain(0.8)
         assert!(e.decks[0].song_bar_1based(g) >= 10);
 
         let song = e.decks[0].song_bar_1based(g);
-        let mut buf = vec![0f32; bar];
+        let mut buf = stereo_buf(bar);
         e.process(&mut buf, &bank);
         let g2 = e.transport.bar_index();
         assert_eq!(e.decks[0].song_bar_1based(g2), song + (g2 - g));
@@ -474,7 +524,7 @@ b: note("{n}").s("sawtooth").gain(0.8)
 
     #[test]
     fn xfade_transitions_between_decks() {
-        // 120 BPM @ 48k → 1 bar = 96000 samples. Pending applies only at buffer head.
+        // 120 BPM @ 48k → 1 bar = 96000 frames. Pending applies only at buffer head.
         let mut e = Engine::new(48_000, 120.0);
         let bank = SampleBank::empty();
         let bar = 96_000usize;
@@ -484,9 +534,9 @@ b: note("{n}").s("sawtooth").gain(0.8)
             song: Box::new(test_song("c3")),
         });
         // Reach bar 1 head and apply load A.
-        let mut buf = vec![0f32; bar];
+        let mut buf = stereo_buf(bar);
         e.process(&mut buf, &bank);
-        let mut buf = vec![0f32; bar];
+        let mut buf = stereo_buf(bar);
         e.process(&mut buf, &bank);
         assert_eq!(e.decks[0].song_title(), Some("t"));
         assert!((e.mixer.gain_a - 1.0).abs() < 1e-5);
@@ -501,11 +551,11 @@ b: note("{n}").s("sawtooth").gain(0.8)
         });
 
         // Process until pending targets are reached (next bar head).
-        let mut buf = vec![0f32; bar];
+        let mut buf = stereo_buf(bar);
         e.process(&mut buf, &bank);
         // If still pending (buffer head was mid-timeline), one more bar.
         if e.mixer.xfade().is_none() && e.decks[1].song_title().is_none() {
-            let mut buf = vec![0f32; bar];
+            let mut buf = stereo_buf(bar);
             e.process(&mut buf, &bank);
         }
         assert_eq!(
@@ -522,7 +572,7 @@ b: note("{n}").s("sawtooth").gain(0.8)
 
         // Run enough bars for a 2-bar xfade to finish.
         for _ in 0..4 {
-            let mut buf = vec![0f32; bar];
+            let mut buf = stereo_buf(bar);
             e.process(&mut buf, &bank);
         }
 
@@ -557,9 +607,9 @@ b: note("{n}").s("sawtooth").gain(0.8)
             deck: 1,
             song: Box::new(test_song("c3")),
         });
-        let mut buf = vec![0f32; 96_000];
+        let mut buf = stereo_buf(96_000);
         e.process(&mut buf, &bank); // apply at bar 1
-        let mut buf = vec![0f32; 48_000];
+        let mut buf = stereo_buf(48_000);
         e.process(&mut buf, &bank);
         let peak = buf.iter().fold(0f32, |m, s| m.max(s.abs()));
         assert!(
@@ -593,9 +643,9 @@ bass: note("c2").s("sawtooth").lpf(400).gain(0.5)
             song: Box::new(song),
         });
         // Skip bar 0, play bar 1.
-        let mut buf = vec![0f32; 96_000];
+        let mut buf = stereo_buf(96_000);
         e.process(&mut buf, &bank);
-        let mut buf = vec![0f32; 48_000];
+        let mut buf = stereo_buf(48_000);
         e.process(&mut buf, &bank);
         assert!(buf.iter().any(|s| s.abs() > 0.001), "smoke should sound");
     }

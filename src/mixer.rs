@@ -23,13 +23,17 @@ pub enum XFadeTick {
 }
 
 /// Per-deck channel EQ: Hi (shelf) / Mid (peak) / Lo (shelf). Positions 0..=1, 0.5 = flat.
+/// Dual-mono state (shared coeffs) so stereo pan is preserved.
 #[derive(Clone, Debug)]
 struct ChannelEq {
     /// [Hi, Mid, Lo] slider positions.
     pos: [f32; 3],
-    hi: Biquad,
-    mid: Biquad,
-    lo: Biquad,
+    hi_l: Biquad,
+    mid_l: Biquad,
+    lo_l: Biquad,
+    hi_r: Biquad,
+    mid_r: Biquad,
+    lo_r: Biquad,
     sr: f32,
 }
 
@@ -37,9 +41,12 @@ impl ChannelEq {
     fn new(sr: f32) -> Self {
         let mut eq = Self {
             pos: [0.5, 0.5, 0.5],
-            hi: Biquad::bypass(),
-            mid: Biquad::bypass(),
-            lo: Biquad::bypass(),
+            hi_l: Biquad::bypass(),
+            mid_l: Biquad::bypass(),
+            lo_l: Biquad::bypass(),
+            hi_r: Biquad::bypass(),
+            mid_r: Biquad::bypass(),
+            lo_r: Biquad::bypass(),
             sr: sr.max(1.0),
         };
         eq.rebuild();
@@ -66,33 +73,40 @@ impl ChannelEq {
         let sr = self.sr;
         let q = 0.707;
         // band 0 = Hi, 1 = Mid, 2 = Lo (matches live_ui)
-        self.hi.set_coeffs_gain(
-            BiquadKind::HighShelf,
-            6000.0,
-            q,
-            eq_pos_to_db(self.pos[0]),
-            sr,
-        );
-        self.mid.set_coeffs_gain(
-            BiquadKind::Peaking,
-            1000.0,
-            q,
-            eq_pos_to_db(self.pos[1]),
-            sr,
-        );
-        self.lo.set_coeffs_gain(
-            BiquadKind::LowShelf,
-            200.0,
-            q,
-            eq_pos_to_db(self.pos[2]),
-            sr,
-        );
+        for (hi, mid, lo) in [
+            (&mut self.hi_l, &mut self.mid_l, &mut self.lo_l),
+            (&mut self.hi_r, &mut self.mid_r, &mut self.lo_r),
+        ] {
+            hi.set_coeffs_gain(
+                BiquadKind::HighShelf,
+                6000.0,
+                q,
+                eq_pos_to_db(self.pos[0]),
+                sr,
+            );
+            mid.set_coeffs_gain(
+                BiquadKind::Peaking,
+                1000.0,
+                q,
+                eq_pos_to_db(self.pos[1]),
+                sr,
+            );
+            lo.set_coeffs_gain(
+                BiquadKind::LowShelf,
+                200.0,
+                q,
+                eq_pos_to_db(self.pos[2]),
+                sr,
+            );
+        }
     }
 
     #[inline]
-    fn process(&mut self, x: f32) -> f32 {
-        // Lo → Mid → Hi
-        self.hi.process(self.mid.process(self.lo.process(x)))
+    fn process_stereo(&mut self, l: f32, r: f32) -> (f32, f32) {
+        // Lo → Mid → Hi per channel
+        let l = self.hi_l.process(self.mid_l.process(self.lo_l.process(l)));
+        let r = self.hi_r.process(self.mid_r.process(self.lo_r.process(r)));
+        (l, r)
     }
 }
 
@@ -105,9 +119,12 @@ pub struct Mixer {
     /// Master high-pass cutoff Hz (`None` = bypass).
     pub hpf_hz: Option<f32>,
     xfade: Option<XFadeState>,
-    lpf_y: f32,
-    hpf_y: f32,
-    hpf_x_prev: f32,
+    lpf_y_l: f32,
+    lpf_y_r: f32,
+    hpf_y_l: f32,
+    hpf_y_r: f32,
+    hpf_x_prev_l: f32,
+    hpf_x_prev_r: f32,
     compressor: Option<crate::dsp::Compressor>,
     comp_sr: f32,
     eq_a: ChannelEq,
@@ -128,9 +145,12 @@ impl Mixer {
             lpf_hz: None,
             hpf_hz: None,
             xfade: None,
-            lpf_y: 0.0,
-            hpf_y: 0.0,
-            hpf_x_prev: 0.0,
+            lpf_y_l: 0.0,
+            lpf_y_r: 0.0,
+            hpf_y_l: 0.0,
+            hpf_y_r: 0.0,
+            hpf_x_prev_l: 0.0,
+            hpf_x_prev_r: 0.0,
             compressor: None,
             comp_sr: 48_000.0,
             eq_a: ChannelEq::new(48_000.0),
@@ -256,9 +276,25 @@ impl Mixer {
         }
     }
 
-    /// Mix A/B mono buffers with channel EQ, faders, master filter, optional compressor into `out`.
-    pub fn mix(&mut self, out: &mut [f32], a: &[f32], b: &[f32], sample_rate: f32) {
-        let n = out.len().min(a.len()).min(b.len());
+    /// Mix A/B stereo buffers with channel EQ, faders, master filter, linked compressor.
+    #[allow(clippy::too_many_arguments)]
+    pub fn mix(
+        &mut self,
+        out_l: &mut [f32],
+        out_r: &mut [f32],
+        a_l: &[f32],
+        a_r: &[f32],
+        b_l: &[f32],
+        b_r: &[f32],
+        sample_rate: f32,
+    ) {
+        let n = out_l
+            .len()
+            .min(out_r.len())
+            .min(a_l.len())
+            .min(a_r.len())
+            .min(b_l.len())
+            .min(b_r.len());
         let ga = self.gain_a;
         let gb = self.gain_b;
         let sr = sample_rate.max(1.0);
@@ -275,27 +311,37 @@ impl Mixer {
         });
 
         for i in 0..n {
-            // Channel EQ then fader (DJ mixer style).
-            let ea = self.eq_a.process(a[i]) * ga;
-            let eb = self.eq_b.process(b[i]) * gb;
-            let mut x = ea + eb;
+            // Channel EQ then fader (DJ mixer style), dual-mono.
+            let (ea_l, ea_r) = self.eq_a.process_stereo(a_l[i], a_r[i]);
+            let (eb_l, eb_r) = self.eq_b.process_stereo(b_l[i], b_r[i]);
+            let mut l = ea_l * ga + eb_l * gb;
+            let mut r = ea_r * ga + eb_r * gb;
 
             if let Some(k) = hpf_k {
-                let y = k * (self.hpf_y + x - self.hpf_x_prev);
-                self.hpf_x_prev = x;
-                self.hpf_y = y;
-                x = y;
+                let yl = k * (self.hpf_y_l + l - self.hpf_x_prev_l);
+                self.hpf_x_prev_l = l;
+                self.hpf_y_l = yl;
+                l = yl;
+                let yr = k * (self.hpf_y_r + r - self.hpf_x_prev_r);
+                self.hpf_x_prev_r = r;
+                self.hpf_y_r = yr;
+                r = yr;
             }
             if let Some(k) = lpf_k {
-                self.lpf_y += k * (x - self.lpf_y);
-                x = self.lpf_y;
+                self.lpf_y_l += k * (l - self.lpf_y_l);
+                l = self.lpf_y_l;
+                self.lpf_y_r += k * (r - self.lpf_y_r);
+                r = self.lpf_y_r;
             }
 
             if let Some(comp) = self.compressor.as_mut() {
-                x = comp.process(x);
+                let (cl, cr) = comp.process_stereo(l, r);
+                l = cl;
+                r = cr;
             }
 
-            out[i] = x.clamp(-1.0, 1.0);
+            out_l[i] = l.clamp(-1.0, 1.0);
+            out_r[i] = r.clamp(-1.0, 1.0);
         }
     }
 }
@@ -351,6 +397,17 @@ mod tests {
         assert!((m.gain_b - 1.0).abs() < 1e-5);
     }
 
+    fn mix_center(m: &mut Mixer, out: &mut [f32], a: &[f32], b: &[f32], sr: f32) {
+        let n = out.len();
+        let mut out_l = vec![0.0f32; n];
+        let mut out_r = vec![0.0f32; n];
+        // Center mono sources: same on L and R (equal-power center would scale; tests use direct L/R).
+        m.mix(&mut out_l, &mut out_r, a, a, b, b, sr);
+        for i in 0..n {
+            out[i] = 0.5 * (out_l[i] + out_r[i]);
+        }
+    }
+
     #[test]
     fn compressor_on_mix_reduces_peak() {
         let mut m = Mixer::new();
@@ -369,7 +426,7 @@ mod tests {
         let a = vec![0.9f32; 2000];
         let b = vec![0.0f32; 2000];
         let mut out = vec![0.0f32; 2000];
-        m.mix(&mut out, &a, &b, 48_000.0);
+        mix_center(&mut m, &mut out, &a, &b, 48_000.0);
         let peak = out.iter().map(|x| x.abs()).fold(0.0f32, f32::max);
         assert!(peak < 0.9, "peak={peak}");
     }
@@ -388,7 +445,7 @@ mod tests {
         }
         let b = vec![0.0f32; n];
         let mut out = vec![0.0f32; n];
-        m.mix(&mut out, &a, &b, sr);
+        mix_center(&mut m, &mut out, &a, &b, sr);
         // Skip filter settling; compare RMS.
         let rms_in: f32 = a[1000..].iter().map(|x| x * x).sum::<f32>() / (n - 1000) as f32;
         let rms_out: f32 = out[1000..].iter().map(|x| x * x).sum::<f32>() / (n - 1000) as f32;
@@ -413,13 +470,13 @@ mod tests {
         let mut flat = Mixer::new();
         flat.gain_a = 1.0;
         let mut out_flat = vec![0.0f32; n];
-        flat.mix(&mut out_flat, &a, &b, sr);
+        mix_center(&mut flat, &mut out_flat, &a, &b, sr);
 
         let mut cut = Mixer::new();
         cut.gain_a = 1.0;
         cut.set_deck_eq(0, 2, 0.0); // Lo min (-12 dB)
         let mut out_cut = vec![0.0f32; n];
-        cut.mix(&mut out_cut, &a, &b, sr);
+        mix_center(&mut cut, &mut out_cut, &a, &b, sr);
 
         let e_flat: f32 = out_flat[2000..].iter().map(|x| x * x).sum();
         let e_cut: f32 = out_cut[2000..].iter().map(|x| x * x).sum();
@@ -444,13 +501,13 @@ mod tests {
         let mut flat = Mixer::new();
         flat.gain_a = 1.0;
         let mut out_flat = vec![0.0f32; n];
-        flat.mix(&mut out_flat, &a, &b, sr);
+        mix_center(&mut flat, &mut out_flat, &a, &b, sr);
 
         let mut boost = Mixer::new();
         boost.gain_a = 1.0;
         boost.set_deck_eq(0, 0, 1.0); // Hi max (+12 dB)
         let mut out_boost = vec![0.0f32; n];
-        boost.mix(&mut out_boost, &a, &b, sr);
+        mix_center(&mut boost, &mut out_boost, &a, &b, sr);
 
         let e_flat: f32 = out_flat[2000..].iter().map(|x| x * x).sum();
         let e_boost: f32 = out_boost[2000..].iter().map(|x| x * x).sum();

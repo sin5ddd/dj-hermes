@@ -1,4 +1,4 @@
-/// Render callback invoked with a mono (or interleaved) sample buffer.
+/// Render callback invoked with an **interleaved stereo** sample buffer (`[L,R,L,R,…]`).
 pub type RenderCallback = Box<dyn FnMut(&mut [f32]) + Send>;
 
 /// Audio device abstraction. CPAL fills buffers; NullBackend drives headless tests.
@@ -16,9 +16,10 @@ impl NullBackend {
         Self { cb: None }
     }
 
-    /// Run the registered callback once into a fresh buffer of `frames` samples (mono).
+    /// Run the registered callback once into a fresh interleaved stereo buffer
+    /// of `frames` frames (length `frames * 2`).
     pub fn render(&mut self, frames: usize) -> Vec<f32> {
-        let mut buf = vec![0.0; frames];
+        let mut buf = vec![0.0; frames * 2];
         if let Some(cb) = &mut self.cb {
             cb(&mut buf);
         }
@@ -50,7 +51,7 @@ mod tests {
     fn null_backend_renders_silence() {
         let mut b = NullBackend::new();
         b.start(48_000, Box::new(|_d| {}));
-        assert_eq!(b.render(128), vec![0.0; 128]);
+        assert_eq!(b.render(128), vec![0.0; 256]);
     }
 
     #[test]
@@ -64,8 +65,8 @@ mod tests {
                 }
             }),
         );
-        assert_eq!(b.render(4), vec![0.5; 4]);
+        assert_eq!(b.render(4), vec![0.5; 8]);
         b.stop();
-        assert_eq!(b.render(4), vec![0.0; 4]);
+        assert_eq!(b.render(4), vec![0.0; 8]);
     }
 }
