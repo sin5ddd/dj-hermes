@@ -21,6 +21,7 @@ use crossterm::terminal::{
 use crossterm::{cursor, execute, queue, terminal};
 
 use crate::cmd::{self, LiveInput};
+use crate::complete::{self, CompleteCtx, CompleteResult};
 use crate::engine::{Command, Engine};
 use crate::hermes::{HermesEvent, HermesHandle};
 use crate::highlight::{active_spans, bar_index, bar_pos, render_ansi_ex, HighlightModel};
@@ -30,7 +31,9 @@ use crate::voice_input::{VoiceEvent, VoiceHandle};
 use crate::watcher::{DeckPaths, UiLogBuffer};
 
 const HELP_LINE: &str =
-    "F10 viz  F12音声  drag xf/EQ  自然文→Hermes  /a load  /x 4  /bpm  /help  (op: /hush /quit)";
+    "F10 viz  F12音声  Tab候補  drag xf/EQ  自然文→Hermes  /a load  /x 4  /bpm  /help";
+/// Max song/track names shown on the suggest footer line.
+const SUGGEST_MAX_ITEMS: usize = 12;
 const HELP_LINE_REC: &str = "● REC  F12 で停止（最大7秒）";
 const HELP_LINE_STT: &str = "… STT  認識中…";
 
@@ -119,6 +122,12 @@ struct LiveState {
     input: String,
     history: Vec<String>,
     history_idx: Option<usize>,
+    /// Index into current local-command suggestion list (Tab / Shift+Tab).
+    suggest_idx: usize,
+    /// Last multi-match candidate list for Tab cycling (cleared on edit).
+    suggest_cycle: Vec<String>,
+    /// `replace_from` paired with `suggest_cycle`.
+    suggest_cycle_from: usize,
     /// Rolling change log; only the last `LOG_LINES` entries are kept / drawn.
     log: VecDeque<String>,
     /// Centered help overlay (not written into the log).
@@ -236,6 +245,9 @@ pub fn run(
         input: String::new(),
         history: Vec::new(),
         history_idx: None,
+        suggest_idx: 0,
+        suggest_cycle: Vec::new(),
+        suggest_cycle_from: 0,
         log: VecDeque::new(),
         help_open: false,
         voice_phase: VoicePhase::Idle,
@@ -336,6 +348,7 @@ pub fn run(
                                 let line = state.input.trim().to_string();
                                 state.input.clear();
                                 state.history_idx = None;
+                                clear_suggest_cycle(&mut state);
                                 if line.is_empty() {
                                     continue;
                                 }
@@ -356,6 +369,17 @@ pub fn run(
                             KeyCode::Backspace => {
                                 if state.voice_phase != VoicePhase::Recording {
                                     state.input.pop();
+                                    clear_suggest_cycle(&mut state);
+                                }
+                            }
+                            KeyCode::Tab => {
+                                if state.voice_phase != VoicePhase::Recording {
+                                    apply_tab_complete(&mut state, hermes.is_some(), false);
+                                }
+                            }
+                            KeyCode::BackTab => {
+                                if state.voice_phase != VoicePhase::Recording {
+                                    apply_tab_complete(&mut state, hermes.is_some(), true);
                                 }
                             }
                             KeyCode::Up => {
@@ -372,6 +396,7 @@ pub fn run(
                                 };
                                 state.history_idx = Some(idx);
                                 state.input = state.history[idx].clone();
+                                clear_suggest_cycle(&mut state);
                             }
                             KeyCode::Down => {
                                 if state.voice_phase == VoicePhase::Recording {
@@ -385,6 +410,7 @@ pub fn run(
                                         state.history_idx = Some(i + 1);
                                         state.input = state.history[i + 1].clone();
                                     }
+                                    clear_suggest_cycle(&mut state);
                                 }
                             }
                             KeyCode::Char(c)
@@ -393,6 +419,7 @@ pub fn run(
                                     && state.voice_phase != VoicePhase::Recording =>
                             {
                                 state.input.push(c);
+                                clear_suggest_cycle(&mut state);
                             }
                             _ => {}
                         }
@@ -429,7 +456,13 @@ pub fn run(
                 sync_models_from_engine(&mut state, &eng, sample_rate);
             }
 
-            draw_frame(&mut out, &mut state, &playhead, sample_rate)?;
+            draw_frame(
+                &mut out,
+                &mut state,
+                &playhead,
+                sample_rate,
+                hermes.is_some(),
+            )?;
             std::thread::sleep(frame);
         }
     })();
@@ -596,6 +629,7 @@ fn draw_frame(
     state: &mut LiveState,
     playhead: &AtomicU64,
     sample_rate: u32,
+    hermes_enabled: bool,
 ) -> Result<(), String> {
     let (cols_u, rows_u) = terminal::size().unwrap_or((80, 24));
     let cols = cols_u as usize;
@@ -696,11 +730,26 @@ fn draw_frame(
 
     if rows >= 2 {
         let help = match state.voice_phase {
-            VoicePhase::Recording => HELP_LINE_REC,
-            VoicePhase::Stt => HELP_LINE_STT,
-            VoicePhase::Idle => HELP_LINE,
+            VoicePhase::Recording => HELP_LINE_REC.to_string(),
+            VoicePhase::Stt => HELP_LINE_STT.to_string(),
+            VoicePhase::Idle => {
+                let result = if state.suggest_cycle.len() > 1 {
+                    CompleteResult {
+                        candidates: state.suggest_cycle.clone(),
+                        replace_from: state.suggest_cycle_from,
+                        hint: None,
+                    }
+                } else {
+                    suggest_for_state(state, hermes_enabled)
+                };
+                if result.has_display() {
+                    complete::format_suggest_line(&result, state.suggest_idx, SUGGEST_MAX_ITEMS)
+                } else {
+                    HELP_LINE.to_string()
+                }
+            }
         };
-        lines.push(pad_clip_ansi(help, cols));
+        lines.push(pad_clip_ansi(&help, cols));
         let prompt = format!("» {}", state.input);
         lines.push(pad_clip_ansi(&prompt, cols));
     }
@@ -749,6 +798,84 @@ fn draw_frame(
     out.flush().map_err(|e| format!("draw: {e}"))?;
     state.prev_lines = lines;
     Ok(())
+}
+
+fn track_names(viz: &Option<VizModel>) -> Vec<String> {
+    viz.as_ref()
+        .map(|v| v.tracks.iter().map(|t| t.name.clone()).collect())
+        .unwrap_or_default()
+}
+
+fn suggest_for_state(state: &LiveState, hermes_enabled: bool) -> CompleteResult {
+    let tracks_a = track_names(&state.viz_a);
+    let tracks_b = track_names(&state.viz_b);
+    let ctx = CompleteCtx {
+        hermes_enabled,
+        tracks_a: &tracks_a,
+        tracks_b: &tracks_b,
+    };
+    complete::suggest(&state.input, &ctx)
+}
+
+fn clear_suggest_cycle(state: &mut LiveState) {
+    state.suggest_idx = 0;
+    state.suggest_cycle.clear();
+    state.suggest_cycle_from = 0;
+}
+
+/// Tab / Shift+Tab: cycle and apply a local-command candidate into `state.input`.
+fn apply_tab_complete(state: &mut LiveState, hermes_enabled: bool, reverse: bool) {
+    let result = suggest_for_state(state, hermes_enabled);
+
+    // Prefer an active multi-match cycle so Tab can rotate full names after apply.
+    let (cands, replace_from) = if state.suggest_cycle.len() > 1 {
+        (state.suggest_cycle.clone(), state.suggest_cycle_from)
+    } else if result.candidates.len() > 1 {
+        state.suggest_cycle = result.candidates.clone();
+        state.suggest_cycle_from = result.replace_from;
+        (result.candidates.clone(), result.replace_from)
+    } else if result.candidates.len() == 1 {
+        state.suggest_cycle.clear();
+        let synthetic = CompleteResult {
+            candidates: result.candidates.clone(),
+            replace_from: result.replace_from,
+            hint: None,
+        };
+        if let Some(next) = complete::apply_candidate(&state.input, &synthetic, 0) {
+            state.input = next;
+            state.suggest_idx = 0;
+            state.history_idx = None;
+        }
+        return;
+    } else {
+        return;
+    };
+
+    let n = cands.len();
+    let partial = if replace_from <= state.input.len() {
+        state.input[replace_from..].trim_end()
+    } else {
+        ""
+    };
+    let mut idx = state.suggest_idx % n;
+    if cands[idx] == partial {
+        idx = if reverse {
+            idx.checked_sub(1).unwrap_or(n - 1)
+        } else {
+            (idx + 1) % n
+        };
+    } else if reverse {
+        idx = idx.checked_sub(1).unwrap_or(n - 1);
+    }
+    let prefix = if replace_from <= state.input.len() {
+        &state.input[..replace_from]
+    } else {
+        &state.input
+    };
+    // Multi-match: no trailing space so the cycle list stays usable.
+    state.input = format!("{}{}", prefix, cands[idx]);
+    state.suggest_idx = idx;
+    state.history_idx = None;
 }
 
 /// Pull watcher / external messages into the fixed 3-line log.
@@ -1287,6 +1414,9 @@ mod tests {
             input: String::new(),
             history: Vec::new(),
             history_idx: None,
+            suggest_idx: 0,
+            suggest_cycle: Vec::new(),
+            suggest_cycle_from: 0,
             log: VecDeque::new(),
             help_open: false,
             voice_phase: VoicePhase::Idle,

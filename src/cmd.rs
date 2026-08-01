@@ -28,6 +28,7 @@ status
 help
 quit / q            [operator]
 viz [on|off]        toggle body punchcard / highlight (live TUI)
+Tab                 complete local-command tokens (live TUI; song / track names)
 
 # live TUI + Hermes
 bare text           send to Hermes (DJ assistant)
