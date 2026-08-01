@@ -42,11 +42,12 @@ To create or change patterns you MUST call strudel_save_song (writes \
 ~/.config/strudel-rs/songs/ only) with name + content + optional deck — never \
 only describe the plan in text, never use file tools.
 content MUST be setcpm(N) or setcpm(BPM/4) plus one or more `$:` track lines. \
-Never stack(...), never .cpm(). Example content:
+Never stack(...), never .cpm(). Prefer one drum s() with commas for simultaneous \
+hits (e.g. bd*4, hh*8 or [bd,sd]). Example content:
 // @title demo
 setcpm(120/4)
-$: s(\"bd*4\").gain(0.9)
-$: s(\"hh*8\").gain(0.3)
+$: s(\"bd*4, hh*8, ~ sd ~ sd\").gain(0.55)
+$: note(\"c2 c2 eb2 g2\").s(\"sawtooth\").lpf(450).gain(0.5)
 Then strudel_save_song(name=\"visitor-demo\", content=..., deck=\"B\") if loading B.
 To load: strudel_load_song(path=<bare basename>, deck=A|B). Prefer bare names \
 (house16, visitor-dnb). Call strudel_list_songs if unsure. Do not use songs/ prefix \

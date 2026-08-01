@@ -6,6 +6,7 @@
 
 use crate::dsp::CompressorParams;
 use crate::mini::{self, Node};
+use crate::scale::Scale;
 
 /// Defaults for amplitude envelope (seconds; sustain is level 0..1).
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -156,6 +157,8 @@ pub struct PatternCode {
     pub room: f32,
     /// Reverb size 0..=10 (Strudel-compatible range).
     pub roomsize: f32,
+    /// Optional scale: integer mini atoms are 0-based degrees (negative allowed).
+    pub scale: Option<Scale>,
     /// Original source text (for display / error context).
     pub raw: String,
     /// Mini-notation string (contents of the first `"..."`).
@@ -217,6 +220,7 @@ pub fn parse_code(input: &str) -> Result<PatternCode, String> {
         delayfeedback: 0.5,
         room: 0.0,
         roomsize: 1.0,
+        scale: None,
         raw: input.to_string(),
         mini_src: String::new(),
         mini_base: 0,
@@ -452,7 +456,9 @@ fn first_atom_value(node: &Node) -> Option<String> {
     match node {
         Node::Atom { value, .. } => Some(value.clone()),
         Node::Rest => None,
-        Node::Seq(items) | Node::Stack(items) => items.iter().find_map(first_atom_value),
+        Node::Seq(items) | Node::Stack(items) | Node::Parallel(items) => {
+            items.iter().find_map(first_atom_value)
+        }
         Node::Fast(inner, _) | Node::Slow(inner, _) => first_atom_value(inner),
     }
 }
@@ -799,6 +805,13 @@ fn apply_method(pc: &mut PatternCode, name: &str, args: &str) -> Result<(), Stri
             pc.is_note = true;
             Ok(())
         }
+        "scale" => {
+            let s = args.trim().trim_matches('"');
+            pc.scale = Some(crate::scale::parse_scale(s)?);
+            // Degree patterns only make sense as pitched events.
+            pc.is_note = true;
+            Ok(())
+        }
         "n" => {
             if args.trim().is_empty() {
                 pc.is_note = true;
@@ -815,7 +828,7 @@ fn apply_method(pc: &mut PatternCode, name: &str, args: &str) -> Result<(), Stri
 
 /// Parse a note name (optional chord suffix stripped) into MIDI number as `i32`.
 /// A4 = 69. Chord tokens like `c3'maj` use the root only (matches Deck scheduling).
-fn note_to_midi_i32(note: &str) -> Result<i32, String> {
+pub fn note_to_midi_i32(note: &str) -> Result<i32, String> {
     if note.is_empty() {
         return Err("empty note".into());
     }
@@ -864,10 +877,15 @@ pub fn note_to_midi(note: &str) -> Result<u8, String> {
     }
 }
 
+/// MIDI note number → Hz (A4 = 440).
+pub fn midi_to_hz(midi: i32) -> f32 {
+    440.0 * 2f32.powf((midi - 69) as f32 / 12.0)
+}
+
 /// Single note name → Hz (A4 = 440).
 pub fn note_to_hz(note: &str) -> Result<f32, String> {
     let midi = note_to_midi_i32(note)?;
-    Ok(440.0 * 2f32.powf((midi - 69) as f32 / 12.0))
+    Ok(midi_to_hz(midi))
 }
 
 /// `c3'maj` / `c3'min7` → chord tones as note names. Plain notes → one element.
@@ -1081,6 +1099,21 @@ mod tests {
     fn expand_min7() {
         let notes = expand_chord("a2'min7").unwrap();
         assert_eq!(notes, vec!["a2", "c3", "e3", "g3"]);
+    }
+
+    #[test]
+    fn parses_scale_degrees() {
+        let pc = parse_code(r#"note("0 2 3").scale("C2:minor").s("sawtooth").gain(0.5)"#).unwrap();
+        assert!(pc.is_note);
+        assert!(pc.scale.is_some());
+        let sc = pc.scale.as_ref().unwrap();
+        assert!((sc.degree_to_hz(0) - note_to_hz("c2").unwrap()).abs() < 0.5);
+        assert!((sc.degree_to_hz(-1) - note_to_hz("bb1").unwrap()).abs() < 0.5);
+    }
+
+    #[test]
+    fn scale_unknown_mode_errors() {
+        assert!(parse_code(r#"note("0").scale("C:nope")"#).is_err());
     }
 
     #[test]

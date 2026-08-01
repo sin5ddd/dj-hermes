@@ -25,9 +25,7 @@ metadata:
 // @genre drum-and-bass
 setcpm(170/4)
 // drums
-$: s("bd ~ ~ sd ~ bd bd ~ ~ sd ~ ~").fast(2).gain(0.9)
-// hat
-$: s("hh*16").fast(2).gain(0.22).hpf(9000)
+$: s("bd ~ ~ sd ~ bd bd ~ ~ sd ~ ~, hh*16").fast(2).gain(0.55)
 // bass
 $: note("c1").s("sine").lpf(120).attack(0.01).release(0.4).gain(0.7)
 ```

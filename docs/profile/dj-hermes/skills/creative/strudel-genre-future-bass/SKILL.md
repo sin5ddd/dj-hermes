@@ -24,12 +24,8 @@ metadata:
 // @title visitor-future-bass
 // @genre future-bass
 setcpm(140/4)
-// kick
-$: s("bd ~ bd ~").gain(0.85)
-// snare
-$: s("~ sd ~ sd").gain(0.6)
-// hat
-$: s("hh*8").gain(0.22)
+// drums
+$: s("bd ~ bd ~, ~ sd ~ sd, hh*8").gain(0.5)
 // chords
 $: note("c3'maj ~ e3'min ~").s("sawtooth").lpf(1600).attack(0.02).gain(0.35).room(0.3)
 // bass

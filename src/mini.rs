@@ -31,6 +31,8 @@ pub enum Token {
     CloseAngle(Span), // < >
     Star(Span),
     Slash(Span), // * /
+    /// `,` — parallel (simultaneous) separator, not whitespace
+    Comma(Span),
     Number(f64, Span),
 }
 
@@ -45,6 +47,7 @@ impl Token {
             | Token::CloseAngle(s)
             | Token::Star(s)
             | Token::Slash(s)
+            | Token::Comma(s)
             | Token::Number(_, s) => *s,
         }
     }
@@ -57,7 +60,11 @@ pub fn tokenize(input: &str) -> Result<Vec<Token>, String> {
     while i < bytes.len() {
         let c = bytes[i] as char;
         match c {
-            ' ' | '\t' | '\n' | ',' => {
+            ' ' | '\t' | '\n' => {
+                i += 1;
+            }
+            ',' => {
+                out.push(Token::Comma(Span::new(i, i + 1)));
                 i += 1;
             }
             '~' => {
@@ -120,10 +127,12 @@ pub enum Node {
         span: Span,
     },
     Rest,
-    /// `[a b]` / top-level: equal divisions of one cycle
+    /// `[a b]` / top-level: equal divisions of one cycle (space-separated)
     Seq(Vec<Node>),
-    /// `<a b>`: pick one item per cycle
+    /// `<a b>` / `cat(...)`: pick one item per cycle (not simultaneous)
     Stack(Vec<Node>),
+    /// `a, b` / `[bd,sd]`: simultaneous layers over the same time span
+    Parallel(Vec<Node>),
     /// `node * n`
     Fast(Box<Node>, f64),
     /// `node / n`
@@ -158,11 +167,17 @@ fn parse_seq(
     pos: &mut usize,
     closing: Option<fn(&Token) -> bool>,
 ) -> Result<Node, String> {
-    let mut items = Vec::new();
+    // Space-separated items form a Seq branch; commas split Parallel branches.
+    let mut branches: Vec<Vec<Node>> = vec![Vec::new()];
     while *pos < t.len() {
         if closing.as_ref().is_some_and(|pred| pred(&t[*pos])) {
             *pos += 1;
             break;
+        }
+        if matches!(t[*pos], Token::Comma(_)) {
+            *pos += 1;
+            branches.push(Vec::new());
+            continue;
         }
         let mut item = parse_item(t, pos)?;
         loop {
@@ -184,9 +199,35 @@ fn parse_seq(
             }
             break;
         }
-        items.push(item);
+        branches
+            .last_mut()
+            .expect("at least one parallel branch")
+            .push(item);
     }
-    Ok(Node::Seq(items))
+    Ok(finish_parallel_branches(branches))
+}
+
+/// Collapse comma-separated branches into `Seq` (one branch) or `Parallel`.
+fn finish_parallel_branches(mut branches: Vec<Vec<Node>>) -> Node {
+    // Drop empty branches from leading/trailing/double commas.
+    branches.retain(|b| !b.is_empty());
+    if branches.is_empty() {
+        return Node::Seq(vec![]);
+    }
+    if branches.len() == 1 {
+        return Node::Seq(branches.pop().unwrap());
+    }
+    let parts: Vec<Node> = branches
+        .into_iter()
+        .map(|items| {
+            if items.len() == 1 {
+                items.into_iter().next().unwrap()
+            } else {
+                Node::Seq(items)
+            }
+        })
+        .collect();
+    Node::Parallel(parts)
 }
 
 fn is_close_bracket(t: &Token) -> bool {
@@ -224,12 +265,15 @@ fn parse_item(t: &[Token], pos: &mut usize) -> Result<Node, String> {
         Some(Token::OpenAngle(_)) => {
             *pos += 1;
             let s = parse_seq(t, pos, Some(is_close_angle))?;
-            if let Node::Seq(v) = s {
-                Ok(Node::Stack(v))
-            } else {
-                unreachable!()
+            // Angle brackets are cycle-alternate (Stack). Flatten Parallel rare case
+            // so `<a, b>` still yields two cycle choices rather than simultaneous.
+            match s {
+                Node::Seq(v) => Ok(Node::Stack(v)),
+                Node::Parallel(v) => Ok(Node::Stack(v)),
+                other => Ok(Node::Stack(vec![other])),
             }
         }
+        Some(Token::Comma(_)) => Err("unexpected comma".into()),
         other => Err(format!("unexpected token: {other:?}")),
     }
 }
@@ -252,7 +296,7 @@ pub fn offset_spans(node: &mut Node, delta: usize) {
             *span = span.offset(delta);
         }
         Node::Rest => {}
-        Node::Seq(items) | Node::Stack(items) => {
+        Node::Seq(items) | Node::Stack(items) | Node::Parallel(items) => {
             for it in items {
                 offset_spans(it, delta);
             }
@@ -292,6 +336,11 @@ fn emit(node: &Node, start: f64, span: f64, cycle: u64, out: &mut Vec<Event>) {
             }
             let sel = (cycle as usize) % items.len();
             emit(&items[sel], start, span, cycle, out);
+        }
+        Node::Parallel(items) => {
+            for it in items {
+                emit(it, start, span, cycle, out);
+            }
         }
         Node::Fast(inner, n) => {
             let n_u = (*n).max(1.0) as usize;
@@ -390,5 +439,95 @@ mod tests {
         assert_eq!(e1.value, "oh");
         assert_eq!(&src[e0.span.unwrap().start..e0.span.unwrap().end], "hh");
         assert_eq!(&src[e1.span.unwrap().start..e1.span.unwrap().end], "oh");
+    }
+
+    #[test]
+    fn tokenizes_comma() {
+        let t = tokenize("bd,sd").unwrap();
+        assert_eq!(t.len(), 3);
+        assert!(matches!(&t[0], Token::Word(w, _) if w == "bd"));
+        assert!(matches!(&t[1], Token::Comma(_)));
+        assert!(matches!(&t[2], Token::Word(w, _) if w == "sd"));
+    }
+
+    #[test]
+    fn parallel_comma_simultaneous() {
+        let n = parse("bd,sd").unwrap();
+        assert!(matches!(n, Node::Parallel(ref v) if v.len() == 2));
+        let ev = events(&n, 0);
+        assert_eq!(ev.len(), 2);
+        assert!((ev[0].start - 0.0).abs() < 1e-9);
+        assert!((ev[1].start - 0.0).abs() < 1e-9);
+        assert!((ev[0].dur - 1.0).abs() < 1e-9);
+        let mut vals: Vec<_> = ev.iter().map(|e| e.value.as_str()).collect();
+        vals.sort();
+        assert_eq!(vals, ["bd", "sd"]);
+    }
+
+    #[test]
+    fn nested_parallel_in_seq() {
+        let n = parse("[bd hh [bd,sd] hh]").unwrap();
+        // Top-level `[...]` is one item in an outer Seq; inner Seq has 4 slots.
+        let slots = match &n {
+            Node::Seq(outer) => match outer.as_slice() {
+                [Node::Seq(inner)] => inner,
+                other => panic!("expected Seq([Seq(...)]), got {other:?}"),
+            },
+            other => panic!("expected Seq, got {other:?}"),
+        };
+        assert_eq!(slots.len(), 4);
+        assert!(matches!(&slots[2], Node::Parallel(v) if v.len() == 2));
+
+        let ev = events(&n, 0);
+        // bd, hh, bd+sd, hh → 5 events
+        assert_eq!(ev.len(), 5);
+        let at_half: Vec<_> = ev
+            .iter()
+            .filter(|e| (e.start - 0.5).abs() < 1e-9)
+            .map(|e| e.value.as_str())
+            .collect();
+        assert!(at_half.contains(&"bd"));
+        assert!(at_half.contains(&"sd"));
+    }
+
+    #[test]
+    fn parallel_fast_layers() {
+        let n = parse("bd*4, hh*8").unwrap();
+        assert!(matches!(n, Node::Parallel(ref v) if v.len() == 2));
+        let ev = events(&n, 0);
+        let n_bd = ev.iter().filter(|e| e.value == "bd").count();
+        let n_hh = ev.iter().filter(|e| e.value == "hh").count();
+        assert_eq!(n_bd, 4);
+        assert_eq!(n_hh, 8);
+    }
+
+    #[test]
+    fn grid_pattern_star_two() {
+        let n = parse("[bd hh [bd,sd] hh]*2").unwrap();
+        let ev = events(&n, 0);
+        // 5 events per half-cycle × 2
+        assert_eq!(ev.len(), 10);
+        let bds = ev.iter().filter(|e| e.value == "bd").count();
+        let hhs = ev.iter().filter(|e| e.value == "hh").count();
+        let sds = ev.iter().filter(|e| e.value == "sd").count();
+        assert_eq!(bds, 4); // 2 halves × (slot1 + slot3)
+        assert_eq!(hhs, 4);
+        assert_eq!(sds, 2);
+    }
+
+    #[test]
+    fn nested_angle_brackets() {
+        let n = parse("c2 <eb2 g2> <eb2 <f2 g2>>").unwrap();
+        // cycle 0: first of each stack
+        let e0 = events(&n, 0);
+        let vals0: Vec<_> = e0.iter().map(|e| e.value.as_str()).collect();
+        assert_eq!(vals0, ["c2", "eb2", "eb2"]);
+        // cycle 1: alternate stack choices
+        let e1 = events(&n, 1);
+        let vals1: Vec<_> = e1.iter().map(|e| e.value.as_str()).collect();
+        // second slot → g2; third → nested stack with cycle 1 → g2
+        assert_eq!(vals1[0], "c2");
+        assert_eq!(vals1[1], "g2");
+        assert_eq!(vals1[2], "g2");
     }
 }

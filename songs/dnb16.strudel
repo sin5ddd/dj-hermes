@@ -4,66 +4,31 @@
 // cat() = one cycle (bar) per arg — same as mini "<a b c>"
 setcpm(174/4)
 
-// kick — Amen-ish A / A' / break / rebuild
+// drums — kick + snare + hat + openhat parallel
 $: s(cat(
   cat(
-    "bd ~ ~ bd ~ ~ bd ~", "bd ~ ~ bd ~ bd ~ ~",
-    "bd ~ ~ bd ~ ~ bd ~", "bd ~ bd ~ ~ ~ bd ~"
+    "bd ~ ~ bd ~ ~ bd ~, [~ ~ sd ~ ~ ~ sd ~], hh*16, [~ ~ ~ ~ ~ oh ~ ~]",
+    "bd ~ ~ bd ~ bd ~ ~, [~ ~ sd ~ ~ ~ sd ~], hh*16, [~ ~ ~ ~ ~ ~ oh ~]",
+    "bd ~ ~ bd ~ ~ bd ~, [~ ~ sd ~ ~ ~ sd ~], hh*16, [~ ~ ~ ~ ~ oh ~ ~]",
+    "bd ~ bd ~ ~ ~ bd ~, [~ ~ sd ~ ~ sd sd ~], hh*16, [~ ~ ~ ~ oh ~ ~ ~]"
   ),
   cat(
-    "bd ~ ~ bd ~ ~ bd ~", "bd ~ ~ bd ~ bd ~ ~",
-    "bd ~ ~ bd ~ ~ bd ~", "bd ~ bd ~ ~ bd ~ ~"
+    "bd ~ ~ bd ~ ~ bd ~, [~ ~ sd ~ ~ ~ sd ~], hh*16, [~ ~ ~ ~ ~ oh ~ ~]",
+    "bd ~ ~ bd ~ bd ~ ~, [~ ~ sd ~ ~ ~ sd ~], hh*16, [~ ~ ~ ~ ~ ~ oh ~]",
+    "bd ~ ~ bd ~ ~ bd ~, [~ ~ sd ~ ~ ~ sd ~], hh*16, [~ ~ ~ ~ ~ oh ~ ~]",
+    "bd ~ bd ~ ~ bd ~ ~, [~ ~ sd ~ sd ~ sd sd], hh*16, [~ ~ ~ ~ oh ~ oh ~]"
   ),
-  "bd ~ ~ ~ ~ ~ ~ ~", "~ ~ ~ bd ~ ~ bd ~",
+  "bd ~ ~ ~ ~ ~ ~ ~, [~ ~ ~ ~ ~ ~ sd ~], hh*8, ~",
+  "~ ~ ~ bd ~ ~ bd ~, [~ ~ sd ~ ~ ~ ~ ~], hh*8, [~ ~ ~ ~ ~ oh ~ ~]",
   cat(
-    "bd ~ ~ bd ~ ~ bd ~", "bd ~ ~ bd ~ bd ~ ~",
-    "bd ~ ~ bd ~ ~ bd ~", "bd ~ bd ~ ~ ~ bd ~",
-    "bd ~ ~ bd ~ ~ bd ~", "bd bd ~ bd ~ bd ~ bd"
+    "bd ~ ~ bd ~ ~ bd ~, [~ ~ sd ~ ~ ~ sd ~], hh*16, [~ ~ ~ ~ ~ oh ~ ~]",
+    "bd ~ ~ bd ~ bd ~ ~, [~ ~ sd ~ ~ ~ sd ~], hh*16, [~ ~ ~ ~ ~ ~ oh ~]",
+    "bd ~ ~ bd ~ ~ bd ~, [~ ~ sd ~ ~ ~ sd ~], hh*16, [~ ~ ~ ~ ~ oh ~ ~]",
+    "bd ~ bd ~ ~ ~ bd ~, [~ ~ sd ~ ~ sd sd ~], hh*16, [~ ~ ~ ~ oh ~ ~ ~]",
+    "bd ~ ~ bd ~ ~ bd ~, [~ ~ sd ~ ~ ~ sd ~], hh*16, [~ ~ ~ ~ ~ oh ~ ~]",
+    "bd bd ~ bd ~ bd ~ bd, [sd ~ sd sd ~ sd sd ~], hh*16, [~ oh ~ oh ~ oh ~ oh]"
   )
-)).gain(0.88)
-
-// snare — 2-step backbeat, fills, break
-$: s(cat(
-  cat(
-    "[~ ~ sd ~ ~ ~ sd ~]", "[~ ~ sd ~ ~ ~ sd ~]",
-    "[~ ~ sd ~ ~ ~ sd ~]", "[~ ~ sd ~ ~ sd sd ~]"
-  ),
-  cat(
-    "[~ ~ sd ~ ~ ~ sd ~]", "[~ ~ sd ~ ~ ~ sd ~]",
-    "[~ ~ sd ~ ~ ~ sd ~]", "[~ ~ sd ~ sd ~ sd sd]"
-  ),
-  "[~ ~ ~ ~ ~ ~ sd ~]", "[~ ~ sd ~ ~ ~ ~ ~]",
-  cat(
-    "[~ ~ sd ~ ~ ~ sd ~]", "[~ ~ sd ~ ~ ~ sd ~]",
-    "[~ ~ sd ~ ~ ~ sd ~]", "[~ ~ sd ~ ~ sd sd ~]",
-    "[~ ~ sd ~ ~ ~ sd ~]", "[sd ~ sd sd ~ sd sd ~]"
-  )
-)).gain(0.82)
-
-// hat — full 16ths, half-time break
-$: s(cat(
-  cat("hh*16", "hh*16", "hh*16", "hh*16", "hh*16", "hh*16", "hh*16", "hh*16"),
-  "hh*8", "hh*8",
-  cat("hh*16", "hh*16", "hh*16", "hh*16", "hh*16", "hh*16")
-)).gain(0.24)
-
-// openhat — syncopated, silent break, end roll
-$: s(cat(
-  cat(
-    "[~ ~ ~ ~ ~ oh ~ ~]", "[~ ~ ~ ~ ~ ~ oh ~]",
-    "[~ ~ ~ ~ ~ oh ~ ~]", "[~ ~ ~ ~ oh ~ ~ ~]"
-  ),
-  cat(
-    "[~ ~ ~ ~ ~ oh ~ ~]", "[~ ~ ~ ~ ~ ~ oh ~]",
-    "[~ ~ ~ ~ ~ oh ~ ~]", "[~ ~ ~ ~ oh ~ oh ~]"
-  ),
-  "~", "[~ ~ ~ ~ ~ oh ~ ~]",
-  cat(
-    "[~ ~ ~ ~ ~ oh ~ ~]", "[~ ~ ~ ~ ~ ~ oh ~]",
-    "[~ ~ ~ ~ ~ oh ~ ~]", "[~ ~ ~ ~ oh ~ ~ ~]",
-    "[~ ~ ~ ~ ~ oh ~ ~]", "[~ oh ~ oh ~ oh ~ oh]"
-  )
-)).gain(0.32)
+)).gain(0.5)
 
 // reese — A minor, break, return
 $: note(cat(

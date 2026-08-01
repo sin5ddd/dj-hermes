@@ -24,12 +24,8 @@ metadata:
 // @title visitor-house
 // @genre house
 setcpm(124/4)
-// kick
-$: s("bd*4").gain(0.9)
-// clap
-$: s("~ cp ~ cp").gain(0.65)
-// hat
-$: s("hh*8").gain(0.28)
+// drums
+$: s("bd*4, hh*8, ~ sd ~ sd").gain(0.55)
 // bass
 $: note("c2 c2 eb2 g2").s("sawtooth").lpf(450).gain(0.5)
 ```

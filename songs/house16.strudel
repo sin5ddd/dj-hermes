@@ -2,38 +2,32 @@
 // @genre house
 // @details 16-bar classic house loop @ 122 BPM
 // cat() = one cycle (bar) per arg — same as mini "<a b c>"
+// drums: parallel layers (comma = simultaneous, space = sequence)
 setcpm(122/4)
 
-// kick — four-on-floor, end fill
+// drums — four-on-floor + hats + openhat + snare (merged)
 $: s(cat(
-  cat("bd*4", "bd*4", "bd*4", "bd*4", "bd*4", "bd*4", "bd*4", "bd*4"),
-  cat("bd*4", "bd*4", "bd*4", "bd*4", "bd*4", "bd*4", "bd*4", "bd bd bd ~")
-)).gain(0.9)
-
-// hat — 8ths, half-time dip, 16th end
-$: s(cat(
-  cat("hh*8", "hh*8", "hh*8", "hh*8", "hh*8", "hh*8", "hh*8", "hh*8"),
-  "hh*4",
-  cat("hh*8", "hh*8", "hh*8", "hh*8", "hh*8", "hh*8", "hh*16")
-)).gain(0.26)
-
-// openhat — offbeat, break, end fill
-$: s(cat(
-  cat("[~ oh ~ oh]", "[~ oh ~ oh]", "[~ oh ~ oh]", "[~ oh ~ oh]",
-      "[~ oh ~ oh]", "[~ oh ~ oh]", "[~ oh ~ oh]", "[~ oh ~ oh]"),
-  "[~ ~ ~ oh]",
-  cat("[~ oh ~ oh]", "[~ oh ~ oh]", "[~ oh ~ oh]", "[~ oh ~ oh]",
-      "[~ oh ~ oh]", "[~ oh ~ oh]", "[~ oh oh oh]")
-)).gain(0.38)
-
-// snare — classic 2/4, fill, break, rebuild
-$: s(cat(
-  cat("[~ sd ~ sd]", "[~ sd ~ sd]", "[~ sd ~ sd]", "[~ sd ~ sd]",
-      "[~ sd ~ sd]", "[~ sd ~ sd]", "[~ sd ~ sd]", "[~ sd ~ [sd ~]]"),
-  "[~ ~ ~ sd]",
-  cat("[~ sd ~ sd]", "[~ sd ~ sd]", "[~ sd ~ sd]", "[~ sd ~ sd]",
-      "[~ sd ~ sd]", "[~ sd ~ sd]", "[~ sd sd sd]")
-)).gain(0.72)
+  cat(
+    "bd*4, hh*8, [~ oh ~ oh], [~ sd ~ sd]",
+    "bd*4, hh*8, [~ oh ~ oh], [~ sd ~ sd]",
+    "bd*4, hh*8, [~ oh ~ oh], [~ sd ~ sd]",
+    "bd*4, hh*8, [~ oh ~ oh], [~ sd ~ sd]",
+    "bd*4, hh*8, [~ oh ~ oh], [~ sd ~ sd]",
+    "bd*4, hh*8, [~ oh ~ oh], [~ sd ~ sd]",
+    "bd*4, hh*8, [~ oh ~ oh], [~ sd ~ sd]",
+    "bd*4, hh*8, [~ oh ~ oh], [~ sd ~ [sd ~]]"
+  ),
+  "bd*4, hh*4, [~ ~ ~ oh], [~ ~ ~ sd]",
+  cat(
+    "bd*4, hh*8, [~ oh ~ oh], [~ sd ~ sd]",
+    "bd*4, hh*8, [~ oh ~ oh], [~ sd ~ sd]",
+    "bd*4, hh*8, [~ oh ~ oh], [~ sd ~ sd]",
+    "bd*4, hh*8, [~ oh ~ oh], [~ sd ~ sd]",
+    "bd*4, hh*8, [~ oh ~ oh], [~ sd ~ sd]",
+    "bd*4, hh*8, [~ oh ~ oh], [~ sd ~ sd]",
+    "bd bd bd ~, hh*16, [~ oh oh oh], [~ sd sd sd]"
+  )
+)).gain(0.55)
 
 // bass — C / F / break / return
 $: note(cat(

@@ -24,12 +24,10 @@ metadata:
 // @title visitor-acid
 // @genre acid
 setcpm(128/4)
-// kick
-$: s("bd*4").gain(0.9)
-// hat
-$: s("hh*8").gain(0.28).hpf(8000)
-// acid
-$: note("c2 eb2 f2 g2 eb2 f2 c2 bb1").s("sawtooth").lpf(800).lpq(16).decay(0.15).sustain(0.05).gain(0.5)
+// drums
+$: s("bd*4, hh*8").gain(0.5)
+// acid (0=c 2=eb 3=f 4=g; −1 = bb below C2)
+$: note("0 2 3 4 2 3 0 -1").scale("C2:minor").s("sawtooth").lpf(800).lpq(16).decay(0.15).sustain(0.05).gain(0.5)
 ```
 
 ## レシピ

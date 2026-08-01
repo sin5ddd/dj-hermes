@@ -16,6 +16,7 @@ pub mod mini;
 pub mod mixer;
 pub mod repl;
 pub mod sample;
+pub mod scale;
 pub mod song;
 pub mod sound;
 pub mod synth;

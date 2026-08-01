@@ -259,7 +259,11 @@ cargo run -- play songs/techno16.strudel
 cargo run -- play songs/house16.strudel --seconds 45
 ```
 
-16 小節曲は `<...>` で 16 サイクル分の展開を持ち、そのままループする。Strudel 記法（`setcpm` / `$:` / `// @title` メタデータ）で書いているので REPL からのコピペ改造もしやすい。メタデータの書き方は [Strudel: Music metadata](https://strudel.cc/learn/metadata/) に合わせている。
+16 小節曲は `cat(...)` / `<...>` で 16 サイクル分の展開を持ち、そのままループする。Strudel 記法（`setcpm` / `$:` / `// @title` メタデータ）で書いているので REPL からのコピペ改造もしやすい。メタデータの書き方は [Strudel: Music metadata](https://strudel.cc/learn/metadata/) に合わせている。
+
+**ドラムのミニ記法:** スペース区切りは順再生、カンマ区切りは同時再生。デモ曲は原則 1 本の `$:` に統合している（例: `s("bd*4, hh*8, ~ sd ~ sd")` や `s("[bd hh [bd,sd] hh]*2")`）。duck など専用チェーンがあるキックだけは別トラックに残す。
+
+**ベース / 次数:** `note("0 2 4 6").scale("C2:minor")` のように 0 始まりのスケール次数が使える（ルート相対、負の次数可。例: `C2:major` の `-1` → B1）。似た小節は `<>` で差分だけサイクル切替できる。
 
 ## 開発メモ
 

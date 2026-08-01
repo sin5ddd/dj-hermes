@@ -123,12 +123,22 @@ $: note("c4 e4 g4").s("wt_bright").vib("5:8").gain(0.2).delay(0.25).orbit(2)
 
 同梱は主に `bd` / `sd` / `hh` / `oh`（`samples/`）。フォルダ名 = sound 名。
 
+ドラムは **1 本の `s(...)` に統合**（スペース=順、カンマ=同時）。詳細は strudel-composition。
+
 ```
-$: s("bd*4").gain(0.9)
-$: s("~ sd ~ sd").gain(0.7)
-$: s("hh*8").gain(0.25)
+// 並列（密度が違う層）
+$: s("bd*4, hh*8, ~ sd ~ sd").gain(0.55)
+// グリッド（短いループ）
+$: s("[bd hh [bd,sd] hh]*2").gain(0.75)
 $: s("bd").bank("rolandtr808")   // bank 接頭辞 → rolandtr808_bd（bank 内にあれば）
 $: s("bd").n(1)                  // 同一 sound の n 番 WAV（あれば）
+```
+
+duck 付きキックだけは別トラックにしてよい（hat に duckorbit を付けない）:
+
+```
+$: s("bd*4").gain(0.9).duckorbit(2).duckattack(0.12).duckdepth(0.85)
+$: s("hh*8, ~ sd ~ sd").gain(0.35)
 ```
 
 ---
@@ -182,6 +192,23 @@ $: note("c2 c2 eb2 g2").s("sine").fm(3).fmh(1.5).lpf(500).gain(0.55)
 ```
 
 別名: `att` `dec` `sus` `rel`。
+
+### scale（次数 → 音高）
+
+```
+.scale("C2:minor")   // Root[:octave]:mode — オクターブ省略は 4
+.scale("C:major")
+.scale("A2:minor:pentatonic")
+```
+
+- `note("0 2 4")` / head `n("0 2 4")` の **整数**は 0 始まりのスケール次数（**負可**。例: `C2:major` の `-1` → B1）
+- 音名 atom（`c2`）はそのまま
+- 引数はスカラー文字列のみ（ミニ記法の動的 scale は不可）
+- 詳細は strudel-composition
+
+```
+$: note("0 2 0 3 0 <2 4>").scale("C2:minor").s("sawtooth").lpf(500).gain(0.5)
+```
 
 ### ゲイン
 
@@ -292,7 +319,7 @@ $: note("c3 e3 g3 c4").s("sawtooth").orbit(2).gain(0.35).lpf(900)
 
 ## 使えるメソッド一覧（クイック）
 
-**音源・音色:** `s` `sound` `note` `n` `gain` `velocity`/`vel` `noise` `vib`/`vibrato`/`v` `vibmod` `fm` `fmh` `fmattack` `fmdecay` `fmsustain` `penv` `pattack` `pdecay` `lpenv` `lpattack` `lpdecay` `lpsustain` `lprelease` `attack` `decay` `sustain` `release` `adsr`
+**音源・音色:** `s` `sound` `note` `n` `scale` `gain` `velocity`/`vel` `noise` `vib`/`vibrato`/`v` `vibmod` `fm` `fmh` `fmattack` `fmdecay` `fmsustain` `penv` `pattack` `pdecay` `lpenv` `lpattack` `lpdecay` `lpsustain` `lprelease` `attack` `decay` `sustain` `release` `adsr`
 
 **フィルタ:** `lpf` `lpq` `hpf` `hpq` `bpf` `bpq`（および表の別名）
 
@@ -318,7 +345,7 @@ $: note("c3 e3 g3 c4").s("sawtooth").orbit(2).gain(0.35).lpf(900)
 | モジュレーション | `tremolo` `phaser` `pan` `detune`（メソッド） |
 | 外部サンプル DSL | `samples('github:...')` `loopBegin`/`loopEnd` |
 | 引数のミニ記法 | `.lpf("<200 800>")` `.vib("<1 4>")` |
-| その他 | `scale` `beat` `seg` `supersaw` `crackle` `density` `stretch` |
+| その他 | `beat` `seg` `supersaw` `crackle` `density` `stretch` |
 
 ---
 
@@ -336,12 +363,14 @@ $: note("c3 e3 g3 c4").s("sawtooth").orbit(2).gain(0.35).lpf(900)
 ```
 // @title sound-demo
 setcpm(126/4)
+// キックが duck（専用チェーン → 分離）
+$: s("bd*4").gain(0.9).duckorbit(2).duckattack(0.12).duckdepth(0.85)
+// 他ドラムは統合
+$: s("hh*8, ~ sd ~ sd").gain(0.35)
 // FM ベース
 $: note("c2 c2 eb2 g2").s("sine").fm(3).fmh(1.5).lpf(500).gain(0.55).attack(0.005).decay(0.1).sustain(0.3).release(0.08)
 // duck されるパッド
 $: note("c3 e3 g3 c4").s("sawtooth").lpf(900).orbit(2).gain(0.35).attack(0.05).decay(0.2).sustain(0.6).release(0.2)
-// キックが duck
-$: s("bd*4").gain(0.9).duckorbit(2).duckattack(0.12).duckdepth(0.85)
 // 空間
 $: note("c4 e4 g4 b4").s("wt_bright").gain(0.18).delay(0.25).delaytime(0.375).delayfeedback(0.45).orbit(2)
 ```

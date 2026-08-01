@@ -24,12 +24,8 @@ metadata:
 // @title visitor-minimal
 // @genre minimal-techno
 setcpm(126/4)
-// kick
-$: s("bd*4").gain(0.9)
-// hat
-$: s("hh*8").gain(0.22).hpf(9000)
-// perc
-$: s("~ cp ~ ~").gain(0.35)
+// drums
+$: s("bd*4, hh*8, ~ sd ~ ~").gain(0.5)
 // bass
 $: note("c2 ~ eb2 ~").s("sawtooth").lpf(350).gain(0.45)
 ```

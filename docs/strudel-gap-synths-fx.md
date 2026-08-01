@@ -47,7 +47,7 @@
 
 ### メソッド（概略）
 
-`s`/`sound`, `note`/`n`, `gain`, `velocity`/`vel`, `pan`（スカラー）, ADSR 一式, `lpf`/`hpf`/`bpf` + Q, `vib`/`vibmod`, `fm`/`fmh`/`fmattack`/`fmdecay`/`fmsustain`, `noise`(mix), `penv`/`pattack`/`pdecay`, `lpenv`/`lpattack`…`lprelease`, `begin`/`end`/`speed`/`bank`/`clip`/`legato`/`cut`, `fast`/`slow`, `orbit`, `duckorbit`/`duckattack`/`duckdepth`, `delay`/`delaytime`/`delayfeedback`, `room`/`roomsize`, `compressor`
+`s`/`sound`, `note`/`n`, `scale`, `gain`, `velocity`/`vel`, `pan`（スカラー）, ADSR 一式, `lpf`/`hpf`/`bpf` + Q, `vib`/`vibmod`, `fm`/`fmh`/`fmattack`/`fmdecay`/`fmsustain`, `noise`(mix), `penv`/`pattack`/`pdecay`, `lpenv`/`lpattack`…`lprelease`, `begin`/`end`/`speed`/`bank`/`clip`/`legato`/`cut`, `fast`/`slow`, `orbit`, `duckorbit`/`duckattack`/`duckdepth`, `delay`/`delaytime`/`delayfeedback`, `room`/`roomsize`, `compressor`
 
 詳細は sound-design Skill を参照。
 

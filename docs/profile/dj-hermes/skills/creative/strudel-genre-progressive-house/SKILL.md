@@ -24,12 +24,8 @@ metadata:
 // @title visitor-prog-house
 // @genre progressive-house
 setcpm(128/4)
-// kick
-$: s("bd*4").gain(0.9)
-// clap
-$: s("~ cp ~ cp").gain(0.55)
-// hat
-$: s("hh*8").gain(0.25)
+// drums
+$: s("bd*4, hh*8, ~ sd ~ sd").gain(0.55)
 // pad
 $: note("c3'maj ~ g2'maj ~").s("sawtooth").lpf(900).attack(0.08).release(0.3).gain(0.32).room(0.4)
 // bass

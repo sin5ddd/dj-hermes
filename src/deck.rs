@@ -1,9 +1,10 @@
 //! Deck: schedule song tracks for one bar, orbit buses, duck, voice pool.
 
-use crate::code::{note_to_hz, Adsr, DuckParams, FilterParams, ModParams, PatternCode};
+use crate::code::{Adsr, DuckParams, FilterParams, ModParams, PatternCode};
 use crate::dsp::{equal_power_pan, orbit_index, CompressorParams, DuckState, OrbitFx, NUM_ORBITS};
 use crate::mini;
 use crate::sample::{SampleBank, SampleVoice, VoiceKind, SAMPLE_ROOT_HZ};
+use crate::scale::resolve_pitch;
 use crate::song::Song;
 use crate::sound::{resolve_sound_with_bank, ResolvedSound};
 use crate::synth::{OscSource, Voice};
@@ -197,9 +198,9 @@ fn schedule_track_into(
         let at = bar_start + ((ev.start * spb) / speed) as u64;
         let len = ((((ev.dur * spb) / speed) * len_scale) as u64).max(64);
         let (sound, freq, is_note) = if pc.is_note {
-            match note_to_hz(&ev.value) {
-                Ok(h) => (pc.sound.clone(), h, true),
-                Err(_) => continue,
+            match resolve_pitch(&ev.value, pc.scale.as_ref()) {
+                Some(h) => (pc.sound.clone(), h, true),
+                None => continue,
             }
         } else {
             (ev.value.clone(), 0.0, false)

@@ -24,12 +24,8 @@ metadata:
 // @title visitor-electro
 // @genre electro
 setcpm(126/4)
-// kick
-$: s("bd*4").gain(0.9)
-// snare
-$: s("~ sd ~ sd").gain(0.7)
-// hat
-$: s("hh*8").gain(0.25)
+// drums
+$: s("bd*4, hh*8, ~ sd ~ sd").gain(0.55)
 // bass
 $: note("c2 ~ c2 eb2").s("square").lpf(500).gain(0.5)
 ```

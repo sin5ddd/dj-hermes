@@ -1,7 +1,8 @@
 # Strudel skills（プロファイル同梱・strudel-rs 専用）
 
 展示用 profile `dj-hermes` が使う **ローカル skills** です。  
-本家 Strudel REPL 記法は含みません。保存形式は `setcpm` + `$:` のみ。
+本家 Strudel REPL 記法は含みません。保存形式は `setcpm` + `$:` のみ。  
+ドラムは原則 **1 本の `s(...)`**（スペース=順再生、カンマ=同時再生）。正本は `strudel-composition`。
 
 Hermes の公式バンドル skills とは別物で、`.no-bundled-skills` により公式カタログは入れません。
 

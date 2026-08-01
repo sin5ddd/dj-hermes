@@ -17,12 +17,12 @@ import sys
 from pathlib import Path
 
 # Forbidden inside ``` code fences (models copy these into save content).
+# Note: cat(...) IS valid strudel-rs song format (multi-bar); do not forbid it.
 FORBIDDEN = [
     (re.compile(r"\bstack\s*\("), "stack(...) is not strudel-rs file format"),
     (re.compile(r"\)\s*\.cpm\s*\("), ").cpm(...) is not strudel-rs (use setcpm)"),
     (re.compile(r"(?<![a-zA-Z_])\.cpm\s*\("), ".cpm(...) is not strudel-rs (use setcpm)"),
     (re.compile(r"\bsine\.range\s*\("), "sine.range is not supported in strudel-rs"),
-    (re.compile(r"\bcat\s*\("), "cat(...) factory is not strudel-rs save format"),
     (re.compile(r"\barrange\s*\("), "arrange(...) is not strudel-rs save format"),
 ]
 

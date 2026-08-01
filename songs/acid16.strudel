@@ -1,66 +1,67 @@
 // @title acid16
 // @genre acid, minimal techno
 // @details 16-bar loop @ 130 BPM
-// cat() = one cycle (bar) per arg — same as mini "<a b c>"
+// Degrees 0-based C minor: 0=c 2=eb 3=f 4=g 6=bb 7=c+oct (−1 = bb below root)
+// cat() = one bar per arg; <> alternates by global cycle within a slot
 setcpm(130/4)
 
-// kick — A(4) / A'(4) / break(2) / A''(6)
+// drums — kick + hat + snare parallel
 $: s(cat(
-  cat("bd ~ ~ ~", "bd ~ ~ bd","bd ~ ~ ~","bd ~ bd ~"),
-  cat("bd ~ ~ ~", "bd ~ ~ bd", "bd ~ ~ ~","bd ~ bd bd"),
-  "bd ~ ~ ~","~ ~ ~ bd",
-  cat("bd ~ ~ ~", "bd ~ ~ bd", "bd ~ ~ ~", "bd ~ bd ~", "bd ~ ~ ~", "bd bd ~ bd"))
-).gain(0.9)
-
-// hat — groove + open fills
-$: s(cat(
-  cat("[~ hh ~ hh]", "[~ hh ~ hh]", "[~ hh ~ hh]", "[~ hh hh hh]"),
-  cat("[~ hh ~ hh]", "[~ hh ~ hh]", "[~ hh ~ hh]", "[hh ~ hh hh]"),
-  "[~ ~ ~ hh]", "[~ hh ~ ~]",
-  cat("[~ hh ~ hh]", "[~ hh ~ hh]", "[~ hh ~ hh]", "[~ hh hh hh]", "[~ hh ~ hh]", "[hh hh ~ hh]"))
-).gain(0.3)
-
-// snare — backbeat with fills
-$: s(cat(
-  cat("[~ ~ sd ~]", "[~ ~ sd ~]", "[~ ~ sd ~]", "[~ ~ sd sd]"),
-  cat( "[~ ~ sd ~]", "[~ ~ sd ~]", "[~ ~ sd ~]", "[~ sd ~ sd]"),
-  "[~ ~ ~ ~]","[~ ~ sd ~]",
-  cat("[~ ~ sd ~]", "[~ ~ sd ~]", "[~ ~ sd ~]", "[~ ~ sd sd]", "[~ ~ sd ~]", "[sd ~ sd ~]"))
-).gain(0.7)
-
-// acid — TB-ish 16ths, A / A' / break / B
-$: note(cat(
   cat(
-    "c2 eb2 c2 f2 c2 eb2 g2 eb2",
-    "c2 eb2 c2 f2 c2 g2 eb2 f2",
-    "c2 eb2 c2 f2 c2 eb2 g2 bb2",
-    "c2 f2 eb2 g2 c2 eb2 f2 g2"
+    "bd ~ ~ ~, [~ hh ~ hh], [~ ~ sd ~]",
+    "bd ~ ~ bd, [~ hh ~ hh], [~ ~ sd ~]",
+    "bd ~ ~ ~, [~ hh ~ hh], [~ ~ sd ~]",
+    "bd ~ bd ~, [~ hh hh hh], [~ ~ sd sd]"
   ),
   cat(
-    "c2 eb2 c2 f2 c2 eb2 g2 eb2",
-    "c2 eb2 c2 f2 c2 g2 eb2 f2",
-    "c2 eb2 c2 f2 c2 eb2 g2 bb2",
-    "c2 f2 g2 bb2 c3 bb2 g2 f2"
+    "bd ~ ~ ~, [~ hh ~ hh], [~ ~ sd ~]",
+    "bd ~ ~ bd, [~ hh ~ hh], [~ ~ sd ~]",
+    "bd ~ ~ ~, [~ hh ~ hh], [~ ~ sd ~]",
+    "bd ~ bd bd, [hh ~ hh hh], [~ sd ~ sd]"
   ),
-  "c2 ~ ~ ~ ~ ~ ~ ~",
-  "~ ~ ~ ~ c2 eb2 f2 g2",
+  "bd ~ ~ ~, [~ ~ ~ hh], [~ ~ ~ ~]",
+  "~ ~ ~ bd, [~ hh ~ ~], [~ ~ sd ~]",
   cat(
-    "c2 eb2 c2 f2 c2 eb2 g2 eb2",
-    "c2 eb2 c2 f2 c2 g2 eb2 f2",
-    "c2 eb2 c2 f2 c2 eb2 g2 bb2",
-    "c2 f2 eb2 g2 c2 eb2 f2 g2",
-    "c2 eb2 c2 f2 c2 g2 bb2 c3",
-    "c3 bb2 g2 f2 eb2 f2 g2 c2"
+    "bd ~ ~ ~, [~ hh ~ hh], [~ ~ sd ~]",
+    "bd ~ ~ bd, [~ hh ~ hh], [~ ~ sd ~]",
+    "bd ~ ~ ~, [~ hh ~ hh], [~ ~ sd ~]",
+    "bd ~ bd ~, [~ hh hh hh], [~ ~ sd sd]",
+    "bd ~ ~ ~, [~ hh ~ hh], [~ ~ sd ~]",
+    "bd bd ~ bd, [hh hh ~ hh], [sd ~ sd ~]"
   )
-))
+)).gain(0.55)
+
+// acid — TB-ish 16ths; degree + scale + <> tail variants (16 bars)
+$: note(cat(
+  // A (4 bars) — same skeleton; <> picks different tails across cycles
+  "0 2 0 3 0 <2 4> <4 2> <2 <3 6>>",
+  "0 2 0 3 0 <2 4> <4 2> <2 <3 6>>",
+  "0 2 0 3 0 <2 4> <4 2> <2 <3 6>>",
+  "0 2 0 3 0 <2 4> <4 2> <2 <3 6>>",
+  // A' (4)
+  "0 2 0 3 0 <2 4> <4 2> <3 6 7 6>",
+  "0 2 0 3 0 <2 4> <4 2> <3 6 7 6>",
+  "0 2 0 3 0 <2 4> <4 2> <3 6 7 6>",
+  "0 2 0 3 0 <2 4> <4 2> <3 6 7 6>",
+  // break (2)
+  "0 ~ ~ ~ ~ ~ ~ ~",
+  "~ ~ ~ ~ 0 2 3 4",
+  // B (6)
+  "0 2 0 3 0 2 4 2",
+  "0 2 0 3 0 4 2 3",
+  "0 2 0 3 0 2 4 2",
+  "0 3 2 4 0 2 3 4",
+  "0 2 0 3 0 4 6 7",
+  "7 6 4 3 2 3 4 0"
+)).scale("C2:minor")
 .s("sawtooth").lpf(650).gain(0.5).attack(0.001).decay(0.06).sustain(0.15).release(0.04)
 
-// high — sparse stabs (silent bars = "~")
+// high — sparse stabs (C3:minor degrees)
 $: note(cat(
-  cat("~", "~ ~ ~ ~ ~ ~ g3 ~", "~", "~ ~ ~ ~ bb3 ~ ~ ~"),
-  cat("~", "~ ~ ~ ~ ~ ~ g3 ~", "~", "~ ~ c4 ~ ~ bb3 ~ g3"),
+  cat("~", "~ ~ ~ ~ ~ ~ 4 ~", "~", "~ ~ ~ ~ 6 ~ ~ ~"),
+  cat("~", "~ ~ ~ ~ ~ ~ 4 ~", "~", "~ ~ 7 ~ ~ 6 ~ 4"),
   "~","~",
-  cat("~", "~ ~ ~ ~ ~ ~ g3 ~", "~", "~ ~ ~ ~ bb3 ~ ~ ~", "~ ~ ~ ~ ~ ~ g3 ~", "c4 ~ bb3 ~ g3 ~ f3 ~")
-))
+  cat("~", "~ ~ ~ ~ ~ ~ 4 ~", "~", "~ ~ ~ ~ 6 ~ ~ ~", "~ ~ ~ ~ ~ ~ 4 ~", "7 ~ 6 ~ 4 ~ 3 ~")
+)).scale("C3:minor")
 .s("square")
 .lpf(3200).gain(0.16).attack(0.001).decay(0.05).sustain(0.1).release(0.03)

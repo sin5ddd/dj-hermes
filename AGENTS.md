@@ -36,17 +36,17 @@
 // @title smoke
 // @by strudel-rs
 setcpm(30)
-// kick
-$: s("bd*4").gain(0.9)
+// drums (space = sequence, comma = simultaneous)
+$: s("[bd hh [bd,sd] hh]*2").gain(0.75)
 // bass
 $: note("c2 c2 eb2 g2").s("sawtooth").lpf(400).gain(0.7)
-// hat
-$: s("hh*8").gain(0.3)
 ```
 
 - `setcpm(N)` / `setcpm(120/4)`: cycles per minute（Strudel と同じ）。1 cycle = 1 bar（4 beats）なのでエンジン BPM は `N * 4`
 - `setcps(x)` も可（BPM = `x * 240`）
-- `$:` の直前コメント（`// kick`）をトラック名にする。コメント無しは `$0`, `$1`, …
+- ミニ記法: スペース=順再生、カンマ=同時再生（例: `[bd,sd]` / `bd*4, hh*8`）。ドラムは原則 1 本の `$:` に統合
+- ベース/メロ: 次数 + `.scale("C2:minor")`（0 始まり・ルート相対、**負次数可**。`C2:major` の `-1` → B1）。音名 + ネスト `<>` での小節差分圧縮も可
+- `$:` の直前コメント（`// drums`）をトラック名にする。コメント無しは `$0`, `$1`, …
 - メタデータは [Strudel 流のコメントタグ](https://strudel.cc/learn/metadata/): `// @title …` / `// @by …` / `// @license …` など（`/* … */` ブロックや 1 行複数タグも可）
 - レガシー互換: `// title: …` / `bpm:` / `title:` / `name: code` / `---` も引き続きパース可能
 - 独自ミニパーサで読む（serde/toml は使わない）

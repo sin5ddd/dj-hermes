@@ -24,12 +24,8 @@ metadata:
 // @title visitor-chill
 // @genre chill
 setcpm(90/4)
-// kick
-$: s("bd ~ ~ bd ~ ~ bd ~").gain(0.75)
-// snare
-$: s("~ ~ sd ~").gain(0.55)
-// hat
-$: s("hh*8").gain(0.18)
+// drums
+$: s("bd ~ ~ bd ~ ~ bd ~, ~ ~ sd ~, hh*8").gain(0.45)
 // keys
 $: note("c3 e3 g3 e3").s("triangle").lpf(1200).gain(0.35).room(0.3)
 ```

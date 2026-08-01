@@ -25,9 +25,7 @@ metadata:
 // @genre dubstep
 setcpm(140/4)
 // drums
-$: s("bd ~ ~ ~ bd ~ sd ~").gain(0.9)
-// hat
-$: s("hh*8").gain(0.2).hpf(9000)
+$: s("bd ~ ~ ~ bd ~ sd ~, hh*8").gain(0.55)
 // wobble-ish bass (static lpf; no dynamic LFO mini-args)
 $: note("c1 c1 eb1 c1").s("sawtooth").lpf(280).lpq(6).gain(0.55)
 ```

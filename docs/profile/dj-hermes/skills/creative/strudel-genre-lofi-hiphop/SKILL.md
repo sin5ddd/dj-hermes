@@ -24,12 +24,8 @@ metadata:
 // @title visitor-lofi
 // @genre lofi-hiphop
 setcpm(84/4)
-// kick
-$: s("bd ~ ~ bd ~ ~ bd ~").gain(0.75)
-// snare
-$: s("~ ~ sd ~").gain(0.55)
-// hat
-$: s("hh*8").gain(0.15)
+// drums
+$: s("bd ~ ~ bd ~ ~ bd ~, ~ ~ sd ~, hh*8").gain(0.45)
 // keys
 $: note("c3 e3 g3 a3").s("triangle").lpf(1100).gain(0.32).room(0.35)
 // bass
