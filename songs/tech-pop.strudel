@@ -1,15 +1,15 @@
-// @title techno16
+// @title tech-pop
 // @genre techno
-// @details short live techno loop @ 128 BPM (not a 16-bar arrangement)
-setcpm(128/4)
+// @details short live demo @ 126 BPM (scale + degrees; no lfo/add/cp)
+setcpm(126/4)
 
-// bass — same skeleton; <> picks tails across cycles
+// bass
 $: note("0 2 0 3 0 <2 4> <4 2> <2 <3 6>>")
   .scale("C2:minor")
   .s("sawtooth").lpf(500).gain(0.7)
   .attack(0.001).decay(0.06).sustain(0.15).release(0.04)
 
-// drums — one track (* densify, comma parallel)
+// drums (cp → sd/oh; default bank only)
 $: s("bd*4, [~ <sd oh>]*2, [~ hh]*4").gain(0.5)
 
 // lead
@@ -22,3 +22,4 @@ $: note("7 6 <4 9> <3 [4 2]>")
 $: note("0 2 4 [6,8] 0 2 4 [7,9]")
   .scale("C4:minor")
   .s("sawtooth").gain(0.35).bpf(1500)
+  .decay(0.3).sustain(0.3)

@@ -1,53 +1,24 @@
 // @title house16
 // @genre house
-// @details 16-bar classic house loop @ 122 BPM
-// cat() = one cycle (bar) per arg — same as mini "<a b c>"
-// drums: parallel layers (comma = simultaneous, space = sequence)
+// @details short live house loop @ 122 BPM
 setcpm(122/4)
 
-// drums — smart mini: * densify, @ elongate, comma = parallel
-$: s(cat(
-  cat(
-    "bd*4, [~ sd]*2, [~ hh]*4, [~ oh]*2",
-    "bd*4, [~ sd]*2, [~ hh]*4, [~ oh]*2",
-    "bd*4, [~ sd]*2, [~ hh]*4, [~ oh]*2",
-    "bd*4, [~ sd]*2, [~ hh]*4, [~ oh]*2",
-    "bd*4, [~ sd]*2, [~ hh]*4, [~ oh]*2",
-    "bd*4, [~ sd]*2, [~ hh]*4, [~ oh]*2",
-    "bd*4, [~ sd]*2, [~ hh]*4, [~ oh]*2",
-    "bd*4, [~ sd]*2, [~ hh]*4, [~ oh ~ [sd ~]]"
-  ),
-  "bd*4, [~@3 sd], hh*4, [~@3 oh]",
-  cat(
-    "bd*4, [~ sd]*2, [~ hh]*4, [~ oh]*2",
-    "bd*4, [~ sd]*2, [~ hh]*4, [~ oh]*2",
-    "bd*4, [~ sd]*2, [~ hh]*4, [~ oh]*2",
-    "bd*4, [~ sd]*2, [~ hh]*4, [~ oh]*2",
-    "bd*4, [~ sd]*2, [~ hh]*4, [~ oh]*2",
-    "bd*4, [~ sd]*2, [~ hh]*4, [~ oh]*2",
-    "bd bd bd ~, [~ sd sd sd], hh*16, [~ oh oh oh]"
-  )
-)).gain(0.55)
+// drums
+$: s("bd*4, [~ sd]*2, [~ hh]*4, [~ oh]*2").gain(0.55)
 
-// bass — C / F / break / return
-$: note(cat(
-  cat(
-    "c2 c2 g2 c2", "c2 c2 g2 bb1", "f2 f2 c2 f2", "f2 f2 eb2 f2",
-    "c2 c2 g2 c2", "c2 c2 g2 bb1", "f2 f2 c2 f2", "g2 g2 f2 g2"
-  ),
-  "c2 ~ ~ ~", "~ ~ g2 c2",
-  cat(
-    "c2 c2 g2 c2", "c2 c2 g2 bb1", "f2 f2 c2 f2",
-    "f2 f2 eb2 f2", "c2 c2 g2 c2", "g2 f2 eb2 c2"
-  )
-))
-.s("triangle").lpf(520).gain(0.58).attack(0.01).decay(0.15).sustain(0.5).release(0.1)
+// bass
+$: note("0 0 2 4 0 <2 3> 4 0")
+  .scale("C2:minor")
+  .s("sawtooth").lpf(450).gain(0.5)
+  .attack(0.005).decay(0.1).sustain(0.3).release(0.06)
 
-// pad — held chords, rest break, resolve
-$: note(cat(
-  cat("c3 ~ ~ ~", "c3 ~ ~ ~", "f3 ~ ~ ~", "f3 ~ ~ ~",
-      "c3 ~ ~ ~", "c3 ~ ~ ~", "f3 ~ ~ ~", "g3 ~ ~ ~"),
-  "~", "~",
-  cat("c3 ~ ~ ~", "c3 ~ ~ ~", "f3 ~ ~ ~", "f3 ~ ~ ~", "c3 ~ ~ ~", "g3 ~ f3 ~")
-))
-.s("sine").lpf(900).gain(0.18).attack(0.08).decay(0.2).sustain(0.7).release(0.25)
+// stab
+$: note("~ ~ 4 <7 6>")
+  .scale("C3:minor")
+  .s("square").lpf(2200).gain(0.18)
+  .attack(0.001).decay(0.08).sustain(0.2).release(0.05)
+
+// chords
+$: note("0 2 4 [6,8] ~ 2 4 [7,9]")
+  .scale("C4:minor")
+  .s("sawtooth").gain(0.28).bpf(1400)

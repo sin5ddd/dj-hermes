@@ -198,7 +198,8 @@ fn schedule_track_into(
         let at = bar_start + ((ev.start * spb) / speed) as u64;
         let len = ((((ev.dur * spb) / speed) * len_scale) as u64).max(64);
         let (sound, freq, is_note) = if pc.is_note {
-            match resolve_pitch(&ev.value, pc.scale.as_ref()) {
+            let sc = pc.scale.as_ref().map(|p| p.at_cycle(bar));
+            match resolve_pitch(&ev.value, sc) {
                 Some(h) => (pc.sound.clone(), h, true),
                 None => continue,
             }

@@ -124,7 +124,11 @@ fn showcase_songs_use_task23_features() {
     let ambient = fs::read_to_string(songs_dir().join("ambient1.strudel")).unwrap();
     assert!(ambient.contains("wt_"));
     assert!(ambient.contains("vib(") || ambient.contains(".vib("));
-    assert!(ambient.contains("'maj") || ambient.contains("'min"));
+    // Prefer scale + relative integer degrees over chord-quality note tags.
+    assert!(
+        ambient.contains(".scale(") || ambient.contains("scale("),
+        "ambient1 should use .scale(...) with degree patterns"
+    );
 }
 
 #[test]

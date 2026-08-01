@@ -105,6 +105,72 @@ fn mode_intervals(mode: &str) -> Result<Vec<i32>, String> {
     Ok(intervals.to_vec())
 }
 
+/// Fixed scale or a per-cycle progression (Strudel-style `.scale("<A2:minor D:dorian …>")`).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ScalePattern {
+    Fixed(Scale),
+    /// One entry per cycle (bar), from mini `<>` in the scale argument.
+    PerCycle(Vec<Scale>),
+}
+
+impl ScalePattern {
+    /// Scale active for the given cycle (bar index).
+    pub fn at_cycle(&self, cycle: u64) -> &Scale {
+        match self {
+            ScalePattern::Fixed(s) => s,
+            ScalePattern::PerCycle(v) => {
+                debug_assert!(!v.is_empty());
+                &v[(cycle as usize) % v.len()]
+            }
+        }
+    }
+}
+
+/// Parse a `.scale(...)` argument: fixed `C2:minor` or progression
+/// `<A2:minor D:dorian G:mixolydian C:major>` (one scale per cycle).
+pub fn parse_scale_arg(raw: &str) -> Result<ScalePattern, String> {
+    let s = raw.trim().trim_matches('"').trim();
+    if s.is_empty() {
+        return Err("empty scale".into());
+    }
+
+    if s.starts_with('<') {
+        if !s.ends_with('>') {
+            return Err(format!("unclosed scale progression: {raw:?}"));
+        }
+        let inner = s[1..s.len() - 1].trim();
+        if inner.is_empty() {
+            return Err("empty scale progression".into());
+        }
+        // Mini `:` is not a word char; split progression by whitespace only.
+        let mut scales = Vec::new();
+        for part in inner.split_whitespace() {
+            scales.push(parse_scale(part)?);
+        }
+        if scales.is_empty() {
+            return Err("empty scale progression".into());
+        }
+        if scales.len() == 1 {
+            return Ok(ScalePattern::Fixed(scales.remove(0)));
+        }
+        return Ok(ScalePattern::PerCycle(scales));
+    }
+
+    if s.contains('<') || s.contains('>') {
+        return Err(format!(
+            "scale progression must be fully inside <...>, got {raw:?}"
+        ));
+    }
+    // Spaces without <> are not a multi-scale pattern (would be ambiguous).
+    if s.split_whitespace().count() > 1 {
+        return Err(format!(
+            "multi-scale progression needs <> (e.g. <A2:minor D:dorian>), got {raw:?}"
+        ));
+    }
+
+    Ok(ScalePattern::Fixed(parse_scale(s)?))
+}
+
 /// Resolve a mini-notation atom to Hz.
 ///
 /// With a scale: integer tokens are scale degrees (negative allowed).
@@ -172,6 +238,46 @@ mod tests {
         let sm = parse_scale("C2:minor").unwrap();
         let bb1 = note_to_hz("bb1").unwrap();
         assert!((sm.degree_to_hz(-1) - bb1).abs() < 0.5);
+    }
+
+    #[test]
+    fn parse_scale_arg_fixed() {
+        let p = parse_scale_arg("C2:minor").unwrap();
+        match p {
+            ScalePattern::Fixed(s) => assert_eq!(s.root_midi, note_to_midi_i32("c2").unwrap()),
+            ScalePattern::PerCycle(_) => panic!("expected Fixed"),
+        }
+    }
+
+    #[test]
+    fn parse_scale_arg_per_cycle_progression() {
+        let p = parse_scale_arg("<A2:minor D:dorian G:mixolydian C:major>").unwrap();
+        match p {
+            ScalePattern::PerCycle(v) => {
+                assert_eq!(v.len(), 4);
+                assert_eq!(v[0].root_midi, note_to_midi_i32("a2").unwrap());
+                assert_eq!(v[1].root_midi, note_to_midi_i32("d4").unwrap()); // D → D4
+                assert_eq!(v[2].root_midi, note_to_midi_i32("g4").unwrap());
+                assert_eq!(v[3].root_midi, note_to_midi_i32("c4").unwrap());
+                // Cycle 0 vs 3: degree 0 moves A2 → C4
+                assert!((v[0].degree_to_hz(0) - note_to_hz("a2").unwrap()).abs() < 0.5);
+                assert!((v[3].degree_to_hz(0) - note_to_hz("c4").unwrap()).abs() < 0.5);
+            }
+            ScalePattern::Fixed(_) => panic!("expected PerCycle"),
+        }
+        let p = parse_scale_arg("<A2:minor D:dorian G:mixolydian C:major>").unwrap();
+        assert_eq!(
+            p.at_cycle(0).root_midi,
+            note_to_midi_i32("a2").unwrap()
+        );
+        assert_eq!(
+            p.at_cycle(4).root_midi,
+            note_to_midi_i32("a2").unwrap()
+        );
+        assert_eq!(
+            p.at_cycle(3).root_midi,
+            note_to_midi_i32("c4").unwrap()
+        );
     }
 
     #[test]

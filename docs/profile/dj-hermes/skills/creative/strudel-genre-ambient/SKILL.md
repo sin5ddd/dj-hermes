@@ -1,22 +1,22 @@
 ---
 name: strudel-genre-ambient
-description: "Use when writing Ambient for strudel-rs."
-version: 2.0.0
+description: "Use when writing short Ambient live loops for strudel-rs."
+version: 3.0.0
 author: Hermes Agent
 license: MIT
 metadata:
   hermes:
-    tags: [strudel-rs, music, genre, ambient]
+    tags: [strudel-rs, music, genre, ambient, live-coding]
     related_skills:
       - strudel-composition
       - strudel-sound-design
       - strudel-data-format
 ---
 
-# strudel-rs × アンビエント
+# strudel-rs × アンビエント（短いライブループ）
 
 ## Overview
-ビート控えめ・パッド長め・低めの gain。BPM 目安 60–90 相当（遅め setcpm）。
+遅いテンポ・長い attack/release・room/delay。BPM 目安 60–90。2–3 トラックで十分。
 
 ## コピー用フル例
 
@@ -25,27 +25,29 @@ metadata:
 // @genre ambient
 setcpm(70/4)
 // pad
-$: note("c3'maj ~ eb3'min ~").s("sawtooth").lpf(600).attack(0.2).release(0.8).gain(0.3).room(0.5)
-// soft bass
-$: note("c2 ~ ~ ~").s("sine").lpf(200).gain(0.35)
-// air
-$: s("hh*4").gain(0.08).hpf(10000)
+$: note("<0 2 4 7>/2").scale("C3:minor").s("wt_organ").lpf(1200).gain(0.4)
+  .attack(0.2).decay(0.3).sustain(0.7).release(0.5).room(0.45).orbit(1)
+// shimmer
+$: note("<0 2 4 6>/2").scale("C4:minor").s("wt_bright").vib("5:8").gain(0.18)
+  .attack(0.1).release(0.4).delay(0.25).orbit(2)
+// soft pulse (optional)
+$: note("0 ~ 4 ~").scale("C2:minor").s("sine").lpf(400).gain(0.2)
 ```
 
-## レシピ
+## ライブで変えると効く箇所
 
-1. 長い attack/release  
-2. キックは無し or ごく薄い  
-3. room は薄〜中  
+1. pad の `.lpf` / `.room`  
+2. `<>` で和音次数をゆっくり切替  
+3. shimmer gain  
 
 ## Pitfalls
 
-1. 連打キックでアンビエントが崩れる  
+1. ドラムを詰めすぎる  
 2. `stack` / `.cpm`  
-3. gain 過大  
+3. 長尺 `cat`  
 
 ## Checklist
 
-- [ ] ゆったり  
+- [ ] 短い pad + 空間系  
 - [ ] `setcpm` + `$:`  
 - [ ] `strudel_save_song`  

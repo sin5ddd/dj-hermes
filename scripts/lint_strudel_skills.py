@@ -24,6 +24,10 @@ FORBIDDEN = [
     (re.compile(r"(?<![a-zA-Z_])\.cpm\s*\("), ".cpm(...) is not strudel-rs (use setcpm)"),
     (re.compile(r"\bsine\.range\s*\("), "sine.range is not supported in strudel-rs"),
     (re.compile(r"\barrange\s*\("), "arrange(...) is not strudel-rs save format"),
+    # Unimplemented / easy-to-copy-wrong in small models (examples must stay playable).
+    (re.compile(r"\.lfo\s*\("), ".lfo(...) is not implemented in strudel-rs"),
+    (re.compile(r"\.add\s*\("), ".add(...) is not implemented in strudel-rs"),
+    (re.compile(r'(?<![a-zA-Z_])cp(?![a-zA-Z_])'), "sample 'cp' is not in the default bank (use sd/oh)"),
 ]
 
 # Inside method calls like .lpf("<a b>") — dynamic mini args not supported.

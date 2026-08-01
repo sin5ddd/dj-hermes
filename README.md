@@ -243,7 +243,7 @@ cargo run -- dj songs/techno1.strudel songs/ambient1.strudel
 cargo test --test e2e
 ```
 
-#### 16 小節ループ
+#### 短いライブループ（`*16` は互換名。中身は 1 サイクル骨格）
 
 | ファイル | ジャンル | テンポ |
 | --- | --- | --- |
@@ -252,18 +252,18 @@ cargo test --test e2e
 | `songs/dnb16.strudel` | DnB | 174 BPM |
 | `songs/acid16.strudel` | アシッド / ミニマル | 130 BPM |
 | `songs/garage16.strudel` | UK ガレージ / 2-step | 132 BPM |
-| `songs/smoke.strudel` | スモーク（短め） | 120 BPM |
+| `songs/smoke.strudel` | スモーク（最短） | 120 BPM |
 
 ```bash
 cargo run -- play songs/techno16.strudel
 cargo run -- play songs/house16.strudel --seconds 45
 ```
 
-16 小節曲は `cat(...)` / `<...>` で 16 サイクル分の展開を持ち、そのままループする。Strudel 記法（`setcpm` / `$:` / `// @title` メタデータ）で書いているので REPL からのコピペ改造もしやすい。メタデータの書き方は [Strudel: Music metadata](https://strudel.cc/learn/metadata/) に合わせている。
+デモ曲は **短い `$:` ループ**（2–5 トラック）が既定。`<>` でサイクル差分を出し、演奏しながらコードを少しずつ書き換える想定（16 小節 `cat` の長尺アレンジではない）。Strudel 記法（`setcpm` / `$:` / `// @title`）なので REPL からのコピペ改造もしやすい。メタデータは [Strudel: Music metadata](https://strudel.cc/learn/metadata/) に合わせている。
 
-**ドラムのミニ記法:** スペース=順、カンマ=同時、`@n`=時間ウェイト（elongate）。デモは原則 1 本の `$:`（例: `s("bd*4, [~ sd]*2, [~ hh]*4, <~ [~@3 bd ~@4]>")`）。duck 付きキックだけは別トラックに残す。
+**ドラムのミニ記法:** スペース=順、カンマ=同時、`@n`=時間ウェイト（elongate）。デモは原則 1 本の `$:`（例: `s("bd*4, [~ sd]*2, [~ hh]*4")`）。duck 付きキックだけは別トラックに残す。
 
-**ベース / 次数:** `note("0 2 4 6").scale("C2:minor")` のように 0 始まりのスケール次数が使える（ルート相対、負の次数可。例: `C2:major` の `-1` → B1）。似た小節は `<>` で差分だけサイクル切替できる。
+**ベース / 次数:** `note("0 2 0 3 0 <2 4>").scale("C2:minor")` のように 0 始まりのスケール次数が使える（ルート相対、負の次数可。例: `C2:major` の `-1` → B1）。
 
 ## 開発メモ
 

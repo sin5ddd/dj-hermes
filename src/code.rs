@@ -6,7 +6,7 @@
 
 use crate::dsp::CompressorParams;
 use crate::mini::{self, Node};
-use crate::scale::Scale;
+use crate::scale::ScalePattern;
 
 /// Defaults for amplitude envelope (seconds; sustain is level 0..1).
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -157,8 +157,8 @@ pub struct PatternCode {
     pub room: f32,
     /// Reverb size 0..=10 (Strudel-compatible range).
     pub roomsize: f32,
-    /// Optional scale: integer mini atoms are 0-based degrees (negative allowed).
-    pub scale: Option<Scale>,
+    /// Optional scale (fixed or per-cycle progression): integer mini atoms are degrees.
+    pub scale: Option<ScalePattern>,
     /// Original source text (for display / error context).
     pub raw: String,
     /// Mini-notation string (contents of the first `"..."`).
@@ -809,7 +809,7 @@ fn apply_method(pc: &mut PatternCode, name: &str, args: &str) -> Result<(), Stri
         }
         "scale" => {
             let s = args.trim().trim_matches('"');
-            pc.scale = Some(crate::scale::parse_scale(s)?);
+            pc.scale = Some(crate::scale::parse_scale_arg(s)?);
             // Degree patterns only make sense as pitched events.
             pc.is_note = true;
             Ok(())
@@ -1108,9 +1108,26 @@ mod tests {
         let pc = parse_code(r#"note("0 2 3").scale("C2:minor").s("sawtooth").gain(0.5)"#).unwrap();
         assert!(pc.is_note);
         assert!(pc.scale.is_some());
-        let sc = pc.scale.as_ref().unwrap();
+        let sc = pc.scale.as_ref().unwrap().at_cycle(0);
         assert!((sc.degree_to_hz(0) - note_to_hz("c2").unwrap()).abs() < 0.5);
         assert!((sc.degree_to_hz(-1) - note_to_hz("bb1").unwrap()).abs() < 0.5);
+    }
+
+    #[test]
+    fn parses_scale_progression() {
+        let pc = parse_code(
+            r#"note("0 2 4 0").scale("<A2:minor D:dorian G:mixolydian C:major>").s("sawtooth")"#,
+        )
+        .unwrap();
+        let pat = pc.scale.as_ref().unwrap();
+        assert_eq!(
+            pat.at_cycle(0).root_midi,
+            note_to_midi_i32("a2").unwrap()
+        );
+        assert_eq!(
+            pat.at_cycle(2).root_midi,
+            note_to_midi_i32("g4").unwrap()
+        );
     }
 
     #[test]

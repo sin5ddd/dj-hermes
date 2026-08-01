@@ -1,51 +1,51 @@
 ---
 name: strudel-genre-chill-pop
-description: "Use when writing Chill Pop for strudel-rs."
-version: 2.0.0
+description: "Use when writing short Chill Pop live loops for strudel-rs."
+version: 3.0.0
 author: Hermes Agent
 license: MIT
 metadata:
   hermes:
-    tags: [strudel-rs, music, genre, chill-pop]
+    tags: [strudel-rs, music, genre, chill-pop, live-coding]
     related_skills:
       - strudel-composition
       - strudel-sound-design
       - strudel-data-format
 ---
 
-# strudel-rs × チルポップ
+# strudel-rs × チルポップ（短いライブループ）
 
 ## Overview
-ポップなコード感 + 軽いビート。BPM 目安 95–110。
+明るいメジャー寄り・シンプルなフック。BPM 目安 100–120。
 
 ## コピー用フル例
 
 ```
 // @title visitor-chill-pop
 // @genre chill-pop
-setcpm(100/4)
+setcpm(110/4)
 // drums
-$: s("bd ~ bd ~, ~ sd ~ sd, hh*8").gain(0.5)
-// chords
-$: note("c3'maj ~ f3'maj ~").s("triangle").lpf(1400).gain(0.35).room(0.25)
+$: s("bd*4, [~ sd]*2, [~ hh]*4").gain(0.5)
 // bass
-$: note("c2 ~ f2 ~").s("sine").lpf(250).gain(0.45)
+$: note("0 0 4 2").scale("C2:major").s("sawtooth").lpf(450).gain(0.5)
+// hook
+$: note("0 2 4 <7 9>").scale("C4:major").s("square").lpf(2500).gain(0.18)
 ```
 
-## レシピ
+## ライブで変えると効く箇所
 
-1. シンプルな 2–4 コード循環  
-2. キックはハーフっぽくても可  
-3. メロ/コードは gain 控えめ  
+1. hook の `<>`  
+2. scale major ↔ minor  
+3. hook gain / lpf  
 
 ## Pitfalls
 
-1. コードに歪みを載せすぎ  
+1. レイヤー過多  
 2. `stack` / `.cpm`  
-3. 和音記法を知らない場合は単音アルペジオで代替  
+3. 長尺 `cat`  
 
 ## Checklist
 
-- [ ] ポップな進行  
+- [ ] 短い 2–3 トラック  
 - [ ] `setcpm` + `$:`  
 - [ ] `strudel_save_song`  

@@ -1,10 +1,16 @@
 // @title ambient1
 // @genre ambient
-// @details Task 21/24 demo: wavetable pad + room/delay @ 126 BPM
+// @details short live ambient loop: wt pad + shimmer (cpm matches techno1 for dual-deck demos)
 setcpm(126/4)
-// pad
-$: note("<c3'maj g2'min>/2").s("wt_organ").lpf(1200).gain(0.4).attack(0.15).decay(0.3).sustain(0.7).release(0.4).room(0.45).roomsize(4).orbit(1)
+// pad — parallel scale degrees (triads as [0,2,4] etc.)
+$: note("<[0,2,4] [4,6,8]>/2").scale("C3:minor")
+  .s("wt_organ").lpf(1200).gain(0.4)
+  .attack(0.2).decay(0.3).sustain(0.7).release(0.5)
+  .room(0.45).roomsize(4).orbit(1)
 // shimmer
-$: note("<c4 e4 g4 b4>/2").s("wt_bright").vib("5:8").gain(0.18).attack(0.08).release(0.3).delay(0.25).delaytime(0.375).delayfeedback(0.45).orbit(2)
-// arp
-$: note("c4 e4 g4 b4 e5").s("sine").gain(0.15).fast(2).orbit(3)
+$: note("<0 2 4 6>/2").scale("C4:minor")
+  .s("wt_bright").vib("5:8").gain(0.18)
+  .attack(0.1).release(0.4)
+  .delay(0.25).delaytime(0.375).delayfeedback(0.45).orbit(2)
+// soft arp
+$: note("0 2 4 7 4").scale("C4:minor").s("sine").gain(0.12).fast(2).orbit(3)

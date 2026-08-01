@@ -1,65 +1,18 @@
 // @title garage16
 // @genre uk garage, 2-step
-// @details 16-bar loop @ 132 BPM
-// cat() = one cycle (bar) per arg — same as mini "<a b c>"
+// @details short live 2-step loop @ 132 BPM
 setcpm(132/4)
 
-// drums — 2-step skeleton; oh sparse via @
-$: s(cat(
-  cat(
-    "bd ~@3 bd ~ bd ~, [~@2 sd ~ ~ sd ~@2], hh ~ hh hh hh ~ hh ~, [~@3 oh ~@4]",
-    "bd ~@3 bd ~@3, [~@2 sd ~@3 sd ~], hh ~ hh hh hh ~ hh hh, [~@6 oh ~]",
-    "bd ~@3 bd ~ bd ~, [~@2 sd ~ ~ sd ~@2], hh ~ hh hh hh ~ hh ~, [~@3 oh ~@4]",
-    "bd ~ bd ~ bd ~@3, [~@2 sd ~ sd ~ sd ~], hh hh hh ~ hh ~ hh ~, [~@4 oh ~@2 oh]"
-  ),
-  cat(
-    "bd ~@3 bd ~ bd ~, [~@2 sd ~ ~ sd ~@2], hh ~ hh hh hh ~ hh ~, [~@3 oh ~@4]",
-    "bd ~@3 bd ~@3, [~@2 sd ~@3 sd ~], hh ~ hh hh hh ~ hh hh, [~@6 oh ~]",
-    "bd ~@3 bd ~ bd ~, [~@2 sd ~ ~ sd ~@2], hh ~ hh hh hh ~ hh ~, [~@3 oh ~@4]",
-    "bd ~ bd ~ ~ bd ~@2, [~ sd ~ sd ~@2 sd ~], hh hh ~ hh hh ~ hh hh, [~ oh ~@4 oh ~]"
-  ),
-  "bd ~@7, [~@5 sd ~@2], hh ~@3 hh ~@3, ~",
-  "~@4 bd ~ bd ~, [~@2 sd ~@5], [~ hh]*4, [~@3 oh ~@4]",
-  cat(
-    "bd ~@3 bd ~ bd ~, [~@2 sd ~ ~ sd ~@2], hh ~ hh hh hh ~ hh ~, [~@3 oh ~@4]",
-    "bd ~@3 bd ~@3, [~@2 sd ~@3 sd ~], hh ~ hh hh hh ~ hh hh, [~@6 oh ~]",
-    "bd ~@3 bd ~ bd ~, [~@2 sd ~ ~ sd ~@2], hh ~ hh hh hh ~ hh ~, [~@3 oh ~@4]",
-    "bd ~ bd ~ bd ~@3, [~@2 sd ~ sd ~ sd ~], hh hh hh ~ hh ~ hh ~, [~@4 oh ~@2 oh]",
-    "bd ~@3 bd ~ bd ~, [~@2 sd ~ ~ sd ~@2], hh ~ hh hh hh ~ hh ~, [~@3 oh ~@4]",
-    "bd ~ bd ~ bd ~ bd ~, [sd ~ sd ~ ~ sd sd ~], hh hh hh hh hh ~ hh hh, [~ oh]*3 ~"
-  )
-)).gain(0.5)
+// drums — 2-step skeleton
+$: s("bd ~ bd ~ ~ bd ~ ~, [~ sd]*2, hh ~ hh hh hh ~ hh ~, [~@3 oh ~@4]").gain(0.55)
 
-// bass — F minor 2-step, break, run
-$: note(cat(
-  cat(
-    "f2 ~ f2 ~ ab2 ~ c3 ~", "f2 ~ f2 ~ eb2 ~ f2 ~",
-    "f2 ~ f2 ~ ab2 ~ c3 ~", "bb1 ~ bb1 ~ c2 ~ eb2 ~",
-    "f2 ~ f2 ~ ab2 ~ c3 ~", "f2 ~ f2 ~ eb2 ~ f2 ~",
-    "f2 ~ f2 ~ ab2 ~ c3 ~", "bb1 ~ c2 ~ eb2 ~ f2 ~"
-  ),
-  "f2 ~ ~ ~ ~ ~ ~ ~", "~ ~ f2 ~ ab2 ~ c3 ~",
-  cat(
-    "f2 ~ f2 ~ ab2 ~ c3 ~", "f2 ~ f2 ~ eb2 ~ f2 ~",
-    "f2 ~ f2 ~ ab2 ~ c3 ~", "bb1 ~ bb1 ~ c2 ~ eb2 ~",
-    "f2 ~ f2 ~ ab2 ~ c3 ~", "f2 eb2 c2 bb1 ab1 bb1 c2 f2"
-  )
-))
-.s("sawtooth").lpf(450).gain(0.5).attack(0.005).decay(0.1).sustain(0.3).release(0.08)
+// bass
+$: note("0 ~ 0 2 ~ <3 4> 0 ~")
+  .scale("C2:minor")
+  .s("sawtooth").lpf(420).gain(0.5)
+  .attack(0.005).decay(0.08).sustain(0.25).release(0.05)
 
-// keys — stab chords, break, resolve
-$: note(cat(
-  cat(
-    "~ ~ ab3 ~ ~ ~ c4 ~", "~ ~ ~ ~ ab3 ~ ~ ~",
-    "~ ~ ab3 ~ ~ ~ c4 ~", "~ ~ bb3 ~ ~ ab3 ~ ~",
-    "~ ~ ab3 ~ ~ ~ c4 ~", "~ ~ ~ ~ ab3 ~ ~ ~",
-    "~ ~ ab3 ~ ~ ~ c4 ~", "~ bb3 ~ ab3 ~ f3 ~ ~"
-  ),
-  "~", "~ ~ ~ ~ ~ ~ ab3 ~",
-  cat(
-    "~ ~ ab3 ~ ~ ~ c4 ~", "~ ~ ~ ~ ab3 ~ ~ ~",
-    "~ ~ ab3 ~ ~ ~ c4 ~", "~ ~ bb3 ~ ~ ab3 ~ ~",
-    "~ ~ ab3 ~ ~ ~ c4 ~", "ab3 ~ bb3 ~ c4 ~ eb4 ~"
-  )
-))
-.s("triangle").lpf(1800).gain(0.2).attack(0.002).decay(0.12).sustain(0.25).release(0.08)
+// stab
+$: note("~ 4 ~ <6 7>")
+  .scale("C3:minor")
+  .s("square").lpf(2400).gain(0.16)

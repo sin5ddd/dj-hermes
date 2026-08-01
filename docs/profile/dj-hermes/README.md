@@ -24,17 +24,17 @@
 
 ## 同梱 Strudel skills
 
-`puredata-hermes/skills/creative/` 由来。プロファイル配下へコピーして使う。
+**ライブ短いループ**向けの作曲ガイド。プロファイル配下へコピーして使う。
 
 | スキル | 用途 |
 | --- | --- |
-| `strudel-composition` | mini-notation・パターン・ファクトリ |
-| `strudel-data-format` | ファイル形式・メタデータ |
-| `strudel-sound-design` | 波形・エフェクト・音色 |
-| `strudel-genre-*` | ジャンル別の書き方（acid / house / dnb / ambient など 12 本） |
+| `strudel-composition` | 正本: 短いループ + mini + ライブ差分 save |
+| `strudel-data-format` | ファイル形式・メタデータ（2–5 トラック目安） |
+| `strudel-sound-design` | 波形・エフェクト・音色（ライブで触るツマミ） |
+| `strudel-genre-*` | ジャンル別の短いレシピ（16 小節 cat は書かない） |
 
 エージェントは `skills_list` / `skill_view` で必要なものだけ読む（progressive disclosure）。  
-`skill_manage` の書き込みは見本 config で `skills.write_approval: true`（承認待ち）にしている。
+まず `strudel-composition`。`skill_manage` の書き込みは見本 config で `skills.write_approval: true`（承認待ち）。
 
 ### 開発中の共有ディレクトリ（任意）
 
@@ -122,8 +122,11 @@ hermes --profile dj-hermes skills list --source local --enabled-only
 
 skills / SOUL / MCP は次で揃えている:
 
-- content = `setcpm(...)` + `$:` 行のみ（`stack` / `.cpm` 禁止）
+- content = `setcpm(...)` + **短い** `$:` 行のみ（2–5 トラック目安。`stack` / `.cpm` 禁止）
+- 既定は 1 サイクル + `<>`。長尺 `cat` は非既定
+- ライブ編集は **同名 + deck で上書き**（1 パラメータ差分）
 - 保存は `strudel_save_song(name, content, deck?)` のみ
+- 未実装メソッド（`.lfo` / `.add`）や未同梱 `cp` は例に出さない
 - 検査: `python scripts/lint_strudel_skills.py`
 
 ## ライブ profile からの再エクスポート

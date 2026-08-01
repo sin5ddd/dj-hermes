@@ -1,51 +1,54 @@
 ---
 name: strudel-genre-future-bass
-description: "Use when writing Future Bass for strudel-rs."
-version: 2.0.0
+description: "Use when writing short Future Bass live loops for strudel-rs."
+version: 3.0.0
 author: Hermes Agent
 license: MIT
 metadata:
   hermes:
-    tags: [strudel-rs, music, genre, future-bass]
+    tags: [strudel-rs, music, genre, future-bass, live-coding]
     related_skills:
       - strudel-composition
       - strudel-sound-design
       - strudel-data-format
 ---
 
-# strudel-rs × Future Bass
+# strudel-rs × フューチャーベース（短いライブループ）
 
 ## Overview
-明るいコード + サイドチェイン風の隙間 + 中速 BPM（目安 140–150 相当だがシンプル配置で可）。
+コード感 + 明るいリード + 4 つ打ち。BPM 目安 140–150。短い 3–4 トラック。
 
 ## コピー用フル例
 
 ```
 // @title visitor-future-bass
 // @genre future-bass
-setcpm(140/4)
+setcpm(145/4)
 // drums
-$: s("bd ~ bd ~, ~ sd ~ sd, hh*8").gain(0.5)
-// chords
-$: note("c3'maj ~ e3'min ~").s("sawtooth").lpf(1600).attack(0.02).gain(0.35).room(0.3)
-// bass
-$: note("c2 ~ g1 ~").s("sine").lpf(220).gain(0.5)
+$: s("bd*4, [~ sd]*2, [~ hh]*4, [~ oh]*2").gain(0.5)
+// chords (parallel degrees)
+$: note("[0,2,4] ~ [0,3,5] ~").scale("C3:minor").s("sawtooth").lpf(1400).gain(0.3)
+  .attack(0.02).decay(0.2).sustain(0.4).release(0.15)
+// lead
+$: note("7 9 <11 12> 9").scale("C4:minor").s("square").lpf(3000).gain(0.18)
+// sub
+$: note("0 ~ 0 ~").scale("C1:minor").s("sine").lpf(150).gain(0.55)
 ```
 
-## レシピ
+## ライブで変えると効く箇所
 
-1. コードを前面、キックは間引き可  
-2. 明るい lpf  
-3. room 薄め  
+1. chord の並列次数  
+2. lead `<>`  
+3. chord `.lpf`  
 
 ## Pitfalls
 
-1. 複雑なチョップ記法の多用（未対応が多い）  
-2. `stack` / `.cpm`  
-3. コード gain 過大でクリップ  
+1. レイヤー過多でクリップ  
+2. `stack` / `.add` / `.cpm`  
+3. 長尺 `cat`  
 
 ## Checklist
 
-- [ ] コード + リズム  
+- [ ] 短い chords + lead  
 - [ ] `setcpm` + `$:`  
 - [ ] `strudel_save_song`  

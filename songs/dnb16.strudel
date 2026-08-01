@@ -1,59 +1,19 @@
 // @title dnb16
 // @genre drum and bass
-// @details 16-bar loop @ 174 BPM
-// cat() = one cycle (bar) per arg — same as mini "<a b c>"
+// @details short live dnb loop @ 174 BPM
 setcpm(174/4)
 
-// drums — parallel layers; oh uses @ for sparse placement
-$: s(cat(
-  cat(
-    "bd ~ ~ bd ~ ~ bd ~, [~ ~ sd ~ ~ ~ sd ~], hh*16, [~@5 oh ~@2]",
-    "bd ~ ~ bd ~ bd ~ ~, [~ ~ sd ~ ~ ~ sd ~], hh*16, [~@6 oh ~]",
-    "bd ~ ~ bd ~ ~ bd ~, [~ ~ sd ~ ~ ~ sd ~], hh*16, [~@5 oh ~@2]",
-    "bd ~ bd ~ ~ ~ bd ~, [~ ~ sd ~ ~ sd sd ~], hh*16, [~@4 oh ~@3]"
-  ),
-  cat(
-    "bd ~ ~ bd ~ ~ bd ~, [~ ~ sd ~ ~ ~ sd ~], hh*16, [~@5 oh ~@2]",
-    "bd ~ ~ bd ~ bd ~ ~, [~ ~ sd ~ ~ ~ sd ~], hh*16, [~@6 oh ~]",
-    "bd ~ ~ bd ~ ~ bd ~, [~ ~ sd ~ ~ ~ sd ~], hh*16, [~@5 oh ~@2]",
-    "bd ~ bd ~ ~ bd ~ ~, [~ ~ sd ~ sd ~ sd sd], hh*16, [~@4 oh ~ oh ~]"
-  ),
-  "bd ~@7, [~@6 sd ~], hh*8, ~",
-  "~@3 bd ~ ~ bd ~, [~@2 sd ~@4], hh*8, [~@5 oh ~@2]",
-  cat(
-    "bd ~ ~ bd ~ ~ bd ~, [~ ~ sd ~ ~ ~ sd ~], hh*16, [~@5 oh ~@2]",
-    "bd ~ ~ bd ~ bd ~ ~, [~ ~ sd ~ ~ ~ sd ~], hh*16, [~@6 oh ~]",
-    "bd ~ ~ bd ~ ~ bd ~, [~ ~ sd ~ ~ ~ sd ~], hh*16, [~@5 oh ~@2]",
-    "bd ~ bd ~ ~ ~ bd ~, [~ ~ sd ~ ~ sd sd ~], hh*16, [~@4 oh ~@3]",
-    "bd ~ ~ bd ~ ~ bd ~, [~ ~ sd ~ ~ ~ sd ~], hh*16, [~@5 oh ~@2]",
-    "bd bd ~ bd ~ bd ~ bd, [sd ~ sd sd ~ sd sd ~], hh*16, [~ oh]*4"
-  )
-)).gain(0.5)
+// drums — break + hats
+$: s("bd ~ ~ sd ~ bd bd ~, hh*16, [~@5 oh ~@2]").fast(2).gain(0.55)
 
-// reese — A minor, break, return
-$: note(cat(
-  cat(
-    "a1 a1 a1 a1", "a1 a1 c2 a1", "a1 a1 a1 a1", "g1 g1 a1 a1",
-    "a1 a1 a1 a1", "a1 a1 c2 d2", "a1 a1 a1 a1", "g1 g1 e1 g1"
-  ),
-  "a1 ~ ~ ~", "~ ~ ~ a1",
-  cat(
-    "a1 a1 a1 a1", "a1 a1 c2 a1", "a1 a1 a1 a1",
-    "g1 g1 a1 a1", "a1 a1 c2 d2", "a1 g1 e1 a1"
-  )
-))
-.s("sawtooth").lpf(280).gain(0.52).attack(0.02).decay(0.18).sustain(0.55).release(0.12)
+// sub
+$: note("0 ~ ~ <0 -1>")
+  .scale("C1:minor")
+  .s("sine").lpf(120).gain(0.7)
+  .attack(0.01).release(0.4)
 
-// sub — root pulses under reese
-$: note(cat(
-  cat(
-    "a1 ~ a1 ~", "a1 ~ a1 ~", "a1 ~ a1 ~", "g1 ~ a1 ~",
-    "a1 ~ a1 ~", "a1 ~ a1 ~", "a1 ~ a1 ~", "g1 ~ e1 ~"
-  ),
-  "a1 ~ ~ ~", "~",
-  cat(
-    "a1 ~ a1 ~", "a1 ~ a1 ~", "a1 ~ a1 ~",
-    "g1 ~ a1 ~", "a1 ~ a1 ~", "a1 g1 a1 ~"
-  )
-))
-.s("sine").gain(0.35).attack(0.01).decay(0.1).sustain(0.6).release(0.1)
+// stab
+$: note("~ 4 ~ <7 9>")
+  .scale("C3:minor")
+  .s("square").lpf(2000).gain(0.15)
+  .attack(0.001).decay(0.12).sustain(0.15).release(0.05)

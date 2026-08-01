@@ -1,51 +1,52 @@
 ---
 name: strudel-genre-dnb
-description: "Use when writing Drum and Bass for strudel-rs."
-version: 2.0.0
+description: "Use when writing short Drum and Bass live loops for strudel-rs."
+version: 3.0.0
 author: Hermes Agent
 license: MIT
 metadata:
   hermes:
-    tags: [strudel-rs, music, genre, dnb]
+    tags: [strudel-rs, music, genre, dnb, live-coding]
     related_skills:
       - strudel-composition
       - strudel-sound-design
       - strudel-data-format
 ---
 
-# strudel-rs × ドラムンベース
+# strudel-rs × ドラムンベース（短いライブループ）
 
 ## Overview
-高速ブレイクビーツ + 重いサブ。体感 160–180 BPM 相当。`setcpm(BPM/4)` と `$:` のみ。
+高速ブレイク + 重いサブ。体感 160–180 BPM。**1 サイクルの短い break 骨格**で十分。16 小節 `cat` は不要。
 
-## コピー用フル例（そのまま save）
+## コピー用フル例
 
 ```
 // @title visitor-dnb
 // @genre drum-and-bass
 setcpm(170/4)
-// drums
-$: s("bd ~ ~ sd ~ bd bd ~ ~ sd ~ ~, hh*16").fast(2).gain(0.55)
-// bass
-$: note("c1").s("sine").lpf(120).attack(0.01).release(0.4).gain(0.7)
+// drums (break + hats; .fast for feel)
+$: s("bd ~ ~ sd ~ bd bd ~, hh*16, [~@5 oh ~@2]").fast(2).gain(0.55)
+// sub
+$: note("0 ~ ~ ~").scale("C1:minor").s("sine").lpf(120).gain(0.7)
+  .attack(0.01).release(0.4)
+// stab (optional)
+$: note("~ 4 ~ <7 9>").scale("C3:minor").s("square").lpf(2000).gain(0.15)
 ```
 
-`strudel_save_song(name="visitor-dnb", content=..., deck="B")` のように保存。
+## ライブで変えると効く箇所
 
-## レシピ
-
-1. ドラムは 4 つ打ちではなくブレイク配置 + `.fast(2)`  
-2. サブは `c1` 付近 + `sine` + 低い `lpf`  
-3. ハットは `hh*16` で高域  
+1. break の snare 位置（スペース区切り）  
+2. sub の次数 `0` ↔ `-1`  
+3. `hh*16` ↔ `hh*8`  
 
 ## Pitfalls
 
 1. `bd*4` のまま → 速いハウスになる  
 2. `stack(...).cpm(170)` → 保存 400  
-3. サブが高すぎる → `c1`–`f1` 付近  
+3. サブが高すぎる → `C1` 付近  
 
 ## Checklist
 
-- [ ] `setcpm` + `$:` のみ  
-- [ ] ブレイク配置  
-- [ ] `strudel_save_song` 実行  
+- [ ] 短い break + sub  
+- [ ] `setcpm` + `$:`  
+- [ ] `strudel_save_song`  

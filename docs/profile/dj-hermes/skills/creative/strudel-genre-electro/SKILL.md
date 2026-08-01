@@ -1,22 +1,22 @@
 ---
 name: strudel-genre-electro
-description: "Use when writing Electro for strudel-rs."
-version: 2.0.0
+description: "Use when writing short Electro live loops for strudel-rs."
+version: 3.0.0
 author: Hermes Agent
 license: MIT
 metadata:
   hermes:
-    tags: [strudel-rs, music, genre, electro]
+    tags: [strudel-rs, music, genre, electro, live-coding]
     related_skills:
       - strudel-composition
       - strudel-sound-design
       - strudel-data-format
 ---
 
-# strudel-rs × エレクトロ
+# strudel-rs × エレクトロ（短いライブループ）
 
 ## Overview
-機械的なキック/スネア + シンセベース。BPM 目安 120–130。
+シャープなキック・電子感のあるベース。BPM 目安 120–130。
 
 ## コピー用フル例
 
@@ -25,25 +25,29 @@ metadata:
 // @genre electro
 setcpm(126/4)
 // drums
-$: s("bd*4, hh*8, ~ sd ~ sd").gain(0.55)
+$: s("bd*4, [~ sd]*2, hh*8").gain(0.55)
 // bass
-$: note("c2 ~ c2 eb2").s("square").lpf(500).gain(0.5)
+$: note("0 0 3 0 <2 5> 0 4 0").scale("C2:minor")
+  .s("square").lpf(700).gain(0.5)
+  .attack(0.001).decay(0.08).sustain(0.2).release(0.04)
+// stab
+$: note("~ ~ 7 ~").scale("C3:minor").s("sawtooth").lpf(1800).gain(0.2)
 ```
 
-## レシピ
+## ライブで変えると効く箇所
 
-1. タイトな 4 つ打ち  
-2. square / saw の短いベース  
-3. ハットは乾いたまま  
+1. bass 次数と `.lpf`  
+2. `hh*8` ↔ `[~ hh]*4`  
+3. stab 追加/削除  
 
 ## Pitfalls
 
-1. アンビエント寄りの長い release  
+1. ベースがキックと同帯域で濁る  
 2. `stack` / `.cpm`  
-3. サンプル bank 名の推測書き  
+3. 長尺 `cat`  
 
 ## Checklist
 
-- [ ] 機械的グルーヴ  
+- [ ] 短い 2–3 トラック  
 - [ ] `setcpm` + `$:`  
 - [ ] `strudel_save_song`  

@@ -1,12 +1,12 @@
 ---
 name: strudel-sound-design
-description: "Use when designing synths or effects for strudel-rs (not full Strudel REPL)."
-version: 2.0.0
+description: "Use when designing synths or effects for short live loops in strudel-rs."
+version: 3.0.0
 author: Hermes Agent
 license: MIT
 metadata:
   hermes:
-    tags: [strudel-rs, music, sound-design, synthesis, effects]
+    tags: [strudel-rs, music, sound-design, synthesis, effects, live-coding]
     related_skills:
       - strudel-data-format
       - strudel-composition
@@ -29,13 +29,16 @@ metadata:
 ## Overview
 
 この Skill は **strudel-rs**（Rust 自前 DSP）向け。WebAudio 版 Strudel REPL の全機能は持たない。  
-音源・メソッドは `src/code.rs` / `src/sound.rs` / `src/synth.rs` に実装されているものだけを使う。
+音源・メソッドは実装済みのものだけ。パターンの長さ・ライブ差分は **strudel-composition**（短いループが既定）。
 
-**本家にあって未実装の一覧:** リポジトリ `docs/strudel-gap-synths-fx.md`（シンセ / FX / サンプルギャップ）。
+**ライブで触るとわかりやすいツマミ**: `.lpf` / `.lpq` / `.hpf` / `.bpf` / `.gain` / ADSR / `.room` / `.delay` / `.fm` / `.vib`  
+スカラーを 1 つ変えて同じ曲名で save する。
+
+**本家にあって未実装の一覧:** `docs/strudel-gap-synths-fx.md`。例に **`.lfo` / `.add` は書かない**。
 
 ## When to Use
 
-- ユーザーが **strudel-rs** で音色・FX を設計する時
+- 短い `$:` ループの音色・FX を決める / ライブで 1 パラメータ変える時
 - 波形 / ノイズ / 内蔵 wavetable / サンプル + 対応エフェクトを選ぶ時
 
 Don't use for: パターン記法の詳細（→ strudel-composition）、曲ファイル形式（→ strudel-data-format）、**本家 Strudel 専用**のシンセ（ZZFX・partials・phaser 等）。
@@ -193,21 +196,24 @@ $: note("c2 c2 eb2 g2").s("sine").fm(3).fmh(1.5).lpf(500).gain(0.55)
 
 別名: `att` `dec` `sus` `rel`。
 
-### scale（次数 → 音高）
+### scale（次数 → 音高 / コード進行）
 
 ```
-.scale("C2:minor")   // Root[:octave]:mode — オクターブ省略は 4
+.scale("C2:minor")   // 固定: Root[:octave]:mode — オクターブ省略は 4
 .scale("C:major")
 .scale("A2:minor:pentatonic")
+// コード進行: 1 サイクルごとに scale を切替（次数パターンはそのまま）
+.scale("<A2:minor D:dorian G:mixolydian C:major>")
 ```
 
 - `note("0 2 4")` / head `n("0 2 4")` の **整数**は 0 始まりのスケール次数（**負可**。例: `C2:major` の `-1` → B1）
 - 音名 atom（`c2`）はそのまま
-- 引数はスカラー文字列のみ（ミニ記法の動的 scale は不可）
+- **`.scale` だけ** `<…>` 進行が使える（`.lpf("<…>")` 等は不可）
 - 詳細は strudel-composition
 
 ```
 $: note("0 2 0 3 0 <2 4>").scale("C2:minor").s("sawtooth").lpf(500).gain(0.5)
+$: note("0 2 4 0").scale("<A2:minor D:dorian G:mixolydian C:major>").s("sawtooth").lpf(600).gain(0.5)
 ```
 
 ### ゲイン
@@ -358,32 +364,34 @@ $: note("c3 e3 g3 c4").s("sawtooth").orbit(2).gain(0.35).lpf(900)
 
 ---
 
-## 実例（デモ曲と同系統・そのまま save 可能）
+## 実例（短いライブループ・そのまま save 可能）
 
 ```
 // @title sound-demo
 setcpm(126/4)
-// キックが duck（専用チェーン → 分離）
+// duck 付きキックだけ分離
 $: s("bd*4").gain(0.9).duckorbit(2).duckattack(0.12).duckdepth(0.85)
-// 他ドラムは統合
-$: s("hh*8, ~ sd ~ sd").gain(0.35)
-// FM ベース
-$: note("c2 c2 eb2 g2").s("sine").fm(3).fmh(1.5).lpf(500).gain(0.55).attack(0.005).decay(0.1).sustain(0.3).release(0.08)
+$: s("[~ hh]*4, [~ sd]*2").gain(0.35)
+// FM ベース（次数）
+$: note("0 0 2 4").scale("C2:minor").s("sine").fm(3).fmh(1.5).lpf(500).gain(0.55)
+  .attack(0.005).decay(0.1).sustain(0.3).release(0.08)
 // duck されるパッド
-$: note("c3 e3 g3 c4").s("sawtooth").lpf(900).orbit(2).gain(0.35).attack(0.05).decay(0.2).sustain(0.6).release(0.2)
-// 空間
-$: note("c4 e4 g4 b4").s("wt_bright").gain(0.18).delay(0.25).delaytime(0.375).delayfeedback(0.45).orbit(2)
+$: note("0 2 4 7").scale("C3:minor").s("sawtooth").lpf(900).orbit(2).gain(0.35)
+  .attack(0.05).decay(0.2).sustain(0.6).release(0.2)
 ```
+
+ライブ差分例: パッドの `.lpf(900)` → `600`、または bass `.fm(3)` → `5` だけ変えて同名 save。
 
 ---
 
 ## Common Pitfalls
 
 1. **本家コピペの動的引数**（`"<...>"` をメソッドに渡す）→ 数値パース失敗。固定値にする。
-2. **未対応メソッド**（`phaser` `vowel` `distort` `partials` …）→ そのパターン行がエラー。
+2. **未対応メソッド**（`phaser` `vowel` `distort` `partials` `lfo` `add` …）→ そのパターン行がエラー。
 3. **同じ orbit で delay/room を複数トラックから書く** → last-write で上書き。役割ごとに orbit を分ける。
-4. **`c3'maj` で和音が鳴ると思わない** → root のみ。和音は `note("c3 e3 g3")` 等で書く。
+4. **`c3'maj` で和音が鳴ると思わない** → root のみ。和音は `note("0 2 4")` / `[6,8]` 等で書く。
 5. **ZZFX / supersaw / 外部 wt** は使えない。波形・wt_sine/bright/organ・サンプルに寄せる。
+6. 音色のために 16 小節 `cat` を書かない → 短いループのままスカラーを触る。
 
 ## Verification Checklist
 
