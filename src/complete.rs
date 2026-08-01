@@ -67,19 +67,14 @@ pub fn suggest_with_songs(
 
 /// Apply `candidates[index]` over the partial token range.
 ///
-/// A unique match gets a trailing space (ready for the next token). Multiple
-/// matches do not, so Tab can cycle alternatives.
+/// Always appends a trailing space so the next token (or Enter dispatch) is ready.
 pub fn apply_candidate(input: &str, result: &CompleteResult, index: usize) -> Option<String> {
     let cand = result.candidates.get(index)?;
     if result.replace_from > input.len() {
         return None;
     }
     let prefix = &input[..result.replace_from];
-    if result.candidates.len() == 1 {
-        Some(format!("{prefix}{cand} "))
-    } else {
-        Some(format!("{prefix}{cand}"))
-    }
+    Some(format!("{prefix}{cand} "))
 }
 
 // --- internals ---
@@ -414,9 +409,8 @@ mod tests {
     fn apply_preserves_slash_prefix() {
         let s = songs(&["techno1", "techno16", "smoke"]);
         let r = suggest_with_songs("/a load te", &ctx(true, &[], &[]), &s);
-        // Multiple matches: no trailing space (Tab can cycle).
         let applied = apply_candidate("/a load te", &r, 0).unwrap();
-        assert_eq!(applied, "/a load techno1");
+        assert_eq!(applied, "/a load techno1 ");
         let unique = suggest_with_songs("/a load smoke", &ctx(true, &[], &[]), &s);
         assert_eq!(
             apply_candidate("/a load smoke", &unique, 0).unwrap(),

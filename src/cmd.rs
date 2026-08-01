@@ -28,7 +28,8 @@ status
 help
 quit / q            [operator]
 viz [on|off]        toggle body punchcard / highlight (live TUI)
-Tab                 complete local-command tokens (live TUI; song / track names)
+↑↓ / Tab / Enter    suggest overlay: select / apply / apply+run (live TUI)
+Esc                 dismiss suggest (or quit when prompt empty)
 
 # live TUI + Hermes
 bare text           send to Hermes (DJ assistant)

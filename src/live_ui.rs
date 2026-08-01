@@ -31,9 +31,9 @@ use crate::voice_input::{VoiceEvent, VoiceHandle};
 use crate::watcher::{DeckPaths, UiLogBuffer};
 
 const HELP_LINE: &str =
-    "F10 viz  F12音声  Tab候補  drag xf/EQ  自然文→Hermes  /a load  /x 4  /bpm  /help";
-/// Max song/track names shown on the suggest footer line.
-const SUGGEST_MAX_ITEMS: usize = 12;
+    "F10 viz  F12音声  ↑↓候補  drag xf/EQ  自然文→Hermes  /a load  /x 4  /bpm  /help";
+/// Max candidate rows inside the suggest overlay (scroll window).
+const SUGGEST_MAX_ROWS: usize = 10;
 const HELP_LINE_REC: &str = "● REC  F12 で停止（最大7秒）";
 const HELP_LINE_STT: &str = "… STT  認識中…";
 
@@ -122,12 +122,10 @@ struct LiveState {
     input: String,
     history: Vec<String>,
     history_idx: Option<usize>,
-    /// Index into current local-command suggestion list (Tab / Shift+Tab).
+    /// Index into the current local-command suggestion list (↑↓).
     suggest_idx: usize,
-    /// Last multi-match candidate list for Tab cycling (cleared on edit).
-    suggest_cycle: Vec<String>,
-    /// `replace_from` paired with `suggest_cycle`.
-    suggest_cycle_from: usize,
+    /// Esc closed the suggest overlay; cleared when the input changes.
+    suggest_dismissed: bool,
     /// Rolling change log; only the last `LOG_LINES` entries are kept / drawn.
     log: VecDeque<String>,
     /// Centered help overlay (not written into the log).
@@ -246,8 +244,7 @@ pub fn run(
         history: Vec::new(),
         history_idx: None,
         suggest_idx: 0,
-        suggest_cycle: Vec::new(),
-        suggest_cycle_from: 0,
+        suggest_dismissed: false,
         log: VecDeque::new(),
         help_open: false,
         voice_phase: VoicePhase::Idle,
@@ -316,6 +313,11 @@ pub fn run(
                             }
                             continue;
                         }
+
+                        let hermes_on = hermes.is_some();
+                        let suggest = suggest_for_state(&state, hermes_on);
+                        let suggest_on = suggest_is_open(&state, &suggest);
+
                         match key.code {
                             KeyCode::Char('c') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                                 let _ = tx.send(Command::Hush);
@@ -332,6 +334,11 @@ pub fn run(
                                     state.push_log("voice: Hermes off では使えません");
                                 }
                             }
+                            // Suggest open: Esc only dismisses the overlay.
+                            KeyCode::Esc if suggest_on => {
+                                state.suggest_dismissed = true;
+                                state.invalidate_frame();
+                            }
                             KeyCode::Esc if state.input.is_empty() => {
                                 let _ = tx.send(Command::Hush);
                                 return Ok(());
@@ -341,14 +348,47 @@ pub fn run(
                                 let msg = state.toggle_body_mode();
                                 state.push_log(msg);
                             }
+                            KeyCode::Up
+                                if suggest_on
+                                    && !suggest.candidates.is_empty()
+                                    && state.voice_phase != VoicePhase::Recording =>
+                            {
+                                let n = suggest.candidates.len();
+                                state.suggest_idx = if state.suggest_idx == 0 {
+                                    n - 1
+                                } else {
+                                    state.suggest_idx - 1
+                                };
+                                state.invalidate_frame();
+                            }
+                            KeyCode::Down
+                                if suggest_on
+                                    && !suggest.candidates.is_empty()
+                                    && state.voice_phase != VoicePhase::Recording =>
+                            {
+                                let n = suggest.candidates.len();
+                                state.suggest_idx = (state.suggest_idx + 1) % n;
+                                state.invalidate_frame();
+                            }
+                            KeyCode::Tab
+                                if suggest_on
+                                    && !suggest.candidates.is_empty()
+                                    && state.voice_phase != VoicePhase::Recording =>
+                            {
+                                apply_suggest_selection(&mut state, &suggest);
+                            }
                             KeyCode::Enter => {
                                 if state.voice_phase == VoicePhase::Recording {
                                     continue;
                                 }
+                                // Apply highlighted candidate before dispatch when overlay is open.
+                                if suggest_on && !suggest.candidates.is_empty() {
+                                    apply_suggest_selection(&mut state, &suggest);
+                                }
                                 let line = state.input.trim().to_string();
                                 state.input.clear();
                                 state.history_idx = None;
-                                clear_suggest_cycle(&mut state);
+                                reset_suggest_edit(&mut state);
                                 if line.is_empty() {
                                     continue;
                                 }
@@ -369,23 +409,10 @@ pub fn run(
                             KeyCode::Backspace => {
                                 if state.voice_phase != VoicePhase::Recording {
                                     state.input.pop();
-                                    clear_suggest_cycle(&mut state);
+                                    reset_suggest_edit(&mut state);
                                 }
                             }
-                            KeyCode::Tab => {
-                                if state.voice_phase != VoicePhase::Recording {
-                                    apply_tab_complete(&mut state, hermes.is_some(), false);
-                                }
-                            }
-                            KeyCode::BackTab => {
-                                if state.voice_phase != VoicePhase::Recording {
-                                    apply_tab_complete(&mut state, hermes.is_some(), true);
-                                }
-                            }
-                            KeyCode::Up => {
-                                if state.voice_phase == VoicePhase::Recording {
-                                    continue;
-                                }
+                            KeyCode::Up if state.voice_phase != VoicePhase::Recording => {
                                 if state.history.is_empty() {
                                     continue;
                                 }
@@ -396,12 +423,9 @@ pub fn run(
                                 };
                                 state.history_idx = Some(idx);
                                 state.input = state.history[idx].clone();
-                                clear_suggest_cycle(&mut state);
+                                reset_suggest_edit(&mut state);
                             }
-                            KeyCode::Down => {
-                                if state.voice_phase == VoicePhase::Recording {
-                                    continue;
-                                }
+                            KeyCode::Down if state.voice_phase != VoicePhase::Recording => {
                                 if let Some(i) = state.history_idx {
                                     if i + 1 >= state.history.len() {
                                         state.history_idx = None;
@@ -410,7 +434,7 @@ pub fn run(
                                         state.history_idx = Some(i + 1);
                                         state.input = state.history[i + 1].clone();
                                     }
-                                    clear_suggest_cycle(&mut state);
+                                    reset_suggest_edit(&mut state);
                                 }
                             }
                             KeyCode::Char(c)
@@ -419,7 +443,7 @@ pub fn run(
                                     && state.voice_phase != VoicePhase::Recording =>
                             {
                                 state.input.push(c);
-                                clear_suggest_cycle(&mut state);
+                                reset_suggest_edit(&mut state);
                             }
                             _ => {}
                         }
@@ -730,26 +754,11 @@ fn draw_frame(
 
     if rows >= 2 {
         let help = match state.voice_phase {
-            VoicePhase::Recording => HELP_LINE_REC.to_string(),
-            VoicePhase::Stt => HELP_LINE_STT.to_string(),
-            VoicePhase::Idle => {
-                let result = if state.suggest_cycle.len() > 1 {
-                    CompleteResult {
-                        candidates: state.suggest_cycle.clone(),
-                        replace_from: state.suggest_cycle_from,
-                        hint: None,
-                    }
-                } else {
-                    suggest_for_state(state, hermes_enabled)
-                };
-                if result.has_display() {
-                    complete::format_suggest_line(&result, state.suggest_idx, SUGGEST_MAX_ITEMS)
-                } else {
-                    HELP_LINE.to_string()
-                }
-            }
+            VoicePhase::Recording => HELP_LINE_REC,
+            VoicePhase::Stt => HELP_LINE_STT,
+            VoicePhase::Idle => HELP_LINE,
         };
-        lines.push(pad_clip_ansi(&help, cols));
+        lines.push(pad_clip_ansi(help, cols));
         let prompt = format!("» {}", state.input);
         lines.push(pad_clip_ansi(&prompt, cols));
     }
@@ -758,8 +767,18 @@ fn draw_frame(
     }
     lines.truncate(rows);
 
+    // Help takes priority; otherwise show local-command suggest overlay.
     if state.help_open {
         overlay_help_modal(&mut lines, cols, rows);
+    } else {
+        let suggest = suggest_for_state(state, hermes_enabled);
+        if suggest_is_open(state, &suggest) {
+            // Keep index in range if the filtered list shrank.
+            if !suggest.candidates.is_empty() {
+                state.suggest_idx %= suggest.candidates.len();
+            }
+            overlay_suggest_modal(&mut lines, cols, rows, &suggest, state.suggest_idx);
+        }
     }
 
     let size_changed = state.prev_cols != cols_u || state.prev_rows != rows_u;
@@ -781,8 +800,10 @@ fn draw_frame(
     }
 
     if rows >= 1 {
-        if state.help_open {
-            // Hide cursor while the help window is up.
+        let suggest = suggest_for_state(state, hermes_enabled);
+        let overlay = state.help_open || suggest_is_open(state, &suggest);
+        if overlay {
+            // Hide cursor while a modal covers the prompt.
             queue!(out, cursor::Hide).map_err(|e| format!("draw: {e}"))?;
         } else {
             let cursor_col = (2 + state.input.chars().count()).min(cols.saturating_sub(1)) as u16;
@@ -817,65 +838,58 @@ fn suggest_for_state(state: &LiveState, hermes_enabled: bool) -> CompleteResult 
     complete::suggest(&state.input, &ctx)
 }
 
-fn clear_suggest_cycle(state: &mut LiveState) {
-    state.suggest_idx = 0;
-    state.suggest_cycle.clear();
-    state.suggest_cycle_from = 0;
+fn suggest_is_open(state: &LiveState, result: &CompleteResult) -> bool {
+    !state.help_open && !state.suggest_dismissed && result.has_display()
 }
 
-/// Tab / Shift+Tab: cycle and apply a local-command candidate into `state.input`.
-fn apply_tab_complete(state: &mut LiveState, hermes_enabled: bool, reverse: bool) {
-    let result = suggest_for_state(state, hermes_enabled);
+/// Reset selection when the user edits the prompt (also re-enables overlay after Esc).
+fn reset_suggest_edit(state: &mut LiveState) {
+    state.suggest_idx = 0;
+    state.suggest_dismissed = false;
+    state.invalidate_frame();
+}
 
-    // Prefer an active multi-match cycle so Tab can rotate full names after apply.
-    let (cands, replace_from) = if state.suggest_cycle.len() > 1 {
-        (state.suggest_cycle.clone(), state.suggest_cycle_from)
-    } else if result.candidates.len() > 1 {
-        state.suggest_cycle = result.candidates.clone();
-        state.suggest_cycle_from = result.replace_from;
-        (result.candidates.clone(), result.replace_from)
-    } else if result.candidates.len() == 1 {
-        state.suggest_cycle.clear();
-        let synthetic = CompleteResult {
-            candidates: result.candidates.clone(),
-            replace_from: result.replace_from,
-            hint: None,
-        };
-        if let Some(next) = complete::apply_candidate(&state.input, &synthetic, 0) {
-            state.input = next;
-            state.suggest_idx = 0;
-            state.history_idx = None;
-        }
+/// Insert the highlighted candidate into the prompt (trailing space via complete).
+fn apply_suggest_selection(state: &mut LiveState, result: &CompleteResult) {
+    if result.candidates.is_empty() {
         return;
-    } else {
-        return;
-    };
-
-    let n = cands.len();
-    let partial = if replace_from <= state.input.len() {
-        state.input[replace_from..].trim_end()
-    } else {
-        ""
-    };
-    let mut idx = state.suggest_idx % n;
-    if cands[idx] == partial {
-        idx = if reverse {
-            idx.checked_sub(1).unwrap_or(n - 1)
-        } else {
-            (idx + 1) % n
-        };
-    } else if reverse {
-        idx = idx.checked_sub(1).unwrap_or(n - 1);
     }
-    let prefix = if replace_from <= state.input.len() {
-        &state.input[..replace_from]
+    let idx = state.suggest_idx % result.candidates.len();
+    if let Some(next) = complete::apply_candidate(&state.input, result, idx) {
+        state.input = next;
+        state.suggest_idx = 0;
+        state.suggest_dismissed = false;
+        state.history_idx = None;
+        state.invalidate_frame();
+    }
+}
+
+/// Build visible body lines for the suggest list (selection + scroll window).
+fn suggest_body_lines(result: &CompleteResult, selected: usize, max_rows: usize) -> Vec<String> {
+    if result.candidates.is_empty() {
+        if let Some(ref h) = result.hint {
+            return vec![h.clone()];
+        }
+        return Vec::new();
+    }
+    let n = result.candidates.len();
+    let sel = selected % n;
+    let max_rows = max_rows.max(1);
+    let start = if n <= max_rows {
+        0
     } else {
-        &state.input
+        (sel + 1).saturating_sub(max_rows)
     };
-    // Multi-match: no trailing space so the cycle list stays usable.
-    state.input = format!("{}{}", prefix, cands[idx]);
-    state.suggest_idx = idx;
-    state.history_idx = None;
+    let end = (start + max_rows).min(n);
+    let mut out = Vec::with_capacity(end - start + 1);
+    for i in start..end {
+        let mark = if i == sel { "▸ " } else { "  " };
+        out.push(format!("{mark}{}", result.candidates[i]));
+    }
+    if start > 0 || end < n {
+        out.push(format!("  … {}/{} …", sel + 1, n));
+    }
+    out
 }
 
 /// Pull watcher / external messages into the fixed 3-line log.
@@ -898,12 +912,56 @@ fn drain_ui_log(state: &mut LiveState, ui_log: &Option<UiLogBuffer>) {
 
 /// Centered help window overlaid on the current frame (does not use the log area).
 fn overlay_help_modal(lines: &mut [String], cols: usize, rows: usize) {
+    let body: Vec<String> = cmd::HELP
+        .trim_end()
+        .lines()
+        .map(|s| s.to_string())
+        .collect();
+    paint_overlay_box(
+        lines,
+        cols,
+        rows,
+        " help ",
+        &body,
+        "Esc / Enter / Space で閉じる",
+    );
+}
+
+/// Local-command candidate list (same chrome as help).
+fn overlay_suggest_modal(
+    lines: &mut [String],
+    cols: usize,
+    rows: usize,
+    result: &CompleteResult,
+    selected: usize,
+) {
+    let body = suggest_body_lines(result, selected, SUGGEST_MAX_ROWS);
+    if body.is_empty() {
+        return;
+    }
+    let footer = if result.candidates.is_empty() {
+        "Esc で閉じる"
+    } else {
+        "↑↓ 選択  Tab 適用  Enter 適用+実行  Esc 閉じる"
+    };
+    paint_overlay_box(lines, cols, rows, " suggest ", &body, footer);
+}
+
+/// Shared floating panel used by help and suggest.
+fn paint_overlay_box(
+    lines: &mut [String],
+    cols: usize,
+    rows: usize,
+    title: &str,
+    body: &[String],
+    footer: &str,
+) {
     if cols < 12 || rows < 6 {
         return;
     }
-    let body: Vec<&str> = cmd::HELP.trim_end().lines().collect();
-    let footer = "Esc / Enter / Space で閉じる";
-    let title = " help ";
+    if body.is_empty() {
+        return;
+    }
 
     let content_w = body
         .iter()
@@ -912,7 +970,6 @@ fn overlay_help_modal(lines: &mut [String], cols: usize, rows: usize) {
         .chain(std::iter::once(visible_width(title) + 2))
         .max()
         .unwrap_or(24);
-    // Inner text width, then full box including borders: "│ " + text + " │"
     let inner = content_w.min(cols.saturating_sub(4)).max(16);
     let box_w = (inner + 4).min(cols);
     let inner = box_w.saturating_sub(4);
@@ -926,7 +983,6 @@ fn overlay_help_modal(lines: &mut [String], cols: usize, rows: usize) {
 
     let hline = "─".repeat(box_w.saturating_sub(2));
     let bot = format!("└{hline}┘");
-    // Title on top border: ┌─ help ────────┐
     let top = title_border(&hline, title, box_w);
 
     let mut box_lines: Vec<String> = Vec::with_capacity(box_h);
@@ -934,7 +990,6 @@ fn overlay_help_modal(lines: &mut [String], cols: usize, rows: usize) {
     for line in body.iter().take(body_show) {
         box_lines.push(box_content_row(line, inner));
     }
-    // Pad if body was truncated by height.
     while box_lines.len() < box_h.saturating_sub(3) {
         box_lines.push(box_content_row("", inner));
     }
@@ -948,13 +1003,10 @@ fn overlay_help_modal(lines: &mut [String], cols: usize, rows: usize) {
         if r >= lines.len() {
             break;
         }
-        // Reverse-video / bold-ish frame: leave base content under left/right padding.
         let left = " ".repeat(col0);
         let mid = pad_clip_ansi(bline, box_w);
-        // Rebuild full-width line: left pad + box + right pad.
         let right_pad = cols.saturating_sub(col0 + box_w);
         let right = " ".repeat(right_pad);
-        // Dim the side gutters slightly so the window reads as a floating panel.
         let composed = format!("{LOG_DIM}{left}\x1b[0m\x1b[1m{mid}\x1b[0m{LOG_DIM}{right}\x1b[0m");
         lines[r] = pad_clip_ansi(&composed, cols);
     }
@@ -1415,8 +1467,7 @@ mod tests {
             history: Vec::new(),
             history_idx: None,
             suggest_idx: 0,
-            suggest_cycle: Vec::new(),
-            suggest_cycle_from: 0,
+            suggest_dismissed: false,
             log: VecDeque::new(),
             help_open: false,
             voice_phase: VoicePhase::Idle,
@@ -1483,6 +1534,40 @@ mod tests {
             joined.contains("閉じる") || joined.contains("Esc"),
             "{joined}"
         );
+    }
+
+    #[test]
+    fn suggest_body_marks_selection_and_scrolls() {
+        let result = CompleteResult {
+            candidates: (0..15).map(|i| format!("song{i}")).collect(),
+            replace_from: 0,
+            hint: None,
+        };
+        let lines = suggest_body_lines(&result, 0, 5);
+        assert!(lines[0].starts_with("▸ "), "{lines:?}");
+        assert!(lines[1].starts_with("  "), "{lines:?}");
+        assert!(lines.iter().any(|l| l.contains('…')), "{lines:?}");
+
+        let lines = suggest_body_lines(&result, 12, 5);
+        assert!(lines.iter().any(|l| l.contains("▸ song12")), "{lines:?}");
+    }
+
+    #[test]
+    fn suggest_modal_draws_candidates() {
+        let cols = 80usize;
+        let rows = 24usize;
+        let mut lines: Vec<String> = (0..rows).map(|_| pad_clip_ansi("", cols)).collect();
+        let result = CompleteResult {
+            candidates: vec!["techno1".into(), "ambient1".into()],
+            replace_from: 8,
+            hint: None,
+        };
+        overlay_suggest_modal(&mut lines, cols, rows, &result, 1);
+        let joined = lines.join("\n");
+        assert!(joined.contains("suggest"), "{joined}");
+        assert!(joined.contains("techno1"), "{joined}");
+        assert!(joined.contains("ambient1"), "{joined}");
+        assert!(joined.contains("↑↓") || joined.contains("選択"), "{joined}");
     }
 
     #[test]
