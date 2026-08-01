@@ -1,7 +1,7 @@
 ---
 name: strudel-composition
 description: "Use when writing strudel-rs live patterns: short loops, mini-notation, iterative save."
-version: 3.1.0
+version: 3.2.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -10,6 +10,7 @@ metadata:
     related_skills:
       - strudel-data-format
       - strudel-sound-design
+      - strudel-live-edit
 ---
 
 # strudel-rs 作曲（Composition）— ライブ短いループ
@@ -45,7 +46,7 @@ $: note("7 6 <4 9> <3 [4 2]>")
   .s("square").lpf(3200).gain(0.16)
   .attack(0.001).decay(0.5).sustain(0.1).release(0.03)
 
-// chords — 並列次数 [6,8]（.add は未対応）
+// chords — 並列次数 [6,8]
 $: note("0 2 4 [6,8] 0 2 4 [7,9]")
   .scale("C4:minor")
   .s("sawtooth").gain(0.35).bpf(1500)
@@ -70,10 +71,14 @@ $: note("0 0 2 4").scale("C2:minor").s("sawtooth").lpf(450).gain(0.5)
 | --- | --- |
 | ハット細かく | `[~ hh]*4` → `hh*8` |
 | ベース動かして | 次数の末尾を `<>` で差し替え |
-| 暗い | bass `.lpf` を下げる / lead gain を下げる |
-| ブレイク | drums 末尾に `, <~ [~@3 bd ~@4]>` |
+| 暗い / 明るい | **モード梯子**（→ **strudel-live-edit**）。副次で lpf |
+| ブレイク / フィル | drums に `<>` / `.ply(2)`（→ live-edit） |
+| メロディ足して | lead `$:` + `@`（→ live-edit） |
+| 転調 / 移調 | scale ルート or `.add`/`.sub`（→ live-edit） |
 | コード足して | chord の `$:` を 1 本追加 or `[6,8]` を変える |
 | 進行変えて | `.scale("<A2:minor D:dorian …>")` の中身を差し替え |
+
+自然言語の編集レシピの詳細は **strudel-live-edit**。
 
 **アンチパターン**: 毎回 8–16 引数の `cat(...)` を一から生成する。
 
@@ -117,8 +122,9 @@ $: s("bd*4, [~ sd]*2, [~ hh]*4, <~ [~@3 bd ~@4]>").gain(0.55)
 $: note("0 2 0 3 0 <2 4> <4 2>").scale("C2:minor").s("sawtooth").lpf(600).gain(0.5)
 // head の n(...) も可（メソッド .n(1) サンプル index とは別）
 $: n("0 0 2 4").scale("C2:minor").s("sine").lpf(400).gain(0.55)
-// 和音は並列次数（.add は未対応）
+// 和音は並列次数; 移調は .add/.sub（スカラー）
 $: note("0 2 4 [6,8]").scale("C4:minor").s("sawtooth").gain(0.3)
+$: note("0 2 4").scale("C2:minor").add(2).s("sawtooth").lpf(500).gain(0.5)
 ```
 
 | scale 引数 | 意味 |
@@ -166,8 +172,8 @@ $: note("0 2 3 4").scale("C2:minor").s("sawtooth").lpf(600).lpq(8).gain(0.5)
 $: s("bd*4, hh*16").hpf(200).gain(0.45)
 ```
 
-不可: `.lpf("<400 1200>")`、`.vib("<1 4>")`、`stack(...)`、`.cpm(120)`、**`.lfo(...)` / `.add(...)`**（未実装）。  
-可（例外）: **`.scale("<A2:minor D:dorian …>")`** の進行のみ（上節）。
+不可: `.vib("<1 4>")`、`stack(...)`、`.cpm(120)`、**`.lfo(...)`**（未実装）。  
+可: **`.scale("<…>")` 進行**、**`.lpf("<400 1200>")`** / **`.lpf(sine.rangex(500,4000))`**、**`.add` / `.sub` / `.ply`**（詳細は live-edit / sound-design）。
 
 同梱サンプル: `bd` `sd` `hh` `oh`（`cp` は無い → `sd`/`oh` を使う）。
 
@@ -188,7 +194,7 @@ $: s("bd*4, hh*16").hpf(200).gain(0.45)
 
 - 本家 JS: `stack(...)`、`.cpm()`、裸の `s("...")` 行（`$:` 無し）  
 - 理由なく kick/hat/snare を 3 トラックに分ける  
-- 未実装: `.lfo` / `.add` / 未同梱 `cp`  
+- 未実装: `.lfo` / 未同梱 `cp`  
 - 既定での 16 小節 `cat` 長尺  
 
 ## Pitfalls

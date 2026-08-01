@@ -126,7 +126,8 @@ skills / SOUL / MCP は次で揃えている:
 - 既定は 1 サイクル + `<>`。長尺 `cat` は非既定
 - ライブ編集は **同名 + deck で上書き**（1 パラメータ差分）
 - 保存は `strudel_save_song(name, content, deck?)` のみ
-- 未実装メソッド（`.lfo` / `.add`）や未同梱 `cp` は例に出さない
+- 未実装メソッド（`.lfo`）や未同梱 `cp` は例に出さない。スカラー `.add` / `.sub` / `.ply` は可
+- 自然言語編集は skill `strudel-live-edit`
 - 検査: `python scripts/lint_strudel_skills.py`
 
 ## ライブ profile からの再エクスポート

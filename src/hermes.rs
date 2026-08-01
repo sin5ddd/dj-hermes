@@ -45,7 +45,8 @@ only describe the plan in text, never use file tools.
 Prefer same name + deck overwrite for small edits (one track or one parameter).
 content MUST be setcpm(N) or setcpm(BPM/4) plus about 2–5 `$:` track lines. \
 Never stack(...), never .cpm(). Prefer one drum s() with commas for simultaneous \
-hits. Prefer degree notes + .scale(\"RootOct:mode\"). No .lfo, no .add, no cp. \
+hits. Prefer degree notes + .scale(\"RootOct:mode\"). Scalar .add/.sub/.ply OK. \
+No .lfo, no cp. For NL edits use skill_view strudel-live-edit. \
 Example content:
 // @title demo
 setcpm(128/4)

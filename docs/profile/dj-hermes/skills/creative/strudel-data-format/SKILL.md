@@ -1,7 +1,7 @@
 ---
 name: strudel-data-format
 description: "Use when writing short .strudel live-loop files for strudel-rs save/load."
-version: 3.0.0
+version: 3.1.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -10,6 +10,7 @@ metadata:
     related_skills:
       - strudel-composition
       - strudel-sound-design
+      - strudel-live-edit
 ---
 
 # strudel-rs 曲ファイル形式
@@ -67,9 +68,8 @@ $: note("0 2 4 [6,8] 0 2 4 [7,9]").scale("C4:minor")
 ## 禁止（保存すると 400 または再生失敗）
 
 - `stack(...)` / `).cpm(...)` / 裸の `s("bd")` 行（`$:` 無し）  
-- メソッド引数の動的ミニ記法: `.lpf("<200 800>")` など  
-- 未実装: `.lfo(...)` / `.add(...)`、未同梱 `cp`  
-- 可: `.scale("<A2:minor D:dorian …>")` の進行（1 サイクル 1 スケール）。`.lpf("<…>")` は不可  
+- 未実装: `.lfo(...)`（メソッド名）、未同梱 `cp`、`vib("<…>")` など一部の動的引数  
+- 可: `.scale("<…>")` 進行、`.lpf("<400 1200>")` / `.lpf(sine.rangex(500,4000))`、`.add` / `.sub` / `.ply`
 
 - `sine.range(...)` などの本家 JS ヘルパ  
 

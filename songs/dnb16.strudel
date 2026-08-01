@@ -4,16 +4,16 @@
 setcpm(174/4)
 
 // drums — break + hats
-$: s("bd ~ ~ sd ~ bd bd ~, hh*16, [~@5 oh ~@2]").fast(2).gain(0.55)
+$: s("bd <~ sd> ~ sd ~ <bd ~> <bd sd> <db ~>, hh*4, [~@5 oh ~@2]").fast(2).gain(0.25).lpf(4000)
 
 // sub
-$: note("0 ~ ~ <0 -1>")
-  .scale("C1:minor")
-  .s("sine").lpf(120).gain(0.7)
-  .attack(0.01).release(0.4)
+$: note("0 3 0 <0 -1>")
+  .scale("C2:minor")
+  .s("square").lpf(120).gain(0.7)
+  .attack(0.01).decay(0.5).release(0.4)
 
 // stab
-$: note("~ 4 ~ <7 9>")
-  .scale("C3:minor")
-  .s("square").lpf(2000).gain(0.15)
+$: note("[4@2 <7 9>@2]/2")
+  .scale("C2:minor")
+  .s("sawtooth").lpf(2000).gain(0.55)
   .attack(0.001).decay(0.12).sustain(0.15).release(0.05)

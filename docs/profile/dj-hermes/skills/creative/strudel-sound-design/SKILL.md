@@ -1,7 +1,7 @@
 ---
 name: strudel-sound-design
 description: "Use when designing synths or effects for short live loops in strudel-rs."
-version: 3.0.0
+version: 3.1.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -10,6 +10,7 @@ metadata:
     related_skills:
       - strudel-data-format
       - strudel-composition
+      - strudel-live-edit
       - strudel-genre-acid
       - strudel-genre-electro
       - strudel-genre-minimal-techno
@@ -34,7 +35,8 @@ metadata:
 **ライブで触るとわかりやすいツマミ**: `.lpf` / `.lpq` / `.hpf` / `.bpf` / `.gain` / ADSR / `.room` / `.delay` / `.fm` / `.vib`  
 スカラーを 1 つ変えて同じ曲名で save する。
 
-**本家にあって未実装の一覧:** `docs/strudel-gap-synths-fx.md`。例に **`.lfo` / `.add` は書かない**。
+**本家にあって未実装の一覧:** `docs/strudel-gap-synths-fx.md`。例に **`.lfo` は書かない**。  
+**明暗（キーの印象）は scale モードを優先**（→ strudel-live-edit）。`.lpf` は音色の副次。
 
 ## When to Use
 
@@ -49,7 +51,7 @@ Don't use for: パターン記法の詳細（→ strudel-composition）、曲フ
 
 | 項目 | strudel-rs |
 | --- | --- |
-| メソッド引数 | **スカラー数値のみ**（`parse_num` / `a:b` コロン列）。`vib("<1 2 4>")` のような **ミニ記法の動的引数は不可** |
+| メソッド引数 | **スカラー**、**ミニ数値パターン**（`.lpf("<400 1200>")`）、**LFO**（`.lpf(sine.rangex(500,4000))`）。`vib` 等はまだスカラーのみ |
 | 未知メソッド | パースエラー → その行は落ちる（演奏は継続） |
 | 未知 sound | `unknown sound`（波形でもサンプルでもない） |
 | orbit | **デッキ内 1..4** のみ。A/B デッキ間で共有しない |
@@ -209,11 +211,35 @@ $: note("c2 c2 eb2 g2").s("sine").fm(3).fmh(1.5).lpf(500).gain(0.55)
 - `note("0 2 4")` / head `n("0 2 4")` の **整数**は 0 始まりのスケール次数（**負可**。例: `C2:major` の `-1` → B1）
 - 音名 atom（`c2`）はそのまま
 - **`.scale` だけ** `<…>` 進行が使える（`.lpf("<…>")` 等は不可）
-- 詳細は strudel-composition
+- 詳細は strudel-composition / 明暗は strudel-live-edit
 
 ```
 $: note("0 2 0 3 0 <2 4>").scale("C2:minor").s("sawtooth").lpf(500).gain(0.5)
 $: note("0 2 4 0").scale("<A2:minor D:dorian G:mixolydian C:major>").s("sawtooth").lpf(600).gain(0.5)
+```
+
+### add / sub（移調・スカラー）
+
+```
+.add(2)              // scale あり次数 → +2 度; 音名 → +2 半音
+.sub(1)              // .add(-1) と同義。累積可
+```
+
+```
+$: note("0 2 4").scale("C2:minor").add(2).s("sawtooth").lpf(500).gain(0.5)
+$: note("c4 e4").add(12).s("sine").gain(0.3)
+```
+
+パターン引数（`.add("<1 2>")`）は不可。
+
+### ply（イベント分割連打・スカラー）
+
+```
+.ply(2)              // 各イベントを 2 分割して連打（1..=16、複数回は乗算）
+```
+
+```
+$: s("bd*4, [~ sd]*2").ply(2).gain(0.55)
 ```
 
 ### ゲイン
@@ -239,9 +265,17 @@ $: note("0 2 4 0").scale("<A2:minor D:dorian G:mixolydian C:major>").s("sawtooth
 ```
 $: note("c3 e3 g3").s("sawtooth").lpf(400).lpq(2).gain(0.4)
 $: s("bd*4").hpf(80)
+// バーごと / イベントごとに cutoff を変える（mini 数値パターン）
+$: s("bd*4, hh*8").lpf("<500 2000 8000 2000>").gain(0.5)
+// 連続 LFO（1 バーで 1 周。Hz は rangex が指数マップ）
+$: note("0 2 4 7").scale("C3:minor").s("sawtooth")
+  .lpf(sine.rangex(500, 4000)).gain(0.35)
+// ゆっくりスイープ
+$: note("0").scale("C2:minor").s("sawtooth").lpf(sine.range(200, 2000).slow(4)).gain(0.5)
 ```
 
-非対応: `ftype` / `fanchor` / `vowel` / ladder 切替。
+対応 LFO 波形: `sine` `cosine` `tri` `saw` `square` + `.range` / `.rangex` + 任意で `.slow(n)` / `.fast(n)`。  
+非対応: `ftype` / `fanchor` / `vowel` / ladder 切替 / `perlin` / `rand`（未実装）。
 
 ---
 
@@ -325,13 +359,13 @@ $: note("c3 e3 g3 c4").s("sawtooth").orbit(2).gain(0.35).lpf(900)
 
 ## 使えるメソッド一覧（クイック）
 
-**音源・音色:** `s` `sound` `note` `n` `scale` `gain` `velocity`/`vel` `noise` `vib`/`vibrato`/`v` `vibmod` `fm` `fmh` `fmattack` `fmdecay` `fmsustain` `penv` `pattack` `pdecay` `lpenv` `lpattack` `lpdecay` `lpsustain` `lprelease` `attack` `decay` `sustain` `release` `adsr`
+**音源・音色:** `s` `sound` `note` `n` `scale` `add` `sub` `gain` `velocity`/`vel` `noise` `vib`/`vibrato`/`v` `vibmod` `fm` `fmh` `fmattack` `fmdecay` `fmsustain` `penv` `pattack` `pdecay` `lpenv` `lpattack` `lpdecay` `lpsustain` `lprelease` `attack` `decay` `sustain` `release` `adsr`
 
 **フィルタ:** `lpf` `lpq` `hpf` `hpq` `bpf` `bpq`（および表の別名）
 
 **サンプル:** `begin` `end` `speed` `bank` `clip` `legato` `cut`
 
-**時間:** `fast` `slow`
+**時間:** `fast` `slow` `ply`
 
 **バス / FX:** `orbit`/`o` `duckorbit`/`duck` `duckattack` `duckdepth` `delay` `delaytime` `delayfeedback` `room` `roomsize`/`size` `compressor`
 
@@ -387,7 +421,7 @@ $: note("0 2 4 7").scale("C3:minor").s("sawtooth").lpf(900).orbit(2).gain(0.35)
 ## Common Pitfalls
 
 1. **本家コピペの動的引数**（`"<...>"` をメソッドに渡す）→ 数値パース失敗。固定値にする。
-2. **未対応メソッド**（`phaser` `vowel` `distort` `partials` `lfo` `add` …）→ そのパターン行がエラー。
+2. **未対応メソッド**（`phaser` `vowel` `distort` `partials` `lfo` …）→ そのパターン行がエラー。
 3. **同じ orbit で delay/room を複数トラックから書く** → last-write で上書き。役割ごとに orbit を分ける。
 4. **`c3'maj` で和音が鳴ると思わない** → root のみ。和音は `note("0 2 4")` / `[6,8]` 等で書く。
 5. **ZZFX / supersaw / 外部 wt** は使えない。波形・wt_sine/bright/organ・サンプルに寄せる。

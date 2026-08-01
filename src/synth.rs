@@ -175,7 +175,7 @@ impl Voice {
             lpf: Biquad::bypass(),
             hpf: Biquad::bypass(),
             bpf: Biquad::bypass(),
-            use_lpf: filter.lpf.is_some() || mods.lpenv.abs() > 1e-6,
+            use_lpf: filter.lpf.is_some() || mods.lpenv.abs() > 1e-6 || mods.lpf_lfo.is_some(),
             use_hpf: filter.hpf.is_some(),
             use_bpf: filter.bpf.is_some(),
             base_lpf: filter.lpf,
@@ -248,6 +248,16 @@ impl Voice {
     }
 
     fn effective_lpf_hz(&self) -> Option<f32> {
+        // Continuous LFO (sine.rangex etc.) wins over fixed + lpenv stack base.
+        if let Some(spec) = self.mods.lpf_lfo {
+            let spb = if self.mods.samples_per_bar > 1.0 {
+                self.mods.samples_per_bar
+            } else {
+                self.sr_cached.max(1.0)
+            };
+            let bar_phase = self.mods.lfo_phase0 + (self.pos as f32 / spb);
+            return Some(spec.value_at_bar_phase(bar_phase).clamp(20.0, 20_000.0));
+        }
         let base = match self.base_lpf {
             Some(hz) => hz,
             None if self.mods.lpenv.abs() > 1e-6 => 500.0,
@@ -325,8 +335,8 @@ impl Voice {
         }
 
         self.advance_lp_env();
-        // Update LPF coeffs when filter envelope is active (state preserved).
-        if self.mods.lpenv.abs() > 1e-6 {
+        // Update LPF coeffs when filter envelope or continuous LFO is active.
+        if self.mods.lpenv.abs() > 1e-6 || self.mods.lpf_lfo.is_some() {
             if let Some(cut) = self.effective_lpf_hz() {
                 self.lpf
                     .set_coeffs(BiquadKind::LowPass, cut, self.filter.lpq, sr);

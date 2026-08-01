@@ -44,7 +44,7 @@ $: note("0 ~ 0 ~").scale("C1:minor").s("sine").lpf(150).gain(0.55)
 ## Pitfalls
 
 1. レイヤー過多でクリップ  
-2. `stack` / `.add` / `.cpm`  
+2. `stack` / `.cpm` / `.lfo`  
 3. 長尺 `cat`  
 
 ## Checklist

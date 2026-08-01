@@ -5,6 +5,7 @@ pub mod backend;
 pub mod cmd;
 pub mod code;
 pub mod complete;
+pub mod control;
 pub mod deck;
 pub mod dsp;
 pub mod engine;

@@ -4,7 +4,7 @@ use crate::code::{Adsr, DuckParams, FilterParams, ModParams, PatternCode};
 use crate::dsp::{equal_power_pan, orbit_index, CompressorParams, DuckState, OrbitFx, NUM_ORBITS};
 use crate::mini;
 use crate::sample::{SampleBank, SampleVoice, VoiceKind, SAMPLE_ROOT_HZ};
-use crate::scale::resolve_pitch;
+use crate::scale::resolve_pitch_with_add;
 use crate::song::Song;
 use crate::sound::{resolve_sound_with_bank, ResolvedSound};
 use crate::synth::{OscSource, Voice};
@@ -191,47 +191,104 @@ fn schedule_track_into(
 ) {
     let speed = pc.speed.max(1e-6);
     let len_scale = pc.length_scale() as f64;
+    let ply = pc.ply.clamp(1, 16) as f64;
     for ev in mini::events(&pc.pattern, bar) {
         if ev.value == "~" || ev.value.is_empty() {
             continue;
         }
-        let at = bar_start + ((ev.start * spb) / speed) as u64;
-        let len = ((((ev.dur * spb) / speed) * len_scale) as u64).max(64);
-        let (sound, freq, is_note) = if pc.is_note {
-            let sc = pc.scale.as_ref().map(|p| p.at_cycle(bar));
-            match resolve_pitch(&ev.value, sc) {
-                Some(h) => (pc.sound.clone(), h, true),
-                None => continue,
+        // `.ply(n)`: split each event into n equal sub-hits within its timespan.
+        let n = ply as u32;
+        let sub_dur = ev.dur / ply;
+        for i in 0..n {
+            let sub_start = ev.start + (i as f64) * sub_dur;
+            let phase = sub_start.clamp(0.0, 0.999_999);
+
+            let pitch_extra = pc
+                .pitch_add_dyn
+                .as_ref()
+                .and_then(|d| d.sample_at(bar, phase))
+                .map(|v| pc.pitch_add_dyn_sign * f64::from(v))
+                .unwrap_or(0.0);
+            let pitch_add = pc.pitch_add + pitch_extra;
+
+            let (sound, freq, is_note) = if pc.is_note {
+                let sc = pc.scale.as_ref().map(|p| p.at_cycle(bar));
+                match resolve_pitch_with_add(&ev.value, sc, pitch_add) {
+                    Some(h) => (pc.sound.clone(), h, true),
+                    None => continue,
+                }
+            } else {
+                (ev.value.clone(), 0.0, false)
+            };
+
+            let mut filter = pc.filter;
+            let mut mods = pc.mod_params;
+            mods.samples_per_bar = spb as f32;
+            mods.lfo_phase0 = phase as f32;
+
+            // Dynamic filters: patterns → per-event snapshot; LFO → continuous on synth.
+            if let Some(ref d) = pc.lpf_dyn {
+                if let Some(spec) = d.as_lfo() {
+                    mods.lpf_lfo = Some(spec);
+                    filter.lpf = Some(spec.value_at_bar_phase(phase as f32));
+                } else if let Some(v) = d.sample_at(bar, phase) {
+                    filter.lpf = Some(v.clamp(20.0, 20_000.0));
+                    mods.lpf_lfo = None;
+                }
             }
-        } else {
-            (ev.value.clone(), 0.0, false)
-        };
-        scheduled.push(ScheduledHit {
-            at_sample: at,
-            len_samples: len,
-            sound,
-            freq,
-            gain: pc.effective_gain(),
-            pan: pc.pan.clamp(0.0, 1.0),
-            filter: pc.filter,
-            adsr: pc.adsr,
-            mods: pc.mod_params,
-            is_note,
-            begin: pc.begin,
-            end: pc.end,
-            sample_speed: pc.sample_speed,
-            sample_n: pc.sample_n,
-            bank: pc.bank.clone(),
-            orbit: pc.orbit,
-            duck: pc.duck,
-            cut: pc.cut,
-            compressor: pc.compressor,
-            delay: pc.delay,
-            delaytime: pc.delaytime,
-            delayfeedback: pc.delayfeedback,
-            room: pc.room,
-            roomsize: pc.roomsize,
-        });
+            if let Some(ref d) = pc.hpf_dyn {
+                if let Some(v) = d.sample_at(bar, phase) {
+                    filter.hpf = Some(v.clamp(20.0, 20_000.0));
+                }
+            }
+            if let Some(ref d) = pc.bpf_dyn {
+                if let Some(v) = d.sample_at(bar, phase) {
+                    filter.bpf = Some(v.clamp(20.0, 20_000.0));
+                }
+            }
+
+            let mut gain = pc.effective_gain();
+            if let Some(ref d) = pc.gain_dyn {
+                if let Some(v) = d.sample_at(bar, phase) {
+                    gain = v * pc.velocity;
+                }
+            }
+            let mut pan = pc.pan;
+            if let Some(ref d) = pc.pan_dyn {
+                if let Some(v) = d.sample_at(bar, phase) {
+                    pan = v;
+                }
+            }
+
+            let at = bar_start + ((sub_start * spb) / speed) as u64;
+            let len = ((((sub_dur * spb) / speed) * len_scale) as u64).max(64);
+            scheduled.push(ScheduledHit {
+                at_sample: at,
+                len_samples: len,
+                sound: sound.clone(),
+                freq,
+                gain,
+                pan: pan.clamp(0.0, 1.0),
+                filter,
+                adsr: pc.adsr,
+                mods,
+                is_note,
+                begin: pc.begin,
+                end: pc.end,
+                sample_speed: pc.sample_speed,
+                sample_n: pc.sample_n,
+                bank: pc.bank.clone(),
+                orbit: pc.orbit,
+                duck: pc.duck,
+                cut: pc.cut,
+                compressor: pc.compressor,
+                delay: pc.delay,
+                delaytime: pc.delaytime,
+                delayfeedback: pc.delayfeedback,
+                room: pc.room,
+                roomsize: pc.roomsize,
+            });
+        }
     }
 }
 
@@ -479,6 +536,57 @@ bass: note("c3 e3 g3").s("sawtooth").gain(0.8)
         let bank = SampleBank::empty();
         let buf = process_mid(&mut d, 48_000, &t, &bank);
         assert!(buf.iter().any(|s| s.abs() > 0.01));
+    }
+
+    #[test]
+    fn schedule_ply_multiplies_hits() {
+        use crate::code::parse_code;
+        let pc = parse_code(r#"s("bd").ply(4).gain(0.5)"#).unwrap();
+        let mut hits = Vec::new();
+        schedule_track_into(&mut hits, &pc, 0, 0, 48_000.0);
+        assert_eq!(hits.len(), 4);
+        // Equal spacing within the bar (speed=1).
+        let starts: Vec<u64> = hits.iter().map(|h| h.at_sample).collect();
+        assert_eq!(starts[0], 0);
+        assert!(starts[1] > starts[0]);
+        assert_eq!(starts[2] - starts[1], starts[1] - starts[0]);
+    }
+
+    #[test]
+    fn schedule_add_shifts_degree_pitch() {
+        use crate::code::note_to_hz;
+        use crate::code::parse_code;
+        let base = parse_code(r#"note("0").scale("C4:major").s("sine").gain(0.5)"#).unwrap();
+        let shifted =
+            parse_code(r#"note("0").scale("C4:major").add(2).s("sine").gain(0.5)"#).unwrap();
+        let mut h0 = Vec::new();
+        let mut h2 = Vec::new();
+        schedule_track_into(&mut h0, &base, 0, 0, 48_000.0);
+        schedule_track_into(&mut h2, &shifted, 0, 0, 48_000.0);
+        assert_eq!(h0.len(), 1);
+        assert_eq!(h2.len(), 1);
+        // C major: degree 0+2 == degree 2 ≈ E4
+        assert!((h2[0].freq - note_to_hz("e4").unwrap()).abs() < 1.0);
+        assert!((h0[0].freq - note_to_hz("c4").unwrap()).abs() < 1.0);
+    }
+
+    #[test]
+    fn schedule_dyn_lpf_pattern_and_lfo() {
+        use crate::code::parse_code;
+        let pat = parse_code(r#"s("bd bd").lpf("100 900").gain(0.5)"#).unwrap();
+        let mut hits = Vec::new();
+        schedule_track_into(&mut hits, &pat, 0, 0, 48_000.0);
+        assert_eq!(hits.len(), 2);
+        assert!((hits[0].filter.lpf.unwrap() - 100.0).abs() < 1.0);
+        assert!((hits[1].filter.lpf.unwrap() - 900.0).abs() < 1.0);
+
+        let lfo =
+            parse_code(r#"note("c3").s("sawtooth").lpf(sine.rangex(500,4000)).gain(0.4)"#).unwrap();
+        let mut h2 = Vec::new();
+        schedule_track_into(&mut h2, &lfo, 0, 0, 48_000.0);
+        assert_eq!(h2.len(), 1);
+        assert!(h2[0].mods.lpf_lfo.is_some());
+        assert!(h2[0].filter.lpf.is_some());
     }
 
     #[test]

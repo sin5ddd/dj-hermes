@@ -171,21 +171,34 @@ pub fn parse_scale_arg(raw: &str) -> Result<ScalePattern, String> {
     Ok(ScalePattern::Fixed(parse_scale(s)?))
 }
 
-/// Resolve a mini-notation atom to Hz.
+/// Resolve a mini-notation atom to Hz (no pitch offset).
 ///
 /// With a scale: integer tokens are scale degrees (negative allowed).
-/// Named notes always go through `note_to_hz` when not pure integers.
+/// Named notes always go through note-name parsing when not pure integers.
 pub fn resolve_pitch(value: &str, scale: Option<&Scale>) -> Option<f32> {
+    resolve_pitch_with_add(value, scale, 0.0)
+}
+
+/// Resolve pitch with a scalar offset from `.add` / `.sub`.
+///
+/// - Scale + integer atom: degree `deg + pitch_add.round()` then `degree_to_hz`.
+/// - Named note: MIDI + `pitch_add` semitones (fractional allowed via float MIDI).
+/// - Scale missing + integer atom: still unresolved (degrees need a scale).
+pub fn resolve_pitch_with_add(value: &str, scale: Option<&Scale>, pitch_add: f64) -> Option<f32> {
     let v = value.trim();
     if v.is_empty() || v == "~" {
         return None;
     }
     if let Some(sc) = scale {
         if let Ok(deg) = parse_integer_degree(v) {
-            return Some(sc.degree_to_hz(deg));
+            let offset = pitch_add.round() as i32;
+            return Some(sc.degree_to_hz(deg.saturating_add(offset)));
         }
     }
-    crate::code::note_to_hz(v).ok()
+    // Named notes (and non-degree tokens): chromatic semitone shift.
+    let midi = crate::code::note_to_midi_i32(v).ok()?;
+    let midi_f = midi as f64 + pitch_add;
+    Some(crate::code::midi_to_hz(midi_f.round() as i32))
 }
 
 /// True integer degree: `0`, `-1`, `12` — not `1.5`, not `c2`.
@@ -266,18 +279,9 @@ mod tests {
             ScalePattern::Fixed(_) => panic!("expected PerCycle"),
         }
         let p = parse_scale_arg("<A2:minor D:dorian G:mixolydian C:major>").unwrap();
-        assert_eq!(
-            p.at_cycle(0).root_midi,
-            note_to_midi_i32("a2").unwrap()
-        );
-        assert_eq!(
-            p.at_cycle(4).root_midi,
-            note_to_midi_i32("a2").unwrap()
-        );
-        assert_eq!(
-            p.at_cycle(3).root_midi,
-            note_to_midi_i32("c4").unwrap()
-        );
+        assert_eq!(p.at_cycle(0).root_midi, note_to_midi_i32("a2").unwrap());
+        assert_eq!(p.at_cycle(4).root_midi, note_to_midi_i32("a2").unwrap());
+        assert_eq!(p.at_cycle(3).root_midi, note_to_midi_i32("c4").unwrap());
     }
 
     #[test]
@@ -294,6 +298,29 @@ mod tests {
         assert!((hz - note_to_hz("c2").unwrap()).abs() < 0.5);
         let named = resolve_pitch("g2", Some(&s)).unwrap();
         assert!((named - note_to_hz("g2").unwrap()).abs() < 0.5);
+    }
+
+    #[test]
+    fn resolve_pitch_add_shifts_degrees() {
+        let s = parse_scale("C2:major").unwrap();
+        // degree 0 + 2 == degree 2
+        let a = resolve_pitch_with_add("0", Some(&s), 2.0).unwrap();
+        let b = resolve_pitch("2", Some(&s)).unwrap();
+        assert!((a - b).abs() < 0.5);
+        // sub 1 from degree 2 → degree 1
+        let c = resolve_pitch_with_add("2", Some(&s), -1.0).unwrap();
+        let d = resolve_pitch("1", Some(&s)).unwrap();
+        assert!((c - d).abs() < 0.5);
+    }
+
+    #[test]
+    fn resolve_pitch_add_shifts_named_semitones() {
+        let c4 = note_to_hz("c4").unwrap();
+        let c5 = note_to_hz("c5").unwrap();
+        let hz = resolve_pitch_with_add("c4", None, 12.0).unwrap();
+        assert!((hz - c5).abs() < 0.5);
+        let same = resolve_pitch_with_add("c4", None, 0.0).unwrap();
+        assert!((same - c4).abs() < 0.5);
     }
 
     #[test]

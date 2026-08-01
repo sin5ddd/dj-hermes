@@ -4,6 +4,7 @@
 //! - `note(cat("a", "b"))` / `s(cat("bd ~", "sd ~"))` — one cycle per arg (`"<a b>"`)
 //! - nested `cat(cat(...), ...)` flattens to a longer cycle list
 
+use crate::control::{is_colon_scalar_list, parse_dyn_f32, DynF32, LfoSpec};
 use crate::dsp::CompressorParams;
 use crate::mini::{self, Node};
 use crate::scale::ScalePattern;
@@ -71,6 +72,12 @@ pub struct ModParams {
     pub lpd: f32,
     pub lps: f32,
     pub lpr: f32,
+    /// Continuous LPF LFO (`sine.rangex` etc.). `None` = off.
+    pub lpf_lfo: Option<LfoSpec>,
+    /// Bar phase (0..1) at note onset; continuous LFO continues from here.
+    pub lfo_phase0: f32,
+    /// Samples per bar (cycle) for LFO phase advance; 0 = treat as 1 bar/sec fallback.
+    pub samples_per_bar: f32,
 }
 
 impl Default for ModParams {
@@ -92,6 +99,9 @@ impl Default for ModParams {
             lpd: 0.1,
             lps: 0.5,
             lpr: 0.1,
+            lpf_lfo: None,
+            lfo_phase0: 0.0,
+            samples_per_bar: 0.0,
         }
     }
 }
@@ -159,6 +169,24 @@ pub struct PatternCode {
     pub roomsize: f32,
     /// Optional scale (fixed or per-cycle progression): integer mini atoms are degrees.
     pub scale: Option<ScalePattern>,
+    /// Scalar pitch offset from `.add` / `.sub` (accumulated).
+    /// With scale: integer degrees shift by `pitch_add.round()` steps.
+    /// Named notes: shift by `pitch_add` semitones (MIDI).
+    pub pitch_add: f64,
+    /// Event subdivision factor from `.ply(n)` (accumulated by multiply, clamp 1..=16).
+    pub ply: u32,
+    /// Optional dynamic gain (mini pattern or LFO snapshot at event).
+    pub gain_dyn: Option<DynF32>,
+    /// Optional dynamic pan.
+    pub pan_dyn: Option<DynF32>,
+    /// Optional dynamic LPF (pattern per-event, or continuous LFO on synth voice).
+    pub lpf_dyn: Option<DynF32>,
+    pub hpf_dyn: Option<DynF32>,
+    pub bpf_dyn: Option<DynF32>,
+    /// Optional per-event pitch_add pattern (added to scalar `pitch_add`).
+    pub pitch_add_dyn: Option<DynF32>,
+    /// Sign for patterned pitch add from `.sub` (-1) vs `.add` (+1).
+    pub pitch_add_dyn_sign: f64,
     /// Original source text (for display / error context).
     pub raw: String,
     /// Mini-notation string (contents of the first `"..."`).
@@ -221,6 +249,15 @@ pub fn parse_code(input: &str) -> Result<PatternCode, String> {
         room: 0.0,
         roomsize: 1.0,
         scale: None,
+        pitch_add: 0.0,
+        ply: 1,
+        gain_dyn: None,
+        pan_dyn: None,
+        lpf_dyn: None,
+        hpf_dyn: None,
+        bpf_dyn: None,
+        pitch_add_dyn: None,
+        pitch_add_dyn_sign: 1.0,
         raw: input.to_string(),
         mini_src: String::new(),
         mini_base: 0,
@@ -513,59 +550,143 @@ fn apply_cutoff_q(list: &[f64]) -> Result<(f32, Option<f32>), String> {
     Ok((cut, q))
 }
 
+enum FilterDynKind {
+    Lpf,
+    Hpf,
+    Bpf,
+}
+
+fn apply_filter_dyn(pc: &mut PatternCode, args: &str, kind: FilterDynKind) -> Result<(), String> {
+    // Colon form "1000:8" stays fixed cutoff:Q.
+    if is_colon_scalar_list(args) {
+        let list = parse_colon_list(args);
+        let (cut, q) = apply_cutoff_q(&list)?;
+        match kind {
+            FilterDynKind::Lpf => {
+                pc.filter.lpf = Some(cut);
+                pc.lpf_dyn = None;
+                if let Some(q) = q {
+                    pc.filter.lpq = q;
+                }
+            }
+            FilterDynKind::Hpf => {
+                pc.filter.hpf = Some(cut);
+                pc.hpf_dyn = None;
+                if let Some(q) = q {
+                    pc.filter.hpq = q;
+                }
+            }
+            FilterDynKind::Bpf => {
+                pc.filter.bpf = Some(cut);
+                pc.bpf_dyn = None;
+                if let Some(q) = q {
+                    pc.filter.bpq = q;
+                }
+            }
+        }
+        return Ok(());
+    }
+    match parse_dyn_f32(args)? {
+        DynF32::Const(v) => match kind {
+            FilterDynKind::Lpf => {
+                pc.filter.lpf = Some(v);
+                pc.lpf_dyn = None;
+            }
+            FilterDynKind::Hpf => {
+                pc.filter.hpf = Some(v);
+                pc.hpf_dyn = None;
+            }
+            FilterDynKind::Bpf => {
+                pc.filter.bpf = Some(v);
+                pc.bpf_dyn = None;
+            }
+        },
+        other => match kind {
+            FilterDynKind::Lpf => {
+                // Base while continuous LFO runs (midpoint-ish).
+                if let Some(spec) = other.as_lfo() {
+                    pc.filter.lpf = Some(((spec.min + spec.max) * 0.5).clamp(20.0, 20_000.0));
+                }
+                pc.lpf_dyn = Some(other);
+            }
+            FilterDynKind::Hpf => {
+                if let Some(spec) = other.as_lfo() {
+                    pc.filter.hpf = Some(((spec.min + spec.max) * 0.5).clamp(20.0, 20_000.0));
+                }
+                pc.hpf_dyn = Some(other);
+            }
+            FilterDynKind::Bpf => {
+                if let Some(spec) = other.as_lfo() {
+                    pc.filter.bpf = Some(((spec.min + spec.max) * 0.5).clamp(20.0, 20_000.0));
+                }
+                pc.bpf_dyn = Some(other);
+            }
+        },
+    }
+    Ok(())
+}
+
+fn apply_pitch_add_dyn(pc: &mut PatternCode, args: &str, sign: f64) -> Result<(), String> {
+    match parse_dyn_f32(args)? {
+        DynF32::Const(v) => {
+            pc.pitch_add += sign * f64::from(v);
+            Ok(())
+        }
+        DynF32::Lfo(_) => Err(
+            ".add/.sub LFO is not supported; use a mini pattern or scalar (vib for continuous pitch)"
+                .into(),
+        ),
+        DynF32::Pattern(node) => {
+            pc.pitch_add_dyn = Some(DynF32::Pattern(node));
+            pc.pitch_add_dyn_sign = sign;
+            Ok(())
+        }
+    }
+}
+
 fn apply_method(pc: &mut PatternCode, name: &str, args: &str) -> Result<(), String> {
     match name {
         "s" | "sound" => {
             pc.sound = args.trim().trim_matches('"').to_string();
             Ok(())
         }
-        "gain" => {
-            pc.gain = parse_num(args)? as f32;
-            Ok(())
-        }
+        "gain" => match parse_dyn_f32(args)? {
+            DynF32::Const(v) => {
+                pc.gain = v;
+                pc.gain_dyn = None;
+                Ok(())
+            }
+            other => {
+                pc.gain_dyn = Some(other);
+                Ok(())
+            }
+        },
         "velocity" | "vel" => {
             pc.velocity = parse_num(args)? as f32;
             Ok(())
         }
-        "pan" => {
-            pc.pan = (parse_num(args)? as f32).clamp(0.0, 1.0);
-            Ok(())
-        }
-        "lpf" | "cutoff" | "lp" | "ctf" => {
-            let list = parse_colon_list(args);
-            let (cut, q) = apply_cutoff_q(&list)?;
-            pc.filter.lpf = Some(cut);
-            if let Some(q) = q {
-                pc.filter.lpq = q;
+        "pan" => match parse_dyn_f32(args)? {
+            DynF32::Const(v) => {
+                pc.pan = v.clamp(0.0, 1.0);
+                pc.pan_dyn = None;
+                Ok(())
             }
-            Ok(())
-        }
+            other => {
+                pc.pan_dyn = Some(other);
+                Ok(())
+            }
+        },
+        "lpf" | "cutoff" | "lp" | "ctf" => apply_filter_dyn(pc, args, FilterDynKind::Lpf),
         "lpq" | "resonance" => {
             pc.filter.lpq = parse_num(args)? as f32;
             Ok(())
         }
-        "hpf" | "hp" | "hcutoff" => {
-            let list = parse_colon_list(args);
-            let (cut, q) = apply_cutoff_q(&list)?;
-            pc.filter.hpf = Some(cut);
-            if let Some(q) = q {
-                pc.filter.hpq = q;
-            }
-            Ok(())
-        }
+        "hpf" | "hp" | "hcutoff" => apply_filter_dyn(pc, args, FilterDynKind::Hpf),
         "hpq" | "hresonance" => {
             pc.filter.hpq = parse_num(args)? as f32;
             Ok(())
         }
-        "bpf" | "bp" | "bandf" => {
-            let list = parse_colon_list(args);
-            let (cut, q) = apply_cutoff_q(&list)?;
-            pc.filter.bpf = Some(cut);
-            if let Some(q) = q {
-                pc.filter.bpq = q;
-            }
-            Ok(())
-        }
+        "bpf" | "bp" | "bandf" => apply_filter_dyn(pc, args, FilterDynKind::Bpf),
         "bpq" | "bandq" => {
             pc.filter.bpq = parse_num(args)? as f32;
             Ok(())
@@ -812,6 +933,17 @@ fn apply_method(pc: &mut PatternCode, name: &str, args: &str) -> Result<(), Stri
             pc.scale = Some(crate::scale::parse_scale_arg(s)?);
             // Degree patterns only make sense as pitched events.
             pc.is_note = true;
+            Ok(())
+        }
+        "add" => apply_pitch_add_dyn(pc, args, 1.0),
+        "sub" => apply_pitch_add_dyn(pc, args, -1.0),
+        "ply" => {
+            let n = parse_num(args)?;
+            if n.fract() != 0.0 || n < 1.0 {
+                return Err(format!("ply expects integer >= 1, got {n}"));
+            }
+            let n = (n as u32).clamp(1, 16);
+            pc.ply = pc.ply.saturating_mul(n).clamp(1, 16);
             Ok(())
         }
         "n" => {
@@ -1120,19 +1252,72 @@ mod tests {
         )
         .unwrap();
         let pat = pc.scale.as_ref().unwrap();
-        assert_eq!(
-            pat.at_cycle(0).root_midi,
-            note_to_midi_i32("a2").unwrap()
-        );
-        assert_eq!(
-            pat.at_cycle(2).root_midi,
-            note_to_midi_i32("g4").unwrap()
-        );
+        assert_eq!(pat.at_cycle(0).root_midi, note_to_midi_i32("a2").unwrap());
+        assert_eq!(pat.at_cycle(2).root_midi, note_to_midi_i32("g4").unwrap());
     }
 
     #[test]
     fn scale_unknown_mode_errors() {
         assert!(parse_code(r#"note("0").scale("C:nope")"#).is_err());
+    }
+
+    #[test]
+    fn parses_add_sub_accumulate() {
+        let pc = parse_code(r#"note("0 2 4").scale("C2:major").add(2).sub(1).s("sine")"#).unwrap();
+        assert!((pc.pitch_add - 1.0).abs() < 1e-9);
+        let pc2 = parse_code(r#"note("c4").add(12).s("sine")"#).unwrap();
+        assert!((pc2.pitch_add - 12.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn parses_dyn_lpf_pattern_and_lfo() {
+        let pc = parse_code(r#"s("bd*4").lpf("<400 1200>").gain(0.5)"#).unwrap();
+        assert!(matches!(
+            pc.lpf_dyn,
+            Some(crate::control::DynF32::Pattern(_))
+        ));
+        let pc2 = parse_code(r#"note("c3").s("sawtooth").lpf(sine.rangex(500, 4000)).gain(0.4)"#)
+            .unwrap();
+        match pc2.lpf_dyn.as_ref().unwrap() {
+            crate::control::DynF32::Lfo(s) => {
+                assert!(s.exponential);
+                assert!((s.min - 500.0).abs() < 0.1);
+            }
+            _ => panic!("expected LFO"),
+        }
+        let pc3 = parse_code(r#"note("0").scale("C4:major").add("<0 2>").s("sine")"#).unwrap();
+        assert!(pc3.pitch_add_dyn.is_some());
+    }
+
+    #[test]
+    fn parses_cutoff_alias_with_lfo() {
+        let pc = parse_code(r#"s("hh*8").cutoff(sine.range(200, 8000).slow(2))"#).unwrap();
+        match pc.lpf_dyn.as_ref().unwrap() {
+            crate::control::DynF32::Lfo(s) => {
+                assert!(!s.exponential);
+                assert!((s.cycles_per_bar - 0.5).abs() < 1e-5);
+            }
+            _ => panic!("expected LFO"),
+        }
+    }
+
+    #[test]
+    fn parses_ply_multiply_and_clamp() {
+        let pc = parse_code(r#"s("bd").ply(2).ply(2)"#).unwrap();
+        assert_eq!(pc.ply, 4);
+        let pc2 = parse_code(r#"s("bd").ply(16).ply(2)"#).unwrap();
+        assert_eq!(pc2.ply, 16); // clamp
+        assert!(parse_code(r#"s("bd").ply(0)"#).is_err());
+        assert!(parse_code(r#"s("bd").ply(1.5)"#).is_err());
+        assert!(parse_code(r#"s("bd").ply("<2 4>")"#).is_err());
+    }
+
+    #[test]
+    fn sample_track_accepts_add_without_pitch_use() {
+        // Parse succeeds; pitch_add is only applied on note paths at schedule time.
+        let pc = parse_code(r#"s("bd").add(2).gain(0.5)"#).unwrap();
+        assert!(!pc.is_note);
+        assert!((pc.pitch_add - 2.0).abs() < 1e-9);
     }
 
     #[test]
