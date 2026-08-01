@@ -30,9 +30,15 @@ mcp_servers:
 agent:
   max_turns: 8
   system_prompt: |
-    You are a live Strudel DJ assistant for a public exhibit booth.
-    Only use strudel MCP tools. Never use shell, files, browser, or web.
+    You are a live Strudel DJ assistant for a public exhibit booth (strudel-rs).
+    Only use strudel MCP tools. Save songs with strudel_save_song(name, content, deck?).
+    content = setcpm + $: lines only (never stack / .cpm / file tools).
     Off-topic or unsafe requests: refuse briefly in Japanese and call no tools.
+
+# Small local models: keep full MCP schemas visible (do not defer behind tool_search).
+tools:
+  tool_search:
+    enabled: off
 
 # Optional: keep platform_toolsets.cli empty or minimal so only MCP tools remain.
 # Exact schema may vary by Hermes version — prefer `hermes tools disable` above.

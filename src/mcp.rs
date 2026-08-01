@@ -175,19 +175,30 @@ fn tools_list() -> Value {
             },
             {
                 "name": "strudel_load_song",
-                "description": "Deck: load a song onto a deck (next bar). Bare name looks under ~/.config/strudel-rs/songs/ then songs/; .strudel/.txt optional (.strudel preferred).",
+                "description": "Deck: load a song onto a deck (next bar). Prefer a BARE basename only (e.g. path=\"visitor-dnb\" or \"house16\") — searches ~/.config/strudel-rs/songs/ first, then repo songs/. Optional .strudel. After strudel_save_song, load with the same basename (no songs/ prefix). Example: path=\"visitor-dnb\", deck=\"A\".",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "path": { "type": "string", "description": "e.g. smoke, songs/smoke.strudel" },
+                        "path": {
+                            "type": "string",
+                            "description": "Bare name preferred: visitor-dnb, house16 (not songs/visitor-dnb.strudel)"
+                        },
                         "deck": { "type": "string", "description": "A or B" }
                     },
                     "required": ["path", "deck"]
                 }
             },
             {
+                "name": "strudel_list_songs",
+                "description": "Deck: list song basenames available to load. Returns user library (~/.config/strudel-rs/songs/) and bundled songs/ names. Use these bare names with strudel_load_song.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {}
+                }
+            },
+            {
                 "name": "strudel_save_song",
-                "description": "Deck: save a .strudel song into the user library ONLY (~/.config/strudel-rs/songs/<name>.strudel). Basename only (no paths). Validates content before write. Optional deck loads after save (next bar). Use this when file tools are disabled (exhibit profile).",
+                "description": "Deck: save a .strudel song into the user library ONLY (~/.config/strudel-rs/songs/<name>.strudel). Basename only (no paths). Validates before write. Optional deck loads after save (next bar). File tools disabled: always use this. content MUST use setcpm (or setcps) and one or more `$:` track lines — never stack(...), never .cpm(). Example args: name=\"visitor-dnb\", content=\"// @title dnb\\nsetcpm(170/4)\\n// drums\\n$: s(\\\"bd ~ ~ sd ~ bd bd ~ ~ sd ~ ~\\\").fast(2).gain(0.9)\\n// hat\\n$: s(\\\"hh*16\\\").gain(0.22)\\n// bass\\n$: note(\\\"c1\\\").s(\\\"sine\\\").lpf(120).gain(0.7)\\n\", deck=\"B\".",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
@@ -197,7 +208,7 @@ fn tools_list() -> Value {
                         },
                         "content": {
                             "type": "string",
-                            "description": "Full song source (setcpm / $: tracks, max 256KiB)"
+                            "description": "Full song source: setcpm(N) or setcpm(BPM/4), then lines `$: <chain>` (max 256KiB). No stack(), no .cpm()."
                         },
                         "deck": {
                             "type": "string",
@@ -339,6 +350,7 @@ fn tools_call(
                 json!({ "path": path, "deck": deck }),
             )
         }
+        "strudel_list_songs" => http_get(client, &format!("{base}/songs")),
         "strudel_save_song" => {
             let name = arg_str(&args, "name")?;
             let content = arg_str(&args, "content")?;
@@ -388,16 +400,53 @@ fn tools_call(
 
     match outcome {
         Ok(text) => Ok(tool_text_result(text, false)),
-        Err(e) => {
-            // Surface connection errors clearly (play process not running).
-            Ok(tool_text_result(
-                format!(
-                    "error: {e}\n(Is play running with API on {base}? Default port {DEFAULT_API_PORT})"
-                ),
-                true,
-            ))
+        Err(e) => Ok(tool_text_result(format_tool_http_error(base, &e), true)),
+    }
+}
+
+/// Map HTTP / transport errors to model-facing text.
+///
+/// Connection failures get a play/API hint. 4xx validation/parse failures do **not**
+/// (a connection hint makes small models give up as if the environment is broken).
+fn format_tool_http_error(base: &str, err: &str) -> String {
+    let lower = err.to_ascii_lowercase();
+    let is_http_status = lower.contains("http 4") || lower.contains("http 5");
+    let is_connect = !is_http_status
+        && (lower.contains("connect")
+            || lower.contains("connection")
+            || lower.contains("timed out")
+            || lower.contains("timeout")
+            || lower.contains("dns")
+            || lower.contains("refused")
+            || lower.contains("error sending request")
+            || lower.contains("tcp"));
+
+    if is_connect {
+        return format!(
+            "error: {err}\n(Is play running with API on {base}? Default port {DEFAULT_API_PORT})"
+        );
+    }
+
+    let mut out = format!("error: {err}");
+    if lower.contains("song not found") {
+        out.push_str(
+            "\nHint: use a bare basename for path (e.g. visitor-dnb or house16), not songs/.... \
+User-library saves live under ~/.config/strudel-rs/songs/. Call strudel_list_songs to see names, \
+then strudel_load_song(path=<basename>, deck=A|B).",
+        );
+    } else {
+        // Parse failures from save_song only (not every HTTP 400).
+        let looks_like_song_parse = (lower.contains("expected")
+            && (lower.contains("$:") || lower.contains("name: code")))
+            || (lower.contains("unexpected char") && lower.contains("http 400"));
+        if looks_like_song_parse {
+            out.push_str(
+                "\nHint: song content must use setcpm(N) (or setcpm(BPM/4)) and `$: <chain>` lines. \
+Do not use stack(...) or .cpm(). Retry strudel_save_song with corrected content.",
+            );
         }
     }
+    out
 }
 
 fn tool_text_result(text: String, is_error: bool) -> Value {
@@ -524,7 +573,7 @@ mod tests {
     fn tools_list_mixer_deck_transport_no_set_code() {
         let v = tools_list();
         let tools = v["tools"].as_array().unwrap();
-        assert_eq!(tools.len(), 11);
+        assert_eq!(tools.len(), 12);
         let names: Vec<_> = tools.iter().filter_map(|t| t["name"].as_str()).collect();
         assert!(!names.contains(&"strudel_set_code"));
         assert_eq!(names[0], "strudel_mixer_eq");
@@ -533,6 +582,7 @@ mod tests {
         assert!(names.contains(&"strudel_xfade"));
         assert!(names.contains(&"strudel_set_bpm"));
         assert!(names.contains(&"strudel_load_song"));
+        assert!(names.contains(&"strudel_list_songs"));
         assert!(names.contains(&"strudel_save_song"));
         assert!(names.contains(&"strudel_head"));
         assert!(names.contains(&"strudel_status"));
@@ -544,6 +594,60 @@ mod tests {
         assert!(descs.iter().any(|d| d.starts_with("Mixer:")));
         assert!(descs.iter().any(|d| d.starts_with("Deck:")));
         assert!(descs.iter().any(|d| d.starts_with("Transport:")));
+        let save = tools
+            .iter()
+            .find(|t| t["name"] == "strudel_save_song")
+            .unwrap();
+        let save_desc = save["description"].as_str().unwrap();
+        assert!(
+            save_desc.contains("setcpm") && save_desc.contains("$:"),
+            "save description should show required format: {save_desc}"
+        );
+        assert!(
+            save_desc.contains("stack") || save_desc.contains("never stack"),
+            "save description should forbid stack: {save_desc}"
+        );
+    }
+
+    #[test]
+    fn format_tool_http_error_connect_gets_play_hint() {
+        let msg = format_tool_http_error(
+            "http://127.0.0.1:17878",
+            "error sending request for url (http://127.0.0.1:17878/song/save): connection refused",
+        );
+        assert!(msg.contains("Is play running"), "{msg}");
+        assert!(msg.contains("17878"), "{msg}");
+    }
+
+    #[test]
+    fn format_tool_http_error_parse_400_no_play_hint() {
+        let msg = format_tool_http_error(
+            "http://127.0.0.1:17878",
+            "HTTP 400 Bad Request: {\"error\":\"line 1: expected 'name: code' or '$: code'\"}",
+        );
+        assert!(
+            !msg.contains("Is play running"),
+            "parse 400 must not look like connection failure: {msg}"
+        );
+        assert!(msg.contains("setcpm") || msg.contains("$:"), "{msg}");
+        assert!(msg.contains("stack") || msg.contains("Hint:"), "{msg}");
+    }
+
+    #[test]
+    fn format_tool_http_error_not_found_hints_basename() {
+        let msg = format_tool_http_error(
+            "http://127.0.0.1:17878",
+            "HTTP 400 Bad Request: {\"error\":\"song not found: songs/house-track.strudel (tried: songs/house-track.strudel)\"}",
+        );
+        assert!(!msg.contains("Is play running"), "{msg}");
+        assert!(
+            !msg.contains("setcpm"),
+            "load not-found must not get save-format hint: {msg}"
+        );
+        assert!(
+            msg.contains("bare basename") || msg.contains("list_songs"),
+            "{msg}"
+        );
     }
 
     #[test]

@@ -17,8 +17,8 @@ use serde::{Deserialize, Serialize};
 use crate::code::parse_code;
 use crate::engine::{Command, Engine};
 use crate::song::{
-    ensure_user_songs_dir, parse_song, resolve_song_path, resolve_user_song_save_path, Song, Track,
-    MAX_SONG_CONTENT_BYTES,
+    ensure_user_songs_dir, list_bundled_songs, list_user_library_songs, parse_song,
+    resolve_song_path, resolve_user_song_save_path, Song, Track, MAX_SONG_CONTENT_BYTES,
 };
 
 // Re-export for callers/tests that used api::sanitize_song_path.
@@ -323,6 +323,26 @@ async fn load_song(
     Ok(StatusCode::ACCEPTED)
 }
 
+#[derive(Serialize)]
+pub struct ListSongsRes {
+    /// Basenames in `~/.config/strudel-rs/songs/` (MCP save target).
+    pub user_library: Vec<String>,
+    /// Basenames in cwd `songs/` (demo bundle).
+    pub bundled: Vec<String>,
+    /// How to pass `path` to `/song/load` / `strudel_load_song`.
+    pub load_hint: String,
+}
+
+/// List loadable song basenames (user library + bundled demos).
+async fn list_songs() -> Json<ListSongsRes> {
+    Json(ListSongsRes {
+        user_library: list_user_library_songs(),
+        bundled: list_bundled_songs(),
+        load_hint: "Use bare basename with strudel_load_song path= (e.g. visitor-dnb or house16). Prefer user_library names for MCP-saved songs; do not prefix songs/."
+            .into(),
+    })
+}
+
 /// Persist a song into the user library (`~/.config/strudel-rs/songs/` only).
 async fn save_song(
     State(s): State<AppState>,
@@ -538,6 +558,7 @@ pub fn router(state: AppState) -> Router {
         .route("/code", put(put_code))
         .route("/song/load", post(load_song))
         .route("/song/save", post(save_song))
+        .route("/songs", get(list_songs))
         .route("/xfade", post(xfade))
         .route("/bpm", post(set_bpm))
         .route("/mute", post(mute))

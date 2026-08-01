@@ -113,9 +113,19 @@ hermes --profile dj-hermes skills list --source local --enabled-only
 2. **内蔵 toolset は skills 以外 off** + `agent.disabled_toolsets` で x_search 等の自動有効化も封じる  
    （`skills` は skill_view 用に **許可**。shell / file は禁止のまま）
 3. MCP は **strudel のみ**、`strudel_hush` は exclude（緊急停止はオペレータの `/hush` / Esc）
-4. **バンドル skills は載せない**（`.no-bundled-skills`）。同梱は strudel 作曲用 15 本だけ
+4. **バンドル skills は載せない**（`.no-bundled-skills`）。同梱は strudel 作曲用 15 本だけ（**strudel-rs 記法のみ**）
 5. `skills.write_approval: true` で skill ファイルの作成・編集をオペレータ承認制に
 6. `hermes tools disable` を後から再実行すると `platform_toolsets` が書き換わることがある → 変更後は必ず `tools list` で確認
+7. **`tools.tool_search.enabled: off`** — MCP を tool_search の後ろに隠さない（ローカル小モデル向け）
+8. 展示はネット不通を想定し **ローカル小モデル** を既定にする
+
+## 小モデル向けの曲保存契約
+
+skills / SOUL / MCP は次で揃えている:
+
+- content = `setcpm(...)` + `$:` 行のみ（`stack` / `.cpm` 禁止）
+- 保存は `strudel_save_song(name, content, deck?)` のみ
+- 検査: `python scripts/lint_strudel_skills.py`
 
 ## ライブ profile からの再エクスポート
 

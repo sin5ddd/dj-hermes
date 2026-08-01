@@ -331,23 +331,19 @@ $: note("c3 e3 g3 c4").s("sawtooth").orbit(2).gain(0.35).lpf(900)
 
 ---
 
-## 実例（デモ曲と同系統）
+## 実例（デモ曲と同系統・そのまま save 可能）
 
 ```
+// @title sound-demo
+setcpm(126/4)
 // FM ベース
-$: note("c2 c2 eb2 g2").s("sine").fm(3).fmh(1.5).lpf(500).gain(0.55)
-  .attack(0.005).decay(0.1).sustain(0.3).release(0.08)
-
+$: note("c2 c2 eb2 g2").s("sine").fm(3).fmh(1.5).lpf(500).gain(0.55).attack(0.005).decay(0.1).sustain(0.3).release(0.08)
 // duck されるパッド
-$: note("c3 e3 g3 c4").s("sawtooth").lpf(900).orbit(2).gain(0.35)
-  .attack(0.05).decay(0.2).sustain(0.6).release(0.2)
-
+$: note("c3 e3 g3 c4").s("sawtooth").lpf(900).orbit(2).gain(0.35).attack(0.05).decay(0.2).sustain(0.6).release(0.2)
 // キックが duck
 $: s("bd*4").gain(0.9).duckorbit(2).duckattack(0.12).duckdepth(0.85)
-
 // 空間
-$: note("c4 e4 g4 b4").s("wt_bright").gain(0.18)
-  .delay(0.25).delaytime(0.375).delayfeedback(0.45).orbit(2)
+$: note("c4 e4 g4 b4").s("wt_bright").gain(0.18).delay(0.25).delaytime(0.375).delayfeedback(0.45).orbit(2)
 ```
 
 ---

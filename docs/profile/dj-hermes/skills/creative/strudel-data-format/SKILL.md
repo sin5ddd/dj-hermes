@@ -1,128 +1,64 @@
 ---
 name: strudel-data-format
-description: "Use when writing .strudel files or music metadata tags."
-version: 1.0.0
+description: "Use when writing .strudel files for strudel-rs save/load."
+version: 2.0.0
 author: Hermes Agent
 license: MIT
 metadata:
   hermes:
-    tags: [strudel, music, file-format, metadata]
+    tags: [strudel-rs, music, file-format, metadata]
     related_skills:
       - strudel-composition
       - strudel-sound-design
-      - strudel-genre-acid
-      - strudel-genre-electro
-      - strudel-genre-minimal-techno
-      - strudel-genre-house
-      - strudel-genre-dnb
-      - strudel-genre-ambient
-      - strudel-genre-chill
-      - strudel-genre-dubstep
-      - strudel-genre-progressive-house
-      - strudel-genre-future-bass
-      - strudel-genre-lofi-hiphop
-      - strudel-genre-chill-pop
 ---
 
-# Strudel データ形式（`.strudel`）
+# strudel-rs 曲ファイル形式
 
 ## Overview
-`.strudel` は Strudel 楽曲コード（JavaScript + mini-notation 文字列）を保存するための暫定拡張子です。この Skill はファイル形式の規約と、楽曲メタデータ（コメント内の `@title` 等タグ）の書き方を定義します。メタデータは Strudel 本体からは無視されますが、検索・管理ツールや他ソフトで楽曲情報を取り出すために使われます。
+strudel-rs は `.strudel` テキストをパースして再生する。保存は MCP **`strudel_save_song`** のみ（file ツール不可）。書き込み先は `~/.config/strudel-rs/songs/<name>.strudel` のみ。
 
-## When to Use
-- ユーザーが `.strudel` ファイルを新規作成・保存する時
-- 楽曲にタイトル・作者・ライセンス等のメタデータを付与したい時
-- Strudel 楽曲をフォルダで管理・検索するツールを作る時
+## 必須の形（コピー用）
 
-Don't use for: 実際の音作り（→ strudel-sound-design）、パターン記法の記述（→ strudel-composition）。
-
-## `.strudel` ファイルの基本
-- 拡張子: `.strudel`（暫定規約）
-- 中身は通常の Strudel コード（JS + mini-notation 文字列）そのまま
-- メタデータはコード中のコメントとして記述する
-
-## メタデータ記法
-行コメントでタグを書く:
 ```
-// @title My Cool Song
-// @by John Doe
-// @license CC-BY-SA-4.0
+// @title My Song
+// @by booth
+// @genre house
+setcpm(120/4)
+// kick
+$: s("bd*4").gain(0.9)
+// hat
+$: s("hh*8").gain(0.3)
+// bass
+$: note("c2 c2 eb2 g2").s("sawtooth").lpf(400).gain(0.55)
 ```
 
-代替構文（ブロックコメント）:
-```
-/*
- @title My Cool Song
- @by John Doe
- @license CC-BY-SA-4.0
-*/
-```
+1. 任意: `// @title` / `@by` / `@genre` などのコメントタグ  
+2. **必須**: `setcpm(N)` または `setcpm(BPM/4)`（1 cycle = 1 bar = 4 beats → エンジン BPM = N×4）。`setcps(x)` も可  
+3. **必須**: 1 本以上の **`$:` 行**（トラック）。直前の `// name` がトラック名  
 
-1行に複数タグを書くことも可:
-```
-// @title My Cool Song @by John Doe @license CC-BY-SA-4.0
-```
+## strudel_save_song
 
-`title` のみ、先頭に引用符で書く別構文あり（ファイル先頭に限定）:
-```
-// "My Cool Song" @by John Doe
-```
-
-## タグ一覧
-| タグ | 意味 |
+| 引数 | 意味 |
 | --- | --- |
-| `@title` | 曲名 |
-| `@by` | 作者（カンマ区切り、`<>` でリンク可: `@by John Doe `） |
-| `@license` | ライセンス（SPDX識別子、例: `CC-BY-SA-4.0`） |
-| `@details` | 補足情報 |
-| `@url` | 関連URL（リポジトリ、Soundcloud等） |
-| `@genre` | ジャンル（pop, jazz 等） |
-| `@album` | アルバム名 |
-| `@tag` | 任意のタグ |
+| `name` | ベース名のみ（例 `visitor-house`）。パス禁止 |
+| `content` | 上の全文 |
+| `deck` | 任意 `A` / `B` — 保存後にロード |
+| `overwrite` | 既定 true |
 
-## 複数値の書き方
-一部のタグはカンマ・改行・タグ重複で複数値を取る:
-```
-/*
- @by John Doe
- @by Jane Doe
- @genre pop, jazz
- @url https://example.com
- @url https://example.org
-*/
-```
-接頭辞を付けて使い分けも可:
-```
-/* song @by John Doe samples @by Jane Doe */
-...note("a3 c#4 e4 a4") // @by Sandy Sue
-```
+## 禁止（保存すると 400）
 
-## 複数行の値
-リスト非対応タグ（@details等）は複数行の値を取れる:
-```
-/*
-@details I wrote this song in February 19th, 2023.
- It was around midnight and I was lying on
- the sofa in the living room.
-*/
-```
+- `stack(...)` / `).cpm(...)` / 裸の `s("bd")` 行（`$:` 無し）  
+- メソッド引数の動的ミニ記法: `.lpf("<200 800>")` など  
+- `sine.range(...)` などの本家 JS ヘルパ  
 
-## オンラインREPLでの検索
-- 作者検索: `by: Ada L`
-- ジャンル検索: `genre: unicorns`
-- メタデータ未指定時は `@title`/`@by`/`@tag` に一致するものが表示される
+## Pitfalls
 
-## ツール作者への注意
-メタデータの構文が正しいとは限らない。不正な値が来ても壊れないよう堅牢に実装すること。
+1. チャットにコードを書いて終わり → 必ず `strudel_save_song` を呼ぶ  
+2. `name` に日本語や `/` → ASCII の basename のみ  
+3. content に `stack` を入れる → パース失敗  
 
-## Common Pitfalls
-1. メタデータをコメント外（実コード）に書く → Strudel が構文エラーになる。
-2. SPDX識別子を間違える（例: `CC-BY` のみ）→ ライセンス検索で引っかからない。
-3. ツール側で値を信じ込む → 不正値でパース落ち。必ずバリデーション＋フォールバック。
+## Checklist
 
-## Verification Checklist
-- [ ] 拡張子が `.strudel` である
-- [ ] メタデータがコメント内にあり、実コードを壊していない
-- [ ] タグ名が公式一覧に存在する（@title/@by/@license/@details/@url/@genre/@album/@tag）
-- [ ] 複数値はカンマ・改行・重複いずれかの規約に従っている
-- [ ] ツールが不正値でもクラッシュしない
+- [ ] `setcpm` がある  
+- [ ] 各トラックが `$:` で始まる  
+- [ ] `strudel_save_song(name, content, deck?)` を実行した  

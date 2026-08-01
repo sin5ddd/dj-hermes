@@ -1,183 +1,84 @@
 ---
 name: strudel-composition
-description: "Use when writing Strudel patterns or mini-notation."
-version: 1.0.0
+description: "Use when writing strudel-rs patterns (mini-notation + $: tracks)."
+version: 2.0.0
 author: Hermes Agent
 license: MIT
 metadata:
   hermes:
-    tags: [strudel, music, composition, mini-notation, patterns]
+    tags: [strudel-rs, music, composition, mini-notation]
     related_skills:
       - strudel-data-format
       - strudel-sound-design
-      - strudel-genre-acid
-      - strudel-genre-electro
-      - strudel-genre-minimal-techno
-      - strudel-genre-house
-      - strudel-genre-dnb
-      - strudel-genre-ambient
-      - strudel-genre-chill
-      - strudel-genre-dubstep
-      - strudel-genre-progressive-house
-      - strudel-genre-future-bass
-      - strudel-genre-lofi-hiphop
-      - strudel-genre-chill-pop
 ---
 
-# Strudel 楽曲の書き方（Composition）
+# strudel-rs 作曲（Composition）
 
 ## Overview
-Strudel は Tidal Cycles 由来の "Mini-Notation" という小さい記法でリズムパターンを書く。この Skill は、`.strudel` コード内で楽曲を記述するための記法（シーケンス、ネスト、ユークリッドリズム等）、パターン生成関数、タイムモディファイア、パラメータ制御をまとめる。
+strudel-rs は **曲ファイル**として `setcpm` + **`$:` トラック**だけを受け付ける。mini-notation は文字列の中（`s("...")` / `note("...")`）で使う。保存は必ず `strudel_save_song`。
 
-## When to Use
-- ユーザーが Strudel で実際に曲を書く・パターンを組む時
-- mini-notation の記法やファクトリ関数を使う時
-- 音符・リズム・構成をプログラム的に操作したい時
+## 保存テンプレ（そのまま content に）
 
-Don't use for: 保存形式・メタデータ（→ strudel-data-format）、シンセ/エフェクト音作り（→ strudel-sound-design）。
-
-## Mini-Notation の基本
-バッククォート `` ` `` で複数行、ダブルクォート `"` で単一行、シングルクォート `'` で非パース文字列。
-
-### サイクル内のイベント列
 ```
-note("c e g b")   // 4音が1サイクルに圧縮、各音は1/4サイクル
-note("c d e f g a b")  // 音が増えると各音長は短くなる（サイクル長は一定）
-```
-
-### 乗算（*）
-```
-note("[e5 b4 d5 c5]*2")      // 1サイクル中に2回
-note("[e5 b4 d5 c5]*2.75")   // 小数も可
+// @title demo
+setcpm(120/4)
+// kick
+$: s("bd*4").gain(0.9)
+// snare
+$: s("~ sd ~ sd").gain(0.7)
+// hat
+$: s("hh*8").gain(0.25)
+// bass
+$: note("c2 c2 eb2 g2").s("sawtooth").lpf(500).gain(0.55)
 ```
 
-### 除算（/）
-```
-note("[e5 b4 d5 c5]/2")      // 2サイクルにわたって再生
-```
+## Mini-notation（`$:` の文字列内だけ）
 
-### 山括弧 < >
-イベント数で長さを決定（ピアノロール的）。
-```
-note("<e5 b4 d5 c5>")        // /4 と同等
-note("<e5 b4 d5 c5>*8")      // 1サイクルに8音
-```
-
-### 括弧ネスト [ ]
-時間を細分化。内側の列は外側1イベントの長さになる。
-```
-note("e5 [b4 c5] d5 [c5 b4]")
-```
-
-### 休符
-`~` または `-`。
-```
-note("[b4 [~ c5] d5 e5]")
-```
-
-### 並列／ポリフォニー（,）
-```
-note("[g3,b3,e4]")           // コード
-note("<[g3,b3,e4] [a3,c3,e4] [b3,d3,f#4]>*2")
-```
-
-### 伸長（@）
-時間的重み。
-```
-note("<[g3,b3,e4]@2 [a3,c3,e4] [b3,d3,f#4]>*2")
-```
-
-### 複製（!）
-早くせず繰り返し。
-```
-note("<[g3,b3,e4]!2 [a3,c3,e4] [b3,d3,f#4]>*2")
-```
-
-### ランダム（?, |）
-```
-note("[g3,b3,e4]*8?")        // 50%で除去
-note("[g3,b3,e4]*8?0.1")    // 10%で除去
-note("[g3,b3,e4] | [a3,c3,e4] | [b3,d3,f#4]")  // ランダム選択
-```
-
-### ユークリッドリズム（(beats,segments,offset)）
-```
-s("bd(3,8,0)")   // 3拍/8セグメント、位置0（Pop Clave）
-s("bd(3,8)")     // offset省略可
-s("bd(3,8,3), hh cp")
-```
-
-## パターン生成関数（ファクトリ）
-| 関数 | mini |
+| 記法 | 意味 |
 | --- | --- |
-| `cat(x,y)` (slowcat) | `""` |
-| `seq(x,y)` (fastcat) | `"x y"` |
-| `stack(x,y)` (polyrhythm) | `"x,y"` |
-| `stepcat([3,x],[1,y])` (timecat) | `"x@3 y@2"` |
-| `polymeter(a,b,c, x,y)` | `"{a b c, x y}"` |
-| `polymeterSteps(2,x,y,z)` | `"{x y z}%2"` |
-| `silence` | `"~"` |
+| `bd sd hh` | 順にイベント |
+| `bd*4` | 1 サイクルに 4 回 |
+| `~` / `-` | 休符 |
+| `[a b]` | 細分化 |
+| `<a b c>` | サイクルまたぎ列 |
+| `a,b` | 同時（ポリ） |
+| `bd(3,8)` | ユークリッド |
 
 ```
-cat("e5","b4",["d5","c5"]).note()
-stack("g3","b3",["e4","d4"]).note()
-arrange([4,"(3,8)"],[2,"(5,8)"]).note()
-n(run(4)).scale("C4:pentatonic")      // 0..3 の離散パターン
-"hh".s().struct(binary(5))            // "1 0 1"
+$: s("bd*4").gain(0.9)
+$: s("hh*8").gain(0.3)
+$: note("c3 e3 g3").s("sawtooth").lpf(800).gain(0.4)
+$: s("bd(3,8)").gain(0.85)
 ```
 
-## タイムモディファイア
-| 関数 | mini |
-| --- | --- |
-| `slow(2)` | `/2` |
-| `fast(2)` | `*2` |
-| `euclid(3,8)` | `(3,8)` |
-| `euclidRot(3,8,1)` | `(3,8,1)` |
+## チェーン（スカラー引数のみ）
 
 ```
-s("bd hh sd hh").slow(2)
-s("bd hh sd hh").fast(2)
-note("c3").euclid(3,8)             // キューバン・トレシージョ
-note("c3").euclidRot(3,16,14)      // サンバ
-note("c d e g").rev()               // 反転
-note("c d e g").palindrome()        // 往復
-note("0 1 2 3".scale('A minor')).iter(4)
-s("bd ~ sd cp").ply("<1 2 3>")
-s("bd*2 hh*3 [sd bd]*2 perc").zoom(0.25,0.75)
-s("hh*8").swing(4)                  // swingBy(1/3,4)
-s(",hh*2").cpm(90)                  // 90 BPM
+$: note("c2 eb2 f2 g2").s("sawtooth").lpf(600).lpq(8).gain(0.5)
+$: s("hh*16").hpf(8000).gain(0.2)
 ```
 
-## コントロールパラメータ
-各パラメータは独立して制御できる。
-```
-note("c e g b")
- .cutoff("<500 1000 2000>")
- .gain(0.8)
- .s("sawtooth")
- .log()
-```
+不可: `.lpf("<400 1200>")`、`.vib("<1 4>")`、`stack(...)`、`.cpm(120)`。
 
-### 値の修飾（演算子）
-```
-note("c e g").add(2)        // 数値+2
-note("c e g").mul(2)        // ×2
-note("c e g").range(0,1)    // 0..1 → 範囲スケール
-```
-チェーンで param 関数を重ね可能:
-```
-note(cat('c','e','g'))
-```
+## テンポ
 
-## Common Pitfalls
-1. サイクル長が固定なのを忘れる → 「音符を足すとテンポが上がる」と誤解。足すと各音が短くなる。
-2. パラメータ無しの文字列を鳴らそうとする → `note` 等で包む必要あり。
-3. `*` と `/` を逆にする → `*` は早く、`/` は遅く。
-4. ユークリッドの offset を忘れて位相が合わない → hh 等と重ねて聴く。
+- `setcpm(30)` → BPM 120（30 cycles/min × 4 beats）  
+- `setcpm(120/4)` → BPM 120 と同じ書き方  
+- 体感テンポを上げるのは主に mini の `*2` / `.fast(2)`  
 
-## Verification Checklist
-- [ ] バッククォート/ダブルクォート/シングルクォートの使い分けが正しい
-- [ ] サイクル内イベント数と乗除算でテンポ意図が一致している
-- [ ] コード・休符・ネストが `,` `[]` `~` で正しく書けている
-- [ ] ユークリッド記法 `(beats,segments,offset)` の引数順が正しい
-- [ ] 各音が `note`/`s` 等の param 関数で包まれている
+## 禁止
+
+- 本家 JS: `stack`, `cat`, `arrange`, `.cpm()`  
+- `$:` 無しの裸パターン行  
+
+## Pitfalls
+
+1. チャットにコードだけ書いて保存しない  
+2. `stack(...).cpm(170)` を content に入れる → 400  
+3. 引数にミニ記法パターンを入れる → 非対応  
+
+## Checklist
+
+- [ ] `setcpm` + 複数 `$:`  
+- [ ] mini は引用符の中だけ  
+- [ ] `strudel_save_song` で保存（必要なら `deck`）  

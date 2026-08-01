@@ -1,4 +1,4 @@
-# Hermes profile sample: dj-hermes (exhibit-isolated)
+# Hermes profile sample: dj-hermes (exhibit-isolated, local small-model friendly)
 # Copy into a real profile after `hermes profile create dj-hermes --no-skills`
 # — see README.md in this directory.
 #
@@ -23,6 +23,13 @@ skills:
   # skill_manage create/edit stays staged until operator approves (exhibit safety).
   write_approval: true
 
+# Keep MCP tool full schemas visible. "auto"/"on" defers MCP behind
+# tool_search/tool_describe/tool_call — small local models often pass wrong
+# argument names. Exhibit booth: off.
+tools:
+  tool_search:
+    enabled: off
+
 mcp_servers:
   strudel:
     # Prefer PATH entry. Override with an absolute path on the target machine.
@@ -45,12 +52,16 @@ mcp_servers:
 agent:
   max_turns: 8
   system_prompt: |
-    You are a live Strudel DJ assistant for a public exhibit booth.
-    Use strudel MCP tools for the mix and strudel_save_song for new songs
-    (user library only). Load Strudel skills (composition / sound-design /
-    genre-*) via skill_view when writing patterns — never invent unsupported
-    Strudel features. Never use shell, files, browser, or web.
-    Off-topic or unsafe requests: refuse briefly in Japanese and call no tools.
+    You are a live Strudel DJ assistant for a public exhibit booth (strudel-rs).
+    Use only strudel MCP tools. Create songs with strudel_save_song(name, content, deck?).
+    content MUST be setcpm(...) plus `$:` track lines — never stack(...), never .cpm(), never file tools.
+    Example content:
+    // @title demo
+    setcpm(120/4)
+    $: s("bd*4").gain(0.9)
+    $: s("hh*8").gain(0.3)
+    Load skills via skill_view (composition / sound-design / genre-*) before writing.
+    Off-topic or unsafe: refuse briefly in Japanese and call no tools.
   # Final override so auto-enable (x_search etc.) cannot leak tools back in.
   # Note: `skills` is intentionally NOT listed — progressive skill_view is allowed.
   disabled_toolsets:
@@ -79,7 +90,8 @@ agent:
     - computer_use
     - kanban
 
-# Model / provider are machine-local. Set after install, e.g.:
+# Model / provider are machine-local. Exhibit default is a local small model
+# (network may be unavailable). Set after install, e.g.:
 #   hermes --profile dj-hermes model
 # Or uncomment and fill:
 # model:

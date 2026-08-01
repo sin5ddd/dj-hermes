@@ -118,6 +118,40 @@ pub fn ensure_user_songs_dir() -> Result<PathBuf, String> {
     Ok(dir)
 }
 
+/// Basenames (`*.strudel` / `*.txt`) in a directory, sorted.
+pub fn list_song_basenames_in(dir: &Path) -> Vec<String> {
+    let mut out = Vec::new();
+    let Ok(rd) = std::fs::read_dir(dir) else {
+        return out;
+    };
+    for ent in rd.flatten() {
+        let path = ent.path();
+        if !path.is_file() {
+            continue;
+        }
+        if known_song_ext(&path).is_none() {
+            continue;
+        }
+        if let Some(name) = path.file_name().and_then(|s| s.to_str()) {
+            out.push(name.to_string());
+        }
+    }
+    out.sort();
+    out
+}
+
+/// User-library song basenames (`~/.config/strudel-rs/songs/`).
+pub fn list_user_library_songs() -> Vec<String> {
+    user_songs_dir()
+        .map(|d| list_song_basenames_in(&d))
+        .unwrap_or_default()
+}
+
+/// Bundled demo song basenames under [`DEFAULT_SONGS_DIR`] relative to cwd.
+pub fn list_bundled_songs() -> Vec<String> {
+    list_song_basenames_in(Path::new(DEFAULT_SONGS_DIR))
+}
+
 /// Normalize a user-facing save name to a safe file name (`*.strudel`).
 ///
 /// Accepts only a single path segment: `[A-Za-z0-9._-]+`, optional `.strudel` / `.txt`.
@@ -207,6 +241,10 @@ fn has_dir_component(path: &Path) -> bool {
 /// - Bare names (no directory): **user library** (`~/.config/strudel-rs/songs`) →
 ///   [`DEFAULT_SONGS_DIR`] → cwd.
 /// - Missing `.strudel` / `.txt` is filled in; **`.strudel` before `.txt`**.
+/// - Paths with a directory (e.g. `songs/foo.strudel`): try the path as written,
+///   then also resolve the **basename** the same way as a bare name. Models often
+///   pass `songs/<saved-name>` for user-library tracks that only live under
+///   `~/.config/strudel-rs/songs/`.
 pub fn song_path_candidates(input: &str) -> Result<Vec<PathBuf>, String> {
     let _ = sanitize_song_path(input)?;
     let p = Path::new(input.trim());
@@ -273,6 +311,52 @@ pub fn song_path_candidates(input: &str) -> Result<Vec<PathBuf>, String> {
             }
         }
     }
+
+    // Basename fallback: `songs/visitor-dnb.strudel` → also try user library / songs/
+    // as if the user passed bare `visitor-dnb.strudel` or `visitor-dnb`.
+    if has_dir_component(p) {
+        if let Some(file_name) = p.file_name() {
+            let bare = Path::new(file_name);
+            match known_song_ext(bare) {
+                Some(_) => {
+                    if let Some(ref ud) = user_dir {
+                        push(&mut out, ud.join(bare));
+                    }
+                    push(&mut out, PathBuf::from(DEFAULT_SONGS_DIR).join(bare));
+                    push(&mut out, bare.to_path_buf());
+                }
+                None if bare.extension().is_some() => {
+                    if let Some(ref ud) = user_dir {
+                        push(&mut out, ud.join(bare));
+                    }
+                    push(&mut out, PathBuf::from(DEFAULT_SONGS_DIR).join(bare));
+                    push(&mut out, bare.to_path_buf());
+                }
+                None => {
+                    let name = bare.as_os_str();
+                    if let Some(ref ud) = user_dir {
+                        push(&mut out, ud.join(name).with_extension("strudel"));
+                        push(&mut out, ud.join(name).with_extension("txt"));
+                    }
+                    push(
+                        &mut out,
+                        PathBuf::from(DEFAULT_SONGS_DIR)
+                            .join(name)
+                            .with_extension("strudel"),
+                    );
+                    push(
+                        &mut out,
+                        PathBuf::from(DEFAULT_SONGS_DIR)
+                            .join(name)
+                            .with_extension("txt"),
+                    );
+                    push(&mut out, PathBuf::from(name).with_extension("strudel"));
+                    push(&mut out, PathBuf::from(name).with_extension("txt"));
+                }
+            }
+        }
+    }
+
     Ok(out)
 }
 
@@ -1028,6 +1112,30 @@ $: s("hh*8")
         let c = song_path_candidates("demos/pad").unwrap();
         assert_eq!(c[0], PathBuf::from("demos/pad.strudel"));
         assert_eq!(c[1], PathBuf::from("demos/pad.txt"));
+        // Basename also tried under user library / songs/ (model often passes songs/name).
+        assert!(
+            c.iter()
+                .any(|p| p == &PathBuf::from("songs").join("pad.strudel")),
+            "{c:?}"
+        );
+        if let Ok(ud) = user_songs_dir() {
+            assert!(
+                c.iter().any(|p| p == &ud.join("pad.strudel")),
+                "user lib basename fallback missing in {c:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn song_path_candidates_songs_prefix_falls_back_to_user_lib_basename() {
+        let c = song_path_candidates("songs/house-track.strudel").unwrap();
+        assert_eq!(c[0], PathBuf::from("songs/house-track.strudel"));
+        if let Ok(ud) = user_songs_dir() {
+            assert!(
+                c.iter().any(|p| p == &ud.join("house-track.strudel")),
+                "expected user lib fallback in {c:?}"
+            );
+        }
     }
 
     #[test]

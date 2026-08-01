@@ -156,7 +156,7 @@ curl -s -X POST -H "Content-Type: application/json" \
 | グループ | ツール |
 | --- | --- |
 | Mixer | `strudel_mixer_eq` / `strudel_mixer_filter` / `strudel_mixer_crossfader` / `strudel_xfade` / `strudel_set_bpm` |
-| Deck | `strudel_load_song` / `strudel_save_song` / `strudel_mute` / `strudel_head` |
+| Deck | `strudel_load_song` / `strudel_list_songs` / `strudel_save_song` / `strudel_mute` / `strudel_head` |
 | Transport | `strudel_hush` / `strudel_status` |
 
 曲の差し替えは **`strudel_load_song`**（`.strudel` ファイル）。新規作成・保存は **`strudel_save_song`**（書き込み先は `~/.config/strudel-rs/songs/` のみ）。パターン文字列を直接送る MCP ツールは用意していません（HTTP `PUT /code` はスクリプト用に残置）。
@@ -260,7 +260,7 @@ printf '%s\n' \
   | strudel-rs mcp
 ```
 
-`tools/list` の応答に `strudel_mixer_eq` / `strudel_load_song` / `strudel_save_song` / `strudel_status` など **11 ツール**が出ればブリッジは生きています（`strudel_set_code` は含みません）。
+`tools/list` の応答に `strudel_mixer_eq` / `strudel_load_song` / `strudel_list_songs` / `strudel_save_song` / `strudel_status` など **12 ツール**が出ればブリッジは生きています（`strudel_set_code` は含みません）。
 
 ### 同梱デモ曲
 

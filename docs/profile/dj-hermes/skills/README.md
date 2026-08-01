@@ -1,6 +1,8 @@
-# Strudel skills（プロファイル同梱）
+# Strudel skills（プロファイル同梱・strudel-rs 専用）
 
 展示用 profile `dj-hermes` が使う **ローカル skills** です。  
+本家 Strudel REPL 記法は含みません。保存形式は `setcpm` + `$:` のみ。
+
 Hermes の公式バンドル skills とは別物で、`.no-bundled-skills` により公式カタログは入れません。
 
 ## 配置
@@ -16,18 +18,32 @@ skills/
 
 各ディレクトリに `SKILL.md` が必要（agentskills.io / Hermes 互換）。
 
-## ソース
+## 正本と同期
 
-開発の正本は `puredata-hermes/skills/creative/strudel-*` 側にある想定です。  
-このディレクトリは **展示プロファイルに載せるためのコピー**です。スキル本文を直すときは正本を直してからここへ再コピーしてください。
+**正本はこのリポジトリの `docs/profile/dj-hermes/skills/`** です。  
+live profile へは次をコピーします:
 
 ```powershell
-# 例: puredata-hermes 正本 → この見本
-$src = "..\..\..\..\skills\creative"   # リポジトリ配置に合わせて調整
-$dst = "creative"
-Get-ChildItem $src -Directory | Where-Object Name -like 'strudel-*' | ForEach-Object {
-  Copy-Item $_.FullName (Join-Path $dst $_.Name) -Recurse -Force
-}
+$src = "docs\profile\dj-hermes\skills\creative"
+$dst = Join-Path $env:LOCALAPPDATA "hermes\profiles\dj-hermes\skills\creative"
+New-Item -ItemType Directory -Force -Path $dst | Out-Null
+Copy-Item -Recurse -Force "$src\*" $dst
+```
+
+Linux/macOS:
+
+```bash
+PROFILE_DIR="${HERMES_HOME:-$HOME/.hermes}/profiles/dj-hermes"
+mkdir -p "$PROFILE_DIR/skills"
+cp -R docs/profile/dj-hermes/skills/creative "$PROFILE_DIR/skills/"
+```
+
+## 静的チェック
+
+コードフェンス内に `stack(` / `.cpm(` 等が無いことを検査:
+
+```bash
+python scripts/lint_strudel_skills.py
 ```
 
 ## セキュリティ
@@ -35,3 +51,4 @@ Get-ChildItem $src -Directory | Where-Object Name -like 'strudel-*' | ForEach-Ob
 - `skills` toolset は skill の **一覧・閲覧**用
 - 見本 config は `skills.write_approval: true`（skill ファイルの書き込みは承認制）
 - shell / file toolset は無効のまま
+- `tools.tool_search.enabled: off` で MCP フル schema を常時表示（小モデル向け）
