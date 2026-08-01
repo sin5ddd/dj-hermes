@@ -241,7 +241,7 @@ fn conflict(e: impl Into<String>) -> (StatusCode, Json<ErrRes>) {
     (StatusCode::CONFLICT, Json(ErrRes { error: e.into() }))
 }
 
-fn snapshot(engine: &Arc<Mutex<Engine>>) -> StatusInfo {
+pub(crate) fn snapshot(engine: &Arc<Mutex<Engine>>) -> StatusInfo {
     let Ok(e) = engine.lock() else {
         return StatusInfo::default();
     };
@@ -569,6 +569,8 @@ pub fn router(state: AppState) -> Router {
         .route("/mixer/crossfader", post(mixer_crossfader))
         .route("/status", get(get_status))
         .route("/events", get(events))
+        // Hermes Streamable HTTP MCP (in-process tools → Command channel).
+        .route("/mcp", post(crate::mcp::streamable_http_post))
         .with_state(state)
 }
 
@@ -669,6 +671,85 @@ mod tests {
             .unwrap();
         assert_eq!(res.status(), StatusCode::OK);
         assert_eq!(json_body(res).await, "ok");
+    }
+
+    #[tokio::test]
+    async fn mcp_streamable_http_initialize_and_tools_list() {
+        let (state, _) = test_state();
+        let app = router(state);
+        let init_body = r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"t","version":"0"}}}"#;
+        let res = app
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/mcp")
+                    .header("content-type", "application/json")
+                    .header("accept", "application/json, text/event-stream")
+                    .body(Body::from(init_body))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(res.status(), StatusCode::OK);
+        let ct = res
+            .headers()
+            .get("content-type")
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or("");
+        assert!(ct.starts_with("application/json"), "{ct}");
+        let body = json_body(res).await;
+        let v: serde_json::Value = serde_json::from_str(&body).unwrap();
+        assert_eq!(v["result"]["serverInfo"]["name"], "strudel-rs");
+        assert_eq!(v["result"]["protocolVersion"], "2025-03-26");
+    }
+
+    #[tokio::test]
+    async fn mcp_notification_returns_202() {
+        let (state, _) = test_state();
+        let app = router(state);
+        let body = r#"{"jsonrpc":"2.0","method":"notifications/initialized"}"#;
+        let res = app
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/mcp")
+                    .header("content-type", "application/json")
+                    .body(Body::from(body))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(res.status(), StatusCode::ACCEPTED);
+    }
+
+    #[tokio::test]
+    async fn mcp_tools_call_eq_queues_command() {
+        let (state, rx) = test_state();
+        let app = router(state);
+        let body = r#"{"jsonrpc":"2.0","id":9,"method":"tools/call","params":{"name":"strudel_mixer_eq","arguments":{"deck":"B","hi":0.8}}}"#;
+        let res = app
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/mcp")
+                    .header("content-type", "application/json")
+                    .body(Body::from(body))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(res.status(), StatusCode::OK);
+        let body = json_body(res).await;
+        let v: serde_json::Value = serde_json::from_str(&body).unwrap();
+        assert_eq!(v["result"]["isError"], false);
+        match rx.try_recv().unwrap() {
+            Command::SetDeckEq { deck, band, value } => {
+                assert_eq!(deck, 1);
+                assert_eq!(band, 0);
+                assert!((value - 0.8).abs() < 1e-5);
+            }
+            _ => panic!("expected SetDeckEq"),
+        }
     }
 
     #[tokio::test]

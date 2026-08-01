@@ -54,10 +54,7 @@ hermes --profile dj-hermes model   # 展示用モデル・キー（個人用と�
 ```yaml
 mcp_servers:
   strudel:
-    command: strudel-rs   # またはフルパス
-    args: ["mcp"]
-    env:
-      STRUDEL_API: "http://127.0.0.1:17878"
+    url: "http://127.0.0.1:17878/mcp"   # play/dj 起動後（exe spawn なし）
     tools:
       # hush はオペレータの /hush に任せる
       exclude: [strudel_hush]

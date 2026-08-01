@@ -14,7 +14,7 @@
 | ------------ | --------------------------------------------------------------------------------- |
 | 人間（編集） | エディタで `songs/*.strudel` を保存 → ファイル監視が検知 → **次の小節境界**で反映 |
 | 人間（操作） | live TUI: 自然文→Hermes、`/` 付きでローカルコマンド。`--text` は rustyline 裸コマンド |
-| LLM / Hermes | TUI から `hermes -z`（profile `dj-hermes`）+ MCP。HTTP API / `strudel-rs mcp` |
+| LLM / Hermes | TUI から `hermes -z`（profile `dj-hermes`）+ MCP。HTTP API の `POST /mcp`（stdio `strudel-rs mcp` は非推奨デバッグ用） |
 
 主な体験:
 
@@ -98,7 +98,7 @@ Song をロードして鳴らす再生ユニット ×2。両デッキは同一 T
 ```
 
 - コマンド経路: `crossbeam` のチャネル（SPSC 想定）
-- **演奏 CLI は手動起動**。MCP は **別プロセス**（stdio）で本体 HTTP（`127.0.0.1:17878`）へ中継。stdio 直結で audio を多重起動しない
+- **演奏 CLI は手動起動**。Hermes 向け MCP は演奏プロセスの **`POST /mcp`（Streamable HTTP）**。stdio `strudel-rs mcp` は非推奨。audio の多重起動をツール経路から起こさない
 - 単一バイナリ + サブコマンド（`play` / `mcp` / `list` 等）。別 crate の workspace 分割はしない
 
 ---
@@ -189,21 +189,21 @@ Release プロファイル目安（プラン）: `opt-level = 3`, `lto = true`, 
 
 - 操作: `PUT`/`POST` 系（code, load, xfade, mute, hush, bpm 等）
 - 購読: `GET /events`（SSE）、`GET /status`
+- MCP: `POST /mcp`（Streamable HTTP、Hermes 用）
 
-### MCP ツール（予定）
+### MCP ツール
 
 Mixer: `mixer_eq` / `mixer_filter` / `mixer_crossfader` / `xfade` / `set_bpm`  
-Deck: `load_song` / `mute` / `head`  
+Deck: `load_song` / `list_songs` / `save_song` / `mute` / `head`  
 Transport: `hush` / `status`  
-（いずれも `strudel_*` プレフィックス。コード直書きの `set_code` は MCP から削除済み。曲は `load_song`）
+（いずれも `strudel_*` プレフィックス。コード直書きの `set_code` は MCP から削除済み。曲は `load_song` / `save_song`）
 
 Hermes 登録例:
 
 ```yaml
 mcp_servers:
     strudel:
-        command: /path/to/strudel-rs
-        args: ["mcp"]
+        url: "http://127.0.0.1:17878/mcp"
 ```
 
 ---

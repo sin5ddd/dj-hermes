@@ -88,7 +88,8 @@ Usage:
   --debug-log P path for -d (env: STRUDEL_DEBUG_LOG; e.g. C:\\temp\\strudel-debug.log)
 
   strudel-rs mcp
-                MCP stdio bridge → HTTP API (play/dj process must be running)
+                DEPRECATED debug stdio bridge → HTTP API.
+                Hermes: set mcp_servers.strudel.url to http://127.0.0.1:PORT/mcp
 
   Default play loops forever (TUI: q / Esc; headless: Ctrl+C).
   dj: left=A / right=B highlight, » prompt at bottom.

@@ -73,9 +73,8 @@ cp docs/profile/dj-hermes/.no-bundled-skills "$PROFILE_DIR/"
 mkdir -p "$PROFILE_DIR/skills"
 cp -R docs/profile/dj-hermes/skills/creative "$PROFILE_DIR/skills/"
 
-# 3) strudel-rs の場所を合わせる（PATH に無い場合）
-#    config.yaml の mcp_servers.strudel.command を絶対パスに変更
-#    または PATH に strudel-rs を通す
+# 3) 演奏 API が http://127.0.0.1:17878 で生きていること
+#    （strudel-rs dj / play。ポートを変えたら config の url も合わせる）
 
 # 4) 展示用モデル・認証（個人用と分離推奨）
 hermes --profile dj-hermes model
@@ -86,7 +85,7 @@ hermes --profile dj-hermes tools list --platform cli
 hermes --profile dj-hermes skills list --source local --enabled-only
 #   → strudel-composition など 15 本
 hermes --profile dj-hermes mcp list
-# dj 起動後:
+# dj/play 起動後（MCP は HTTP /mcp — exe spawn なし）:
 hermes --profile dj-hermes mcp test strudel
 ```
 
@@ -133,7 +132,7 @@ skills / SOUL / MCP は次で揃えている:
 
 ```bash
 # 例: 生きている config をサニタイズして上書き（手作業推奨）
-# - mcp_servers.strudel.command → strudel-rs
+# - mcp_servers.strudel.url → http://127.0.0.1:17878/mcp（command/args は使わない）
 # - model / base_url セクション削除
 # - .env / auth.json はコピーしない
 # - skills/creative は puredata-hermes 側と diff を見て同期

@@ -131,6 +131,7 @@ $: note("c3'maj").s("sawtooth").lpf(800).orbit(2).gain(0.4).room(0.35).roomsize(
 | POST | `/mute` | トラック mute/unmute |
 | POST | `/head` | デッキ頭出し（1 始まり小節、次バーで同期） |
 | POST | `/hush` | 全停止 |
+| POST | `/mcp` | MCP Streamable HTTP（Hermes 用。JSON-RPC） |
 
 ```bash
 # 本体（別ターミナル）— songs/ samples/ のあるディレクトリで
@@ -146,10 +147,10 @@ curl -s -X POST -H "Content-Type: application/json" \
   http://127.0.0.1:17878/mixer/crossfader
 ```
 
-## MCP 登録
+## MCP 登録（Hermes）
 
-`strudel-rs mcp` は **stdio の薄いブリッジ**です。音声デバイスは開きません。  
-**先に** `strudel-rs play`（API 付き）を起動してから、MCP クライアントを繋いでください。本体未起動時はツールが接続エラーを返します（仕様）。
+演奏プロセスの HTTP API 上に **Streamable HTTP MCP**（`POST /mcp`）があります。  
+音声デバイスは MCP 経路では開きません。**先に** `strudel-rs play` / `dj`（API 付き）を起動してから Hermes を繋いでください。本体未起動時は接続エラーになります（仕様）。
 
 提供ツール（Mixer → Deck → Transport）:
 
@@ -164,11 +165,11 @@ curl -s -X POST -H "Content-Type: application/json" \
 ### 手順
 
 1. 演奏本体を起動する（API `:17878`）
-2. MCP クライアントに下記を登録する
+2. Hermes プロファイルに下記を登録する（`command` で exe を spawn しない）
 3. チャットから `strudel_status` や `strudel_mixer_eq` を呼ぶ
 
 ```bash
-# ターミナル 1 — 演奏（API も同時に立つ）
+# ターミナル 1 — 演奏（API + /mcp も同時に立つ）
 cd /path/to/strudel-rust
 strudel-rs dj songs/smoke.strudel
 # または headless 単曲:
@@ -201,66 +202,30 @@ default 入力デバイスを使います（`arecord -l` で確認）。
 ```yaml
 mcp_servers:
   strudel:
-    command: strudel-rs
-    args: ["mcp"]
-    # ポートを変えている場合:
-    # env:
-    #   STRUDEL_API: "http://127.0.0.1:17878"
+    url: "http://127.0.0.1:17878/mcp"
+    # ポートを変えている場合は URL のポートも合わせる
     tools:
       exclude: [strudel_hush]   # 緊急停止は TUI の /hush
 ```
 
-`command` にフルパスを書く例:
+`GET /events` は状態 SSE であり MCP ではありません。Hermes の `url` は必ず **`/mcp`** を指してください。
 
-```yaml
-mcp_servers:
-  strudel:
-    command: /home/you/.cargo/bin/strudel-rs   # Windows 例: C:\Users\you\.cargo\bin\strudel-rs.exe
-    args: ["mcp"]
-```
-
-### Claude Desktop / Cursor 系（`mcp.json`）
-
-設定ファイルの場所はクライアントによります（例: Claude Desktop の `claude_desktop_config.json`、Cursor の MCP 設定）。
-
-```json
-{
-  "mcpServers": {
-    "strudel": {
-      "command": "strudel-rs",
-      "args": ["mcp"],
-      "env": {
-        "STRUDEL_API": "http://127.0.0.1:17878"
-      }
-    }
-  }
-}
-```
-
-フルパス版:
-
-```json
-{
-  "mcpServers": {
-    "strudel": {
-      "command": "/home/you/.cargo/bin/strudel-rs",
-      "args": ["mcp"]
-    }
-  }
-}
-```
-
-### 動作確認（手動）
+### 動作確認
 
 ```bash
 # 本体起動済みの状態で
-printf '%s\n' \
-  '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"t","version":"0"}}}' \
-  '{"jsonrpc":"2.0","id":2,"method":"tools/list"}' \
-  | strudel-rs mcp
+curl -s -X POST http://127.0.0.1:17878/mcp \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"t","version":"0"}}}'
+
+hermes --profile dj-hermes mcp test strudel
+# → Transport: HTTP … Connected, 12 tools
 ```
 
-`tools/list` の応答に `strudel_mixer_eq` / `strudel_load_song` / `strudel_list_songs` / `strudel_save_song` / `strudel_status` など **12 ツール**が出ればブリッジは生きています（`strudel_set_code` は含みません）。
+`tools/list`（または `mcp test`）で `strudel_mixer_eq` / `strudel_load_song` / `strudel_list_songs` / `strudel_save_song` / `strudel_status` など **12 ツール**が出れば生きています（`strudel_set_code` は含みません）。
+
+デバッグ用に **非推奨** の `strudel-rs mcp`（stdio → REST ブリッジ）も残していますが、Hermes からは使いません。
 
 ### 同梱デモ曲
 

@@ -32,15 +32,9 @@ tools:
 
 mcp_servers:
   strudel:
-    # Prefer PATH entry. Override with an absolute path on the target machine.
-    # Windows example:
-    #   command: "C:\\path\\to\\strudel-rs.exe"
-    # Debug build example:
-    #   command: "/path/to/strudel-rust/target/debug/strudel-rs"
-    command: strudel-rs
-    args: ["mcp"]
-    env:
-      STRUDEL_API: "http://127.0.0.1:17878"
+    # Streamable HTTP against the running play/dj API (no strudel-rs.exe spawn).
+    # Start strudel-rs dj/play first so :17878 is up. Port override: match --port.
+    url: "http://127.0.0.1:17878/mcp"
     enabled: true
     tools:
       # Emergency stop stays on the operator keyboard: /hush or Esc in the TUI.

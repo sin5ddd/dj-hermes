@@ -1,40 +1,102 @@
-//! MCP server (stdio) — thin HTTP bridge to the play process API.
+//! MCP server for strudel-rs.
 //!
-//! Does **not** open audio devices. Requires the main `play` process with API up.
-//! Protocol: JSON-RPC 2.0 over stdio.
+//! **Primary (Hermes):** Streamable HTTP on the play/dj API — `POST /mcp`.
+//! Tools run in-process (Command channel + engine snapshot). No audio devices.
 //!
-//! **Framing (dual support):**
-//! - **NDJSON** — one JSON object per line (`\n`). Used by current Hermes / MCP
-//!   Python SDK (`mcp` ≥ 1.x stdio client).
-//! - **Content-Length** — LSP-style headers + body. Kept for older clients and
-//!   hand-written bridges.
+//! **Deprecated (debug):** `strudel-rs mcp` stdio bridge → REST (`STRUDEL_API`).
+//! Prefer HTTP; keep stdio only for manual NDJSON smoke tests.
 //!
-//! The first inbound message selects the session framing; replies use the same.
+//! Stdio framing (deprecated path):
+//! - **NDJSON** — one JSON object per line
+//! - **Content-Length** — LSP-style headers + body
 //!
-//! Implemented by hand (not `rmcp`) so the bridge stays small and independent of
-//! crate API churn. See plan Risk #6.
+//! Implemented by hand (not `rmcp`) to stay small. See plan Risk #6.
 
 use std::io::{self, BufRead, Read, Write};
 
+use axum::extract::State;
+use axum::http::{header, StatusCode};
+use axum::response::{IntoResponse, Response};
 use serde_json::{json, Map, Value};
 
-use crate::api::{default_api_base, DEFAULT_API_PORT};
+use crate::api::{deck_idx, default_api_base, snapshot, AppState, StatusInfo, DEFAULT_API_PORT};
+use crate::engine::Command;
+use crate::song::{
+    ensure_user_songs_dir, list_bundled_songs, list_user_library_songs, parse_song,
+    resolve_song_path, resolve_user_song_save_path, MAX_SONG_CONTENT_BYTES,
+};
 
-const PROTOCOL_VERSION: &str = "2024-11-05";
+const PROTOCOL_VERSION: &str = "2025-03-26";
 const SERVER_NAME: &str = "strudel-rs";
 const SERVER_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-/// Wire framing for one MCP stdio session.
+/// Wire framing for one MCP stdio session (deprecated debug path).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Framing {
-    /// `{"jsonrpc":...}\n` (Hermes / modern MCP SDK).
+    /// `{"jsonrpc":...}\n`
     Ndjson,
-    /// `Content-Length: N\r\n\r\n{...}` (LSP-style).
+    /// `Content-Length: N\r\n\r\n{...}`
     ContentLength,
 }
 
+/// How tools execute for one RPC session.
+enum ToolBackend<'a> {
+    /// Stdio bridge: HTTP to play process REST API.
+    Http {
+        client: &'a reqwest::blocking::Client,
+        base: &'a str,
+    },
+    /// In-process: same process as play/dj API.
+    Local { state: &'a AppState },
+}
+
+// ── Streamable HTTP (primary) ───────────────────────────────────────────────
+
+/// `POST /mcp` — MCP Streamable HTTP (JSON request → JSON response).
+///
+/// Notifications (no `id`) → 202 Accepted with empty body.
+/// Requests → 200 `application/json` JSON-RPC response.
+pub async fn streamable_http_post(
+    State(state): State<AppState>,
+    body: axum::body::Bytes,
+) -> Response {
+    let msg: Value = match serde_json::from_slice(&body) {
+        Ok(v) => v,
+        Err(e) => {
+            return (
+                StatusCode::BAD_REQUEST,
+                [(header::CONTENT_TYPE, "application/json")],
+                json!({
+                    "jsonrpc": "2.0",
+                    "id": null,
+                    "error": { "code": -32700, "message": format!("parse error: {e}") }
+                })
+                .to_string(),
+            )
+                .into_response();
+        }
+    };
+
+    let backend = ToolBackend::Local { state: &state };
+    match handle_rpc(&msg, &backend) {
+        None => StatusCode::ACCEPTED.into_response(),
+        Some(response) => (
+            StatusCode::OK,
+            [(header::CONTENT_TYPE, "application/json")],
+            response.to_string(),
+        )
+            .into_response(),
+    }
+}
+
+// ── Stdio bridge (deprecated) ───────────────────────────────────────────────
+
 /// Run MCP server until stdin EOF. Blocks the calling thread.
+///
+/// **Deprecated:** use Hermes `url: http://127.0.0.1:17878/mcp` against a running
+/// play/dj process. Kept for manual `printf | strudel-rs mcp` debugging.
 pub fn run() -> Result<(), String> {
+    eprintln!("strudel-rs mcp: stdio bridge is deprecated; prefer POST /mcp on the play API");
     let base = default_api_base();
     let client = reqwest::blocking::Client::builder()
         .timeout(std::time::Duration::from_secs(10))
@@ -45,7 +107,6 @@ pub fn run() -> Result<(), String> {
     let mut stdin = stdin.lock();
     let mut stdout = io::stdout();
 
-    // Locked after first successfully framed message.
     let mut framing: Option<Framing> = None;
 
     while let Some((msg, detected)) = read_message(&mut stdin)? {
@@ -53,53 +114,76 @@ pub fn run() -> Result<(), String> {
             framing = Some(detected);
         }
         let mode = framing.unwrap_or(detected);
-
-        // Notifications have no `id` — handle and do not reply (except we may ignore).
-        let id = msg.get("id").cloned();
-        let method = msg
-            .get("method")
-            .and_then(|m| m.as_str())
-            .unwrap_or("")
-            .to_string();
-
-        if id.is_none() {
-            // notifications/initialized etc. — ignore
-            continue;
+        let backend = ToolBackend::Http {
+            client: &client,
+            base: &base,
+        };
+        if let Some(response) = handle_rpc(&msg, &backend) {
+            write_message(&mut stdout, &response, mode)?;
         }
-
-        let result = match method.as_str() {
-            "initialize" => Ok(initialize_result()),
-            "ping" => Ok(json!({})),
-            "tools/list" => Ok(tools_list()),
-            "tools/call" => {
-                let params = msg.get("params").cloned().unwrap_or(json!({}));
-                tools_call(&client, &base, params)
-            }
-            "resources/list" => Ok(json!({ "resources": [] })),
-            "prompts/list" => Ok(json!({ "prompts": [] })),
-            other => Err(rpc_error(-32601, format!("method not found: {other}"))),
-        };
-
-        let response = match result {
-            Ok(value) => json!({
-                "jsonrpc": "2.0",
-                "id": id,
-                "result": value,
-            }),
-            Err(err_obj) => json!({
-                "jsonrpc": "2.0",
-                "id": id,
-                "error": err_obj,
-            }),
-        };
-        write_message(&mut stdout, &response, mode)?;
     }
     Ok(())
 }
 
-fn initialize_result() -> Value {
+// ── RPC core ────────────────────────────────────────────────────────────────
+
+/// Handle one JSON-RPC message. Returns `None` for notifications (no reply).
+fn handle_rpc(msg: &Value, backend: &ToolBackend<'_>) -> Option<Value> {
+    let id = msg.get("id").cloned();
+    let method = msg
+        .get("method")
+        .and_then(|m| m.as_str())
+        .unwrap_or("")
+        .to_string();
+
+    if id.is_none() {
+        // notifications/initialized etc.
+        return None;
+    }
+
+    let result = match method.as_str() {
+        "initialize" => {
+            let params = msg.get("params").cloned().unwrap_or(json!({}));
+            Ok(initialize_result(&params))
+        }
+        "ping" => Ok(json!({})),
+        "tools/list" => Ok(tools_list()),
+        "tools/call" => {
+            let params = msg.get("params").cloned().unwrap_or(json!({}));
+            tools_call(backend, params)
+        }
+        "resources/list" => Ok(json!({ "resources": [] })),
+        "prompts/list" => Ok(json!({ "prompts": [] })),
+        other => Err(rpc_error(-32601, format!("method not found: {other}"))),
+    };
+
+    Some(match result {
+        Ok(value) => json!({
+            "jsonrpc": "2.0",
+            "id": id,
+            "result": value,
+        }),
+        Err(err_obj) => json!({
+            "jsonrpc": "2.0",
+            "id": id,
+            "error": err_obj,
+        }),
+    })
+}
+
+fn initialize_result(params: &Value) -> Value {
+    // Echo a version the client understands when possible.
+    let requested = params
+        .get("protocolVersion")
+        .and_then(|v| v.as_str())
+        .unwrap_or(PROTOCOL_VERSION);
+    let version = if requested.starts_with("2024") || requested.starts_with("2025") {
+        requested
+    } else {
+        PROTOCOL_VERSION
+    };
     json!({
-        "protocolVersion": PROTOCOL_VERSION,
+        "protocolVersion": version,
         "capabilities": {
             "tools": { "listChanged": false }
         },
@@ -111,7 +195,7 @@ fn initialize_result() -> Value {
 }
 
 fn tools_list() -> Value {
-    // Order: Mixer → Deck → Transport (no official MCP categories; order + prefixes group them).
+    // Order: Mixer → Deck → Transport
     json!({
         "tools": [
             {
@@ -267,11 +351,7 @@ fn tools_list() -> Value {
     })
 }
 
-fn tools_call(
-    client: &reqwest::blocking::Client,
-    base: &str,
-    params: Value,
-) -> Result<Value, Value> {
+fn tools_call(backend: &ToolBackend<'_>, params: Value) -> Result<Value, Value> {
     let name = params
         .get("name")
         .and_then(|v| v.as_str())
@@ -281,9 +361,23 @@ fn tools_call(
         .cloned()
         .unwrap_or_else(|| json!({}));
 
+    match backend {
+        ToolBackend::Http { client, base } => tools_call_http(client, base, name, &args),
+        ToolBackend::Local { state } => tools_call_local(state, name, &args),
+    }
+}
+
+// ── HTTP bridge tool exec (stdio) ───────────────────────────────────────────
+
+fn tools_call_http(
+    client: &reqwest::blocking::Client,
+    base: &str,
+    name: &str,
+    args: &Value,
+) -> Result<Value, Value> {
     let outcome = match name {
         "strudel_mixer_eq" => {
-            let deck = arg_str(&args, "deck")?;
+            let deck = arg_str(args, "deck")?;
             let mut body = Map::new();
             body.insert("deck".into(), json!(deck));
             for key in ["hi", "mid", "lo"] {
@@ -326,7 +420,7 @@ fn tools_call(
             )
         }
         "strudel_xfade" => {
-            let to = arg_str(&args, "to")?;
+            let to = arg_str(args, "to")?;
             let bars = args.get("bars").and_then(|v| v.as_u64()).unwrap_or(4);
             http_post(
                 client,
@@ -342,8 +436,8 @@ fn tools_call(
             http_post(client, &format!("{base}/bpm"), json!({ "bpm": bpm }))
         }
         "strudel_load_song" => {
-            let path = arg_str(&args, "path")?;
-            let deck = arg_str(&args, "deck")?;
+            let path = arg_str(args, "path")?;
+            let deck = arg_str(args, "deck")?;
             http_post(
                 client,
                 &format!("{base}/song/load"),
@@ -352,8 +446,8 @@ fn tools_call(
         }
         "strudel_list_songs" => http_get(client, &format!("{base}/songs")),
         "strudel_save_song" => {
-            let name = arg_str(&args, "name")?;
-            let content = arg_str(&args, "content")?;
+            let name = arg_str(args, "name")?;
+            let content = arg_str(args, "content")?;
             let mut body = Map::new();
             body.insert("name".into(), json!(name));
             body.insert("content".into(), json!(content));
@@ -366,8 +460,8 @@ fn tools_call(
             http_post(client, &format!("{base}/song/save"), Value::Object(body))
         }
         "strudel_mute" => {
-            let deck = arg_str(&args, "deck")?;
-            let track = arg_str(&args, "track")?;
+            let deck = arg_str(args, "deck")?;
+            let track = arg_str(args, "track")?;
             let muted = args
                 .get("muted")
                 .and_then(|v| v.as_bool())
@@ -379,7 +473,7 @@ fn tools_call(
             )
         }
         "strudel_head" => {
-            let deck = arg_str(&args, "deck")?;
+            let deck = arg_str(args, "deck")?;
             let bar = args
                 .get("bar")
                 .and_then(|v| v.as_u64())
@@ -404,10 +498,304 @@ fn tools_call(
     }
 }
 
+// ── In-process tool exec (HTTP /mcp) ────────────────────────────────────────
+
+fn tools_call_local(state: &AppState, name: &str, args: &Value) -> Result<Value, Value> {
+    let outcome = match name {
+        "strudel_mixer_eq" => local_mixer_eq(state, args),
+        "strudel_mixer_filter" => local_mixer_filter(state, args),
+        "strudel_mixer_crossfader" => local_mixer_crossfader(state, args),
+        "strudel_xfade" => local_xfade(state, args),
+        "strudel_set_bpm" => local_set_bpm(state, args),
+        "strudel_load_song" => local_load_song(state, args),
+        "strudel_list_songs" => local_list_songs(),
+        "strudel_save_song" => local_save_song(state, args),
+        "strudel_mute" => local_mute(state, args),
+        "strudel_head" => local_head(state, args),
+        "strudel_hush" => {
+            let _ = state.tx.send(Command::Hush);
+            Ok("ok (204)".into())
+        }
+        "strudel_status" => {
+            let info: StatusInfo = snapshot(&state.engine);
+            serde_json::to_string(&info).map_err(|e| e.to_string())
+        }
+        other => return Err(rpc_error(-32602, format!("unknown tool: {other}"))),
+    };
+
+    match outcome {
+        Ok(text) => Ok(tool_text_result(text, false)),
+        Err(e) => Ok(tool_text_result(format_tool_local_error(&e), true)),
+    }
+}
+
+fn send_cmd(state: &AppState, cmd: Command) -> Result<(), String> {
+    state.tx.send(cmd).map_err(|e| e.to_string())
+}
+
+fn local_mixer_eq(state: &AppState, args: &Value) -> Result<String, String> {
+    let deck_s = args
+        .get("deck")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| "deck required (string)".to_string())?;
+    let deck = deck_idx(deck_s)?;
+    let bands: [(u8, Option<f64>); 3] = [
+        (0, args.get("hi").and_then(|v| v.as_f64())),
+        (1, args.get("mid").and_then(|v| v.as_f64())),
+        (2, args.get("lo").and_then(|v| v.as_f64())),
+    ];
+    if bands.iter().all(|(_, v)| v.is_none()) {
+        return Err("mixer_eq: provide at least one of hi, mid, lo".into());
+    }
+    for (band, val) in bands {
+        let Some(v) = val else { continue };
+        if !v.is_finite() {
+            return Err(format!("eq band {band} must be finite"));
+        }
+        send_cmd(
+            state,
+            Command::SetDeckEq {
+                deck,
+                band,
+                value: (v as f32).clamp(0.0, 1.0),
+            },
+        )?;
+    }
+    Ok("ok".into())
+}
+
+fn local_mixer_filter(state: &AppState, args: &Value) -> Result<String, String> {
+    let has_lpf = args.as_object().is_some_and(|m| m.contains_key("lpf"));
+    let has_hpf = args.as_object().is_some_and(|m| m.contains_key("hpf"));
+    if !has_lpf && !has_hpf {
+        return Err("mixer_filter: provide lpf and/or hpf (number or null)".into());
+    }
+    if has_lpf {
+        let hz = opt_hz(args.get("lpf"))?;
+        send_cmd(state, Command::SetMixerLpf(hz))?;
+    }
+    if has_hpf {
+        let hz = opt_hz(args.get("hpf"))?;
+        send_cmd(state, Command::SetMixerHpf(hz))?;
+    }
+    Ok("ok".into())
+}
+
+fn opt_hz(v: Option<&Value>) -> Result<Option<f32>, String> {
+    match v {
+        None | Some(Value::Null) => Ok(None),
+        Some(x) => {
+            let n = x
+                .as_f64()
+                .ok_or_else(|| "filter Hz must be number or null".to_string())?;
+            if !(n.is_finite() && n > 0.0) {
+                return Err(format!("filter Hz must be positive finite, got {n}"));
+            }
+            Ok(Some(n as f32))
+        }
+    }
+}
+
+fn local_mixer_crossfader(state: &AppState, args: &Value) -> Result<String, String> {
+    let pos = args
+        .get("pos")
+        .and_then(|v| v.as_f64())
+        .ok_or_else(|| "pos required (0..=1)".to_string())?;
+    if !pos.is_finite() {
+        return Err(format!("pos must be finite: {pos}"));
+    }
+    send_cmd(state, Command::SetCrossfader((pos as f32).clamp(0.0, 1.0)))?;
+    Ok("ok".into())
+}
+
+fn local_xfade(state: &AppState, args: &Value) -> Result<String, String> {
+    let to = args
+        .get("to")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| "to required (string)".to_string())?;
+    let to_deck = deck_idx(to)?;
+    let bars = args
+        .get("bars")
+        .and_then(|v| v.as_u64())
+        .unwrap_or(4)
+        .max(1) as u32;
+    send_cmd(state, Command::XFade { to_deck, bars })?;
+    Ok("ok (202)".into())
+}
+
+fn local_set_bpm(state: &AppState, args: &Value) -> Result<String, String> {
+    let bpm = args
+        .get("bpm")
+        .and_then(|v| v.as_f64())
+        .ok_or_else(|| "bpm required".to_string())?;
+    if !(bpm.is_finite() && bpm > 0.0) {
+        return Err(format!("bpm must be a positive finite number: {bpm}"));
+    }
+    send_cmd(state, Command::SetBpm(bpm))?;
+    Ok("ok (202)".into())
+}
+
+fn local_load_song(state: &AppState, args: &Value) -> Result<String, String> {
+    let path = args
+        .get("path")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| "path required (string)".to_string())?;
+    let deck_s = args
+        .get("deck")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| "deck required (string)".to_string())?;
+    let deck = deck_idx(deck_s)?;
+    let resolved = resolve_song_path(path)?;
+    let text = std::fs::read_to_string(&resolved).map_err(|e| format!("read: {e}"))?;
+    let path_str = resolved.to_string_lossy();
+    let song = parse_song(&text, &path_str)?;
+    send_cmd(
+        state,
+        Command::LoadSong {
+            deck,
+            song: Box::new(song),
+        },
+    )?;
+    Ok("ok (202)".into())
+}
+
+fn local_list_songs() -> Result<String, String> {
+    let body = json!({
+        "user_library": list_user_library_songs(),
+        "bundled": list_bundled_songs(),
+        "load_hint": "Use bare basename with strudel_load_song path= (e.g. visitor-dnb or house16). Prefer user_library names for MCP-saved songs; do not prefix songs/."
+    });
+    serde_json::to_string(&body).map_err(|e| e.to_string())
+}
+
+fn local_save_song(state: &AppState, args: &Value) -> Result<String, String> {
+    let name = args
+        .get("name")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| "name required (string)".to_string())?;
+    let content = args
+        .get("content")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| "content required (string)".to_string())?;
+    if content.len() > MAX_SONG_CONTENT_BYTES {
+        return Err(format!(
+            "content too large ({} bytes, max {MAX_SONG_CONTENT_BYTES})",
+            content.len()
+        ));
+    }
+    let path = resolve_user_song_save_path(name)?;
+    let file_name = path
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("song.strudel")
+        .to_string();
+    let overwrite = args
+        .get("overwrite")
+        .and_then(|v| v.as_bool())
+        .unwrap_or(true);
+    if path.is_file() && !overwrite {
+        return Err(format!(
+            "song already exists: {} (set overwrite=true to replace)",
+            path.display()
+        ));
+    }
+    let path_str = path.to_string_lossy().into_owned();
+    let song = parse_song(content, &path_str)?;
+    ensure_user_songs_dir()?;
+    std::fs::write(&path, content.as_bytes()).map_err(|e| format!("write: {e}"))?;
+
+    let mut loaded_deck = None;
+    if let Some(deck_s) = args.get("deck").and_then(|v| v.as_str()) {
+        let deck = deck_idx(deck_s)?;
+        send_cmd(
+            state,
+            Command::LoadSong {
+                deck,
+                song: Box::new(song),
+            },
+        )?;
+        loaded_deck = Some(if deck == 0 { "A" } else { "B" });
+    }
+
+    let res = json!({
+        "path": path_str,
+        "name": file_name,
+        "loaded_deck": loaded_deck,
+    });
+    serde_json::to_string(&res).map_err(|e| e.to_string())
+}
+
+fn local_mute(state: &AppState, args: &Value) -> Result<String, String> {
+    let deck_s = args
+        .get("deck")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| "deck required (string)".to_string())?;
+    let track = args
+        .get("track")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| "track required (string)".to_string())?;
+    let muted = args
+        .get("muted")
+        .and_then(|v| v.as_bool())
+        .ok_or_else(|| "muted required".to_string())?;
+    let deck = deck_idx(deck_s)?;
+    if track.trim().is_empty() {
+        return Err("track name is empty".into());
+    }
+    send_cmd(
+        state,
+        Command::SetTrackMute {
+            deck,
+            track: track.to_string(),
+            muted,
+        },
+    )?;
+    Ok("ok (202)".into())
+}
+
+fn local_head(state: &AppState, args: &Value) -> Result<String, String> {
+    let deck_s = args
+        .get("deck")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| "deck required (string)".to_string())?;
+    let bar = args
+        .get("bar")
+        .and_then(|v| v.as_u64())
+        .ok_or_else(|| "bar required (positive integer, 1-based)".to_string())?;
+    if bar < 1 {
+        return Err("bar must be >= 1 (1 = first bar)".into());
+    }
+    let deck = deck_idx(deck_s)?;
+    send_cmd(state, Command::Head { deck, bar })?;
+    Ok("ok (202)".into())
+}
+
+fn format_tool_local_error(err: &str) -> String {
+    let lower = err.to_ascii_lowercase();
+    let mut out = format!("error: {err}");
+    if lower.contains("song not found") {
+        out.push_str(
+            "\nHint: use a bare basename for path (e.g. visitor-dnb or house16), not songs/.... \
+User-library saves live under ~/.config/strudel-rs/songs/. Call strudel_list_songs to see names, \
+then strudel_load_song(path=<basename>, deck=A|B).",
+        );
+    } else {
+        let looks_like_song_parse = (lower.contains("expected")
+            && (lower.contains("$:") || lower.contains("name: code")))
+            || lower.contains("unexpected char");
+        if looks_like_song_parse {
+            out.push_str(
+                "\nHint: song content must use setcpm(N) (or setcpm(BPM/4)) and `$: <chain>` lines. \
+Do not use stack(...) or .cpm(). Retry strudel_save_song with corrected content.",
+            );
+        }
+    }
+    out
+}
+
+// ── Shared helpers ──────────────────────────────────────────────────────────
+
 /// Map HTTP / transport errors to model-facing text.
-///
-/// Connection failures get a play/API hint. 4xx validation/parse failures do **not**
-/// (a connection hint makes small models give up as if the environment is broken).
 fn format_tool_http_error(base: &str, err: &str) -> String {
     let lower = err.to_ascii_lowercase();
     let is_http_status = lower.contains("http 4") || lower.contains("http 5");
@@ -435,7 +823,6 @@ User-library saves live under ~/.config/strudel-rs/songs/. Call strudel_list_son
 then strudel_load_song(path=<basename>, deck=A|B).",
         );
     } else {
-        // Parse failures from save_song only (not every HTTP 400).
         let looks_like_song_parse = (lower.contains("expected")
             && (lower.contains("$:") || lower.contains("name: code")))
             || (lower.contains("unexpected char") && lower.contains("http 400"));
@@ -500,7 +887,7 @@ fn rpc_error(code: i64, message: impl Into<String>) -> Value {
     json!({ "code": code, "message": message.into() })
 }
 
-/// Read one MCP message. Detects NDJSON (`{...}\n`) or Content-Length framing.
+/// Read one MCP message. Detects NDJSON or Content-Length framing.
 fn read_message(stdin: &mut impl BufRead) -> Result<Option<(Value, Framing)>, String> {
     let mut headers = Map::new();
     let mut line = String::new();
@@ -514,10 +901,8 @@ fn read_message(stdin: &mut impl BufRead) -> Result<Option<(Value, Framing)>, St
         }
         let t = line.trim_end_matches(['\r', '\n']);
         if t.is_empty() {
-            // End of Content-Length headers (blank line).
             break;
         }
-        // NDJSON: one JSON object per line (Hermes / modern MCP SDK).
         if t.starts_with('{') {
             let v: Value = serde_json::from_str(t).map_err(|e| format!("json parse: {e}"))?;
             return Ok(Some((v, Framing::Ndjson)));
@@ -546,7 +931,6 @@ fn read_message(stdin: &mut impl BufRead) -> Result<Option<(Value, Framing)>, St
 fn write_message(stdout: &mut impl Write, value: &Value, framing: Framing) -> Result<(), String> {
     match framing {
         Framing::Ndjson => {
-            // Compact one-line JSON + newline (no pretty-print).
             let body = serde_json::to_string(value).map_err(|e| format!("json encode: {e}"))?;
             writeln!(stdout, "{body}").map_err(|e| format!("stdout: {e}"))?;
             stdout.flush().map_err(|e| format!("stdout flush: {e}"))?;
@@ -568,6 +952,17 @@ fn write_message(stdout: &mut impl Write, value: &Value, framing: Framing) -> Re
 mod tests {
     use super::*;
     use std::io::Cursor;
+    use std::sync::{Arc, Mutex};
+
+    use crossbeam::channel::unbounded;
+
+    use crate::engine::{Command, Engine};
+
+    fn test_state() -> (AppState, crossbeam::channel::Receiver<Command>) {
+        let (tx, rx) = unbounded();
+        let engine = Arc::new(Mutex::new(Engine::new(48_000, 120.0)));
+        (AppState { tx, engine }, rx)
+    }
 
     #[test]
     fn tools_list_mixer_deck_transport_no_set_code() {
@@ -586,7 +981,6 @@ mod tests {
         assert!(names.contains(&"strudel_save_song"));
         assert!(names.contains(&"strudel_head"));
         assert!(names.contains(&"strudel_status"));
-        // Group prefixes in descriptions
         let descs: Vec<_> = tools
             .iter()
             .filter_map(|t| t["description"].as_str())
@@ -648,6 +1042,83 @@ mod tests {
             msg.contains("bare basename") || msg.contains("list_songs"),
             "{msg}"
         );
+    }
+
+    #[test]
+    fn handle_rpc_initialize_and_tools_list() {
+        let (state, _rx) = test_state();
+        let backend = ToolBackend::Local { state: &state };
+
+        let init = json!({
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "initialize",
+            "params": {
+                "protocolVersion": "2025-03-26",
+                "capabilities": {},
+                "clientInfo": { "name": "t", "version": "0" }
+            }
+        });
+        let resp = handle_rpc(&init, &backend).expect("init reply");
+        assert_eq!(resp["id"], 1);
+        assert_eq!(resp["result"]["protocolVersion"], "2025-03-26");
+        assert_eq!(resp["result"]["serverInfo"]["name"], "strudel-rs");
+
+        let list = json!({
+            "jsonrpc": "2.0",
+            "id": 2,
+            "method": "tools/list"
+        });
+        let resp = handle_rpc(&list, &backend).expect("list reply");
+        assert_eq!(resp["result"]["tools"].as_array().unwrap().len(), 12);
+    }
+
+    #[test]
+    fn handle_rpc_notification_no_reply() {
+        let (state, _rx) = test_state();
+        let backend = ToolBackend::Local { state: &state };
+        let n = json!({
+            "jsonrpc": "2.0",
+            "method": "notifications/initialized"
+        });
+        assert!(handle_rpc(&n, &backend).is_none());
+    }
+
+    #[test]
+    fn local_tools_call_status_and_eq() {
+        let (state, rx) = test_state();
+        let backend = ToolBackend::Local { state: &state };
+
+        let status_msg = json!({
+            "jsonrpc": "2.0",
+            "id": 3,
+            "method": "tools/call",
+            "params": { "name": "strudel_status", "arguments": {} }
+        });
+        let resp = handle_rpc(&status_msg, &backend).unwrap();
+        assert_eq!(resp["result"]["isError"], false);
+        let text = resp["result"]["content"][0]["text"].as_str().unwrap();
+        assert!(text.contains("bpm") || text.contains("deck"), "{text}");
+
+        let eq_msg = json!({
+            "jsonrpc": "2.0",
+            "id": 4,
+            "method": "tools/call",
+            "params": {
+                "name": "strudel_mixer_eq",
+                "arguments": { "deck": "A", "lo": 0.3 }
+            }
+        });
+        let resp = handle_rpc(&eq_msg, &backend).unwrap();
+        assert_eq!(resp["result"]["isError"], false);
+        match rx.try_recv().unwrap() {
+            Command::SetDeckEq { deck, band, value } => {
+                assert_eq!(deck, 0);
+                assert_eq!(band, 2);
+                assert!((value - 0.3).abs() < 1e-5);
+            }
+            _ => panic!("expected SetDeckEq"),
+        }
     }
 
     #[test]

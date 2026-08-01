@@ -11,14 +11,10 @@
 # Then prefer copying docs/profile/dj-hermes/* into the profile dir.
 
 # Only strudel MCP — no other MCP servers on this profile.
+# Requires play/dj API up (default :17878). No strudel-rs.exe spawn.
 mcp_servers:
   strudel:
-    command: strudel-rs
-    # Windows example:
-    # command: "C:\\Users\\you\\.cargo\\bin\\strudel-rs.exe"
-    args: ["mcp"]
-    env:
-      STRUDEL_API: "http://127.0.0.1:17878"
+    url: "http://127.0.0.1:17878/mcp"
     tools:
       # Emergency stop stays on the operator keyboard: /hush or Esc in the TUI.
       exclude:
