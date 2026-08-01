@@ -1,7 +1,7 @@
 // @title smoke
 // @details short smoke demo — consolidated drum mini-notation
 setcpm(120/4)
-// drums (space = sequence, comma = simultaneous)
-$: s("[bd hh [bd,sd] hh]*2").gain(0.75)
+// drums (* densify, comma parallel, @ elongate optional)
+$: s("bd*4, [~ sd]*2, [~ hh]*4").gain(0.75)
 // bass (degrees on C minor: 0=c 2=eb 4=g 6=bb)
 $: note("0 2 4 6").scale("C2:minor").s("sawtooth").lpf(400).gain(0.55)

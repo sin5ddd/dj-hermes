@@ -5,28 +5,28 @@
 // cat() = one bar per arg; <> alternates by global cycle within a slot
 setcpm(130/4)
 
-// drums — kick + hat + snare parallel
+// drums — compact parallel (* = densify, @ = elongate weight)
 $: s(cat(
   cat(
-    "bd ~ ~ ~, [~ hh ~ hh], [~ ~ sd ~]",
-    "bd ~ ~ bd, [~ hh ~ hh], [~ ~ sd ~]",
-    "bd ~ ~ ~, [~ hh ~ hh], [~ ~ sd ~]",
-    "bd ~ bd ~, [~ hh hh hh], [~ ~ sd sd]"
+    "bd ~@3, [~ hh]*2, [~@2 sd ~]",
+    "bd ~@2 bd, [~ hh]*2, [~@2 sd ~]",
+    "bd ~@3, [~ hh]*2, [~@2 sd ~]",
+    "bd ~ bd ~, [~ hh hh hh], [~@2 sd sd]"
   ),
   cat(
-    "bd ~ ~ ~, [~ hh ~ hh], [~ ~ sd ~]",
-    "bd ~ ~ bd, [~ hh ~ hh], [~ ~ sd ~]",
-    "bd ~ ~ ~, [~ hh ~ hh], [~ ~ sd ~]",
+    "bd ~@3, [~ hh]*2, [~@2 sd ~]",
+    "bd ~@2 bd, [~ hh]*2, [~@2 sd ~]",
+    "bd ~@3, [~ hh]*2, [~@2 sd ~]",
     "bd ~ bd bd, [hh ~ hh hh], [~ sd ~ sd]"
   ),
-  "bd ~ ~ ~, [~ ~ ~ hh], [~ ~ ~ ~]",
-  "~ ~ ~ bd, [~ hh ~ ~], [~ ~ sd ~]",
+  "bd ~@3, ~@3 hh, ~",
+  "~@3 bd, [~ hh ~@2], [~@2 sd ~]",
   cat(
-    "bd ~ ~ ~, [~ hh ~ hh], [~ ~ sd ~]",
-    "bd ~ ~ bd, [~ hh ~ hh], [~ ~ sd ~]",
-    "bd ~ ~ ~, [~ hh ~ hh], [~ ~ sd ~]",
-    "bd ~ bd ~, [~ hh hh hh], [~ ~ sd sd]",
-    "bd ~ ~ ~, [~ hh ~ hh], [~ ~ sd ~]",
+    "bd ~@3, [~ hh]*2, [~@2 sd ~]",
+    "bd ~@2 bd, [~ hh]*2, [~@2 sd ~]",
+    "bd ~@3, [~ hh]*2, [~@2 sd ~]",
+    "bd ~ bd ~, [~ hh hh hh], [~@2 sd sd]",
+    "bd ~@3, [~ hh]*2, [~@2 sd ~]",
     "bd bd ~ bd, [hh hh ~ hh], [sd ~ sd ~]"
   )
 )).gain(0.55)

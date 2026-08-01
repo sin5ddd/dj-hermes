@@ -4,29 +4,29 @@
 // cat() = one cycle (bar) per arg — same as mini "<a b c>"
 setcpm(174/4)
 
-// drums — kick + snare + hat + openhat parallel
+// drums — parallel layers; oh uses @ for sparse placement
 $: s(cat(
   cat(
-    "bd ~ ~ bd ~ ~ bd ~, [~ ~ sd ~ ~ ~ sd ~], hh*16, [~ ~ ~ ~ ~ oh ~ ~]",
-    "bd ~ ~ bd ~ bd ~ ~, [~ ~ sd ~ ~ ~ sd ~], hh*16, [~ ~ ~ ~ ~ ~ oh ~]",
-    "bd ~ ~ bd ~ ~ bd ~, [~ ~ sd ~ ~ ~ sd ~], hh*16, [~ ~ ~ ~ ~ oh ~ ~]",
-    "bd ~ bd ~ ~ ~ bd ~, [~ ~ sd ~ ~ sd sd ~], hh*16, [~ ~ ~ ~ oh ~ ~ ~]"
+    "bd ~ ~ bd ~ ~ bd ~, [~ ~ sd ~ ~ ~ sd ~], hh*16, [~@5 oh ~@2]",
+    "bd ~ ~ bd ~ bd ~ ~, [~ ~ sd ~ ~ ~ sd ~], hh*16, [~@6 oh ~]",
+    "bd ~ ~ bd ~ ~ bd ~, [~ ~ sd ~ ~ ~ sd ~], hh*16, [~@5 oh ~@2]",
+    "bd ~ bd ~ ~ ~ bd ~, [~ ~ sd ~ ~ sd sd ~], hh*16, [~@4 oh ~@3]"
   ),
   cat(
-    "bd ~ ~ bd ~ ~ bd ~, [~ ~ sd ~ ~ ~ sd ~], hh*16, [~ ~ ~ ~ ~ oh ~ ~]",
-    "bd ~ ~ bd ~ bd ~ ~, [~ ~ sd ~ ~ ~ sd ~], hh*16, [~ ~ ~ ~ ~ ~ oh ~]",
-    "bd ~ ~ bd ~ ~ bd ~, [~ ~ sd ~ ~ ~ sd ~], hh*16, [~ ~ ~ ~ ~ oh ~ ~]",
-    "bd ~ bd ~ ~ bd ~ ~, [~ ~ sd ~ sd ~ sd sd], hh*16, [~ ~ ~ ~ oh ~ oh ~]"
+    "bd ~ ~ bd ~ ~ bd ~, [~ ~ sd ~ ~ ~ sd ~], hh*16, [~@5 oh ~@2]",
+    "bd ~ ~ bd ~ bd ~ ~, [~ ~ sd ~ ~ ~ sd ~], hh*16, [~@6 oh ~]",
+    "bd ~ ~ bd ~ ~ bd ~, [~ ~ sd ~ ~ ~ sd ~], hh*16, [~@5 oh ~@2]",
+    "bd ~ bd ~ ~ bd ~ ~, [~ ~ sd ~ sd ~ sd sd], hh*16, [~@4 oh ~ oh ~]"
   ),
-  "bd ~ ~ ~ ~ ~ ~ ~, [~ ~ ~ ~ ~ ~ sd ~], hh*8, ~",
-  "~ ~ ~ bd ~ ~ bd ~, [~ ~ sd ~ ~ ~ ~ ~], hh*8, [~ ~ ~ ~ ~ oh ~ ~]",
+  "bd ~@7, [~@6 sd ~], hh*8, ~",
+  "~@3 bd ~ ~ bd ~, [~@2 sd ~@4], hh*8, [~@5 oh ~@2]",
   cat(
-    "bd ~ ~ bd ~ ~ bd ~, [~ ~ sd ~ ~ ~ sd ~], hh*16, [~ ~ ~ ~ ~ oh ~ ~]",
-    "bd ~ ~ bd ~ bd ~ ~, [~ ~ sd ~ ~ ~ sd ~], hh*16, [~ ~ ~ ~ ~ ~ oh ~]",
-    "bd ~ ~ bd ~ ~ bd ~, [~ ~ sd ~ ~ ~ sd ~], hh*16, [~ ~ ~ ~ ~ oh ~ ~]",
-    "bd ~ bd ~ ~ ~ bd ~, [~ ~ sd ~ ~ sd sd ~], hh*16, [~ ~ ~ ~ oh ~ ~ ~]",
-    "bd ~ ~ bd ~ ~ bd ~, [~ ~ sd ~ ~ ~ sd ~], hh*16, [~ ~ ~ ~ ~ oh ~ ~]",
-    "bd bd ~ bd ~ bd ~ bd, [sd ~ sd sd ~ sd sd ~], hh*16, [~ oh ~ oh ~ oh ~ oh]"
+    "bd ~ ~ bd ~ ~ bd ~, [~ ~ sd ~ ~ ~ sd ~], hh*16, [~@5 oh ~@2]",
+    "bd ~ ~ bd ~ bd ~ ~, [~ ~ sd ~ ~ ~ sd ~], hh*16, [~@6 oh ~]",
+    "bd ~ ~ bd ~ ~ bd ~, [~ ~ sd ~ ~ ~ sd ~], hh*16, [~@5 oh ~@2]",
+    "bd ~ bd ~ ~ ~ bd ~, [~ ~ sd ~ ~ sd sd ~], hh*16, [~@4 oh ~@3]",
+    "bd ~ ~ bd ~ ~ bd ~, [~ ~ sd ~ ~ ~ sd ~], hh*16, [~@5 oh ~@2]",
+    "bd bd ~ bd ~ bd ~ bd, [sd ~ sd sd ~ sd sd ~], hh*16, [~ oh]*4"
   )
 )).gain(0.5)
 

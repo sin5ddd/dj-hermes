@@ -4,29 +4,29 @@
 // cat() = one cycle (bar) per arg — same as mini "<a b c>"
 setcpm(132/4)
 
-// drums — kick + snare + hat + openhat parallel
+// drums — 2-step skeleton; oh sparse via @
 $: s(cat(
   cat(
-    "bd ~ ~ ~ bd ~ bd ~, [~ ~ sd ~ ~ sd ~ ~], hh ~ hh hh hh ~ hh ~, [~ ~ ~ oh ~ ~ ~ ~]",
-    "bd ~ ~ ~ bd ~ ~ ~, [~ ~ sd ~ ~ ~ sd ~], hh ~ hh hh hh ~ hh hh, [~ ~ ~ ~ ~ ~ oh ~]",
-    "bd ~ ~ ~ bd ~ bd ~, [~ ~ sd ~ ~ sd ~ ~], hh ~ hh hh hh ~ hh ~, [~ ~ ~ oh ~ ~ ~ ~]",
-    "bd ~ bd ~ bd ~ ~ ~, [~ ~ sd ~ sd ~ sd ~], hh hh hh ~ hh ~ hh ~, [~ ~ ~ ~ oh ~ ~ oh]"
+    "bd ~@3 bd ~ bd ~, [~@2 sd ~ ~ sd ~@2], hh ~ hh hh hh ~ hh ~, [~@3 oh ~@4]",
+    "bd ~@3 bd ~@3, [~@2 sd ~@3 sd ~], hh ~ hh hh hh ~ hh hh, [~@6 oh ~]",
+    "bd ~@3 bd ~ bd ~, [~@2 sd ~ ~ sd ~@2], hh ~ hh hh hh ~ hh ~, [~@3 oh ~@4]",
+    "bd ~ bd ~ bd ~@3, [~@2 sd ~ sd ~ sd ~], hh hh hh ~ hh ~ hh ~, [~@4 oh ~@2 oh]"
   ),
   cat(
-    "bd ~ ~ ~ bd ~ bd ~, [~ ~ sd ~ ~ sd ~ ~], hh ~ hh hh hh ~ hh ~, [~ ~ ~ oh ~ ~ ~ ~]",
-    "bd ~ ~ ~ bd ~ ~ ~, [~ ~ sd ~ ~ ~ sd ~], hh ~ hh hh hh ~ hh hh, [~ ~ ~ ~ ~ ~ oh ~]",
-    "bd ~ ~ ~ bd ~ bd ~, [~ ~ sd ~ ~ sd ~ ~], hh ~ hh hh hh ~ hh ~, [~ ~ ~ oh ~ ~ ~ ~]",
-    "bd ~ bd ~ ~ bd ~ ~, [~ sd ~ sd ~ ~ sd ~], hh hh ~ hh hh ~ hh hh, [~ oh ~ ~ ~ ~ oh ~]"
+    "bd ~@3 bd ~ bd ~, [~@2 sd ~ ~ sd ~@2], hh ~ hh hh hh ~ hh ~, [~@3 oh ~@4]",
+    "bd ~@3 bd ~@3, [~@2 sd ~@3 sd ~], hh ~ hh hh hh ~ hh hh, [~@6 oh ~]",
+    "bd ~@3 bd ~ bd ~, [~@2 sd ~ ~ sd ~@2], hh ~ hh hh hh ~ hh ~, [~@3 oh ~@4]",
+    "bd ~ bd ~ ~ bd ~@2, [~ sd ~ sd ~@2 sd ~], hh hh ~ hh hh ~ hh hh, [~ oh ~@4 oh ~]"
   ),
-  "bd ~ ~ ~ ~ ~ ~ ~, [~ ~ ~ ~ ~ sd ~ ~], hh ~ ~ ~ hh ~ ~ ~, ~",
-  "~ ~ ~ ~ bd ~ bd ~, [~ ~ sd ~ ~ ~ ~ ~], ~ hh ~ hh ~ hh ~ hh, [~ ~ ~ oh ~ ~ ~ ~]",
+  "bd ~@7, [~@5 sd ~@2], hh ~@3 hh ~@3, ~",
+  "~@4 bd ~ bd ~, [~@2 sd ~@5], [~ hh]*4, [~@3 oh ~@4]",
   cat(
-    "bd ~ ~ ~ bd ~ bd ~, [~ ~ sd ~ ~ sd ~ ~], hh ~ hh hh hh ~ hh ~, [~ ~ ~ oh ~ ~ ~ ~]",
-    "bd ~ ~ ~ bd ~ ~ ~, [~ ~ sd ~ ~ ~ sd ~], hh ~ hh hh hh ~ hh hh, [~ ~ ~ ~ ~ ~ oh ~]",
-    "bd ~ ~ ~ bd ~ bd ~, [~ ~ sd ~ ~ sd ~ ~], hh ~ hh hh hh ~ hh ~, [~ ~ ~ oh ~ ~ ~ ~]",
-    "bd ~ bd ~ bd ~ ~ ~, [~ ~ sd ~ sd ~ sd ~], hh hh hh ~ hh ~ hh ~, [~ ~ ~ ~ oh ~ ~ oh]",
-    "bd ~ ~ ~ bd ~ bd ~, [~ ~ sd ~ ~ sd ~ ~], hh ~ hh hh hh ~ hh ~, [~ ~ ~ oh ~ ~ ~ ~]",
-    "bd ~ bd ~ bd ~ bd ~, [sd ~ sd ~ ~ sd sd ~], hh hh hh hh hh ~ hh hh, [~ oh ~ oh ~ oh ~ ~]"
+    "bd ~@3 bd ~ bd ~, [~@2 sd ~ ~ sd ~@2], hh ~ hh hh hh ~ hh ~, [~@3 oh ~@4]",
+    "bd ~@3 bd ~@3, [~@2 sd ~@3 sd ~], hh ~ hh hh hh ~ hh hh, [~@6 oh ~]",
+    "bd ~@3 bd ~ bd ~, [~@2 sd ~ ~ sd ~@2], hh ~ hh hh hh ~ hh ~, [~@3 oh ~@4]",
+    "bd ~ bd ~ bd ~@3, [~@2 sd ~ sd ~ sd ~], hh hh hh ~ hh ~ hh ~, [~@4 oh ~@2 oh]",
+    "bd ~@3 bd ~ bd ~, [~@2 sd ~ ~ sd ~@2], hh ~ hh hh hh ~ hh ~, [~@3 oh ~@4]",
+    "bd ~ bd ~ bd ~ bd ~, [sd ~ sd ~ ~ sd sd ~], hh hh hh hh hh ~ hh hh, [~ oh]*3 ~"
   )
 )).gain(0.5)
 

@@ -31,6 +31,8 @@ pub enum Token {
     CloseAngle(Span), // < >
     Star(Span),
     Slash(Span), // * /
+    /// `@` — elongate (temporal weight)
+    At(Span),
     /// `,` — parallel (simultaneous) separator, not whitespace
     Comma(Span),
     Number(f64, Span),
@@ -47,6 +49,7 @@ impl Token {
             | Token::CloseAngle(s)
             | Token::Star(s)
             | Token::Slash(s)
+            | Token::At(s)
             | Token::Comma(s)
             | Token::Number(_, s) => *s,
         }
@@ -95,6 +98,10 @@ pub fn tokenize(input: &str) -> Result<Vec<Token>, String> {
                 out.push(Token::Slash(Span::new(i, i + 1)));
                 i += 1;
             }
+            '@' => {
+                out.push(Token::At(Span::new(i, i + 1)));
+                i += 1;
+            }
             c if c.is_ascii_alphanumeric() || matches!(c, '.' | '#' | '-' | '_' | '\'') => {
                 let start = i;
                 i += 1;
@@ -137,6 +144,8 @@ pub enum Node {
     Fast(Box<Node>, f64),
     /// `node / n`
     Slow(Box<Node>, f64),
+    /// `node@n`: temporal weight inside a Seq (default weight is 1)
+    Elongate(Box<Node>, f64),
 }
 
 impl Node {
@@ -180,6 +189,7 @@ fn parse_seq(
             continue;
         }
         let mut item = parse_item(t, pos)?;
+        // Postfix in source order: * / @
         loop {
             if *pos + 1 < t.len() {
                 if matches!(t[*pos], Token::Star(_)) {
@@ -195,6 +205,17 @@ fn parse_seq(
                         *pos += 2;
                         continue;
                     }
+                }
+                if matches!(t[*pos], Token::At(_)) {
+                    if let Token::Number(n, _) = t[*pos + 1] {
+                        if n <= 0.0 {
+                            return Err(format!("elongate weight must be > 0, got {n}"));
+                        }
+                        item = Node::Elongate(Box::new(item), n);
+                        *pos += 2;
+                        continue;
+                    }
+                    return Err("elongate @ expects a number".into());
                 }
             }
             break;
@@ -301,7 +322,24 @@ pub fn offset_spans(node: &mut Node, delta: usize) {
                 offset_spans(it, delta);
             }
         }
-        Node::Fast(inner, _) | Node::Slow(inner, _) => offset_spans(inner, delta),
+        Node::Fast(inner, _) | Node::Slow(inner, _) | Node::Elongate(inner, _) => {
+            offset_spans(inner, delta)
+        }
+    }
+}
+
+/// Temporal weight of a seq child (Elongate); default 1.
+fn seq_weight(node: &Node) -> f64 {
+    match node {
+        Node::Elongate(_, w) => *w,
+        _ => 1.0,
+    }
+}
+
+fn unwrap_elongate(node: &Node) -> &Node {
+    match node {
+        Node::Elongate(inner, _) => inner,
+        other => other,
     }
 }
 
@@ -325,9 +363,16 @@ fn emit(node: &Node, start: f64, span: f64, cycle: u64, out: &mut Vec<Event>) {
             if items.is_empty() {
                 return;
             }
-            let each = span / items.len() as f64;
-            for (i, it) in items.iter().enumerate() {
-                emit(it, start + i as f64 * each, each, cycle, out);
+            let total: f64 = items.iter().map(seq_weight).sum();
+            if total <= 0.0 {
+                return;
+            }
+            let mut t = start;
+            for it in items {
+                let w = seq_weight(it);
+                let each = span * (w / total);
+                emit(unwrap_elongate(it), t, each, cycle, out);
+                t += each;
             }
         }
         Node::Stack(items) => {
@@ -355,6 +400,8 @@ fn emit(node: &Node, start: f64, span: f64, cycle: u64, out: &mut Vec<Event>) {
                 emit(inner, start, span, cycle, out);
             }
         }
+        // Weight only matters as a Seq sibling; alone, pass through.
+        Node::Elongate(inner, _) => emit(inner, start, span, cycle, out),
     }
 }
 
@@ -529,5 +576,51 @@ mod tests {
         assert_eq!(vals1[0], "c2");
         assert_eq!(vals1[1], "g2");
         assert_eq!(vals1[2], "g2");
+    }
+
+    #[test]
+    fn elongate_weights_seq() {
+        let n = parse("a@2 b").unwrap();
+        let ev = events(&n, 0);
+        assert_eq!(ev.len(), 2);
+        assert!((ev[0].dur - 2.0 / 3.0).abs() < 1e-9);
+        assert!((ev[1].dur - 1.0 / 3.0).abs() < 1e-9);
+        assert!((ev[1].start - 2.0 / 3.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn elongate_rest_and_hits() {
+        // weights 3 + 1 + 4 = 8
+        let n = parse("~@3 bd ~@4").unwrap();
+        let ev = events(&n, 0);
+        assert_eq!(ev.len(), 1);
+        assert_eq!(ev[0].value, "bd");
+        assert!((ev[0].start - 3.0 / 8.0).abs() < 1e-9);
+        assert!((ev[0].dur - 1.0 / 8.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn elongate_zero_errors() {
+        assert!(parse("bd@0").is_err());
+        assert!(parse("bd@-1").is_err());
+    }
+
+    #[test]
+    fn smart_drum_pattern_parses() {
+        let src = "bd*4, [~ sd]*2, [~ hh]*4, <~ [~@3 bd ~@4]>";
+        let n = parse(src).unwrap();
+        assert!(matches!(n, Node::Parallel(ref v) if v.len() == 4));
+        let ev0 = events(&n, 0);
+        let n_bd = ev0.iter().filter(|e| e.value == "bd").count();
+        let n_sd = ev0.iter().filter(|e| e.value == "sd").count();
+        let n_hh = ev0.iter().filter(|e| e.value == "hh").count();
+        // cycle 0 of stack is ~ (no extra bd); bd*4 → 4 kicks
+        assert_eq!(n_bd, 4);
+        assert_eq!(n_sd, 2);
+        assert_eq!(n_hh, 4);
+        // cycle 1: stack picks [~@3 bd ~@4] → one more bd
+        let ev1 = events(&n, 1);
+        let n_bd1 = ev1.iter().filter(|e| e.value == "bd").count();
+        assert_eq!(n_bd1, 5);
     }
 }

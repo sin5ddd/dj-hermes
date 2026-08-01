@@ -459,7 +459,9 @@ fn first_atom_value(node: &Node) -> Option<String> {
         Node::Seq(items) | Node::Stack(items) | Node::Parallel(items) => {
             items.iter().find_map(first_atom_value)
         }
-        Node::Fast(inner, _) | Node::Slow(inner, _) => first_atom_value(inner),
+        Node::Fast(inner, _) | Node::Slow(inner, _) | Node::Elongate(inner, _) => {
+            first_atom_value(inner)
+        }
     }
 }
 

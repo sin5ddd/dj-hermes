@@ -5,27 +5,27 @@
 // drums: parallel layers (comma = simultaneous, space = sequence)
 setcpm(122/4)
 
-// drums — four-on-floor + hats + openhat + snare (merged)
+// drums — smart mini: * densify, @ elongate, comma = parallel
 $: s(cat(
   cat(
-    "bd*4, hh*8, [~ oh ~ oh], [~ sd ~ sd]",
-    "bd*4, hh*8, [~ oh ~ oh], [~ sd ~ sd]",
-    "bd*4, hh*8, [~ oh ~ oh], [~ sd ~ sd]",
-    "bd*4, hh*8, [~ oh ~ oh], [~ sd ~ sd]",
-    "bd*4, hh*8, [~ oh ~ oh], [~ sd ~ sd]",
-    "bd*4, hh*8, [~ oh ~ oh], [~ sd ~ sd]",
-    "bd*4, hh*8, [~ oh ~ oh], [~ sd ~ sd]",
-    "bd*4, hh*8, [~ oh ~ oh], [~ sd ~ [sd ~]]"
+    "bd*4, [~ sd]*2, [~ hh]*4, [~ oh]*2",
+    "bd*4, [~ sd]*2, [~ hh]*4, [~ oh]*2",
+    "bd*4, [~ sd]*2, [~ hh]*4, [~ oh]*2",
+    "bd*4, [~ sd]*2, [~ hh]*4, [~ oh]*2",
+    "bd*4, [~ sd]*2, [~ hh]*4, [~ oh]*2",
+    "bd*4, [~ sd]*2, [~ hh]*4, [~ oh]*2",
+    "bd*4, [~ sd]*2, [~ hh]*4, [~ oh]*2",
+    "bd*4, [~ sd]*2, [~ hh]*4, [~ oh ~ [sd ~]]"
   ),
-  "bd*4, hh*4, [~ ~ ~ oh], [~ ~ ~ sd]",
+  "bd*4, [~@3 sd], hh*4, [~@3 oh]",
   cat(
-    "bd*4, hh*8, [~ oh ~ oh], [~ sd ~ sd]",
-    "bd*4, hh*8, [~ oh ~ oh], [~ sd ~ sd]",
-    "bd*4, hh*8, [~ oh ~ oh], [~ sd ~ sd]",
-    "bd*4, hh*8, [~ oh ~ oh], [~ sd ~ sd]",
-    "bd*4, hh*8, [~ oh ~ oh], [~ sd ~ sd]",
-    "bd*4, hh*8, [~ oh ~ oh], [~ sd ~ sd]",
-    "bd bd bd ~, hh*16, [~ oh oh oh], [~ sd sd sd]"
+    "bd*4, [~ sd]*2, [~ hh]*4, [~ oh]*2",
+    "bd*4, [~ sd]*2, [~ hh]*4, [~ oh]*2",
+    "bd*4, [~ sd]*2, [~ hh]*4, [~ oh]*2",
+    "bd*4, [~ sd]*2, [~ hh]*4, [~ oh]*2",
+    "bd*4, [~ sd]*2, [~ hh]*4, [~ oh]*2",
+    "bd*4, [~ sd]*2, [~ hh]*4, [~ oh]*2",
+    "bd bd bd ~, [~ sd sd sd], hh*16, [~ oh oh oh]"
   )
 )).gain(0.55)
 

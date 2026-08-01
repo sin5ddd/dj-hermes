@@ -4,27 +4,27 @@
 // cat() = one cycle (bar) per arg — same as mini "<a b c>"
 setcpm(128/4)
 
-// drums — kick + hat + snare parallel
+// drums — smart mini (* densify, @ elongate)
 $: s(cat(
   cat(
-    "bd*4, hh*8, [~ sd ~ sd]",
-    "bd*4, hh*8, [~ sd ~ sd]",
-    "bd*4, hh*8, [~ sd ~ sd]",
-    "bd*4, hh*8, [~ sd ~ sd]",
-    "bd*4, hh*8, [~ sd ~ sd]",
-    "bd*4, hh*16, [~ sd ~ sd]",
-    "bd*4, hh*8, [~ sd ~ sd]",
-    "bd*4, hh*8, [~ sd ~ [sd sd]]"
+    "bd*4, [~ sd]*2, [~ hh]*4",
+    "bd*4, [~ sd]*2, [~ hh]*4",
+    "bd*4, [~ sd]*2, [~ hh]*4",
+    "bd*4, [~ sd]*2, [~ hh]*4",
+    "bd*4, [~ sd]*2, [~ hh]*4",
+    "bd*4, [~ sd]*2, hh*16",
+    "bd*4, [~ sd]*2, [~ hh]*4",
+    "bd*4, [~ sd]*2, [~ hh]*4, [~@3 [sd sd]]"
   ),
-  "bd bd ~ bd, hh*4, [~ ~ ~ sd]",
-  "bd ~ bd bd, hh*4, [~ sd ~ ~]",
+  "bd bd ~ bd, [~@3 sd], hh*4",
+  "bd ~ bd bd, [~ sd ~@2], hh*4",
   cat(
-    "bd*4, hh*8, [~ sd ~ sd]",
-    "bd*4, hh*16, [~ sd ~ sd]",
-    "bd*4, hh*8, [~ sd ~ sd]",
-    "bd*4, hh*16, [~ sd ~ [sd sd]]",
-    "bd*4, hh*8, [~ sd ~ sd]",
-    "bd*4, hh*16, [sd ~ sd sd]"
+    "bd*4, [~ sd]*2, [~ hh]*4",
+    "bd*4, [~ sd]*2, hh*16",
+    "bd*4, [~ sd]*2, [~ hh]*4",
+    "bd*4, [~ sd]*2, hh*16, [~@3 [sd sd]]",
+    "bd*4, [~ sd]*2, [~ hh]*4",
+    "bd*4, [sd ~ sd sd], hh*16"
   )
 )).gain(0.55)
 

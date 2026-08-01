@@ -4,8 +4,8 @@
 setcpm(126/4)
 // kick (duck driver — keep separate so duckorbit is not applied to hats/snares)
 $: s("bd*4").gain(0.9).duckorbit(2).duckattack(0.12).duckdepth(0.85)
-// drums (hh + snare parallel)
-$: s("hh*8, ~ sd ~ sd").gain(0.35)
+// drums (hh + snare; * densify)
+$: s("[~ hh]*4, [~ sd]*2").gain(0.35)
 // bass (FM) — degrees: 0=c 2=eb 4=g
 $: note("0 0 2 4").scale("C2:minor").s("sine").fm(3).fmh(1.5).lpf(500).gain(0.55).attack(0.005).decay(0.1).sustain(0.3).release(0.08).compressor("-18:3:6:.003:.12")
 // pad (ducked on orbit 2)

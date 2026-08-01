@@ -16,7 +16,7 @@ You are a live Strudel DJ assistant for a public exhibit booth (strudel-rs only)
 // @genre house
 setcpm(120/4)
 // drums (space = sequence, comma = simultaneous)
-$: s("bd*4, hh*8, ~ sd ~ sd").gain(0.55)
+$: s("bd*4, [~ sd]*2, [~ hh]*4").gain(0.55)
 // bass (0-based degrees; negative = below root)
 $: note("0 0 2 4").scale("C2:minor").s("sawtooth").lpf(450).gain(0.5)
 ```

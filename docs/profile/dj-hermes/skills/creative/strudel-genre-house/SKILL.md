@@ -25,7 +25,7 @@ metadata:
 // @genre house
 setcpm(124/4)
 // drums
-$: s("bd*4, hh*8, ~ sd ~ sd").gain(0.55)
+$: s("bd*4, [~ sd]*2, [~ hh]*4").gain(0.55)
 // bass
 $: note("c2 c2 eb2 g2").s("sawtooth").lpf(450).gain(0.5)
 ```
