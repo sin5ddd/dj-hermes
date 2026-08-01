@@ -4,7 +4,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 
 use crate::deck::Deck;
-use crate::mixer::{Mixer, XFadeTick};
+use crate::mixer::Mixer;
 use crate::sample::SampleBank;
 use crate::song::Song;
 use crate::transport::Transport;
@@ -273,12 +273,9 @@ impl Engine {
     pub fn process(&mut self, out: &mut [f32], samples: &SampleBank) {
         self.apply_pending_at_bar_boundary();
 
-        match self.mixer.tick_xfade(self.transport.global_sample) {
-            XFadeTick::Finished { from_deck, .. } => {
-                self.decks[from_deck].unload();
-            }
-            XFadeTick::Idle | XFadeTick::Active => {}
-        }
+        // XFade only moves gains; both decks keep their songs so the DJ can
+        // fade back (or cue the quiet deck) without reloading.
+        let _ = self.mixer.tick_xfade(self.transport.global_sample);
 
         let frames = out.len() / 2;
         if frames == 0 {
@@ -586,9 +583,10 @@ b: note("{n}").s("sawtooth").gain(0.8)
             "to gain should be 1, got {}",
             e.mixer.gain_b
         );
-        assert!(
-            e.decks[0].song_title().is_none(),
-            "old deck unloaded after xfade"
+        assert_eq!(
+            e.decks[0].song_title(),
+            Some("t"),
+            "source deck should stay loaded after xfade"
         );
         assert_eq!(e.decks[1].song_title(), Some("t"));
     }

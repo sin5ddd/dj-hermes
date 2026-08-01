@@ -15,7 +15,8 @@ pub struct XFadeState {
 pub enum XFadeTick {
     Idle,
     Active,
-    /// Fade finished this tick; engine should unload `from_deck`.
+    /// Fade finished this tick (gains snapped to the target deck).
+    /// Decks keep their songs; only fader positions change.
     Finished {
         from_deck: usize,
         to_deck: usize,

@@ -252,9 +252,10 @@ fn dj_xfade_techno_to_ambient() {
         "to gain should be 1, got {}",
         e.mixer.gain_b
     );
-    assert!(
-        e.decks[0].song_title().is_none(),
-        "old deck unloaded after xfade"
+    assert_eq!(
+        e.decks[0].song_title(),
+        Some("techno1"),
+        "source deck should stay loaded after xfade"
     );
     assert_eq!(e.decks[1].song_title(), Some("ambient1"));
 
