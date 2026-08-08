@@ -93,6 +93,9 @@ pub struct Engine {
     scratch_out_r: Vec<f32>,
     /// Lock-free playhead for UI highlight (UI re-evaluates patterns; audio only stores).
     pub playhead: Arc<AtomicU64>,
+    /// Once true, further `LoadSong` paths must not overwrite master BPM from `song.bpm`.
+    /// Seeded by the first song that carries a BPM, or by an explicit [`Command::SetBpm`].
+    bpm_seeded: bool,
 }
 
 impl Engine {
@@ -109,6 +112,18 @@ impl Engine {
             scratch_out_l: Vec::new(),
             scratch_out_r: Vec::new(),
             playhead: Arc::new(AtomicU64::new(0)),
+            bpm_seeded: false,
+        }
+    }
+
+    /// Apply `song.bpm` to the shared transport only while master BPM is still unseeded.
+    fn maybe_seed_bpm_from_song(&mut self, song: &Song) {
+        if self.bpm_seeded {
+            return;
+        }
+        if let Some(bpm) = song.bpm {
+            self.transport.set_bpm(bpm);
+            self.bpm_seeded = true;
         }
     }
 
@@ -123,13 +138,13 @@ impl Engine {
 
     /// Load a song on a deck immediately (no bar wait). For CLI play / startup UX.
     /// Live hot-swap should keep using `push_command(LoadSong { .. })`.
+    ///
+    /// Song BPM is applied only while master BPM is still unseeded (first song wins).
     pub fn load_song_immediate(&mut self, deck: usize, song: Song) {
         if deck >= 2 {
             return;
         }
-        if let Some(bpm) = song.bpm {
-            self.transport.set_bpm(bpm);
-        }
+        self.maybe_seed_bpm_from_song(&song);
         self.decks[deck].load(song);
         // Audition / startup: ensure the loaded deck is audible.
         if deck == 0 {
@@ -239,9 +254,7 @@ impl Engine {
         for p in ready {
             match p {
                 Pending::LoadSong { deck, song } => {
-                    if let Some(bpm) = song.bpm {
-                        self.transport.set_bpm(bpm);
-                    }
+                    self.maybe_seed_bpm_from_song(&song);
                     self.decks[deck].load(*song);
                     // Ensure loaded deck is audible if its fader is zero and the other is also silent.
                     if self.mixer.deck_gain(deck) <= 0.0 {
@@ -251,7 +264,10 @@ impl Engine {
                         }
                     }
                 }
-                Pending::SetBpm(b) => self.transport.set_bpm(b),
+                Pending::SetBpm(b) => {
+                    self.transport.set_bpm(b);
+                    self.bpm_seeded = true;
+                }
                 Pending::TrackMute { deck, track, muted } => {
                     self.decks[deck].set_track_mute(&track, muted);
                 }
@@ -646,5 +662,165 @@ bass: note("c2").s("sawtooth").lpf(400).gain(0.5)
         let mut buf = stereo_buf(48_000);
         e.process(&mut buf, &bank);
         assert!(buf.iter().any(|s| s.abs() > 0.001), "smoke should sound");
+    }
+
+    fn peak(buf: &[f32]) -> f32 {
+        buf.iter().fold(0f32, |m, s| m.max(s.abs()))
+    }
+
+    fn song_with_bpm(n: &str, bpm: f64) -> Song {
+        parse_song(
+            &format!(
+                r#"bpm: {bpm}
+title: t
+---
+b: note("{n}").s("sawtooth").gain(0.8)
+"#
+            ),
+            "t",
+        )
+        .unwrap()
+    }
+
+    /// Process one full bar at the engine's current BPM (bar length follows transport).
+    fn process_one_bar(e: &mut Engine, bank: &SampleBank) -> Vec<f32> {
+        let frames = e.transport.samples_per_bar().round() as usize;
+        let mut buf = stereo_buf(frames.max(1));
+        e.process(&mut buf, bank);
+        buf
+    }
+
+    /// Drain until a pending command queued for `next_bar` has been applied.
+    fn process_until_next_bar_applied(e: &mut Engine, bank: &SampleBank) {
+        // Advance through the remainder of the current bar, then one buffer on the target head.
+        let _ = process_one_bar(e, bank);
+        let mut buf = stereo_buf(1_000);
+        e.process(&mut buf, bank);
+    }
+
+    /// Hot-reload on the same deck must not stack a new bar-head onset on leftover voices.
+    #[test]
+    fn load_clears_voices_no_double_onset() {
+        let mut e = Engine::new(48_000, 120.0);
+        let bank = SampleBank::empty();
+        let bar = 96_000usize;
+        let song = test_song("c3");
+
+        e.load_song_immediate(0, song.clone());
+        // Play one full bar to establish steady onset energy.
+        let mut buf = stereo_buf(bar);
+        e.process(&mut buf, &bank);
+        let steady = peak(&buf);
+        assert!(
+            steady > 0.05,
+            "expected sound after first bar, peak={steady}"
+        );
+
+        // Reload same content at next bar boundary.
+        e.push_command(Command::LoadSong {
+            deck: 0,
+            song: Box::new(song),
+        });
+        let mut buf = stereo_buf(bar);
+        e.process(&mut buf, &bank);
+        let after_reload = peak(&buf);
+        assert!(
+            after_reload > 0.05,
+            "should still sound after reload, peak={after_reload}"
+        );
+        assert!(
+            after_reload <= steady * 1.25 + 1e-3,
+            "reload onset must not roughly double: steady={steady} after={after_reload}"
+        );
+    }
+
+    /// Silent-side load must not boost the audible deck's main mix.
+    #[test]
+    fn silent_deck_load_does_not_boost_main() {
+        let mut e = Engine::new(48_000, 120.0);
+        let bank = SampleBank::empty();
+        let bar = 96_000usize;
+        e.mixer.gain_a = 1.0;
+        e.mixer.gain_b = 0.0;
+
+        e.load_song_immediate(0, test_song("c3"));
+        let mut buf = stereo_buf(bar);
+        e.process(&mut buf, &bank);
+        let before = peak(&buf);
+        assert!(before > 0.05, "deck A should sound, peak={before}");
+
+        e.push_command(Command::LoadSong {
+            deck: 1,
+            song: Box::new(test_song("c3")),
+        });
+        process_until_next_bar_applied(&mut e, &bank);
+        let after_buf = process_one_bar(&mut e, &bank);
+        let after = peak(&after_buf);
+        assert!(
+            (after - before).abs() <= before * 0.15 + 1e-3,
+            "silent deck load must not change main peak much: before={before} after={after}"
+        );
+        assert_eq!(e.decks[1].song_title(), Some("t"));
+        assert!(e.mixer.gain_b.abs() < 1e-5, "B fader must stay silent");
+    }
+
+    #[test]
+    fn first_load_applies_song_bpm() {
+        let mut e = Engine::new(48_000, 120.0);
+        let bank = SampleBank::empty();
+        assert!(!e.bpm_seeded);
+        e.push_command(Command::LoadSong {
+            deck: 0,
+            song: Box::new(song_with_bpm("c3", 90.0)),
+        });
+        // Apply at next bar head.
+        let mut buf = stereo_buf(96_000);
+        e.process(&mut buf, &bank);
+        let mut buf = stereo_buf(1_000);
+        e.process(&mut buf, &bank);
+        assert!(e.bpm_seeded);
+        assert!(
+            (e.transport.bpm - 90.0).abs() < 1e-9,
+            "first song BPM should seed master, got {}",
+            e.transport.bpm
+        );
+    }
+
+    #[test]
+    fn second_load_keeps_master_bpm() {
+        let mut e = Engine::new(48_000, 120.0);
+        let bank = SampleBank::empty();
+        e.load_song_immediate(0, song_with_bpm("c3", 100.0));
+        assert!(e.bpm_seeded);
+        assert!((e.transport.bpm - 100.0).abs() < 1e-9);
+
+        e.push_command(Command::LoadSong {
+            deck: 1,
+            song: Box::new(song_with_bpm("g3", 140.0)),
+        });
+        process_until_next_bar_applied(&mut e, &bank);
+        assert!(
+            (e.transport.bpm - 100.0).abs() < 1e-9,
+            "second load must not overwrite master BPM, got {}",
+            e.transport.bpm
+        );
+        assert_eq!(e.decks[1].song_title(), Some("t"));
+    }
+
+    #[test]
+    fn set_bpm_still_works_after_seed() {
+        let mut e = Engine::new(48_000, 120.0);
+        let bank = SampleBank::empty();
+        e.load_song_immediate(0, song_with_bpm("c3", 100.0));
+        assert!(e.bpm_seeded);
+
+        e.push_command(Command::SetBpm(80.0));
+        process_until_next_bar_applied(&mut e, &bank);
+        assert!(
+            (e.transport.bpm - 80.0).abs() < 1e-9,
+            "explicit SetBpm must apply, got {}",
+            e.transport.bpm
+        );
+        assert!(e.bpm_seeded);
     }
 }

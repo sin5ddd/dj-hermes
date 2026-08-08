@@ -4,7 +4,7 @@
 
 use std::path::{Component, Path, PathBuf};
 
-use crate::code::{parse_code, PatternCode};
+use crate::code::{edit_method_on_code, parse_code, MethodEditOp, PatternCode};
 
 /// Default directory for bare song names (relative to process working directory).
 pub const DEFAULT_SONGS_DIR: &str = "songs";
@@ -546,6 +546,235 @@ pub fn parse_song(text: &str, path: &str) -> Result<Song, String> {
     })
 }
 
+/// Keep metadata / tempo lines from the top of `source` (everything before the first track).
+///
+/// Comment lines that only label the next `$:` track (`// drums`) are **excluded** so
+/// [`rebuild_song_source`] can re-emit `// name` without duplication.
+pub fn extract_song_preamble(source: &str) -> String {
+    let lines: Vec<&str> = source.split_inclusive('\n').collect();
+    let mut out = String::new();
+    let mut i = 0usize;
+    let mut block = false;
+
+    while i < lines.len() {
+        let raw = lines[i];
+        let line_no_nl = raw.trim_end_matches(['\r', '\n']);
+        let line = line_no_nl.trim();
+
+        if block {
+            out.push_str(raw);
+            if line_no_nl.contains("*/") {
+                block = false;
+            }
+            i += 1;
+            continue;
+        }
+        if line.starts_with("/*") && !line.contains("*/") {
+            out.push_str(raw);
+            block = true;
+            i += 1;
+            continue;
+        }
+
+        if is_track_start_line(line_no_nl) {
+            break;
+        }
+
+        // Skip track-label comments: `// drums` immediately before `$:` / `name:`.
+        if strip_line_comment(line).is_some() {
+            let mut j = i + 1;
+            while j < lines.len() {
+                let peek = lines[j].trim_end_matches(['\r', '\n']).trim();
+                if peek.is_empty() {
+                    j += 1;
+                    continue;
+                }
+                break;
+            }
+            if j < lines.len()
+                && is_track_start_line(lines[j].trim_end_matches(['\r', '\n']))
+                && !is_metadata_comment(line)
+            {
+                // Leave label comments for rebuild_song_source.
+                break;
+            }
+        }
+
+        out.push_str(raw);
+        i += 1;
+    }
+    out
+}
+
+fn is_metadata_comment(line: &str) -> bool {
+    let Some(body) = strip_line_comment(line) else {
+        return false;
+    };
+    let b = body.trim();
+    b.starts_with('@') || b.starts_with("title:") || b.starts_with('"') // quoted title form
+}
+
+fn is_track_start_line(line_no_nl: &str) -> bool {
+    let line = line_no_nl.trim();
+    if line.is_empty() || line.starts_with("//") || line.starts_with("/*") || line == "---" {
+        return false;
+    }
+    if parse_setcpm(line).is_some()
+        || parse_setcps(line).is_some()
+        || line.starts_with("bpm:")
+        || line.starts_with("title:")
+    {
+        return false;
+    }
+    let Some(colon) = line_no_nl.find(':') else {
+        return false;
+    };
+    let name_part = line_no_nl[..colon].trim();
+    !name_part.is_empty()
+}
+
+/// Rebuild a full `.strudel` source from preamble + tracks (`// name` + `$: code`).
+pub fn rebuild_song_source(preamble: &str, tracks: &[(String, String)]) -> String {
+    let mut out = preamble.to_string();
+    if !out.is_empty() && !out.ends_with('\n') {
+        out.push('\n');
+    }
+    for (name, code) in tracks {
+        let code = code.trim().trim_end_matches(';').trim();
+        // Named tracks get a label comment; `$0`-style anon names stay unlabeled.
+        if !name.is_empty() && !name.starts_with('$') {
+            out.push_str("// ");
+            out.push_str(name);
+            out.push('\n');
+        }
+        out.push_str("$: ");
+        out.push_str(code);
+        out.push('\n');
+    }
+    out
+}
+
+/// Snapshot of track name + raw chain text for API/MCP.
+#[derive(Debug, Clone)]
+pub struct TrackSource {
+    pub name: String,
+    pub code: String,
+    pub muted: bool,
+}
+
+impl Song {
+    pub fn track_sources(&self) -> Vec<TrackSource> {
+        self.tracks
+            .iter()
+            .map(|t| TrackSource {
+                name: t.name.clone(),
+                code: t.code.raw.clone(),
+                muted: t.muted,
+            })
+            .collect()
+    }
+
+    fn find_track_index(&self, track: &str) -> Result<usize, String> {
+        let track = track.trim();
+        if track.is_empty() {
+            return Err("track name required".into());
+        }
+        if let Ok(i) = track.parse::<usize>() {
+            if i < self.tracks.len() {
+                return Ok(i);
+            }
+            return Err(format!(
+                "track index {i} out of range (0..{})",
+                self.tracks.len()
+            ));
+        }
+        self.tracks
+            .iter()
+            .position(|t| t.name == track)
+            .ok_or_else(|| format!("track not found: {track}"))
+    }
+
+    /// Replace / remove / append a track, rebuild source, and re-parse into a new [`Song`].
+    pub fn patch_track(
+        &self,
+        track: &str,
+        op: &str,
+        code: Option<&str>,
+        new_name: Option<&str>,
+    ) -> Result<Song, String> {
+        let mut pairs: Vec<(String, String)> = self
+            .tracks
+            .iter()
+            .map(|t| (t.name.clone(), t.code.raw.clone()))
+            .collect();
+        let op = op.trim().to_ascii_lowercase();
+        match op.as_str() {
+            "replace" => {
+                let i = self.find_track_index(track)?;
+                let code = code
+                    .map(str::trim)
+                    .filter(|s| !s.is_empty())
+                    .ok_or_else(|| "code required for replace".to_string())?;
+                parse_code(code)?;
+                pairs[i].1 = code.to_string();
+                if let Some(n) = new_name.map(str::trim).filter(|s| !s.is_empty()) {
+                    pairs[i].0 = n.to_string();
+                }
+            }
+            "remove" => {
+                let i = self.find_track_index(track)?;
+                if pairs.len() == 1 {
+                    return Err("cannot remove the last track".into());
+                }
+                pairs.remove(i);
+            }
+            "append" => {
+                let code = code
+                    .map(str::trim)
+                    .filter(|s| !s.is_empty())
+                    .ok_or_else(|| "code required for append".to_string())?;
+                parse_code(code)?;
+                let name = new_name
+                    .map(str::trim)
+                    .filter(|s| !s.is_empty())
+                    .map(|s| s.to_string())
+                    .unwrap_or_else(|| format!("${}", pairs.len()));
+                pairs.push((name, code.to_string()));
+            }
+            other => {
+                return Err(format!(
+                    "unknown patch op: {other} (use replace, remove, or append)"
+                ));
+            }
+        }
+
+        let preamble = extract_song_preamble(&self.source);
+        let source = rebuild_song_source(&preamble, &pairs);
+        let mut song = parse_song(&source, &self.path)?;
+        // Preserve runtime mute flags by name when possible.
+        for t in &mut song.tracks {
+            if let Some(old) = self.tracks.iter().find(|o| o.name == t.name) {
+                t.muted = old.muted;
+            }
+        }
+        Ok(song)
+    }
+
+    /// Edit one method on a track chain (`set` / `add` / `remove`).
+    pub fn edit_method(
+        &self,
+        track: &str,
+        op: &str,
+        method: &str,
+        args: &str,
+    ) -> Result<Song, String> {
+        let i = self.find_track_index(track)?;
+        let method_op = MethodEditOp::parse(op)?;
+        let new_code = edit_method_on_code(&self.tracks[i].code.raw, method_op, method, args)?;
+        self.patch_track(&self.tracks[i].name, "replace", Some(&new_code), None)
+    }
+}
+
 /// End offset (exclusive) of line content without trailing `\r`/`\n`.
 fn line_content_end(line_starts: &[(usize, &str)], idx: usize) -> usize {
     let (start, raw) = line_starts[idx];
@@ -1059,6 +1288,51 @@ $: s("hh*8")
             },
             other => panic!("expected Seq, got {other:?}"),
         }
+    }
+
+    #[test]
+    fn patch_track_replace_preserves_other_tracks() {
+        let text = r#"// @title demo
+setcpm(30)
+// drums
+$: s("bd*4").gain(0.9)
+// bass
+$: note("c2").s("sawtooth").lpf(400).gain(0.7)
+"#;
+        let s = parse_song(text, "demo.strudel").unwrap();
+        let s2 = s
+            .patch_track(
+                "bass",
+                "replace",
+                Some(r#"note("c2").s("sine").lpf(200).gain(0.6)"#),
+                None,
+            )
+            .unwrap();
+        assert_eq!(s2.tracks.len(), 2);
+        assert_eq!(s2.tracks[0].name, "drums");
+        assert_eq!(s2.tracks[1].name, "bass");
+        assert_eq!(s2.tracks[1].code.sound, "sine");
+        assert_eq!(s2.tracks[1].code.lpf(), Some(200.0));
+        assert!(s2.source.contains("setcpm(30)"));
+        assert!(s2.source.contains("// drums"));
+        assert!(s2.source.contains("// bass"));
+        // Drums chain unchanged.
+        assert!(s2.tracks[0].code.raw.contains("bd*4"));
+    }
+
+    #[test]
+    fn edit_method_adds_lpf_on_one_track() {
+        let text = r#"// @title demo
+setcpm(30)
+// bass
+$: note("c2").s("sawtooth").gain(0.7)
+// hat
+$: s("hh*8").gain(0.3)
+"#;
+        let s = parse_song(text, "demo.strudel").unwrap();
+        let s2 = s.edit_method("bass", "set", "lpf", "500").unwrap();
+        assert!(s2.tracks[0].code.raw.contains(".lpf(500)"));
+        assert!(!s2.tracks[1].code.raw.contains("lpf"));
     }
 
     #[test]
