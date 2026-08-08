@@ -1,7 +1,7 @@
 ---
 name: strudel-live-edit
 description: "Use when editing a playing strudel-rs song from natural language: add melody, drum fill, modulate/transpose, brighter/darker."
-version: 1.0.0
+version: 1.1.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -18,16 +18,33 @@ metadata:
 ## Overview
 
 来場者の自然言語を、**どの `$:` をどう書き換えるか** に落とす Skill。  
-短いループを **同じ曲名 + `deck`** で 1 意図だけ上書きする（→ `strudel_save_song`）。
+**他パートを書き換えない**ことが最優先。部分編集 API を使い、全文 `strudel_save_song` は新規曲・大規模構成変更に限る。
 
 記法の正本は **strudel-composition**。音色は **strudel-sound-design**。
 
 ## 共通手順
 
-1. 現状の content を把握する（直前 save / 演奏中の曲）  
+1. **`strudel_get_song(deck)`** で現状の `tracks[]` / `source` を読む（記憶だけで全文を書かない）  
 2. 下の **NL ルーティング表**で対象トラックと操作を決める  
-3. **1 意図だけ**変えた全文を `strudel_save_song(name, content, deck)`  
+3. **1 意図だけ**適用する（優先順）:
+   - メソッド 1 個（`.lpf` / `.gain` / `.add` / `.ply` / `.scale` 等）→ **`strudel_edit_method(deck, track, op, method, args?)`**
+     - `op`: `set`（同名は末尾を置換、無ければ追加） / `add`（末尾に追加） / `remove`
+   - 1 トラックのチェーン丸ごと差し替え・追加・削除 → **`strudel_patch_track(deck, track, op, code?, name?)`**
+   - 新規曲や大規模な再構成のみ → `strudel_save_song(name, content, deck)`  
 4. バー境界で反映。チャットにコードだけ書いて終わりにしない  
+
+### edit_method 例
+
+```
+# ベースに LPF
+strudel_edit_method(deck="A", track="bass", op="set", method="lpf", args="400")
+
+# LFO カットオフ
+strudel_edit_method(deck="A", track="bass", op="set", method="lpf", args="sine.rangex(500,4000)")
+
+# gain を外す
+strudel_edit_method(deck="A", track="hat", op="remove", method="gain")
+```
 
 ## NL ルーティング表
 
@@ -180,21 +197,24 @@ $: note("0 2 4 0").scale("C2:phrygian").s("sawtooth").lpf(500).gain(0.6)
 | 長音 | mini `@` |
 | 明るく/暗く | モード梯子 ±1 |
 
-不可のまま: `stack(...)`、`.cpm()`、`.lfo(...)`、`.lpf("<…>")`、未同梱 `cp`。
+不可のまま: `stack(...)`、`.cpm()`、`.lfo(...)`（LFO は `lpf(sine.rangex(...))` 等を使う）、未同梱 `cp`。  
+可: mini パターン `.lpf("<…>")`、連続 LFO `.lpf(sine.rangex(...))`。
 
 ---
 
 ## Pitfalls
 
-1. 毎回フル曲を書き直す → 1 意図差分だけ  
+1. 毎回フル曲を `strudel_save_song` → **get → edit_method / patch_track**  
 2. lead だけ別キーにする → 既存 `.scale` の Root:mode をコピー  
 3. 「暗く」を lpf だけ → まず mode を下げる  
-4. `.add("<1 2>")` → スカラーのみ  
+4. `.add` のパターン引数は実装どおり（不明なら composition を見る）  
 5. ドラムを kick/hat/snare の 3 `$:` に分けない（duckorbit キックのみ例外）  
+6. `get_song` せず記憶の古い content で全文上書き → 他トラック破壊  
 
 ## Checklist
 
+- [ ] `strudel_get_song` で現状を読んだ  
 - [ ] NL 表で対象 `$:` と操作を決めた  
-- [ ] 1 意図だけ変えた  
-- [ ] scale / add / ply は実装済みの使い方  
-- [ ] `strudel_save_song` 同名 + `deck`  
+- [ ] 1 意図だけ（edit_method または patch_track）  
+- [ ] scale / add / ply / lpf LFO は実装済みの使い方  
+- [ ] 全文 save は新規・大規模変更のときだけ  

@@ -64,8 +64,12 @@ $: note("0 0 2 4").scale("C2:minor").s("sawtooth").lpf(450).gain(0.5)
 ## ライブ編集ワークフロー（必須）
 
 1. 初回: 正本に近い **短い** content を `strudel_save_song(name, content, deck)`  
-2. 来場者の要望: **1 トラック or 1 パラメータだけ**変えた全文を同じ `name` + `deck` で上書き  
-3. バー境界で反映される（チャットにコードだけ書いて終わりにしない）
+2. 来場者の要望: **`strudel_get_song(deck)`** → **1 トラック or 1 メソッド**だけ  
+   - パラメータ 1 個 → `strudel_edit_method`  
+   - 1 本の `$:` 差し替え/追加 → `strudel_patch_track`  
+   - 全文 `strudel_save_song` は大規模変更・新規のみ  
+3. バー境界で反映される（チャットにコードだけ書いて終わりにしない）  
+詳細レシピは **strudel-live-edit**。
 
 | 来場者の言い方 | 変更例 |
 | --- | --- |
@@ -202,12 +206,12 @@ $: s("bd*4, hh*16").hpf(200).gain(0.45)
 1. チャットにコードだけ書いて保存しない  
 2. `stack(...).cpm(170)` を content に入れる → 400  
 3. 引数にミニ記法パターンを入れる → 非対応  
-4. 毎回フル曲を書き直して差分が巨大になる  
+4. 毎回フル曲を `strudel_save_song` で書き直して差分が巨大になる  
 
 ## Checklist
 
 - [ ] `setcpm` + 2–5 本の `$:`（短いまま）  
 - [ ] ドラムは原則 1 本の `s(...)`  
 - [ ] ピッチは可能なら次数 + `.scale`  
-- [ ] 変化は `<>` または 1 パラメータのライブ差分  
-- [ ] `strudel_save_song`（同名 + `deck` で上書き推奨）  
+- [ ] ライブ差分は get_song + edit_method / patch_track  
+- [ ] 全文 save は初回・大規模変更のみ  

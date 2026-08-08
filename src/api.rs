@@ -20,6 +20,7 @@ use crate::song::{
     ensure_user_songs_dir, list_bundled_songs, list_user_library_songs, parse_song,
     resolve_song_path, resolve_user_song_save_path, Song, Track, MAX_SONG_CONTENT_BYTES,
 };
+use axum::extract::Query;
 
 // Re-export for callers/tests that used api::sanitize_song_path.
 pub use crate::song::sanitize_song_path;
@@ -113,6 +114,63 @@ pub struct SaveSongReq {
     pub deck: Option<String>,
     /// Default `true`. When `false`, existing file → 409.
     pub overwrite: Option<bool>,
+}
+
+/// Query for `GET /song`.
+#[derive(Deserialize)]
+pub struct GetSongQuery {
+    pub deck: String,
+}
+
+#[derive(Serialize)]
+pub struct TrackInfo {
+    pub name: String,
+    pub code: String,
+    pub muted: bool,
+}
+
+#[derive(Serialize)]
+pub struct GetSongRes {
+    pub deck: String,
+    pub title: String,
+    pub path: String,
+    pub source: String,
+    pub tracks: Vec<TrackInfo>,
+    pub bpm: Option<f64>,
+}
+
+#[derive(Deserialize)]
+pub struct PatchTrackReq {
+    pub deck: String,
+    pub track: String,
+    /// `replace` | `remove` | `append`
+    pub op: String,
+    pub code: Option<String>,
+    /// Optional new/append track label.
+    pub name: Option<String>,
+    /// When true, write rebuilt source to the user library if the song path is there.
+    pub save: Option<bool>,
+}
+
+#[derive(Deserialize)]
+pub struct EditMethodReq {
+    pub deck: String,
+    pub track: String,
+    /// `set` | `add` | `remove`
+    pub op: String,
+    pub method: String,
+    /// Inside-parens args (omit or empty for remove).
+    pub args: Option<String>,
+    pub save: Option<bool>,
+}
+
+#[derive(Serialize)]
+pub struct SongEditRes {
+    pub deck: String,
+    pub title: String,
+    pub source: String,
+    pub tracks: Vec<TrackInfo>,
+    pub saved_path: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -343,6 +401,131 @@ async fn list_songs() -> Json<ListSongsRes> {
     })
 }
 
+fn song_edit_res(deck: usize, song: &Song, saved_path: Option<String>) -> SongEditRes {
+    SongEditRes {
+        deck: if deck == 0 { "A" } else { "B" }.into(),
+        title: song.title.clone(),
+        source: song.source.clone(),
+        tracks: song
+            .track_sources()
+            .into_iter()
+            .map(|t| TrackInfo {
+                name: t.name,
+                code: t.code,
+                muted: t.muted,
+            })
+            .collect(),
+        saved_path,
+    }
+}
+
+fn maybe_save_song_source(song: &Song, save: bool) -> Result<Option<String>, String> {
+    if !save {
+        return Ok(None);
+    }
+    let path = Path::new(&song.path);
+    let name = path
+        .file_name()
+        .and_then(|n| n.to_str())
+        .filter(|n| !n.is_empty())
+        .ok_or_else(|| {
+            "save=true requires a song with a file name (load/save a named song first)".to_string()
+        })?;
+    let dest = resolve_user_song_save_path(name)?;
+    ensure_user_songs_dir()?;
+    std::fs::write(&dest, song.source.as_bytes()).map_err(|e| format!("write: {e}"))?;
+    Ok(Some(dest.to_string_lossy().into_owned()))
+}
+
+/// Snapshot the loaded song source + per-track chains for partial edit workflows.
+async fn get_song(
+    State(s): State<AppState>,
+    Query(q): Query<GetSongQuery>,
+) -> Result<Json<GetSongRes>, (StatusCode, Json<ErrRes>)> {
+    let deck = deck_idx(&q.deck).map_err(bad)?;
+    let e = s.engine.lock().map_err(|e| bad(e.to_string()))?;
+    let song = e.decks[deck]
+        .song_ref()
+        .ok_or_else(|| bad(format!("deck {} has no song loaded", q.deck)))?;
+    Ok(Json(GetSongRes {
+        deck: if deck == 0 { "A" } else { "B" }.into(),
+        title: song.title.clone(),
+        path: song.path.clone(),
+        source: song.source.clone(),
+        tracks: song
+            .track_sources()
+            .into_iter()
+            .map(|t| TrackInfo {
+                name: t.name,
+                code: t.code,
+                muted: t.muted,
+            })
+            .collect(),
+        bpm: song.bpm,
+    }))
+}
+
+/// Patch one track (replace / remove / append), then load on the next bar.
+async fn patch_track(
+    State(s): State<AppState>,
+    Json(r): Json<PatchTrackReq>,
+) -> Result<Json<SongEditRes>, (StatusCode, Json<ErrRes>)> {
+    let deck = deck_idx(&r.deck).map_err(bad)?;
+    let song = {
+        let e = s.engine.lock().map_err(|e| bad(e.to_string()))?;
+        e.decks[deck]
+            .song_ref()
+            .cloned()
+            .ok_or_else(|| bad(format!("deck {} has no song loaded", r.deck)))?
+    };
+    let patched = song
+        .patch_track(&r.track, &r.op, r.code.as_deref(), r.name.as_deref())
+        .map_err(bad)?;
+    let saved_path = maybe_save_song_source(&patched, r.save.unwrap_or(false)).map_err(bad)?;
+    let res = song_edit_res(deck, &patched, saved_path);
+    // Control-plane: publish new source immediately so sequential edits compose.
+    {
+        let mut e = s.engine.lock().map_err(|e| bad(e.to_string()))?;
+        e.decks[deck].set_song_data(patched.clone());
+    }
+    s.tx.send(Command::LoadSong {
+        deck,
+        song: Box::new(patched),
+    })
+    .map_err(|e| bad(e.to_string()))?;
+    Ok(Json(res))
+}
+
+/// Edit one method on a track chain (`set` / `add` / `remove`), then load next bar.
+async fn edit_method(
+    State(s): State<AppState>,
+    Json(r): Json<EditMethodReq>,
+) -> Result<Json<SongEditRes>, (StatusCode, Json<ErrRes>)> {
+    let deck = deck_idx(&r.deck).map_err(bad)?;
+    let song = {
+        let e = s.engine.lock().map_err(|e| bad(e.to_string()))?;
+        e.decks[deck]
+            .song_ref()
+            .cloned()
+            .ok_or_else(|| bad(format!("deck {} has no song loaded", r.deck)))?
+    };
+    let patched = song
+        .edit_method(&r.track, &r.op, &r.method, r.args.as_deref().unwrap_or(""))
+        .map_err(bad)?;
+    let saved_path = maybe_save_song_source(&patched, r.save.unwrap_or(false)).map_err(bad)?;
+    let res = song_edit_res(deck, &patched, saved_path);
+    {
+        let mut e = s.engine.lock().map_err(|e| bad(e.to_string()))?;
+        e.decks[deck].set_song_data(patched.clone());
+    }
+    s.tx.send(Command::LoadSong {
+        deck,
+        song: Box::new(patched),
+    })
+    .map_err(|e| bad(e.to_string()))?;
+    Ok(Json(res))
+}
+
 /// Persist a song into the user library (`~/.config/strudel-rs/songs/` only).
 async fn save_song(
     State(s): State<AppState>,
@@ -558,6 +741,9 @@ pub fn router(state: AppState) -> Router {
         .route("/code", put(put_code))
         .route("/song/load", post(load_song))
         .route("/song/save", post(save_song))
+        .route("/song", get(get_song))
+        .route("/song/patch_track", post(patch_track))
+        .route("/song/edit_method", post(edit_method))
         .route("/songs", get(list_songs))
         .route("/xfade", post(xfade))
         .route("/bpm", post(set_bpm))

@@ -79,13 +79,25 @@ impl Deck {
         }
     }
 
+    /// Replace the loaded song and force a clean reschedule.
+    ///
+    /// Clears ringing voices and the event queue (same policy as [`Self::head_to_bar`] /
+    /// [`Self::unload`]) so hot-reload does not stack a new bar-head onset on top of
+    /// leftover voices (heard as ~2× level on the first hit after load).
     pub fn load(&mut self, song: Song) {
         self.song = Some(song);
+        for v in &mut self.voices {
+            *v = None;
+        }
+        self.scheduled.clear();
+        self.next_event = 0;
         self.scheduled_bar = u64::MAX;
         self.cycle_offset = 0;
+        self.ducks = [DuckState::default(); NUM_ORBITS];
         for fx in &mut self.orbit_fx {
             fx.clear();
         }
+        self.pending_compressor = None;
     }
 
     pub fn unload(&mut self) {
@@ -143,6 +155,14 @@ impl Deck {
 
     pub fn song_mut(&mut self) -> Option<&mut Song> {
         self.song.as_mut()
+    }
+
+    /// Replace song metadata/source for the control plane without forcing an audio reschedule.
+    ///
+    /// Used by partial-edit APIs so sequential `get`/`patch`/`edit_method` compose before the
+    /// bar-quantized [`crate::engine::Command::LoadSong`] applies the audible swap.
+    pub fn set_song_data(&mut self, song: Song) {
+        self.song = Some(song);
     }
 
     pub fn set_track_mute(&mut self, track: &str, muted: bool) {

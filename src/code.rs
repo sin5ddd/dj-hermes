@@ -960,6 +960,178 @@ fn apply_method(pc: &mut PatternCode, name: &str, args: &str) -> Result<(), Stri
     }
 }
 
+// ── Structural chain edit (source-level; independent of PatternCode flatten) ─
+
+/// One method call in a pattern chain: `.name(args)`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MethodCall {
+    pub name: String,
+    /// Raw argument text inside the parentheses (no surrounding `()`).
+    pub args: String,
+}
+
+/// Editable view of `note("…").s("saw").lpf(400)` (head + ordered methods).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ChainEdit {
+    pub head: String,
+    pub head_args: String,
+    pub methods: Vec<MethodCall>,
+}
+
+/// How to change a method on a [`ChainEdit`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MethodEditOp {
+    /// Replace the last occurrence of `method`, or append if missing.
+    Set,
+    /// Always append a new call at the end of the chain.
+    Add,
+    /// Remove the last occurrence of `method` (error if none).
+    Remove,
+}
+
+impl MethodEditOp {
+    pub fn parse(s: &str) -> Result<Self, String> {
+        match s.trim().to_ascii_lowercase().as_str() {
+            "set" => Ok(Self::Set),
+            "add" => Ok(Self::Add),
+            "remove" | "rm" | "del" | "delete" => Ok(Self::Remove),
+            other => Err(format!(
+                "unknown method op: {other} (use set, add, or remove)"
+            )),
+        }
+    }
+}
+
+/// Parse a method chain into head + methods without applying semantics.
+pub fn parse_chain_for_edit(input: &str) -> Result<ChainEdit, String> {
+    let input = input.trim().trim_end_matches(';').trim();
+    if input.is_empty() {
+        return Err("empty chain".into());
+    }
+    if !parens_balanced(input) {
+        return Err("unbalanced parens".into());
+    }
+    let open = input.find('(').ok_or_else(|| "missing (".to_string())?;
+    let head = input[..open].trim();
+    if !matches!(head, "note" | "n" | "s" | "sound" | "cat" | "slowcat") {
+        return Err(format!("unknown head: {head} (use note/s/cat)"));
+    }
+    let (head_args, after_head) =
+        match_parens(&input[open..]).ok_or_else(|| "unbalanced parens in head".to_string())?;
+
+    let mut methods = Vec::new();
+    let mut cur = after_head;
+    while let Some(dot_rel) = cur.find('.') {
+        let after = &cur[dot_rel + 1..];
+        let paren = after
+            .find('(')
+            .ok_or_else(|| "missing ( in method".to_string())?;
+        let name = after[..paren].trim();
+        if name.is_empty() {
+            return Err("empty method name".into());
+        }
+        let (args, rest) = match_parens(&after[paren..])
+            .ok_or_else(|| format!("unbalanced parens in method .{name}"))?;
+        methods.push(MethodCall {
+            name: name.to_string(),
+            args: args.to_string(),
+        });
+        cur = rest;
+    }
+    let trailing = cur.trim();
+    if !trailing.is_empty() {
+        return Err(format!("trailing junk after chain: {trailing}"));
+    }
+
+    Ok(ChainEdit {
+        head: head.to_string(),
+        head_args: head_args.to_string(),
+        methods,
+    })
+}
+
+/// Apply a method-level edit. `args` is the inside-parens text (ignored for Remove).
+pub fn apply_method_edit(
+    chain: &mut ChainEdit,
+    op: MethodEditOp,
+    method: &str,
+    args: &str,
+) -> Result<(), String> {
+    let method = method.trim();
+    if method.is_empty() {
+        return Err("method name required".into());
+    }
+    // Reject head names so callers use patch_track instead.
+    if matches!(method, "note" | "n" | "s" | "sound" | "cat" | "slowcat") {
+        return Err(format!(
+            "cannot edit head factory `{method}` via edit_method; use patch_track"
+        ));
+    }
+
+    match op {
+        MethodEditOp::Add => {
+            chain.methods.push(MethodCall {
+                name: method.to_string(),
+                args: args.to_string(),
+            });
+        }
+        MethodEditOp::Set => {
+            if let Some(i) = chain
+                .methods
+                .iter()
+                .rposition(|m| m.name.eq_ignore_ascii_case(method))
+            {
+                chain.methods[i].name = method.to_string();
+                chain.methods[i].args = args.to_string();
+            } else {
+                chain.methods.push(MethodCall {
+                    name: method.to_string(),
+                    args: args.to_string(),
+                });
+            }
+        }
+        MethodEditOp::Remove => {
+            let Some(i) = chain
+                .methods
+                .iter()
+                .rposition(|m| m.name.eq_ignore_ascii_case(method))
+            else {
+                return Err(format!("method not found: .{method}"));
+            };
+            chain.methods.remove(i);
+        }
+    }
+    Ok(())
+}
+
+/// Serialize a chain back to source text.
+pub fn serialize_chain(chain: &ChainEdit) -> String {
+    let mut out = format!("{}({})", chain.head, chain.head_args);
+    for m in &chain.methods {
+        out.push('.');
+        out.push_str(&m.name);
+        out.push('(');
+        out.push_str(&m.args);
+        out.push(')');
+    }
+    out
+}
+
+/// Convenience: parse → edit → serialize, then validate with [`parse_code`].
+pub fn edit_method_on_code(
+    code: &str,
+    op: MethodEditOp,
+    method: &str,
+    args: &str,
+) -> Result<String, String> {
+    let mut chain = parse_chain_for_edit(code)?;
+    apply_method_edit(&mut chain, op, method, args)?;
+    let out = serialize_chain(&chain);
+    // Reject chains the player cannot parse.
+    parse_code(&out)?;
+    Ok(out)
+}
+
 /// Parse a note name (optional chord suffix stripped) into MIDI number as `i32`.
 /// A4 = 69. Chord tokens like `c3'maj` use the root only (matches Deck scheduling).
 pub fn note_to_midi_i32(note: &str) -> Result<i32, String> {
@@ -1394,5 +1566,46 @@ mod tests {
         assert!((pc2.delayfeedback - 0.6).abs() < 1e-6);
         assert!((pc2.room - 0.9).abs() < 1e-6);
         assert!((pc2.roomsize - 4.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn chain_edit_roundtrip_and_set_lpf() {
+        let src = r#"note("c2 c2").s("sawtooth").gain(0.7)"#;
+        let chain = parse_chain_for_edit(src).unwrap();
+        assert_eq!(chain.head, "note");
+        assert_eq!(chain.methods.len(), 2);
+        assert_eq!(serialize_chain(&chain), src);
+
+        let out = edit_method_on_code(src, MethodEditOp::Set, "lpf", "400").unwrap();
+        assert_eq!(out, r#"note("c2 c2").s("sawtooth").gain(0.7).lpf(400)"#);
+        let pc = parse_code(&out).unwrap();
+        assert_eq!(pc.lpf(), Some(400.0));
+    }
+
+    #[test]
+    fn chain_edit_set_replaces_last_same_method() {
+        let src = r#"note("c3").s("saw").lpf(200).gain(0.5).lpf(800)"#;
+        let out = edit_method_on_code(src, MethodEditOp::Set, "lpf", "1200").unwrap();
+        assert_eq!(out, r#"note("c3").s("saw").lpf(200).gain(0.5).lpf(1200)"#);
+    }
+
+    #[test]
+    fn chain_edit_remove_and_nested_args() {
+        let src = r#"note("0 2").s("sawtooth").lpf(sine.rangex(500,4000)).gain(0.6)"#;
+        let chain = parse_chain_for_edit(src).unwrap();
+        assert_eq!(chain.methods[1].args, "sine.rangex(500,4000)");
+        let out = edit_method_on_code(src, MethodEditOp::Remove, "gain", "").unwrap();
+        assert_eq!(
+            out,
+            r#"note("0 2").s("sawtooth").lpf(sine.rangex(500,4000))"#
+        );
+        assert!(edit_method_on_code(src, MethodEditOp::Remove, "room", "").is_err());
+    }
+
+    #[test]
+    fn chain_edit_add_appends() {
+        let src = r#"s("bd*4").gain(0.9)"#;
+        let out = edit_method_on_code(src, MethodEditOp::Add, "hpf", "200").unwrap();
+        assert_eq!(out, r#"s("bd*4").gain(0.9).hpf(200)"#);
     }
 }
