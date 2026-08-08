@@ -1,7 +1,7 @@
 ---
 name: strudel-genre-ambient
 description: "Use when writing short Ambient live loops for strudel-rs."
-version: 3.0.0
+version: 3.1.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -16,7 +16,8 @@ metadata:
 # strudel-rs × アンビエント（短いライブループ）
 
 ## Overview
-遅いテンポ・長い attack/release・room/delay。BPM 目安 60–90。2–3 トラックで十分。
+遅いテンポ・長い attack/release・room/delay。BPM 目安 60–90。2–3 トラックで十分。  
+ユーザー WAV があれば pad/tone/piano は **フルネーム**（`pad-ambient_drone01` / `piano-acoustic_soft` 等、bank なし）。無ければ `wt_organ` / `wt_bright`（→ sound-design / `samples/LAYOUT.md`）。
 
 ## コピー用フル例
 
@@ -24,7 +25,7 @@ metadata:
 // @title visitor-ambient
 // @genre ambient
 setcpm(70/4)
-// pad
+// pad — ユーザー kit があれば s("pad-ambient_drone01") 等に差し替え
 $: note("<0 2 4 7>/2").scale("C3:minor").s("wt_organ").lpf(1200).gain(0.4)
   .attack(0.2).decay(0.3).sustain(0.7).release(0.5).room(0.45).orbit(1)
 // shimmer

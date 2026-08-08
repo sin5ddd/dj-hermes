@@ -47,3 +47,6 @@ temp/
 *.wav.raw
 /out/
 /recordings/
+
+# User sample kits at samples/ root (bundled kits live in samples/<name>/*.wav folders)
+/samples/*.wav

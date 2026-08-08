@@ -1,7 +1,7 @@
 ---
 name: strudel-composition
 description: "Use when writing strudel-rs live patterns: short loops, mini-notation, iterative save."
-version: 3.2.0
+version: 3.3.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -23,6 +23,7 @@ strudel-rs の曲は **短いループを `$:` で重ね、演奏しながら少
 - mini-notation は文字列の中だけ（`s("...")` / `note("...")`）
 - **既定は 1 サイクル骨格 + `<>` で小差分**（2–5 トラック）
 - **16 小節 `cat` の長尺アレンジは既定にしない**（ライブ差分が重い）
+- **音色・サンプル**: ドラムは短い `bd`/`sd`/… + 任意 `.bank`。pad/lead/FX はフルネームまたはシンセ（→ **strudel-sound-design** / `samples/LAYOUT.md`）
 
 ## 正本テンプレ（そのまま content に）
 
@@ -116,6 +117,16 @@ $: s("bd*4, [~ sd]*2, [~ hh]*4, <~ [~@3 bd ~@4]>").gain(0.55)
 4. **小節っぽい差分** → パターン内の `<>`（まずこれ）  
 5. **例外で分離** — `.duckorbit` 付きキックだけ別 `$:`  
 6. 本家 `stack(...)` は使わない  
+7. **パート名は短く**（`bd` `sd` `hh` `oh`）。キット差は **`.bank("tr808-hard")` 等**（ディスクは `{bank}_{part}`）。フルネームでリズムを埋めない  
+8. **`bd:00` は不可** → `s("bd")` または `.n(0)`  
+
+ユーザーキットがあるとき:
+
+```
+$: s("bd*4, [~ sd]*2, [~ hh]*4").bank("tr808-hard").gain(0.55)
+```
+
+bank を付けないと同梱 `samples/bd/` 等が使われる。
 
 ## ベース / メロディ
 
@@ -179,7 +190,18 @@ $: s("bd*4, hh*16").hpf(200).gain(0.45)
 不可: `.vib("<1 4>")`、`stack(...)`、`.cpm(120)`、**`.lfo(...)`**（未実装）。  
 可: **`.scale("<…>")` 進行**、**`.lpf("<400 1200>")`** / **`.lpf(sine.rangex(500,4000))`**、**`.add` / `.sub` / `.ply`**（詳細は live-edit / sound-design）。
 
-同梱サンプル: `bd` `sd` `hh` `oh`（`cp` は無い → `sd`/`oh` を使う）。
+同梱サンプル: `bd` `sd` `hh` `oh`（`cp` は同梱無し → `sd`/`oh`、またはユーザー `{bank}_cp`）。  
+追加キット・pad/lead の置き方: **`samples/LAYOUT.md`** / 音色は **strudel-sound-design**。
+
+pad / lead / piano でユーザー WAV がある例:
+
+```
+$: note("0 2 4 7").scale("C3:minor").s("pad-ambient_drone01").room(0.4).orbit(1).gain(0.35)
+$: note("7 6 <4 9>").scale("C4:minor").s("lead-supersaw_4oct").lpf(2800).gain(0.16)
+$: note("0 2 4 0").scale("C3:minor").s("piano-acoustic_soft").gain(0.35)
+```
+
+（ファイルが無ければ `wt_organ` / `square` / `triangle` 等のシンセに戻す。ピアノ感はサンプル推奨。）
 
 ## テンポ
 
@@ -198,8 +220,10 @@ $: s("bd*4, hh*16").hpf(200).gain(0.45)
 
 - 本家 JS: `stack(...)`、`.cpm()`、裸の `s("...")` 行（`$:` 無し）  
 - 理由なく kick/hat/snare を 3 トラックに分ける  
-- 未実装: `.lfo` / 未同梱 `cp`  
+- 未実装: `.lfo`  
+- 同梱に無い `cp` を bank なしで使う  
 - 既定での 16 小節 `cat` 長尺  
+- mini 内の `bd:00` / `kit:bd`（コロン不可）  
 
 ## Pitfalls
 
@@ -207,11 +231,14 @@ $: s("bd*4, hh*16").hpf(200).gain(0.45)
 2. `stack(...).cpm(170)` を content に入れる → 400  
 3. 引数にミニ記法パターンを入れる → 非対応  
 4. 毎回フル曲を `strudel_save_song` で書き直して差分が巨大になる  
+5. ドラムをフルファイル名で書く → 読めない。短い part + `.bank`  
+6. `{bank}-{part}.wav` とハイフン連結 → 正は `{bank}_{part}`  
 
 ## Checklist
 
 - [ ] `setcpm` + 2–5 本の `$:`（短いまま）  
-- [ ] ドラムは原則 1 本の `s(...)`  
+- [ ] ドラムは原則 1 本の短い `s("bd …")`（キットは `.bank`）  
 - [ ] ピッチは可能なら次数 + `.scale`  
+- [ ] pad/lead/piano はフルネーム WAV またはシンセ  
 - [ ] ライブ差分は get_song + edit_method / patch_track  
 - [ ] 全文 save は初回・大規模変更のみ  

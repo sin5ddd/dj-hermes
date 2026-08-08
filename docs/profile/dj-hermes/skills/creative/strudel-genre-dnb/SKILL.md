@@ -1,7 +1,7 @@
 ---
 name: strudel-genre-dnb
 description: "Use when writing short Drum and Bass live loops for strudel-rs."
-version: 3.0.0
+version: 3.1.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -16,7 +16,8 @@ metadata:
 # strudel-rs × ドラムンベース（短いライブループ）
 
 ## Overview
-高速ブレイク + 重いサブ。体感 160–180 BPM。**1 サイクルの短い break 骨格**で十分。16 小節 `cat` は不要。
+高速ブレイク + 重いサブ。体感 160–180 BPM。**1 サイクルの短い break 骨格**で十分。16 小節 `cat` は不要。  
+ドラムは短い part + 任意 `.bank("…")`。低域は `reese-dark` 等フル名があれば優先、無ければ sine サブ（→ sound-design / LAYOUT.md）。
 
 ## コピー用フル例
 
@@ -24,9 +25,9 @@ metadata:
 // @title visitor-dnb
 // @genre drum-and-bass
 setcpm(170/4)
-// drums (break + hats; .fast for feel)
+// drums (break + hats; .fast for feel). ユーザー kit なら .bank("tr808-hard") 等
 $: s("bd ~ ~ sd ~ bd bd ~, hh*16, [~@5 oh ~@2]").fast(2).gain(0.55)
-// sub
+// sub — kit があれば s("reese-dark") 等
 $: note("0 ~ ~ ~").scale("C1:minor").s("sine").lpf(120).gain(0.7)
   .attack(0.01).release(0.4)
 // stab (optional)

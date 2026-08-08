@@ -1,7 +1,7 @@
 ---
 name: strudel-sound-design
-description: "Use when designing synths or effects for short live loops in strudel-rs."
-version: 3.1.0
+description: "Use when designing synths, samples, banks, or effects for short live loops in strudel-rs."
+version: 3.2.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -31,6 +31,15 @@ metadata:
 
 この Skill は **strudel-rs**（Rust 自前 DSP）向け。WebAudio 版 Strudel REPL の全機能は持たない。  
 音源・メソッドは実装済みのものだけ。パターンの長さ・ライブ差分は **strudel-composition**（短いループが既定）。
+
+**サンプル配置の正本（disk）:** リポジトリ `samples/LAYOUT.md`（bank キー・フルネーム・gitignore）。
+
+**二系統:**
+
+| 系統 | パターン内の名前 | bank | 例 |
+| --- | --- | --- | --- |
+| **ドラム** | 短い `bd` `sd` `hh` `oh` `cp` … | **キット用に付ける** | `s("bd*4, [~ sd]*2").bank("tr808-hard")` |
+| **音程 / pad / lead / piano / FX** | **フルネーム** | 付けない | `s("pad-ambient_drone01")` / `s("piano-acoustic_soft")` |
 
 **ライブで触るとわかりやすいツマミ**: `.lpf` / `.lpq` / `.hpf` / `.bpf` / `.gain` / ADSR / `.room` / `.delay` / `.fm` / `.vib`  
 スカラーを 1 つ変えて同じ曲名で save する。
@@ -126,18 +135,67 @@ $: note("c4 e4 g4").s("wt_bright").vib("5:8").gain(0.2).delay(0.25).orbit(2)
 
 ### サンプル（キット）
 
-同梱は主に `bd` / `sd` / `hh` / `oh`（`samples/`）。フォルダ名 = sound 名。
+配置の詳細は **`samples/LAYOUT.md`**。エンジンは `samples/` を **1 階層だけ**読む。
+
+#### 同梱デフォルト（短いパート名）
+
+| sound | 変種 | パス例 |
+| --- | --- | --- |
+| `bd` | `.n(0)` / `.n(1)` | `samples/bd/00.wav`, `01.wav` |
+| `sd` | 0, 1 | `samples/sd/` |
+| `hh` | 0 | `samples/hh/00.wav` |
+| `oh` | 0 | `samples/oh/00.wav` |
+
+- `s("bd")` = その sound の **n=0**（先頭 WAV）。**`bd:00` は書けない**（mini に `:` 不可）
+- 未同梱 `cp` はデフォルトでは使わない（ユーザーキットで `…_cp` を置いたときだけ）
+
+#### ドラム + `.bank`（リズムは短く、キットは bank）
+
+`.bank("X")` + `s("bd")` → キー **`x_bd`**（小文字化、`bank` と part を `_` で連結）。
+
+```
+// デフォルトキット（bank なし）
+$: s("bd*4, [~ sd]*2, [~ hh]*4").gain(0.55)
+// ユーザーキット（disk: samples/tr808-hard_bd.wav 等）
+$: s("bd hh [bd,sd] hh").bank("tr808-hard").gain(0.55)
+$: s("bd*4, [~ sd]*2, hh*8").bank("accdrum-jazz").gain(0.5)
+$: s("bd").n(1)   // 同一キー内の変種（フォルダに 01.wav 等があるとき）
+```
+
+- **1 ドラム `$:` につき bank は 1 つ**（チェーン全体に効く）
+- bank 名にキット／特性を載せる: `tr808-hard`, `tr808-soft`, `accdrum-jazz`
+- ファイルは `samples/{bank}_{part}.wav` または `samples/{bank}_{part}/00.wav`
+- 直下の追加 `*.wav` は git 外想定（`.gitignore`）
+
+#### 音程・FX — フルネーム（bank なし）
+
+```
+$: note("0 2 4 7").scale("C3:minor").s("pad-ambient_drone01")
+  .attack(0.2).release(0.5).room(0.45).orbit(1).gain(0.35)
+$: note("7 6 4").scale("C4:minor").s("lead-supersaw_4oct").lpf(3200).gain(0.16)
+// piano / EP（disk: piano-acoustic_soft.wav 等。録音 root ≈ C3）
+$: note("0 2 4 0").scale("C3:minor").s("piano-acoustic_soft").gain(0.35)
+  .attack(0.005).decay(0.3).sustain(0.2).release(0.25)
+$: note("<0 2 4 7>/2").scale("C4:major").s("piano-electric_rhodes")
+  .room(0.3).orbit(1).gain(0.28)
+$: s("fx-riser_short01")
+```
+
+命名目安: `{family}-{character}_{detail}`  
+例: `pad-ambient_bright01`, `piano-acoustic_soft`, `piano-electric_rhodes`, `reese-dark`, `atmo-noise`。
+
+#### 役割レシピ（シンセでも可・サンプルがあれば優先）
+
+| 役割 | サンプルがあるとき | 無いとき（同梱のみ） |
+| --- | --- | --- |
+| **Pad** | `pad-ambient_*` 等フル名 + 長め ADSR / room | `wt_organ` / `sawtooth` + 長い attack/release + room |
+| **Bass** | 短い hit ならフル名。持続はシンセでも可 | `sine`+FM または `sawtooth`+lpf、`C2:` |
+| **Lead** | `lead-*` フル名 | `square` / `triangle` / `wt_bright` + 低 gain |
+| **Piano / EP** | `piano-acoustic_*` / `piano-electric_*` フル名 + `note`+`.scale` | 代替弱め: `triangle`/`wt_sine` + 短 attack・中 release（本物のピアノ感はサンプル推奨） |
+| **FX** | `fx-*` / `atmo-*` フル名 | `white`/`pink` + 短 ADSR + hpf |
+| **Drums** | 短い part + `.bank("…")` | `bd` `sd` `hh` `oh` のみ |
 
 ドラムは **1 本の `s(...)` に統合**（スペース=順、カンマ=同時）。詳細は strudel-composition。
-
-```
-// 並列（密度が違う層）
-$: s("bd*4, hh*8, ~ sd ~ sd").gain(0.55)
-// グリッド（短いループ）
-$: s("[bd hh [bd,sd] hh]*2").gain(0.75)
-$: s("bd").bank("rolandtr808")   // bank 接頭辞 → rolandtr808_bd（bank 内にあれば）
-$: s("bd").n(1)                  // 同一 sound の n 番 WAV（あれば）
-```
 
 duck 付きキックだけは別トラックにしてよい（hat に duckorbit を付けない）:
 
@@ -424,13 +482,19 @@ $: note("0 2 4 7").scale("C3:minor").s("sawtooth").lpf(900).orbit(2).gain(0.35)
 2. **未対応メソッド**（`phaser` `vowel` `distort` `partials` `lfo` …）→ そのパターン行がエラー。
 3. **同じ orbit で delay/room を複数トラックから書く** → last-write で上書き。役割ごとに orbit を分ける。
 4. **`c3'maj` で和音が鳴ると思わない** → root のみ。和音は `note("0 2 4")` / `[6,8]` 等で書く。
-5. **ZZFX / supersaw / 外部 wt** は使えない。波形・wt_sine/bright/organ・サンプルに寄せる。
+5. **ZZFX / supersaw / 外部 wt** は使えない。波形・wt_sine/bright/organ・サンプルに寄せる（ユーザー `lead-supersaw_*` WAV があればフル名で可）。
 6. 音色のために 16 小節 `cat` を書かない → 短いループのままスカラーを触る。
+7. **`bd:00` / `kit:bd`** → mini に `:` 不可。`s("bd")` / `.n(0)` / `.bank("kit")`。
+8. **ドラムをフルネームで埋める**（`s("tr808-hard_bd …")`）→ リズムが読めない。短い part + `.bank`。
+9. **bank のファイル名を `{bank}-{part}` にする** → 正は **`{bank}_{part}`**（アンダースコア）。
+10. **深いパス** `pad/ambient/x.wav` → 読まれない。フラット or 1 段フォルダ（LAYOUT.md）。
 
 ## Verification Checklist
 
 - [ ] sound は波形 / white|pink|brown / wt_* / ローカル sample のいずれか
+- [ ] ドラムは短い part。キット差は `.bank`（ディスクは `{bank}_{part}`）
+- [ ] pad/lead/piano/FX はフルネーム（bank なし）またはシンセ代替
 - [ ] メソッドは上記一覧のみ
-- [ ] メソッド引数は数値または `a:b` のみ（ミニ記法パターンなし）
+- [ ] メソッド引数は数値 / `a:b` / 対応メソッドの mini・LFO のみ
 - [ ] delay/room を共有するトラックは orbit を意識している
 - [ ] duck する側に `duckorbit`、される側に同じ `orbit`
