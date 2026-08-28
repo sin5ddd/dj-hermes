@@ -6,9 +6,8 @@ use crossbeam::channel::Sender;
 use rustyline::error::ReadlineError;
 use rustyline::DefaultEditor;
 
-use crate::cmd;
+use crate::cmd::{self, DeckPaths};
 use crate::engine::{Command, Engine};
-use crate::watcher::DeckPaths;
 
 /// Run the REPL on the current thread until quit.
 pub fn run(tx: Sender<Command>, deck_paths: DeckPaths, engine: Option<Arc<Mutex<Engine>>>) {

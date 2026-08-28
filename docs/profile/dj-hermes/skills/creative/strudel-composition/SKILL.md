@@ -19,7 +19,7 @@ metadata:
 
 strudel-rs の曲は **短いループを `$:` で重ね、演奏しながら少しずつ書き換える** のが本筋。
 
-- 保存形式: `setcpm` + **`$:` トラック**のみ（`strudel_save_song`）
+- 演奏形式: `setcpm` + **`$:` トラック**のみ（鳴らすのは `strudel_apply_song`）
 - mini-notation は文字列の中だけ（`s("...")` / `note("...")`）
 - **既定は 1 サイクル骨格 + `<>` で小差分**（2–5 トラック）
 - **16 小節 `cat` の長尺アレンジは既定にしない**（ライブ差分が重い）
@@ -64,11 +64,11 @@ $: note("0 0 2 4").scale("C2:minor").s("sawtooth").lpf(450).gain(0.5)
 
 ## ライブ編集ワークフロー（必須）
 
-1. 初回: 正本に近い **短い** content を `strudel_save_song(name, content, deck)`  
-2. 来場者の要望: **`strudel_get_song(deck)`** → **1 トラック or 1 メソッド**だけ  
-   - パラメータ 1 個 → `strudel_edit_method`  
-   - 1 本の `$:` 差し替え/追加 → `strudel_patch_track`  
-   - 全文 `strudel_save_song` は大規模変更・新規のみ  
+1. 初回: 正本に近い **短い** content を `strudel_apply_song(content, deck)`（ディスクに書かない）
+2. 来場者の要望: **`strudel_get_song(deck)`** → **1 トラック or 1 メソッド**だけ
+   - パラメータ 1 個 → `strudel_edit_method`
+   - 1 本の `$:` 差し替え/追加 → `strudel_patch_track`
+   - 全文 `strudel_apply_song` は大規模変更・新規のみ。残す指示のときだけ `strudel_save_song`
 3. バー境界で反映される（チャットにコードだけ書いて終わりにしない）  
 詳細レシピは **strudel-live-edit**。
 
@@ -230,7 +230,7 @@ $: note("0 2 4 0").scale("C3:minor").s("piano-acoustic_soft").gain(0.35)
 1. チャットにコードだけ書いて保存しない  
 2. `stack(...).cpm(170)` を content に入れる → 400  
 3. 引数にミニ記法パターンを入れる → 非対応  
-4. 毎回フル曲を `strudel_save_song` で書き直して差分が巨大になる  
+4. 毎回フル曲を `strudel_save_song` で書き直して差分が巨大になる
 5. ドラムをフルファイル名で書く → 読めない。短い part + `.bank`  
 6. `{bank}-{part}.wav` とハイフン連結 → 正は `{bank}_{part}`  
 
@@ -241,4 +241,4 @@ $: note("0 2 4 0").scale("C3:minor").s("piano-acoustic_soft").gain(0.35)
 - [ ] ピッチは可能なら次数 + `.scale`  
 - [ ] pad/lead/piano はフルネーム WAV またはシンセ  
 - [ ] ライブ差分は get_song + edit_method / patch_track  
-- [ ] 全文 save は初回・大規模変更のみ  
+- [ ] 全文 apply は初回・大規模変更のみ。save は残す指示のときだけ

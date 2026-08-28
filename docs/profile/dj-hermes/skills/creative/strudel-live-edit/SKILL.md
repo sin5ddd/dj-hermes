@@ -18,7 +18,7 @@ metadata:
 ## Overview
 
 来場者の自然言語を、**どの `$:` をどう書き換えるか** に落とす Skill。  
-**他パートを書き換えない**ことが最優先。部分編集 API を使い、全文 `strudel_save_song` は新規曲・大規模構成変更に限る。
+**他パートを書き換えない**ことが最優先。部分編集 API を使い、全文 `strudel_apply_song` は新規曲・大規模構成変更に限る。
 
 記法の正本は **strudel-composition**。音色は **strudel-sound-design**。
 
@@ -30,7 +30,7 @@ metadata:
    - メソッド 1 個（`.lpf` / `.gain` / `.add` / `.ply` / `.scale` 等）→ **`strudel_edit_method(deck, track, op, method, args?)`**
      - `op`: `set`（同名は末尾を置換、無ければ追加） / `add`（末尾に追加） / `remove`
    - 1 トラックのチェーン丸ごと差し替え・追加・削除 → **`strudel_patch_track(deck, track, op, code?, name?)`**
-   - 新規曲や大規模な再構成のみ → `strudel_save_song(name, content, deck)`  
+   - 新規曲や大規模な再構成のみ → `strudel_apply_song(content, deck)`（ディスクに書かない）
 4. バー境界で反映。チャットにコードだけ書いて終わりにしない  
 
 ### edit_method 例
@@ -204,7 +204,7 @@ $: note("0 2 4 0").scale("C2:phrygian").s("sawtooth").lpf(500).gain(0.6)
 
 ## Pitfalls
 
-1. 毎回フル曲を `strudel_save_song` → **get → edit_method / patch_track**  
+1. 毎回フル曲を `strudel_save_song` → **get → edit_method / patch_track**（新規は apply_song）
 2. lead だけ別キーにする → 既存 `.scale` の Root:mode をコピー  
 3. 「暗く」を lpf だけ → まず mode を下げる  
 4. `.add` のパターン引数は実装どおり（不明なら composition を見る）  
@@ -217,4 +217,4 @@ $: note("0 2 4 0").scale("C2:phrygian").s("sawtooth").lpf(500).gain(0.6)
 - [ ] NL 表で対象 `$:` と操作を決めた  
 - [ ] 1 意図だけ（edit_method または patch_track）  
 - [ ] scale / add / ply / lpf LFO は実装済みの使い方  
-- [ ] 全文 save は新規・大規模変更のときだけ  
+- [ ] 全文 apply は新規・大規模変更のときだけ。save は残す指示のときだけ

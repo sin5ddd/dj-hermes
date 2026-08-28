@@ -48,4 +48,4 @@ $: note("~ 4 ~ 7 ~ <6 9>").scale("C3:minor").s("triangle").lpf(1800).gain(0.2)
 
 - [ ] 隙間のある短いループ  
 - [ ] `setcpm` + `$:`  
-- [ ] `strudel_save_song`  
+- [ ] `strudel_apply_song`  

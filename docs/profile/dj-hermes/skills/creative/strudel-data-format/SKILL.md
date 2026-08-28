@@ -17,7 +17,7 @@ metadata:
 
 ## Overview
 
-strudel-rs は `.strudel` テキストをパースして再生する。保存は MCP **`strudel_save_song`** のみ（file ツール不可）。書き込み先は `~/.config/strudel-rs/songs/<name>.strudel` のみ。
+strudel-rs は `.strudel` テキストをパースして再生する。鳴らすのは MCP **`strudel_apply_song`**（無書き込み）。ディスク保存は **`strudel_save_song`** のみ（file ツール不可、明示指示までしない）。書き込み先は `~/.config/strudel-rs/songs/<name>.strudel` のみ。
 
 **曲の長さの目安**: トラック **2–5 本**、1 サイクル骨格 + `<>`。長尺 `cat` は非既定（→ strudel-composition）。
 
@@ -54,16 +54,23 @@ $: note("0 2 4 [6,8] 0 2 4 [7,9]").scale("C4:minor")
 3. **必須**: 1 本以上の **`$:` 行**（トラック）。直前の `// name` がトラック名  
 4. ドラムは原則 **1 本の `s(...)`**。詳細は strudel-composition  
 
+## strudel_apply_song
+
+| 引数 | 意味 |
+| --- | --- |
+| `content` | 上の全文 |
+| `deck` | `A` / `B` — 次小節でロード。ディスクに書かない |
+
 ## strudel_save_song
 
 | 引数 | 意味 |
 | --- | --- |
 | `name` | ベース名のみ（例 `visitor-house`）。パス禁止 |
-| `content` | 上の全文 |
-| `deck` | 任意 `A` / `B` — 保存後にロード |
+| `content` | 任意。省略時は `deck` の現行 source |
+| `deck` | 任意 `A` / `B` — content 省略時のスナップショット元。ロードしない |
 | `overwrite` | 既定 true |
 
-**ライブ時**: 同じ `name` + `deck` で content を少し変えて上書きする（毎回新しい名前を作らない）。
+**ライブ時**: 鳴らすのは apply。同じファイルへ残すのは来場者が残してと言ったときだけ。
 
 ## 禁止（保存すると 400 または再生失敗）
 
@@ -75,7 +82,7 @@ $: note("0 2 4 [6,8] 0 2 4 [7,9]").scale("C4:minor")
 
 ## Pitfalls
 
-1. チャットにコードを書いて終わり → 必ず `strudel_save_song`  
+1. チャットにコードを書いて終わり → 必ず `strudel_apply_song`
 2. `name` に日本語や `/` → ASCII の basename のみ  
 3. content に `stack` を入れる → パース失敗  
 4. 16 小節 `cat` を毎回書く → ライブ向きでない（短いループにする）  
@@ -86,4 +93,4 @@ $: note("0 2 4 [6,8] 0 2 4 [7,9]").scale("C4:minor")
 - [ ] 各トラックが `$:` で始まる  
 - [ ] 2–5 本程度で短い  
 - [ ] ドラムが統合記法になっている  
-- [ ] `strudel_save_song(name, content, deck?)` を実行した  
+- [ ] `strudel_apply_song(content, deck)` を実行した。save は「残して」と言われたときだけ

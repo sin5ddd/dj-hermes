@@ -49,4 +49,4 @@ $: note("0 ~ 2 ~").scale("C2:minor").s("sine").lpf(300).gain(0.45)
 
 - [ ] 短い 2–3 トラック  
 - [ ] `setcpm` + `$:`  
-- [ ] `strudel_save_song`  
+- [ ] `strudel_apply_song`  

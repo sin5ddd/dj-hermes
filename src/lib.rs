@@ -24,4 +24,3 @@ pub mod synth;
 pub mod transport;
 pub mod viz;
 pub mod voice_input;
-pub mod watcher;

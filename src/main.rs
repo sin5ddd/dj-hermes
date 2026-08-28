@@ -15,6 +15,7 @@ use crossterm::terminal::{
 };
 use crossterm::{cursor, execute, terminal, QueueableCommand};
 use strudel_rs::api::{self, AppState, DEFAULT_API_PORT};
+use strudel_rs::cmd::{new_deck_paths, DeckPaths};
 use strudel_rs::engine::{Command, Engine};
 use strudel_rs::highlight::{
     active_spans, bar_index, bar_pos, format_header, render_ansi, HighlightModel,
@@ -24,7 +25,6 @@ use strudel_rs::mcp;
 use strudel_rs::repl;
 use strudel_rs::sample::SampleBank;
 use strudel_rs::song::{parse_song, resolve_song_path};
-use strudel_rs::watcher::{self, DeckPaths, UiLogBuffer};
 
 fn main() {
     let mut args: Vec<String> = std::env::args().skip(1).collect();
@@ -69,7 +69,7 @@ strudel-rs — Strudel live CLI
 
 Usage:
   strudel-rs play [SONG] [--seconds N] [--headless] [--port N] [--no-api]
-  strudel-rs dj [SONG_A] [SONG_B] [--songs-dir DIR] [--port N] [--no-api] [--text]
+  strudel-rs dj [SONG_A] [SONG_B] [--port N] [--no-api] [--text]
   strudel-rs play --repl [SONG_A] [SONG_B]   (same live UI as dj; kept for compatibility)
   strudel-rs mcp
 
@@ -82,7 +82,7 @@ Usage:
   --repl        alias path into live UI (prefer: strudel-rs dj …)
   --repl-text   text-only REPL (same as: dj --text)
   --text        with dj: rustyline text REPL instead of highlight live UI
-  --songs-dir   directory to watch for .strudel saves (default: songs/)
+
   --port N      HTTP API port (default {DEFAULT_API_PORT}; env STRUDEL_API_PORT)
   --no-api      do not start HTTP API
   -d, --debug   Hermes debug log to file (default: ./strudel-rs.debug.log)
@@ -119,7 +119,6 @@ Exhibit Hermes setup: docs/exhibit/README.md
 struct LiveSessionOpts {
     song_a: Option<PathBuf>,
     song_b: Option<PathBuf>,
-    songs_dir: PathBuf,
     with_highlight: bool,
     api_enabled: bool,
     api_port: u16,
@@ -138,7 +137,6 @@ struct LiveSessionOpts {
 /// Parse `dj` / live-session CLI. Returns `Ok(None)` when `--help` was printed.
 fn parse_live_session_args(args: &[String]) -> Result<Option<LiveSessionOpts>, String> {
     let mut songs: Vec<PathBuf> = Vec::new();
-    let mut songs_dir = PathBuf::from("songs");
     let mut with_highlight = true;
     let mut api_enabled = true;
     let mut hermes_enabled = true;
@@ -151,13 +149,6 @@ fn parse_live_session_args(args: &[String]) -> Result<Option<LiveSessionOpts>, S
     let mut i = 0;
     while i < args.len() {
         match args[i].as_str() {
-            "--songs-dir" => {
-                i += 1;
-                let d = args
-                    .get(i)
-                    .ok_or_else(|| "--songs-dir needs a path".to_string())?;
-                songs_dir = PathBuf::from(d);
-            }
             "--port" => {
                 i += 1;
                 let s = args
@@ -228,7 +219,6 @@ fn parse_live_session_args(args: &[String]) -> Result<Option<LiveSessionOpts>, S
     Ok(Some(LiveSessionOpts {
         song_a: it.next(),
         song_b: it.next(),
-        songs_dir,
         with_highlight,
         api_enabled,
         api_port: api::resolve_port(cli_port),
@@ -254,7 +244,6 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
     let mut highlight = true;
     let mut repl_mode = false;
     let mut repl_text = false;
-    let mut songs_dir = PathBuf::from("songs");
     let mut api_enabled = true;
     let mut hermes_enabled = true;
     let mut hermes_bin: Option<PathBuf> = None;
@@ -286,13 +275,6 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
             "--repl-text" => {
                 repl_mode = true;
                 repl_text = true;
-            }
-            "--songs-dir" => {
-                i += 1;
-                let d = args
-                    .get(i)
-                    .ok_or_else(|| "--songs-dir needs a path".to_string())?;
-                songs_dir = PathBuf::from(d);
             }
             "--port" => {
                 i += 1;
@@ -363,7 +345,6 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
         return cmd_live_session(LiveSessionOpts {
             song_a: it.next(),
             song_b: it.next(),
-            songs_dir,
             with_highlight: !repl_text,
             api_enabled,
             api_port,
@@ -478,7 +459,6 @@ fn cmd_live_session(opts: LiveSessionOpts) -> Result<(), String> {
     let LiveSessionOpts {
         song_a,
         song_b,
-        songs_dir,
         with_highlight,
         api_enabled,
         api_port,
@@ -506,7 +486,7 @@ fn cmd_live_session(opts: LiveSessionOpts) -> Result<(), String> {
     }
 
     let mut engine = Engine::new(sample_rate, 120.0);
-    let deck_paths: DeckPaths = watcher::new_deck_paths();
+    let deck_paths: DeckPaths = new_deck_paths();
     let mut initial_a: Option<HighlightModel> = None;
     let mut initial_b: Option<HighlightModel> = None;
 
@@ -555,12 +535,6 @@ fn cmd_live_session(opts: LiveSessionOpts) -> Result<(), String> {
     let playhead = engine.playhead_handle();
     let engine = Arc::new(Mutex::new(engine));
     let bank = Arc::new(bank);
-    // Live UI routes watcher messages into the 3-line log; text REPL keeps stderr.
-    let ui_log: Option<UiLogBuffer> = if with_highlight {
-        Some(Arc::new(Mutex::new(std::collections::VecDeque::new())))
-    } else {
-        None
-    };
 
     let _api = maybe_start_api(api_enabled, api_port, cmd_tx.clone(), Arc::clone(&engine));
     if with_highlight && hermes_enabled && !api_enabled {
@@ -594,33 +568,6 @@ fn cmd_live_session(opts: LiveSessionOpts) -> Result<(), String> {
     )?;
     stream.play().map_err(|e| format!("play stream: {e}"))?;
 
-    // Keep watcher alive for the live session.
-    let _watcher = if songs_dir.is_dir() {
-        match watcher::watch_songs(
-            &songs_dir,
-            cmd_tx.clone(),
-            Arc::clone(&deck_paths),
-            ui_log.clone(),
-        ) {
-            Ok(w) => {
-                if !with_highlight {
-                    eprintln!("watching {} for .strudel saves", songs_dir.display());
-                }
-                Some(w)
-            }
-            Err(e) => {
-                eprintln!("warning: watcher not started: {e}");
-                None
-            }
-        }
-    } else {
-        eprintln!(
-            "warning: songs dir {} missing — watcher disabled",
-            songs_dir.display()
-        );
-        None
-    };
-
     if with_highlight {
         live_ui::run(
             cmd_tx,
@@ -630,7 +577,6 @@ fn cmd_live_session(opts: LiveSessionOpts) -> Result<(), String> {
             sample_rate,
             initial_a,
             initial_b,
-            ui_log,
             hermes_handle,
             voice_handle,
         )?;
@@ -936,8 +882,6 @@ mod tests {
             "songs/ambient1.strudel",
             "--no-api",
             "--text",
-            "--songs-dir",
-            "songs",
         ]))
         .unwrap()
         .unwrap();
@@ -951,7 +895,6 @@ mod tests {
         );
         assert!(!opts.with_highlight);
         assert!(!opts.api_enabled);
-        assert_eq!(opts.songs_dir, PathBuf::from("songs"));
     }
 
     #[test]

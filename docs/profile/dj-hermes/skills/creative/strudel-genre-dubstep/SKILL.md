@@ -49,4 +49,4 @@ $: s("~ ~ [oh ~] ~").gain(0.25).hpf(3000)
 
 - [ ] 短い half-time 骨格  
 - [ ] `setcpm` + `$:`  
-- [ ] `strudel_save_song`  
+- [ ] `strudel_apply_song`  

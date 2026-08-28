@@ -103,17 +103,24 @@ pub struct LoadReq {
     pub deck: String,
 }
 
-/// Save a song under `~/.config/strudel-rs/songs/` only.
+/// Save a song under `~/.config/strudel-rs/songs/` only (does not change playback).
 #[derive(Deserialize)]
 pub struct SaveSongReq {
     /// Basename (e.g. `visitor-dark` or `visitor-dark.strudel`).
     pub name: String,
-    /// Full `.strudel` source text.
-    pub content: String,
-    /// Optional deck to load after save (`A` / `B`).
+    /// Full `.strudel` source. Omit (or empty) to snapshot the `deck` source.
+    pub content: Option<String>,
+    /// Snapshot source when `content` is omitted. Never loads after save.
     pub deck: Option<String>,
     /// Default `true`. When `false`, existing file → 409.
     pub overwrite: Option<bool>,
+}
+
+/// Apply full `.strudel` source onto a deck without writing disk.
+#[derive(Deserialize)]
+pub struct ApplySongReq {
+    pub content: String,
+    pub deck: String,
 }
 
 /// Query for `GET /song`.
@@ -148,8 +155,6 @@ pub struct PatchTrackReq {
     pub code: Option<String>,
     /// Optional new/append track label.
     pub name: Option<String>,
-    /// When true, write rebuilt source to the user library if the song path is there.
-    pub save: Option<bool>,
 }
 
 #[derive(Deserialize)]
@@ -161,7 +166,6 @@ pub struct EditMethodReq {
     pub method: String,
     /// Inside-parens args (omit or empty for remove).
     pub args: Option<String>,
-    pub save: Option<bool>,
 }
 
 #[derive(Serialize)]
@@ -170,15 +174,12 @@ pub struct SongEditRes {
     pub title: String,
     pub source: String,
     pub tracks: Vec<TrackInfo>,
-    pub saved_path: Option<String>,
 }
 
 #[derive(Serialize)]
 pub struct SaveSongRes {
     pub path: String,
     pub name: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub loaded_deck: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -401,7 +402,7 @@ async fn list_songs() -> Json<ListSongsRes> {
     })
 }
 
-fn song_edit_res(deck: usize, song: &Song, saved_path: Option<String>) -> SongEditRes {
+fn song_edit_res(deck: usize, song: &Song) -> SongEditRes {
     SongEditRes {
         deck: if deck == 0 { "A" } else { "B" }.into(),
         title: song.title.clone(),
@@ -415,26 +416,7 @@ fn song_edit_res(deck: usize, song: &Song, saved_path: Option<String>) -> SongEd
                 muted: t.muted,
             })
             .collect(),
-        saved_path,
     }
-}
-
-fn maybe_save_song_source(song: &Song, save: bool) -> Result<Option<String>, String> {
-    if !save {
-        return Ok(None);
-    }
-    let path = Path::new(&song.path);
-    let name = path
-        .file_name()
-        .and_then(|n| n.to_str())
-        .filter(|n| !n.is_empty())
-        .ok_or_else(|| {
-            "save=true requires a song with a file name (load/save a named song first)".to_string()
-        })?;
-    let dest = resolve_user_song_save_path(name)?;
-    ensure_user_songs_dir()?;
-    std::fs::write(&dest, song.source.as_bytes()).map_err(|e| format!("write: {e}"))?;
-    Ok(Some(dest.to_string_lossy().into_owned()))
 }
 
 /// Snapshot the loaded song source + per-track chains for partial edit workflows.
@@ -481,8 +463,7 @@ async fn patch_track(
     let patched = song
         .patch_track(&r.track, &r.op, r.code.as_deref(), r.name.as_deref())
         .map_err(bad)?;
-    let saved_path = maybe_save_song_source(&patched, r.save.unwrap_or(false)).map_err(bad)?;
-    let res = song_edit_res(deck, &patched, saved_path);
+    let res = song_edit_res(deck, &patched);
     // Control-plane: publish new source immediately so sequential edits compose.
     {
         let mut e = s.engine.lock().map_err(|e| bad(e.to_string()))?;
@@ -512,8 +493,7 @@ async fn edit_method(
     let patched = song
         .edit_method(&r.track, &r.op, &r.method, r.args.as_deref().unwrap_or(""))
         .map_err(bad)?;
-    let saved_path = maybe_save_song_source(&patched, r.save.unwrap_or(false)).map_err(bad)?;
-    let res = song_edit_res(deck, &patched, saved_path);
+    let res = song_edit_res(deck, &patched);
     {
         let mut e = s.engine.lock().map_err(|e| bad(e.to_string()))?;
         e.decks[deck].set_song_data(patched.clone());
@@ -526,15 +506,38 @@ async fn edit_method(
     Ok(Json(res))
 }
 
+fn save_content_from_req(
+    s: &AppState,
+    r: &SaveSongReq,
+) -> Result<String, (StatusCode, Json<ErrRes>)> {
+    match r.content.as_deref() {
+        Some(c) if !c.is_empty() => Ok(c.to_string()),
+        _ => {
+            let deck_s = r
+                .deck
+                .as_deref()
+                .ok_or_else(|| bad("content or deck required"))?;
+            let deck = deck_idx(deck_s).map_err(bad)?;
+            let e = s.engine.lock().map_err(|e| bad(e.to_string()))?;
+            let song = e.decks[deck]
+                .song_ref()
+                .ok_or_else(|| bad(format!("deck {deck_s} has no song loaded")))?;
+            Ok(song.source.clone())
+        }
+    }
+}
+
 /// Persist a song into the user library (`~/.config/strudel-rs/songs/` only).
+/// Does not change playback.
 async fn save_song(
     State(s): State<AppState>,
     Json(r): Json<SaveSongReq>,
 ) -> Result<(StatusCode, Json<SaveSongRes>), (StatusCode, Json<ErrRes>)> {
-    if r.content.len() > MAX_SONG_CONTENT_BYTES {
+    let content = save_content_from_req(&s, &r)?;
+    if content.len() > MAX_SONG_CONTENT_BYTES {
         return Err(bad(format!(
             "content too large ({} bytes, max {MAX_SONG_CONTENT_BYTES})",
-            r.content.len()
+            content.len()
         )));
     }
     let path = resolve_user_song_save_path(&r.name).map_err(bad)?;
@@ -553,30 +556,43 @@ async fn save_song(
 
     // Validate before touching the filesystem.
     let path_str = path.to_string_lossy().into_owned();
-    let song = parse_song(&r.content, &path_str).map_err(bad)?;
+    let _song = parse_song(&content, &path_str).map_err(bad)?;
 
     ensure_user_songs_dir().map_err(bad)?;
-    std::fs::write(&path, r.content.as_bytes()).map_err(|e| bad(format!("write: {e}")))?;
-
-    let mut loaded_deck = None;
-    if let Some(ref deck_s) = r.deck {
-        let deck = deck_idx(deck_s).map_err(bad)?;
-        s.tx.send(Command::LoadSong {
-            deck,
-            song: Box::new(song),
-        })
-        .map_err(|e| bad(e.to_string()))?;
-        loaded_deck = Some(if deck == 0 { "A" } else { "B" }.to_string());
-    }
+    std::fs::write(&path, content.as_bytes()).map_err(|e| bad(format!("write: {e}")))?;
 
     Ok((
         StatusCode::OK,
         Json(SaveSongRes {
             path: path_str,
             name: file_name,
-            loaded_deck,
         }),
     ))
+}
+
+/// Load full `.strudel` source onto a deck (next bar). Does not write disk.
+async fn apply_song(
+    State(s): State<AppState>,
+    Json(r): Json<ApplySongReq>,
+) -> Result<Json<SongEditRes>, (StatusCode, Json<ErrRes>)> {
+    if r.content.len() > MAX_SONG_CONTENT_BYTES {
+        return Err(bad(format!(
+            "content too large ({} bytes, max {MAX_SONG_CONTENT_BYTES})",
+            r.content.len()
+        )));
+    }
+    let deck = deck_idx(&r.deck).map_err(bad)?;
+    let song = parse_song(&r.content, "").map_err(bad)?;
+    {
+        let mut e = s.engine.lock().map_err(|e| bad(e.to_string()))?;
+        e.decks[deck].set_song_data(song.clone());
+    }
+    s.tx.send(Command::LoadSong {
+        deck,
+        song: Box::new(song.clone()),
+    })
+    .map_err(|e| bad(e.to_string()))?;
+    Ok(Json(song_edit_res(deck, &song)))
 }
 
 async fn xfade(
@@ -740,6 +756,7 @@ pub fn router(state: AppState) -> Router {
         .route("/health", get(health))
         .route("/code", put(put_code))
         .route("/song/load", post(load_song))
+        .route("/song/apply", post(apply_song))
         .route("/song/save", post(save_song))
         .route("/song", get(get_song))
         .route("/song/patch_track", post(patch_track))
@@ -830,6 +847,10 @@ mod tests {
     use crossbeam::channel::unbounded;
     use http_body_util::BodyExt;
     use tower::ServiceExt;
+
+    fn lock_home() -> std::sync::MutexGuard<'static, ()> {
+        crate::song::lock_test_home()
+    }
 
     fn test_state() -> (AppState, crossbeam::channel::Receiver<Command>) {
         let (tx, rx) = unbounded();
@@ -1031,7 +1052,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn save_song_writes_user_library_and_optional_load() {
+    async fn save_song_writes_user_library_without_load() {
+        let _home_guard = lock_home();
         let home = std::env::temp_dir().join(format!("strudel_save_home_{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&home);
         std::fs::create_dir_all(&home).unwrap();
@@ -1070,13 +1092,7 @@ mod tests {
         assert!(expected.is_file(), "{}", expected.display());
         let written = std::fs::read_to_string(&expected).unwrap();
         assert!(written.contains("save-test"), "{written}");
-        match rx.try_recv().expect("LoadSong") {
-            Command::LoadSong { deck, song } => {
-                assert_eq!(deck, 1);
-                assert_eq!(song.title, "save-test");
-            }
-            _ => panic!("expected LoadSong"),
-        }
+        assert!(rx.try_recv().is_err(), "save must not queue LoadSong");
 
         // Traversal rejected
         let (state, rx) = test_state();
@@ -1119,6 +1135,183 @@ mod tests {
             .join("songs")
             .join("broken.strudel");
         assert!(!broken.is_file(), "must not write on parse error");
+
+        let _ = std::fs::remove_dir_all(&home);
+    }
+
+    #[tokio::test]
+    async fn apply_song_queues_load_without_write() {
+        let _home_guard = lock_home();
+        let home = std::env::temp_dir().join(format!("strudel_apply_home_{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&home);
+        std::fs::create_dir_all(&home).unwrap();
+        std::env::set_var("HOME", &home);
+
+        let (state, rx) = test_state();
+        let app = router(state.clone());
+        let content = "// @title mem\nsetcpm(30)\n$: s(\"bd*4\")\n";
+        let body = serde_json::json!({ "content": content, "deck": "A" }).to_string();
+        let res = app
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/song/apply")
+                    .header("content-type", "application/json")
+                    .body(Body::from(body))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        let status = res.status();
+        let text = json_body(res).await;
+        assert_eq!(status, StatusCode::OK, "{text}");
+        match rx.try_recv().expect("LoadSong") {
+            Command::LoadSong { deck, song } => {
+                assert_eq!(deck, 0);
+                assert_eq!(song.title, "mem");
+            }
+            _ => panic!("expected LoadSong"),
+        }
+        let lib = home.join(".config").join("strudel-rs").join("songs");
+        if lib.is_dir() {
+            let leftover: Vec<_> = std::fs::read_dir(&lib)
+                .unwrap()
+                .filter_map(|e| e.ok())
+                .filter(|e| e.path().extension().and_then(|x| x.to_str()) == Some("strudel"))
+                .collect();
+            assert!(leftover.is_empty(), "apply must not write: {leftover:?}");
+        }
+
+        let app = router(state);
+        let res = app
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/song/apply")
+                    .header("content-type", "application/json")
+                    .body(Body::from(r#"{"content":"note(\"","deck":"A"}"#))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(res.status(), StatusCode::BAD_REQUEST);
+        assert!(rx.try_recv().is_err(), "must not queue on parse error");
+
+        let _ = std::fs::remove_dir_all(&home);
+    }
+
+    #[tokio::test]
+    async fn save_song_snapshots_deck_without_load() {
+        let _home_guard = lock_home();
+        let home = std::env::temp_dir().join(format!("strudel_snap_home_{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&home);
+        std::fs::create_dir_all(&home).unwrap();
+        std::env::set_var("HOME", &home);
+
+        let (state, rx) = test_state();
+        let content = "// @title snap-src\nsetcpm(30)\n$: s(\"bd*4\")\n";
+        let app = router(state.clone());
+        let res = app
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/song/apply")
+                    .header("content-type", "application/json")
+                    .body(Body::from(
+                        serde_json::json!({ "content": content, "deck": "A" }).to_string(),
+                    ))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(res.status(), StatusCode::OK);
+        let _ = rx.try_recv();
+
+        let app = router(state);
+        let res = app
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/song/save")
+                    .header("content-type", "application/json")
+                    .body(Body::from(r#"{"name":"snap-mem","deck":"A"}"#))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        let status = res.status();
+        let text = json_body(res).await;
+        assert_eq!(status, StatusCode::OK, "{text}");
+        let expected = home
+            .join(".config")
+            .join("strudel-rs")
+            .join("songs")
+            .join("snap-mem.strudel");
+        let written = std::fs::read_to_string(&expected).unwrap();
+        assert!(written.contains("snap-src"), "{written}");
+        assert!(rx.try_recv().is_err(), "snapshot save must not LoadSong");
+
+        let _ = std::fs::remove_dir_all(&home);
+    }
+
+    #[tokio::test]
+    async fn patch_track_save_true_does_not_write() {
+        let _home_guard = lock_home();
+        let home = std::env::temp_dir().join(format!("strudel_patch_home_{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&home);
+        std::fs::create_dir_all(&home).unwrap();
+        std::env::set_var("HOME", &home);
+
+        let (state, rx) = test_state();
+        let content = "// @title p\nsetcpm(30)\n$: s(\"bd*4\")\n";
+        let app = router(state.clone());
+        let res = app
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/song/apply")
+                    .header("content-type", "application/json")
+                    .body(Body::from(
+                        serde_json::json!({ "content": content, "deck": "A" }).to_string(),
+                    ))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(res.status(), StatusCode::OK);
+        let _ = rx.try_recv();
+
+        let app = router(state);
+        let body = serde_json::json!({
+            "deck": "A",
+            "track": "0",
+            "op": "replace",
+            "code": "s(\"bd*4\").gain(0.5)",
+            "save": true
+        })
+        .to_string();
+        let res = app
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/song/patch_track")
+                    .header("content-type", "application/json")
+                    .body(Body::from(body))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        let status = res.status();
+        let text = json_body(res).await;
+        assert_eq!(status, StatusCode::OK, "{text}");
+        let lib = home.join(".config").join("strudel-rs").join("songs");
+        if lib.is_dir() {
+            let leftover: Vec<_> = std::fs::read_dir(&lib)
+                .unwrap()
+                .filter_map(|e| e.ok())
+                .collect();
+            assert!(leftover.is_empty(), "patch must not write: {leftover:?}");
+        }
 
         let _ = std::fs::remove_dir_all(&home);
     }

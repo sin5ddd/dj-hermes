@@ -46,4 +46,4 @@ $: note("0 ~ ~ ~ 0 ~ <2 3> ~").scale("C2:minor").s("sawtooth").lpf(350).gain(0.4
 
 - [ ] 要素が少ない短いループ  
 - [ ] `setcpm` + `$:`  
-- [ ] `strudel_save_song`  
+- [ ] `strudel_apply_song`  

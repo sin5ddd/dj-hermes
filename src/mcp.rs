@@ -271,6 +271,21 @@ fn tools_list() -> Value {
                 }
             },
             {
+                "name": "strudel_apply_song",
+                "description": "Deck: parse full .strudel source and load onto a deck (next bar). Does NOT write disk. Use for new songs and large rewrites. Persist with strudel_save_song only when asked to keep the song. content MUST use setcpm (or setcps) and one or more `$:` track lines — never stack(...), never .cpm().",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "content": {
+                            "type": "string",
+                            "description": "Full song source: setcpm(N) or setcpm(BPM/4), then lines `$: <chain>` (max 256KiB). No stack(), no .cpm()."
+                        },
+                        "deck": { "type": "string", "description": "A or B" }
+                    },
+                    "required": ["content", "deck"]
+                }
+            },
+            {
                 "name": "strudel_list_songs",
                 "description": "Deck: list song basenames available to load. Returns user library (~/.config/strudel-rs/songs/) and bundled songs/ names. Use these bare names with strudel_load_song.",
                 "inputSchema": {
@@ -280,7 +295,7 @@ fn tools_list() -> Value {
             },
             {
                 "name": "strudel_save_song",
-                "description": "Deck: save a .strudel song into the user library ONLY (~/.config/strudel-rs/songs/<name>.strudel). Basename only (no paths). Validates before write. Optional deck loads after save (next bar). File tools disabled: always use this. content MUST use setcpm (or setcps) and one or more `$:` track lines — never stack(...), never .cpm(). Prefer strudel_get_song + strudel_edit_method / strudel_patch_track for live edits; full save is for new songs or large rewrites. Example args: name=\"visitor-dnb\", content=\"// @title dnb\\nsetcpm(170/4)\\n// drums\\n$: s(\\\"bd ~ ~ sd ~ bd bd ~ ~ sd ~ ~\\\").fast(2).gain(0.9)\\n// hat\\n$: s(\\\"hh*16\\\").gain(0.22)\\n// bass\\n$: note(\\\"c1\\\").s(\\\"sine\\\").lpf(120).gain(0.7)\\n\", deck=\"B\".",
+                "description": "Deck: persist a .strudel song into the user library ONLY (~/.config/strudel-rs/songs/<name>.strudel). Basename only (no paths). Validates before write. Does not change playback. To play, use strudel_apply_song or strudel_load_song. If content omitted, deck is required and the current deck source is written. content MUST use setcpm (or setcps) and one or more `$:` track lines — never stack(...), never .cpm().",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
@@ -290,18 +305,18 @@ fn tools_list() -> Value {
                         },
                         "content": {
                             "type": "string",
-                            "description": "Full song source: setcpm(N) or setcpm(BPM/4), then lines `$: <chain>` (max 256KiB). No stack(), no .cpm()."
+                            "description": "Optional full song source: setcpm(N) or setcpm(BPM/4), then lines `$: <chain>` (max 256KiB). Omit to snapshot deck. No stack(), no .cpm()."
                         },
                         "deck": {
                             "type": "string",
-                            "description": "Optional A or B — load after save"
+                            "description": "A or B — required when content is omitted (snapshot only; does not load)"
                         },
                         "overwrite": {
                             "type": "boolean",
                             "description": "Default true; false → fail if file exists"
                         }
                     },
-                    "required": ["name", "content"]
+                    "required": ["name"]
                 }
             },
             {
@@ -317,7 +332,7 @@ fn tools_list() -> Value {
             },
             {
                 "name": "strudel_patch_track",
-                "description": "Deck: replace/remove/append one `$:` track on the loaded song (other tracks preserved). Applies next bar. Prefer this or strudel_edit_method over full strudel_save_song for live edits.",
+                "description": "Deck: replace/remove/append one `$:` track on the loaded song (other tracks preserved). Applies next bar. Prefer this or strudel_edit_method over full strudel_apply_song for live edits.",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
@@ -325,8 +340,7 @@ fn tools_list() -> Value {
                         "track": { "type": "string", "description": "Track name (e.g. bass) or 0-based index" },
                         "op": { "type": "string", "description": "replace | remove | append" },
                         "code": { "type": "string", "description": "Full track chain for replace/append, e.g. note(\"c2\").s(\"saw\").lpf(400)" },
-                        "name": { "type": "string", "description": "Optional label for append/rename on replace" },
-                        "save": { "type": "boolean", "description": "If true, also write to user library (named songs only)" }
+                        "name": { "type": "string", "description": "Optional label for append/rename on replace" }
                     },
                     "required": ["deck", "track", "op"]
                 }
@@ -342,7 +356,7 @@ fn tools_list() -> Value {
                         "op": { "type": "string", "description": "set | add | remove" },
                         "method": { "type": "string", "description": "Method name without dot, e.g. lpf, gain, scale" },
                         "args": { "type": "string", "description": "Inside-parens args (omit for remove)" },
-                        "save": { "type": "boolean", "description": "If true, also write to user library" }
+
                     },
                     "required": ["deck", "track", "op", "method"]
                 }
@@ -485,13 +499,23 @@ fn tools_call_http(
                 json!({ "path": path, "deck": deck }),
             )
         }
+        "strudel_apply_song" => {
+            let content = arg_str(args, "content")?;
+            let deck = arg_str(args, "deck")?;
+            http_post(
+                client,
+                &format!("{base}/song/apply"),
+                json!({ "content": content, "deck": deck }),
+            )
+        }
         "strudel_list_songs" => http_get(client, &format!("{base}/songs")),
         "strudel_save_song" => {
             let name = arg_str(args, "name")?;
-            let content = arg_str(args, "content")?;
             let mut body = Map::new();
             body.insert("name".into(), json!(name));
-            body.insert("content".into(), json!(content));
+            if let Some(content) = args.get("content").and_then(|v| v.as_str()) {
+                body.insert("content".into(), json!(content));
+            }
             if let Some(deck) = args.get("deck").and_then(|v| v.as_str()) {
                 body.insert("deck".into(), json!(deck));
             }
@@ -518,9 +542,6 @@ fn tools_call_http(
             if let Some(name) = args.get("name").and_then(|v| v.as_str()) {
                 body.insert("name".into(), json!(name));
             }
-            if let Some(save) = args.get("save").and_then(|v| v.as_bool()) {
-                body.insert("save".into(), json!(save));
-            }
             http_post(
                 client,
                 &format!("{base}/song/patch_track"),
@@ -539,9 +560,6 @@ fn tools_call_http(
             body.insert("method".into(), json!(method));
             if let Some(a) = args.get("args").and_then(|v| v.as_str()) {
                 body.insert("args".into(), json!(a));
-            }
-            if let Some(save) = args.get("save").and_then(|v| v.as_bool()) {
-                body.insert("save".into(), json!(save));
             }
             http_post(
                 client,
@@ -584,7 +602,10 @@ fn tools_call_http(
 
     match outcome {
         Ok(text) => Ok(tool_text_result(text, false)),
-        Err(e) => Ok(tool_text_result(format_tool_http_error(base, &e), true)),
+        Err(e) => Ok(tool_text_result(
+            format_tool_http_error(base, &e, name),
+            true,
+        )),
     }
 }
 
@@ -598,6 +619,7 @@ fn tools_call_local(state: &AppState, name: &str, args: &Value) -> Result<Value,
         "strudel_xfade" => local_xfade(state, args),
         "strudel_set_bpm" => local_set_bpm(state, args),
         "strudel_load_song" => local_load_song(state, args),
+        "strudel_apply_song" => local_apply_song(state, args),
         "strudel_list_songs" => local_list_songs(),
         "strudel_save_song" => local_save_song(state, args),
         "strudel_get_song" => local_get_song(state, args),
@@ -618,7 +640,7 @@ fn tools_call_local(state: &AppState, name: &str, args: &Value) -> Result<Value,
 
     match outcome {
         Ok(text) => Ok(tool_text_result(text, false)),
-        Err(e) => Ok(tool_text_result(format_tool_local_error(&e), true)),
+        Err(e) => Ok(tool_text_result(format_tool_local_error(&e, name), true)),
     }
 }
 
@@ -800,26 +822,7 @@ fn local_apply_patched_song(
     state: &AppState,
     deck: usize,
     patched: crate::song::Song,
-    save: bool,
 ) -> Result<String, String> {
-    let saved_path = if save {
-        let path = std::path::Path::new(&patched.path);
-        let name = path
-            .file_name()
-            .and_then(|n| n.to_str())
-            .filter(|n| !n.is_empty())
-            .ok_or_else(|| {
-                "save=true requires a song with a file name (load/save a named song first)"
-                    .to_string()
-            })?;
-        let dest = resolve_user_song_save_path(name)?;
-        ensure_user_songs_dir()?;
-        std::fs::write(&dest, patched.source.as_bytes()).map_err(|e| format!("write: {e}"))?;
-        Some(dest.to_string_lossy().into_owned())
-    } else {
-        None
-    };
-
     let tracks: Vec<Value> = patched
         .track_sources()
         .into_iter()
@@ -836,7 +839,6 @@ fn local_apply_patched_song(
         "title": patched.title,
         "source": patched.source,
         "tracks": tracks,
-        "saved_path": saved_path,
     });
 
     {
@@ -872,7 +874,6 @@ fn local_patch_track(state: &AppState, args: &Value) -> Result<String, String> {
         .ok_or_else(|| "op required (string)".to_string())?;
     let code = args.get("code").and_then(|v| v.as_str());
     let name = args.get("name").and_then(|v| v.as_str());
-    let save = args.get("save").and_then(|v| v.as_bool()).unwrap_or(false);
 
     let song = {
         let e = state
@@ -885,7 +886,7 @@ fn local_patch_track(state: &AppState, args: &Value) -> Result<String, String> {
             .ok_or_else(|| format!("deck {deck_s} has no song loaded"))?
     };
     let patched = song.patch_track(track, op, code, name)?;
-    local_apply_patched_song(state, deck, patched, save)
+    local_apply_patched_song(state, deck, patched)
 }
 
 fn local_edit_method(state: &AppState, args: &Value) -> Result<String, String> {
@@ -907,7 +908,6 @@ fn local_edit_method(state: &AppState, args: &Value) -> Result<String, String> {
         .and_then(|v| v.as_str())
         .ok_or_else(|| "method required (string)".to_string())?;
     let method_args = args.get("args").and_then(|v| v.as_str()).unwrap_or("");
-    let save = args.get("save").and_then(|v| v.as_bool()).unwrap_or(false);
 
     let song = {
         let e = state
@@ -920,7 +920,27 @@ fn local_edit_method(state: &AppState, args: &Value) -> Result<String, String> {
             .ok_or_else(|| format!("deck {deck_s} has no song loaded"))?
     };
     let patched = song.edit_method(track, op, method, method_args)?;
-    local_apply_patched_song(state, deck, patched, save)
+    local_apply_patched_song(state, deck, patched)
+}
+
+fn local_apply_song(state: &AppState, args: &Value) -> Result<String, String> {
+    let content = args
+        .get("content")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| "content required (string)".to_string())?;
+    if content.len() > MAX_SONG_CONTENT_BYTES {
+        return Err(format!(
+            "content too large ({} bytes, max {MAX_SONG_CONTENT_BYTES})",
+            content.len()
+        ));
+    }
+    let deck_s = args
+        .get("deck")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| "deck required (string)".to_string())?;
+    let deck = deck_idx(deck_s)?;
+    let song = parse_song(content, "")?;
+    local_apply_patched_song(state, deck, song)
 }
 
 fn local_save_song(state: &AppState, args: &Value) -> Result<String, String> {
@@ -928,10 +948,24 @@ fn local_save_song(state: &AppState, args: &Value) -> Result<String, String> {
         .get("name")
         .and_then(|v| v.as_str())
         .ok_or_else(|| "name required (string)".to_string())?;
-    let content = args
-        .get("content")
-        .and_then(|v| v.as_str())
-        .ok_or_else(|| "content required (string)".to_string())?;
+    let content = match args.get("content").and_then(|v| v.as_str()) {
+        Some(c) if !c.is_empty() => c.to_string(),
+        _ => {
+            let deck_s = args
+                .get("deck")
+                .and_then(|v| v.as_str())
+                .ok_or_else(|| "content or deck required".to_string())?;
+            let deck = deck_idx(deck_s)?;
+            let e = state
+                .engine
+                .lock()
+                .map_err(|e| format!("engine lock: {e}"))?;
+            let song = e.decks[deck]
+                .song_ref()
+                .ok_or_else(|| format!("deck {deck_s} has no song loaded"))?;
+            song.source.clone()
+        }
+    };
     if content.len() > MAX_SONG_CONTENT_BYTES {
         return Err(format!(
             "content too large ({} bytes, max {MAX_SONG_CONTENT_BYTES})",
@@ -955,27 +989,13 @@ fn local_save_song(state: &AppState, args: &Value) -> Result<String, String> {
         ));
     }
     let path_str = path.to_string_lossy().into_owned();
-    let song = parse_song(content, &path_str)?;
+    let _song = parse_song(&content, &path_str)?;
     ensure_user_songs_dir()?;
     std::fs::write(&path, content.as_bytes()).map_err(|e| format!("write: {e}"))?;
-
-    let mut loaded_deck = None;
-    if let Some(deck_s) = args.get("deck").and_then(|v| v.as_str()) {
-        let deck = deck_idx(deck_s)?;
-        send_cmd(
-            state,
-            Command::LoadSong {
-                deck,
-                song: Box::new(song),
-            },
-        )?;
-        loaded_deck = Some(if deck == 0 { "A" } else { "B" });
-    }
 
     let res = json!({
         "path": path_str,
         "name": file_name,
-        "loaded_deck": loaded_deck,
     });
     serde_json::to_string(&res).map_err(|e| e.to_string())
 }
@@ -1025,7 +1045,15 @@ fn local_head(state: &AppState, args: &Value) -> Result<String, String> {
     Ok("ok (202)".into())
 }
 
-fn format_tool_local_error(err: &str) -> String {
+fn parse_content_retry_tool(tool: &str) -> &'static str {
+    if tool == "strudel_apply_song" {
+        "strudel_apply_song"
+    } else {
+        "strudel_save_song"
+    }
+}
+
+fn format_tool_local_error(err: &str, tool: &str) -> String {
     let lower = err.to_ascii_lowercase();
     let mut out = format!("error: {err}");
     if lower.contains("song not found") {
@@ -1039,10 +1067,11 @@ then strudel_load_song(path=<basename>, deck=A|B).",
             && (lower.contains("$:") || lower.contains("name: code")))
             || lower.contains("unexpected char");
         if looks_like_song_parse {
-            out.push_str(
+            let retry = parse_content_retry_tool(tool);
+            out.push_str(&format!(
                 "\nHint: song content must use setcpm(N) (or setcpm(BPM/4)) and `$: <chain>` lines. \
-Do not use stack(...) or .cpm(). Retry strudel_save_song with corrected content.",
-            );
+Do not use stack(...) or .cpm(). Retry {retry} with corrected content.",
+            ));
         }
     }
     out
@@ -1051,7 +1080,7 @@ Do not use stack(...) or .cpm(). Retry strudel_save_song with corrected content.
 // ── Shared helpers ──────────────────────────────────────────────────────────
 
 /// Map HTTP / transport errors to model-facing text.
-fn format_tool_http_error(base: &str, err: &str) -> String {
+fn format_tool_http_error(base: &str, err: &str, tool: &str) -> String {
     let lower = err.to_ascii_lowercase();
     let is_http_status = lower.contains("http 4") || lower.contains("http 5");
     let is_connect = !is_http_status
@@ -1082,10 +1111,11 @@ then strudel_load_song(path=<basename>, deck=A|B).",
             && (lower.contains("$:") || lower.contains("name: code")))
             || (lower.contains("unexpected char") && lower.contains("http 400"));
         if looks_like_song_parse {
-            out.push_str(
+            let retry = parse_content_retry_tool(tool);
+            out.push_str(&format!(
                 "\nHint: song content must use setcpm(N) (or setcpm(BPM/4)) and `$: <chain>` lines. \
-Do not use stack(...) or .cpm(). Retry strudel_save_song with corrected content.",
-            );
+Do not use stack(...) or .cpm(). Retry {retry} with corrected content.",
+            ));
         }
     }
     out
@@ -1223,7 +1253,7 @@ mod tests {
     fn tools_list_mixer_deck_transport_no_set_code() {
         let v = tools_list();
         let tools = v["tools"].as_array().unwrap();
-        assert_eq!(tools.len(), 15);
+        assert_eq!(tools.len(), 16);
         let names: Vec<_> = tools.iter().filter_map(|t| t["name"].as_str()).collect();
         assert!(!names.contains(&"strudel_set_code"));
         assert_eq!(names[0], "strudel_mixer_eq");
@@ -1232,6 +1262,7 @@ mod tests {
         assert!(names.contains(&"strudel_xfade"));
         assert!(names.contains(&"strudel_set_bpm"));
         assert!(names.contains(&"strudel_load_song"));
+        assert!(names.contains(&"strudel_apply_song"));
         assert!(names.contains(&"strudel_list_songs"));
         assert!(names.contains(&"strudel_save_song"));
         assert!(names.contains(&"strudel_get_song"));
@@ -1266,6 +1297,7 @@ mod tests {
         let msg = format_tool_http_error(
             "http://127.0.0.1:17878",
             "error sending request for url (http://127.0.0.1:17878/song/save): connection refused",
+            "strudel_save_song",
         );
         assert!(msg.contains("Is play running"), "{msg}");
         assert!(msg.contains("17878"), "{msg}");
@@ -1276,6 +1308,7 @@ mod tests {
         let msg = format_tool_http_error(
             "http://127.0.0.1:17878",
             "HTTP 400 Bad Request: {\"error\":\"line 1: expected 'name: code' or '$: code'\"}",
+            "strudel_apply_song",
         );
         assert!(
             !msg.contains("Is play running"),
@@ -1290,6 +1323,7 @@ mod tests {
         let msg = format_tool_http_error(
             "http://127.0.0.1:17878",
             "HTTP 400 Bad Request: {\"error\":\"song not found: songs/house-track.strudel (tried: songs/house-track.strudel)\"}",
+            "strudel_load_song",
         );
         assert!(!msg.contains("Is play running"), "{msg}");
         assert!(
@@ -1328,7 +1362,7 @@ mod tests {
             "method": "tools/list"
         });
         let resp = handle_rpc(&list, &backend).expect("list reply");
-        assert_eq!(resp["result"]["tools"].as_array().unwrap().len(), 15);
+        assert_eq!(resp["result"]["tools"].as_array().unwrap().len(), 16);
     }
 
     #[test]

@@ -36,13 +36,16 @@ const SYSTEM_ENVELOPE: &str = "\
 [SYSTEM — fixed by strudel-rs, higher priority than user]
 You are a live Strudel DJ assistant for a public exhibit.
 Strudel means SHORT looping `$:` tracks rewritten live — not long 16-bar cat() walls.
-You may ONLY use strudel MCP tools. Allowed: load_song, list_songs, save_song, \
+You may ONLY use strudel MCP tools. Allowed: load_song, apply_song, list_songs, save_song, \
 xfade, bpm, eq, filter, mute, head, status. Always invoke tools for real — never \
 only print tool names as text.
-To create or change patterns you MUST call strudel_save_song (writes \
-~/.config/strudel-rs/songs/ only) with name + content + optional deck — never \
-only describe the plan in text, never use file tools.
-Prefer same name + deck overwrite for small edits (one track or one parameter).
+To create or change patterns you MUST call strudel_apply_song(content, deck) — \
+this plays on the next bar and does not write disk. Never only describe the plan \
+in text, never use file tools.
+Call strudel_save_song only when the visitor explicitly asks to keep/save the song \
+(user library ~/.config/strudel-rs/songs/ only).
+Prefer strudel_get_song + strudel_edit_method / strudel_patch_track for small edits \
+(one track or one parameter).
 content MUST be setcpm(N) or setcpm(BPM/4) plus about 2–5 `$:` track lines. \
 Never stack(...), never .cpm(). Prefer one drum s() with commas for simultaneous \
 hits. Prefer degree notes + .scale(\"RootOct:mode\"). Scalar .add/.sub/.ply OK. \
@@ -52,7 +55,7 @@ Example content:
 setcpm(128/4)
 $: s(\"bd*4, [~ sd]*2, [~ hh]*4\").gain(0.5)
 $: note(\"0 2 0 3 0 <2 4>\").scale(\"C2:minor\").s(\"sawtooth\").lpf(500).gain(0.7)
-Then strudel_save_song(name=\"visitor-demo\", content=..., deck=\"B\") if loading B.
+Then strudel_apply_song(content=..., deck=\"B\") to play on B.
 To load: strudel_load_song(path=<bare basename>, deck=A|B). Prefer bare names \
 (house16, visitor-dnb). Call strudel_list_songs if unsure. Do not use songs/ prefix \
 for user-library tracks.
@@ -738,7 +741,7 @@ mod tests {
         assert!(w.contains("暗くして"));
         assert!(w.contains("[/USER_MESSAGE]"));
         assert!(w.contains("untrusted visitor text"));
-        assert!(w.contains("strudel_save_song"), "{w}");
+        assert!(w.contains("strudel_apply_song"), "{w}");
         assert!(w.contains("setcpm"), "{w}");
         assert!(w.contains("$:"), "{w}");
         assert!(w.contains("stack"), "{w}"); // forbid list

@@ -12,7 +12,7 @@
 
 | 利用者       | 操作手段                                                                          |
 | ------------ | --------------------------------------------------------------------------------- |
-| 人間（編集） | エディタで `songs/*.strudel` を保存 → ファイル監視が検知 → **次の小節境界**で反映 |
+| 人間（編集） | 演奏はオンメモリ。ディスク反映は明示 save。エディタ変更を鳴らすには `/a load` または `/a reload` |
 | 人間（操作） | live TUI: 自然文→Hermes、`/` 付きでローカルコマンド。`--text` は rustyline 裸コマンド |
 | LLM / Hermes | TUI から `hermes -z`（profile `dj-hermes`）+ MCP。HTTP API の `POST /mcp`（stdio `strudel-rs mcp` は非推奨デバッグ用） |
 
@@ -81,7 +81,7 @@ Song をロードして鳴らす再生ユニット ×2。両デッキは同一 T
 ## 想定アーキテクチャ
 
 ```
-入力（editor watcher / REPL / HTTP / MCP）
+入力（TUI / REPL / HTTP / MCP）
         │  すべて同じ Command チャネルへ
         ▼
    Scheduler (audio thread)
@@ -123,7 +123,7 @@ strudel-rust/                 # このリポジトリのルート
 │   ├── engine.rs             # Scheduler / Command
 │   ├── mixer.rs              # フェーダー / EQ・フィルター / xfade（Task 14）
 │   ├── highlight.rs          # ミニ記法ライブハイライト（Task 26）
-│   ├── watcher.rs            # notify → Command（Task 15）
+│   ├── live_ui.rs            # highlight TUI（Task 16 / 26）
 │   ├── repl.rs               # rustyline REPL（Task 16）
 │   ├── api.rs                # REST + SSE
 │   └── mcp.rs                # rmcp, stdio → HTTP ブリッジ
@@ -180,7 +180,7 @@ Release プロファイル目安（プラン）: `opt-level = 3`, `lto = true`, 
 ### CLI / REPL 例
 
 ```
-./strudel-rs dj songs/techno1.strudel songs/ambient1.strudel   # live UI + API(:17878) + watcher
+./strudel-rs dj songs/techno1.strudel songs/ambient1.strudel   # live UI + API(:17878)
 # または空起動: ./strudel-rs dj
 # プロンプト: a load … / b load … / x 4
 ```
@@ -194,9 +194,9 @@ Release プロファイル目安（プラン）: `opt-level = 3`, `lto = true`, 
 ### MCP ツール
 
 Mixer: `mixer_eq` / `mixer_filter` / `mixer_crossfader` / `xfade` / `set_bpm`  
-Deck: `load_song` / `list_songs` / `save_song` / `mute` / `head`  
+Deck: `load_song` / `apply_song` / `list_songs` / `save_song` / `mute` / `head`  
 Transport: `hush` / `status`  
-（いずれも `strudel_*` プレフィックス。コード直書きの `set_code` は MCP から削除済み。曲は `load_song` / `save_song`）
+（いずれも `strudel_*` プレフィックス。コード直書きの `set_code` は MCP から削除済み。鳴らす全文は `apply_song`、曲ファイルは `load_song`、残すのは `save_song`）
 
 Hermes 登録例:
 

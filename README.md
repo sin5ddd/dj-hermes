@@ -157,10 +157,10 @@ curl -s -X POST -H "Content-Type: application/json" \
 | グループ | ツール |
 | --- | --- |
 | Mixer | `strudel_mixer_eq` / `strudel_mixer_filter` / `strudel_mixer_crossfader` / `strudel_xfade` / `strudel_set_bpm` |
-| Deck | `strudel_load_song` / `strudel_list_songs` / `strudel_save_song` / `strudel_mute` / `strudel_head` |
+| Deck | `strudel_load_song` / `strudel_apply_song` / `strudel_list_songs` / `strudel_save_song` / `strudel_mute` / `strudel_head` |
 | Transport | `strudel_hush` / `strudel_status` |
 
-曲の差し替えは **`strudel_load_song`**（`.strudel` ファイル）。新規作成・保存は **`strudel_save_song`**（書き込み先は `~/.config/strudel-rs/songs/` のみ）。パターン文字列を直接送る MCP ツールは用意していません（HTTP `PUT /code` はスクリプト用に残置）。
+曲の差し替えは **`strudel_load_song`**（`.strudel` ファイル）または **`strudel_apply_song`**（全文・無書き込み）。新規の永続化は **`strudel_save_song`**（書き込み先は `~/.config/strudel-rs/songs/` のみ、演奏は変えない）。HTTP `PUT /code` はスクリプト用に残置。
 
 ### 手順
 
@@ -223,7 +223,7 @@ hermes --profile dj-hermes mcp test strudel
 # → Transport: HTTP … Connected, 12 tools
 ```
 
-`tools/list`（または `mcp test`）で `strudel_mixer_eq` / `strudel_load_song` / `strudel_list_songs` / `strudel_save_song` / `strudel_status` など **12 ツール**が出れば生きています（`strudel_set_code` は含みません）。
+`tools/list`（または `mcp test`）で `strudel_mixer_eq` / `strudel_load_song` / `strudel_apply_song` / `strudel_save_song` / `strudel_status` など **16 ツール**が出れば生きています（`strudel_set_code` は含みません）。
 
 デバッグ用に **非推奨** の `strudel-rs mcp`（stdio → REST ブリッジ）も残していますが、Hermes からは使いません。
 

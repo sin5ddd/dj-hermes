@@ -50,4 +50,4 @@ $: note("0 2 4 7").scale("C3:minor").s("wt_organ").lpf(1000).gain(0.25)
 
 - [ ] 短いループ + ライブでフィルタ  
 - [ ] `setcpm` + `$:`  
-- [ ] `strudel_save_song`  
+- [ ] `strudel_apply_song`  

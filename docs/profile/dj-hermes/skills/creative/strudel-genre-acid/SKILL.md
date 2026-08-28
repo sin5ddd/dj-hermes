@@ -48,4 +48,4 @@ $: note("0 2 3 4 2 3 0 <-1 2>").scale("C2:minor")
 
 - [ ] saw/square + lpf/lpq、短いループ  
 - [ ] `setcpm` + `$:`  
-- [ ] `strudel_save_song`（同名上書きでライブ差分）  
+- [ ] `strudel_apply_song`  

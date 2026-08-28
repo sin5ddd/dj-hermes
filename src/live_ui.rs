@@ -20,7 +20,7 @@ use crossterm::terminal::{
 };
 use crossterm::{cursor, execute, queue, terminal};
 
-use crate::cmd::{self, LiveInput};
+use crate::cmd::{self, DeckPaths, LiveInput};
 use crate::complete::{self, CompleteCtx, CompleteResult};
 use crate::engine::{Command, Engine};
 use crate::hermes::{HermesEvent, HermesHandle};
@@ -28,7 +28,6 @@ use crate::highlight::{active_spans, bar_index, bar_pos, render_ansi_ex, Highlig
 use crate::song::Song;
 use crate::viz::{self, VizModel};
 use crate::voice_input::{VoiceEvent, VoiceHandle};
-use crate::watcher::{DeckPaths, UiLogBuffer};
 
 const HELP_LINE: &str =
     "F10 viz  F12音声  ↑↓候補  drag xf/EQ  自然文→Hermes  /a load  /x 4  /bpm  /help";
@@ -209,7 +208,6 @@ impl LiveState {
 /// Returns when the user quits.
 ///
 /// `initial_a` / `initial_b` seed deck highlight models (e.g. songs passed to `dj`).
-/// `ui_log` receives watcher / external status lines into the 3-line footer log.
 /// `hermes` when `Some` routes bare natural language to Hermes (local cmds need `/`).
 /// `voice` when `Some` enables F12 push-to-talk (cloud STT → Hermes).
 #[allow(clippy::too_many_arguments)]
@@ -221,7 +219,6 @@ pub fn run(
     sample_rate: u32,
     initial_a: Option<HighlightModel>,
     initial_b: Option<HighlightModel>,
-    ui_log: Option<UiLogBuffer>,
     hermes: Option<HermesHandle>,
     voice: Option<VoiceHandle>,
 ) -> Result<(), String> {
@@ -468,7 +465,6 @@ pub fn run(
                 }
             }
 
-            drain_ui_log(&mut state, &ui_log);
             if let Some(ref v) = voice {
                 drain_voice_events(&mut state, v, hermes.as_ref());
             }
@@ -890,24 +886,6 @@ fn suggest_body_lines(result: &CompleteResult, selected: usize, max_rows: usize)
         out.push(format!("  … {}/{} …", sel + 1, n));
     }
     out
-}
-
-/// Pull watcher / external messages into the fixed 3-line log.
-fn drain_ui_log(state: &mut LiveState, ui_log: &Option<UiLogBuffer>) {
-    let Some(buf) = ui_log else {
-        return;
-    };
-    let Ok(mut q) = buf.lock() else {
-        return;
-    };
-    if q.is_empty() {
-        return;
-    }
-    while let Some(msg) = q.pop_front() {
-        state.push_log(msg);
-    }
-    // New log lines must repaint even if only the log region changed.
-    state.invalidate_frame();
 }
 
 /// Centered help window overlaid on the current frame (does not use the log area).

@@ -51,4 +51,4 @@ $: note("0 ~ 0 ~").scale("C1:minor").s("sine").lpf(150).gain(0.55)
 
 - [ ] 短い chords + lead  
 - [ ] `setcpm` + `$:`  
-- [ ] `strudel_save_song`  
+- [ ] `strudel_apply_song`  

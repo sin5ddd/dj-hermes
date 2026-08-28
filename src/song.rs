@@ -16,6 +16,14 @@ pub const USER_SONGS_REL: &str = ".config/strudel-rs/songs";
 /// Max UTF-8 byte size for song content accepted by save.
 pub const MAX_SONG_CONTENT_BYTES: usize = 256 * 1024;
 
+/// Serialize tests that mutate `HOME` (user library path).
+#[cfg(test)]
+pub(crate) fn lock_test_home() -> std::sync::MutexGuard<'static, ()> {
+    use std::sync::Mutex;
+    static LOCK: Mutex<()> = Mutex::new(());
+    LOCK.lock().unwrap_or_else(|e| e.into_inner())
+}
+
 #[derive(Debug, Clone)]
 pub struct Track {
     pub name: String,

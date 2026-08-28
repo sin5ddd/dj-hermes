@@ -51,4 +51,4 @@ $: note("0 ~ 4 ~").scale("C2:minor").s("sine").lpf(400).gain(0.2)
 
 - [ ] 短い pad + 空間系  
 - [ ] `setcpm` + `$:`  
-- [ ] `strudel_save_song`  
+- [ ] `strudel_apply_song`  

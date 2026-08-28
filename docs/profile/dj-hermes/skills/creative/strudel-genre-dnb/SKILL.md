@@ -50,4 +50,4 @@ $: note("~ 4 ~ <7 9>").scale("C3:minor").s("square").lpf(2000).gain(0.15)
 
 - [ ] 短い break + sub  
 - [ ] `setcpm` + `$:`  
-- [ ] `strudel_save_song`  
+- [ ] `strudel_apply_song`  

@@ -50,4 +50,4 @@ $: note("~ ~ 7 ~").scale("C3:minor").s("sawtooth").lpf(1800).gain(0.2)
 
 - [ ] 短い 2–3 トラック  
 - [ ] `setcpm` + `$:`  
-- [ ] `strudel_save_song`  
+- [ ] `strudel_apply_song`  

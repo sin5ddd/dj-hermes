@@ -9,12 +9,23 @@ use std::sync::{Arc, Mutex};
 use crossbeam::channel::Sender;
 
 use crate::engine::{Command, Engine};
-use crate::song::{parse_song, resolve_song_path, Song};
-use crate::watcher::DeckPaths;
+use crate::song::{
+    ensure_user_songs_dir, parse_song, resolve_song_path, resolve_user_song_save_path, Song,
+    MAX_SONG_CONTENT_BYTES,
+};
+
+/// Which path is loaded on deck A / B (for reload targeting).
+pub type DeckPaths = Arc<Mutex<[Option<PathBuf>; 2]>>;
+
+pub fn new_deck_paths() -> DeckPaths {
+    Arc::new(Mutex::new([None, None]))
+}
 
 pub const HELP: &str = "\
 # local commands (live TUI: prefix with / )
 a|b load <file>     load song (bare name → songs/; .strudel/.txt optional)
+a|b reload          re-read last loaded file onto this deck (next bar)
+a|b save [name]     write current deck source to user library (no playback change)
 a|b mute <track>    mute track (next bar)
 a|b unmute <track>
 a|b gain <0..1>     fader (immediate)
@@ -177,7 +188,7 @@ pub fn exec(
     // Deck-prefixed: `a load path`, `b mute kick`, `a x 4`, …
     if let Some(deck) = parse_deck(args[0]) {
         if args.len() < 2 {
-            return ExecResult::msg("usage: a|b <load|mute|unmute|gain|head|x> …");
+            return ExecResult::msg("usage: a|b <load|mute|unmute|gain|head|x|save|reload> …");
         }
         let verb = args[1];
         match verb {
@@ -185,6 +196,15 @@ pub fn exec(
                 // Allow paths with spaces: join rest.
                 let path = PathBuf::from(args[2..].join(" "));
                 return load_song(deck, path, tx, deck_paths);
+            }
+            "reload" => return reload_song(deck, tx, deck_paths),
+            "save" => {
+                let name = if args.len() >= 3 {
+                    Some(args[2..].join(" "))
+                } else {
+                    None
+                };
+                return save_deck_song(deck, name, deck_paths, engine);
             }
             "mute" | "unmute" if args.len() >= 3 => {
                 let muted = verb == "mute";
@@ -239,7 +259,7 @@ pub fn exec(
             }
             other => {
                 return ExecResult::msg(format!(
-                    "unknown verb '{other}' (try: load mute unmute gain head x)"
+                    "unknown verb '{other}' (try: load mute unmute gain head x save reload)"
                 ));
             }
         }
@@ -283,6 +303,99 @@ fn load_song(
         },
         Err(e) => ExecResult::msg(format!("read error {}: {e}", path.display())),
     }
+}
+
+fn deck_label(deck: usize) -> &'static str {
+    if deck == 0 {
+        "A"
+    } else {
+        "B"
+    }
+}
+
+fn reload_song(deck: usize, tx: &Sender<Command>, deck_paths: &DeckPaths) -> ExecResult {
+    let path = match deck_paths.lock() {
+        Ok(dp) => dp[deck].clone(),
+        Err(_) => None,
+    };
+    let Some(path) = path else {
+        return ExecResult::msg(format!(
+            "no file associated with deck {} (load a song first)",
+            deck_label(deck)
+        ));
+    };
+    load_song(deck, path, tx, deck_paths)
+}
+
+fn save_name_hint(deck: usize, deck_paths: &DeckPaths, song: &Song) -> Option<String> {
+    if let Ok(dp) = deck_paths.lock() {
+        if let Some(p) = &dp[deck] {
+            if let Some(n) = p
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .filter(|n| !n.is_empty())
+            {
+                return Some(n.to_string());
+            }
+        }
+    }
+    PathBuf::from(&song.path)
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .filter(|n| !n.is_empty())
+        .map(|s| s.to_string())
+}
+
+fn save_deck_song(
+    deck: usize,
+    name: Option<String>,
+    deck_paths: &DeckPaths,
+    engine: Option<&Arc<Mutex<Engine>>>,
+) -> ExecResult {
+    let label = deck_label(deck);
+    let Some(engine) = engine else {
+        return ExecResult::msg(format!("deck {label} has no song loaded"));
+    };
+    let mut e = match engine.lock() {
+        Ok(g) => g,
+        Err(err) => return ExecResult::msg(format!("engine lock: {err}")),
+    };
+    let Some(mut song) = e.decks[deck].song_ref().cloned() else {
+        return ExecResult::msg(format!("deck {label} has no song loaded"));
+    };
+    let name = match name.filter(|n| !n.is_empty()) {
+        Some(n) => n,
+        None => match save_name_hint(deck, deck_paths, &song) {
+            Some(n) => n,
+            None => return ExecResult::msg("usage: a|b save <name>"),
+        },
+    };
+    if song.source.len() > MAX_SONG_CONTENT_BYTES {
+        return ExecResult::msg(format!(
+            "content too large ({} bytes, max {MAX_SONG_CONTENT_BYTES})",
+            song.source.len()
+        ));
+    }
+    let dest = match resolve_user_song_save_path(&name) {
+        Ok(p) => p,
+        Err(e) => return ExecResult::msg(e),
+    };
+    let dest_str = dest.to_string_lossy().into_owned();
+    if let Err(e) = parse_song(&song.source, &dest_str) {
+        return ExecResult::msg(format!("parse error: {e}"));
+    }
+    if let Err(e) = ensure_user_songs_dir() {
+        return ExecResult::msg(e);
+    }
+    if let Err(e) = std::fs::write(&dest, song.source.as_bytes()) {
+        return ExecResult::msg(format!("write: {e}"));
+    }
+    if let Ok(mut dp) = deck_paths.lock() {
+        dp[deck] = Some(dest.clone());
+    }
+    song.path = dest_str;
+    e.decks[deck].set_song_data(song);
+    ExecResult::msg(format!("saved {} → {}", label, dest.display()))
 }
 
 fn status(deck_paths: &DeckPaths, engine: Option<&Arc<Mutex<Engine>>>) -> ExecResult {
@@ -389,7 +502,7 @@ mod tests {
     #[test]
     fn parses_a_load_and_x() {
         let (tx, rx) = unbounded();
-        let paths = crate::watcher::new_deck_paths();
+        let paths = new_deck_paths();
         // load missing file → message, no panic
         let r = exec("a load no_such.strudel", &tx, &paths, None);
         assert!(!r.quit);
@@ -414,7 +527,7 @@ mod tests {
     #[test]
     fn b_x_targets_b() {
         let (tx, rx) = unbounded();
-        let paths = crate::watcher::new_deck_paths();
+        let paths = new_deck_paths();
         let _ = exec("b x 2", &tx, &paths, None);
         match rx.try_recv().unwrap() {
             Command::XFade { to_deck, bars } => {
@@ -428,7 +541,7 @@ mod tests {
     #[test]
     fn b_head_and_cue_alias() {
         let (tx, rx) = unbounded();
-        let paths = crate::watcher::new_deck_paths();
+        let paths = new_deck_paths();
         let r = exec("b head 33", &tx, &paths, None);
         assert!(r.messages[0].contains("33"));
         match rx.try_recv().unwrap() {
@@ -450,5 +563,54 @@ mod tests {
         let r = exec("b head 0", &tx, &paths, None);
         assert!(r.messages[0].contains(">= 1"));
         assert!(rx.try_recv().is_err());
+        assert!(rx.try_recv().is_err());
+    }
+
+    #[test]
+    fn save_without_song_and_reload_without_path() {
+        let (tx, rx) = unbounded();
+        let paths = new_deck_paths();
+        let r = exec("a save", &tx, &paths, None);
+        assert!(
+            r.messages[0].contains("no song loaded"),
+            "{}",
+            r.messages[0]
+        );
+        assert!(rx.try_recv().is_err());
+        let r = exec("a reload", &tx, &paths, None);
+        assert!(
+            r.messages[0].contains("no file associated"),
+            "{}",
+            r.messages[0]
+        );
+        assert!(rx.try_recv().is_err());
+    }
+
+    #[test]
+    fn save_writes_user_library_without_load() {
+        let _home_guard = crate::song::lock_test_home();
+        let home = std::env::temp_dir().join(format!("strudel_cmd_save_{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&home);
+        std::fs::create_dir_all(&home).unwrap();
+        std::env::set_var("HOME", &home);
+
+        let (tx, rx) = unbounded();
+        let paths = new_deck_paths();
+        let mut engine = Engine::new(44100, 120.0);
+        let song = parse_song("// @title t\nsetcpm(30)\n$: s(\"bd*4\")\n", "").unwrap();
+        engine.decks[0].set_song_data(song);
+        let engine = Arc::new(Mutex::new(engine));
+        let r = exec("a save visitor-mem", &tx, &paths, Some(&engine));
+        assert!(r.messages[0].contains("saved"), "{}", r.messages[0]);
+        assert!(rx.try_recv().is_err(), "TUI save must not LoadSong");
+        let expected = home
+            .join(".config")
+            .join("strudel-rs")
+            .join("songs")
+            .join("visitor-mem.strudel");
+        let written = std::fs::read_to_string(&expected).unwrap();
+        assert!(written.contains("@title t"), "{written}");
+
+        let _ = std::fs::remove_dir_all(&home);
     }
 }
