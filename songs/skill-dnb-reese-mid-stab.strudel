@@ -1,0 +1,12 @@
+// @title skill-dnb-reese-mid-stab
+// @genre drum and bass
+// @details skill: 174 BPM break, square C2 sub, reese-mid at C4, hollow-fifth stab
+setcpm(174/4)
+// drums
+$: s("[bd <~ sd> ~ sd ~ <bd ~> <bd sd> <bd ~>, hh*4, [~@5 oh ~@2]]*2").gain(0.7).lpf(4000)
+// sub
+$: note("0 3 0 <0 -1>").scale("C2:minor").s("square").lpf(120).gain(0.42)
+// mid
+$: note("0 3 0 <0 -1>").scale("C4:minor").s("reese-mid").gain(0.38)
+// stab
+$: note("~ 4 ~ <7 4>").scale("C4:minor").s("stab-fm_fifth").gain(0.22).cut(1)
