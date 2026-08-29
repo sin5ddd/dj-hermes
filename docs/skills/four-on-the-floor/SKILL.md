@@ -11,7 +11,7 @@ description: >-
 
 - The request is a **techno** pulse: kick on every quarter, hats on the offbeats, **kick in front**.
 - You need a **one-track drum** `$:` (bundled `bd` / `hh`).
-- You are **not** writing a house backbeat (snare on 2 and 4) unless you label that variant **house**.
+- You are **not** writing a house clap backbeat (`[~ cp]*2` on 2 and 4). That is [house-clap-backbeat](../house-clap-backbeat/SKILL.md).
 - You are **not** writing 2-step (`bd ~ bd ~`) or a kick-less pad.
 
 ## Pattern (techno)
@@ -35,14 +35,9 @@ Keep drums on **one** `$:` (comma layers). Do not use `stack()`.
 
 No snare: the kick stays the front of the grid.
 
-### House backbeat (house only — not techno)
+### House backbeat (not this file)
 
-Snare on 2 and 4 is a **house** backbeat. Use it only when the request is house (see `songs/house16.strudel` / `songs/smoke.strudel`):
-
-```
-// @genre house
-$: s("bd*4, [~ sd]*2, [~ hh]*4").gain(0.65)
-```
+House 2/4 is **`[~ cp]*2`** (bundled clap), not `[~ sd]*2`, and not stacked with `sd`. Do not add that layer to this techno grid. Recipe: [house-clap-backbeat](../house-clap-backbeat/SKILL.md).
 
 ## Why it sounds that way
 
@@ -59,7 +54,7 @@ Kicks on every quarter are the dance pulse. Offbeat hats fill the eighths. There
 
 `bd*4` is four copies of one atom. `[~ hh]` is rest-then-hat in a quarter-bar; `*4` tiles it four times.
 
-**House** (`bd*4, [~ sd]*2, [~ hh]*4`) adds snares at 0.25 and 0.75. That is a backbeat, not techno four-on-the-floor.
+**House** (`bd*4, [~ cp]*2, [~ hh]*4`) adds claps at 0.25 and 0.75. That is a backbeat, not techno four-on-the-floor. See [house-clap-backbeat](../house-clap-backbeat/SKILL.md). Do not stack `sd` on those hits.
 
 Both decks share one `Transport`. A DJ pair must use the **same** `setcpm`. This example is 124 BPM; `songs/skill-minor-scale-loop.strudel` uses `setcpm(124/4)` for that reason.
 
@@ -82,13 +77,13 @@ Live TUI: `/a load skill-four-on-the-floor` (or the `songs/` path). HTTP: `POST 
 | Goal | Change |
 | --- | --- |
 | Faster hats | `[~ hh]*4` → `hh*8` |
-| House backbeat | add `[~ sd]*2` and label **house** |
+| House clap backbeat | do **not** add it here — use [house-clap-backbeat](../house-clap-backbeat/SKILL.md) |
 | Darker kit | `.lpf(4000)` on the drum `$:` |
 
 ## Do not
 
-- Call `bd*4, [~ sd]*2` techno — that is a house backbeat.
+- Call `bd*4, [~ cp]*2` techno — that is a house backbeat (see [house-clap-backbeat](../house-clap-backbeat/SKILL.md)).
 - Pair this file with a song at another `setcpm` (shared clock; the other tempo is discarded).
 - `stack("bd*4", …)` or `.cpm(124)` — not song format.
 - `bd:00` or `kit:bd` — colon is not a sample selector here.
-- Bank-less `cp` — not in the default sample set.
+- Put `[~ cp]*2` on this kick-front grid.

@@ -700,3 +700,111 @@ fn skill_acid_303_filter_envelope_sounds() {
         clip_rail_ratio(&buf)
     );
 }
+
+#[test]
+fn skill_house_clap_backbeat_sounds() {
+    let path = songs_dir().join("skill-house-clap-backbeat.strudel");
+    let text = fs::read_to_string(&path).unwrap();
+    assert!(
+        text.contains("[~ cp]*2"),
+        "house backbeat must be clap on 2/4: {text}"
+    );
+    assert!(
+        !text.contains("[~ sd]") && !text.contains(",sd") && !text.contains("sd*"),
+        "do not stack or substitute sd on the clap grid: {text}"
+    );
+    assert!(
+        text.contains("lead-fm_pluck") && !text.contains("lead-fm-pluck"),
+        "pluck key is lead-fm_pluck (underscore): {text}"
+    );
+    assert!(
+        text.contains("C4:minor") && !text.contains("C3:minor"),
+        "C3 sample must use C4:minor, not C3:minor: {text}"
+    );
+    assert!(
+        text.contains("4 ~ 7 4  2 0 ~ -1"),
+        "signed-off degrees must not be rewritten: {text}"
+    );
+    assert!(
+        text.contains("cut(1)"),
+        "pluck one-shot needs cut(1): {text}"
+    );
+    assert!(
+        !text.contains("duckorbit") && !text.contains("compressor("),
+        "no duck / track compressor in this recipe: {text}"
+    );
+    assert!(
+        !text.contains("stab-fm_fifth") && !text.contains("reese-mid"),
+        "fifth/reese samples are not this skill: {text}"
+    );
+
+    let song = load_song_file("skill-house-clap-backbeat.strudel");
+    assert_eq!(song.title, "skill-house-clap-backbeat");
+    assert_eq!(song.tracks.len(), 2);
+    assert!(
+        song.bpm.is_some() && (song.bpm.unwrap() - 124.0).abs() < 1e-6,
+        "expected 124 BPM, got {:?}",
+        song.bpm
+    );
+
+    let drums = track(&song, "drums");
+    assert!(
+        drums.code.mini_src.contains("bd*4"),
+        "{}",
+        drums.code.mini_src
+    );
+    assert!(
+        drums.code.mini_src.contains("[~ cp]*2"),
+        "{}",
+        drums.code.mini_src
+    );
+    assert!(
+        drums.code.mini_src.contains("[~ hh]*4"),
+        "{}",
+        drums.code.mini_src
+    );
+    assert!(
+        !drums.code.mini_src.contains("sd"),
+        "drums must not include sd: {}",
+        drums.code.mini_src
+    );
+
+    let pluck = track(&song, "pluck");
+    assert_eq!(pluck.code.sound, "lead-fm_pluck");
+    assert_eq!(pluck.code.cut, Some(1));
+    assert!((pluck.code.gain - 0.4).abs() < 1e-5);
+    assert!(pluck.code.compressor.is_none());
+    let scale = pluck
+        .code
+        .scale
+        .as_ref()
+        .expect("pluck needs .scale")
+        .at_cycle(0);
+    assert_eq!(scale.root_midi, 60, "C4");
+    assert_eq!(scale.intervals, vec![0, 2, 3, 5, 7, 8, 10]);
+
+    if !samples_available() {
+        eprintln!("skip skill_house_clap render: samples/ not found");
+        return;
+    }
+    let bank = load_bank();
+    let bpm = 124.0;
+    let mut e = Engine::new(SR, bpm);
+    e.push_command(Command::LoadSong {
+        deck: 0,
+        song: Box::new(song),
+    });
+    let _ = process_bars(&mut e, &bank, 1, bpm);
+    let buf = process_bars(&mut e, &bank, 2, bpm);
+    assert_finite_bounded(&buf, "skill-house-clap-backbeat");
+    assert!(
+        has_energy(&buf, 0.001),
+        "house clap skill should sound, peak={}",
+        peak(&buf)
+    );
+    assert!(
+        clip_rail_ratio(&buf) < 0.05,
+        "house clap skill clip rail: {}",
+        clip_rail_ratio(&buf)
+    );
+}

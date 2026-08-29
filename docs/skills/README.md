@@ -91,13 +91,13 @@ Genre in this repo is mostly **tempo + drum grid + register + filter**, not a hi
 | --- | --- |
 | `setcpm` | House ~120–128, techno ~126–130, DnB ~170+, ambient can sit on a shared DJ BPM |
 | Drum string | Four-on-the-floor vs 2-step vs break |
-| `.s(...)` | `bd`/`sd`/`hh`/`oh` samples; `sawtooth`/`square`/`sine`/`triangle`; `wt_organ` / `wt_bright` |
+| `.s(...)` | `bd`/`sd`/`hh`/`oh`/`cp` samples; `lead-fm_pluck`; `sawtooth`/`square`/`sine`/`triangle`; `wt_organ` / `wt_bright` |
 | `.lpf` / `.lpq` | Dark bass vs acid (high Q) vs open hats |
 | ADSR | Pluck vs pad |
 | `.room` / `.delay` | Space (orbit-shared FX, ids 1–4 per deck) |
 | `.duckorbit` | Kick ducks **that orbit** (put pad **and** bass on it). `duckattack` is recover time |
 
-Bundled one-shots: `samples/bd`, `sd`, `hh`, `oh`. `db` is not a sample. Unknown names fail resolve (performance continues). `stack()`, `.cpm()`, and a bare `s("...")` line without `$:` are not song format.
+Bundled one-shots: `samples/bd`, `sd`, `hh`, `oh`, `cp` (`samples/cp/00.wav`), plus `lead-fm_pluck`. `db` is not a sample. Unknown names fail resolve (performance continues). `stack()`, `.cpm()`, and a bare `s("...")` line without `$:` are not song format.
 
 ## DJ / mix
 
@@ -111,7 +111,8 @@ Bundled one-shots: `samples/bd`, `sd`, `hh`, `oh`. `db` is not a sample. Unknown
 
 | Skill | When | Example song |
 | --- | --- | --- |
-| [four-on-the-floor](./four-on-the-floor/SKILL.md) | Techno kick+offbeat hats (`bd*4, [~ hh]*4`); house backbeat is labeled separately | `songs/skill-four-on-the-floor.strudel` |
+| [four-on-the-floor](./four-on-the-floor/SKILL.md) | Techno kick+offbeat hats (`bd*4, [~ hh]*4`); no clap | `songs/skill-four-on-the-floor.strudel` |
+| [house-clap-backbeat](./house-clap-backbeat/SKILL.md) | House clap on 2/4 (`[~ cp]*2`, not stacked with `sd`) + C4:minor pluck | `songs/skill-house-clap-backbeat.strudel` |
 | [minor-scale-loop](./minor-scale-loop/SKILL.md) | Short minor bass + triad | `songs/skill-minor-scale-loop.strudel` |
 | [drum-and-bass](./drum-and-bass/SKILL.md) | 174 BPM break, drums above sub, square+saw Reese | `songs/skill-drum-and-bass.strudel` |
 | [sidechain-ducking](./sidechain-ducking/SKILL.md) | Techno kick ducks pad **and** bass; short recover; no track compressor | `songs/skill-sidechain-ducking.strudel` |
@@ -145,6 +146,12 @@ strudel-rs dj songs/skill-sidechain-ducking.strudel songs/ambient1.strudel
 
 strudel-rs play songs/skill-acid-303-filter-envelope.strudel --seconds 12
 strudel-rs play songs/skill-acid-303-filter-envelope.strudel --headless --seconds 8
+
+strudel-rs play songs/skill-house-clap-backbeat.strudel --seconds 12
+strudel-rs play songs/skill-house-clap-backbeat.strudel --headless --seconds 8
+
+# Dual deck — both files must share one setcpm (here 124/4)
+strudel-rs dj songs/skill-house-clap-backbeat.strudel songs/skill-minor-scale-loop.strudel
 ```
 
 Headless hosts without an audio device: `cargo test --test e2e` renders through `Engine::process` (no ALSA).

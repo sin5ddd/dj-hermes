@@ -1,0 +1,8 @@
+// @title skill-house-clap-backbeat
+// @genre house
+// @details skill example: house clap on 2/4 + C-minor FM pluck (124 BPM)
+setcpm(124/4)
+// drums
+$: s("bd*4, [~ cp]*2, [~ hh]*4").gain(0.65)
+// pluck
+$: note("4 ~ 7 4  2 0 ~ -1").scale("C4:minor").s("lead-fm_pluck").gain(0.4).cut(1)
