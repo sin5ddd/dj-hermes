@@ -1,0 +1,2 @@
+# WAV sample kits (bundled demo + synthesist drops) go through Git LFS.
+*.wav filter=lfs diff=lfs merge=lfs -text

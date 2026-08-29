@@ -10,7 +10,16 @@ Quick layout:
 samples/
   <name>/00.wav   # variation index 0 (n=0)
   <name>/01.wav   # optional n=1, ...
-  <name>.wav      # also accepted as a single variation (user kits; gitignored at repo root)
+  <name>.wav      # also accepted as a single variation
+```
+
+Bundled extras (same format): `cp/00.wav` (house 2/4 clap), `lead-fm_pluck.wav`, `stab-fm_fifth.wav` (hollow C+G), `reese-mid.wav`.
+
+WAV files are stored with **Git LFS**. After clone, or if a `.wav` is a 3-line pointer file:
+
+```bash
+git lfs install   # once per machine (clean/smudge hooks)
+git lfs pull
 ```
 
 ## Refresh from Sonic Pi (maintainers)
@@ -24,10 +33,8 @@ ffmpeg -y -i bd_haus.flac -ac 1 -ar 48000 -sample_fmt s16 samples/bd/00.wav
 
 See `LICENSE.md` for mapping and CC0 provenance.
 
-## User kits (not in git)
+## Adding a kit
 
-- Place extra WAVs as **flat files** under `samples/` (e.g. `tr808-hard_bd.wav`, `pad-ambient_drone01.wav`, `piano-acoustic_soft.wav`).
-- `samples/*.wav` at the **directory root** is **gitignored**.
-- Bundled kit folders (`bd/`, `sd/`, …) stay tracked.
-- Do **not** vendor Dirt-Samples. Prefer CC0 or original recordings.
-- Keep a local provenance note if you redistribute third-party audio outside this repo.
+Extra WAVs use the same one-level layout (`samples/<name>.wav` or `samples/<name>/00.wav`) and are **Git LFS** (not gitignored). Prefer CC0 or original recordings. Do **not** vendor Dirt-Samples.
+
+Scratch bounce / debug audio stays out of git (`/out/`, `/recordings/`).

@@ -61,7 +61,7 @@ $: s("bd*4, [~ sd]*2, [~ hh]*4").bank("accdrum-jazz")
 | `sd` | snare |
 | `hh` | closed hat |
 | `oh` | open hat |
-| `cp` | clap（同梱なし。ユーザーキットで追加可） |
+| `cp` | clap（同梱 `samples/cp/00.wav`。ハウス 2/4 のドライクラップ。スネア代用ではない） |
 | `rim` `tom` `perc` … | 必要なら同様に `{bank}_{part}` |
 
 フォルダ内のファイル名例（変種の説明用。キーはフォルダ名）:
@@ -128,17 +128,20 @@ $: s("fx-riser_short01")
 
 ```
 samples/
-  # --- git 同梱デモ（短いパート名）---
+  # --- git 同梱デモ（短いパート名・Git LFS）---
   bd/00.wav 01.wav
   sd/00.wav 01.wav
   hh/00.wav
   oh/00.wav
+  cp/00.wav          # house 2/4 dry clap (FM)
+  lead-fm_pluck.wav  # C3 short FM pluck
+  stab-fm_fifth.wav  # hollow C+G fifth (no third)
+  reese-mid.wav      # C3 mid Reese glue, 800–1200 Hz
   LICENSE.md
   README.md
   LAYOUT.md          # 本ファイル
 
-  # --- ユーザーキット（git 外推奨）---
-  # 直下の *.wav は .gitignore 対象
+  # --- 追加キット（同じ 1 階層・Git LFS でコミット可）---
   tr808-hard_bd.wav
   tr808-hard_sd.wav
   tr808-hard_hh.wav
@@ -155,8 +158,9 @@ samples/
   fx-riser_short01.wav
 ```
 
-- **同梱 CC0 キット**（`bd/` 等）はリポジトリに残す  
-- **追加の直下 `*.wav`** は git に含めない（ライセンス・サイズ）。展示機ローカルに置く  
+- **同梱 CC0 キット**（`bd/` `cp/` と上記 FM ワンショット）はリポジトリに残す  
+- **追加の `samples/<name>.wav` / `samples/<name>/00.wav`** は Git LFS（`.gitattributes` の `*.wav`）。gitignore されない  
+- スクラッチ出力は `/out/` `/recordings/` のまま git 外  
 - Dirt-Samples やライセンス不明キットを **vendor しない**
 
 ---

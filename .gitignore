@@ -43,10 +43,10 @@ agent-tools/
 tmp/
 temp/
 
-# Audio debug dumps (if any)
+# Audio debug dumps / scratch bounce (not sample kits)
 *.wav.raw
 /out/
 /recordings/
 
-# User sample kits at samples/ root (bundled kits live in samples/<name>/*.wav folders)
-/samples/*.wav
+# Sample kits (bundled + synthesist drops) are tracked via Git LFS — see .gitattributes.
+# Do not ignore samples/**/*.wav.
