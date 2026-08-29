@@ -28,6 +28,8 @@ FORBIDDEN = [
     (re.compile(r"\.lfo\s*\("), ".lfo(...) is not implemented in strudel-rs"),
     # .add / .sub / .ply, dyn mini args, sine.range(x) are implemented — do not forbid.
     (re.compile(r'(?<![a-zA-Z_])cp(?![a-zA-Z_])'), "sample 'cp' is not in the default bank (use sd/oh)"),
+    # `db` is not a sample (typo for bd). Unknown atoms are silent.
+    (re.compile(r'(?<![a-zA-Z_])db(?![a-zA-Z_])'), "sample 'db' is not in the default bank (use bd)"),
 ]
 
 # Method args that still cannot be mini patterns (vib etc. remain scalar-only for now).

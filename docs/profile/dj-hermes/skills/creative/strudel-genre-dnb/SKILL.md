@@ -1,7 +1,7 @@
 ---
 name: strudel-genre-dnb
 description: "Use when writing short Drum and Bass live loops for strudel-rs."
-version: 3.1.0
+version: 3.2.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -16,38 +16,44 @@ metadata:
 # strudel-rs × ドラムンベース（短いライブループ）
 
 ## Overview
-高速ブレイク + 重いサブ。体感 160–180 BPM。**1 サイクルの短い break 骨格**で十分。16 小節 `cat` は不要。  
-ドラムは短い part + 任意 `.bank("…")`。低域は `reese-dark` 等フル名があれば優先、無ければ sine サブ（→ sound-design / LAYOUT.md）。
+高速ブレイク + 重いサブ。**`setcpm(174/4)`（174 BPM）**。ドラム gain はサブより上。Reese は **square サブ + saw ミッド**（スクエア一本にしない）。`db` はサンプルに無い（その拍は無音）→ 必ず `bd`。
+
+正本の理由: リポジトリ `docs/skills/dnb/SKILL.md`。
 
 ## コピー用フル例
 
 ```
 // @title visitor-dnb
 // @genre drum-and-bass
-setcpm(170/4)
-// drums (break + hats; .fast for feel). ユーザー kit なら .bank("tr808-hard") 等
-$: s("bd ~ ~ sd ~ bd bd ~, hh*16, [~@5 oh ~@2]").fast(2).gain(0.55)
-// sub — kit があれば s("reese-dark") 等
-$: note("0 ~ ~ ~").scale("C1:minor").s("sine").lpf(120).gain(0.7)
-  .attack(0.01).release(0.4)
-// stab (optional)
-$: note("~ 4 ~ <7 9>").scale("C3:minor").s("square").lpf(2000).gain(0.15)
+setcpm(174/4)
+// drums — break in front of the sub
+$: s("bd <~ sd> ~ sd ~ <bd ~> <bd sd> <bd ~>, hh*4, [~@5 oh ~@2]").fast(2).gain(0.6).lpf(4000)
+// sub
+$: note("0 3 0 <0 -1>").scale("C2:minor").s("square").lpf(120).gain(0.45)
+  .attack(0.01).decay(0.5).release(0.4)
+// mid reese
+$: note("0 3 0 <0 -1>").scale("C2:minor").s("sawtooth").lpf(1000).gain(0.32)
+  .attack(0.01).decay(0.4).release(0.3)
 ```
 
 ## ライブで変えると効く箇所
 
-1. break の snare 位置（スペース区切り）  
+1. break の snare 位置（スペース / `<>`）  
 2. sub の次数 `0` ↔ `-1`  
-3. `hh*16` ↔ `hh*8`  
+3. mid `.lpf` を 800–1200 の中で動かす  
 
 ## Pitfalls
 
 1. `bd*4` のまま → 速いハウスになる  
 2. `stack(...).cpm(170)` → 保存 400  
-3. サブが高すぎる → `C1` 付近  
+3. ドラム `.gain` がサブ以下 → ブレイクが沈む  
+4. パターンに `db` → その拍は無音  
+5. Reese を square 1 本にする  
 
 ## Checklist
 
-- [ ] 短い break + sub  
-- [ ] `setcpm` + `$:`  
+- [ ] `setcpm(174/4)`  
+- [ ] ドラム gain > サブ gain  
+- [ ] square サブ + saw ミッド  
+- [ ] `db` なし  
 - [ ] `strudel_apply_song`  

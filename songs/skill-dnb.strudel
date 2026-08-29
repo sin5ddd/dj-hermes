@@ -1,0 +1,14 @@
+// @title skill-dnb
+// @genre drum and bass
+// @details skill: 174 BPM, drums above sub, square sub + saw mid (no db)
+setcpm(174/4)
+// drums
+$: s("bd <~ sd> ~ sd ~ <bd ~> <bd sd> <bd ~>, hh*4, [~@5 oh ~@2]").fast(2).gain(0.6).lpf(4000)
+// sub
+$: note("0 3 0 <0 -1>").scale("C2:minor")
+  .s("square").lpf(120).gain(0.45)
+  .attack(0.01).decay(0.5).release(0.4)
+// mid
+$: note("0 3 0 <0 -1>").scale("C2:minor")
+  .s("sawtooth").lpf(1000).gain(0.32)
+  .attack(0.01).decay(0.4).release(0.3)

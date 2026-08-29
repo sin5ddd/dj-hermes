@@ -95,7 +95,7 @@ Genre in this repo is mostly **tempo + drum grid + register + filter**, not a hi
 | `.lpf` / `.lpq` | Dark bass vs acid (high Q) vs open hats |
 | ADSR | Pluck vs pad |
 | `.room` / `.delay` | Space (orbit-shared FX, ids 1–4 per deck) |
-| `.duckorbit` | Kick ducks a pad on another orbit |
+| `.duckorbit` | Kick ducks **that orbit** (put pad **and** bass on it). `duckattack` is recover time |
 
 Bundled one-shots: `samples/bd`, `sd`, `hh`, `oh`. Unknown names fail resolve (performance continues). `stack()`, `.cpm()`, and a bare `s("...")` line without `$:` are not song format.
 
@@ -104,6 +104,7 @@ Bundled one-shots: `samples/bd`, `sd`, `hh`, `oh`. Unknown names fail resolve (p
 - Two decks, one `Transport`.
 - Mixer faders + per-deck Hi/Mid/Lo EQ (shelves at 6 kHz / 1 kHz / 200 Hz) + master LPF/HPF.
 - Crossfade: `gainA = cos(θ)`, `gainB = sin(θ)` for `θ` in `0 … π/2` (`mixer.rs`). Starts on a bar boundary; `hush` is immediate.
+- `.compressor(...)` on a `$:` is **mixer master**, last-write (`engine.rs`) — not a track insert. It will squash the kick.
 - Try a pair: `strudel-rs dj songs/techno1.strudel songs/ambient1.strudel` then `/x 4`.
 
 ## Skills in this tree
@@ -112,8 +113,10 @@ Bundled one-shots: `samples/bd`, `sd`, `hh`, `oh`. Unknown names fail resolve (p
 | --- | --- | --- |
 | [four-on-the-floor](./four-on-the-floor/SKILL.md) | House/techno/disco kick on every beat | `songs/skill-four-on-the-floor.strudel` |
 | [minor-scale-loop](./minor-scale-loop/SKILL.md) | Short minor bass + triad | `songs/skill-minor-scale-loop.strudel` |
+| [dnb](./dnb/SKILL.md) | 174 BPM break, drums above sub, square+saw Reese | `songs/skill-dnb.strudel` |
+| [techno-duck](./techno-duck/SKILL.md) | Kick ducks pad **and** bass; short recover; no track compressor | `songs/skill-techno-duck.strudel` |
 
-Follow-up PRs can add house, techno (duck/FM), 2-step, DnB, acid, ambient, and scale-progression recipes. Existing demos: `songs/house16.strudel`, `techno1.strudel`, `garage16.strudel`, `dnb16.strudel`, `acid16.strudel`, `ambient1.strudel`.
+Acid (`acid16` 303 / filter envelope) is not in this tree yet. Other demos: `songs/house16.strudel`, `garage16.strudel`, `ambient1.strudel`.
 
 ## How to try any example
 

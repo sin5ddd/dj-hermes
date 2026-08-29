@@ -1,16 +1,16 @@
 // @title techno1
 // @genre techno
-// @details short live demo: duck orbit + FM bass @ 126 BPM
+// @details kick ducks orbit 2 (pad + FM bass), short recover @ 126 BPM
 setcpm(126/4)
-// kick (duck driver — keep separate)
-$: s("bd*4").gain(0.9).duckorbit(2).duckattack(0.12).duckdepth(0.85)
+// kick (duck driver — keep off orbit 2)
+$: s("bd*4").gain(0.9).duckorbit(2).duckattack(0.04).duckdepth(0.85)
 // drums
 $: s("[~ hh]*4, [~ sd]*2").gain(0.35)
-// bass (FM)
+// bass (FM) — same orbit as pad so the kick ducks the low end
 $: note("0 0 2 <4 6>").scale("C2:minor")
   .s("sine").fm(3).fmh(1.5).lpf(500).gain(0.55)
   .attack(0.005).decay(0.1).sustain(0.3).release(0.08)
-  .compressor("-18:3:6:.003:.12")
+  .orbit(2)
 // pad (ducked on orbit 2)
 $: note("0 2 4 7").scale("C3:minor")
   .s("sawtooth").lpf(900).orbit(2).gain(0.35)

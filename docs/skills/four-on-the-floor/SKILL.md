@@ -11,7 +11,7 @@ description: >-
 
 - The request is a **basic beat**, house/techno/disco pulse, or “kick on every quarter”.
 - You need a **one-track drum** `$:` that this engine can play (bundled `bd` / `sd` / `hh`).
-- You are **not** writing 2-step (`bd ~ bd ~`), a DnB break, or a kick-less pad.
+- You are **not** writing 2-step (`bd ~ bd ~`), a DnB break (→ **dnb**), or a kick-less pad.
 
 ## Pattern
 
