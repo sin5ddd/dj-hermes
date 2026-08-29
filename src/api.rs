@@ -840,6 +840,7 @@ pub fn path_display(p: &Path) -> String {
 }
 
 #[cfg(test)]
+#[allow(clippy::await_holding_lock)] // HOME mutex serializes tests that call .await
 mod tests {
     use super::*;
     use axum::body::Body;
