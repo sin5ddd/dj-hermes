@@ -808,3 +808,154 @@ fn skill_house_clap_backbeat_sounds() {
         clip_rail_ratio(&buf)
     );
 }
+
+#[test]
+fn skill_dnb_reese_mid_stab_sounds() {
+    let path = songs_dir().join("skill-dnb-reese-mid-stab.strudel");
+    let text = fs::read_to_string(&path).unwrap();
+    assert!(
+        text.contains("[bd <~ sd> ~ sd ~ <bd ~> <bd sd> <bd ~>, hh*4, [~@5 oh ~@2]]*2"),
+        "signed-off break + mini *2 must not be rewritten: {text}"
+    );
+    assert!(
+        !text.contains(".fast("),
+        "method .fast squeezes the break into the first half: {text}"
+    );
+    assert!(
+        text.contains(r#"note("0 3 0 <0 -1>").scale("C2:minor").s("square")"#),
+        "square sub stays C2:minor: {text}"
+    );
+    assert!(
+        text.contains(r#"note("0 3 0 <0 -1>").scale("C4:minor").s("reese-mid")"#),
+        "reese-mid must stay C4:minor (hyphen stem): {text}"
+    );
+    assert!(
+        !text.contains("reese_mid") && !text.contains("reese-mid.wav"),
+        "sound key is reese-mid, not reese_mid: {text}"
+    );
+    assert!(
+        text.contains(r#"note("~ 4 ~ <7 4>").scale("C4:minor").s("stab-fm_fifth")"#),
+        "signed-off stab degrees / underscore stem: {text}"
+    );
+    assert!(
+        !text.contains("stab-fm-fifth"),
+        "stab key is stab-fm_fifth (underscore): {text}"
+    );
+    assert!(
+        text.contains("cut(1)"),
+        "stab one-shot needs cut(1): {text}"
+    );
+    assert!(
+        !text.contains("duckorbit") && !text.contains("compressor("),
+        "no duck / track compressor in this recipe: {text}"
+    );
+    assert!(
+        !text.contains(" cp") && !text.contains("\"cp") && !text.contains("[~ cp]"),
+        "no house clap on this grid: {text}"
+    );
+
+    let song = load_song_file("skill-dnb-reese-mid-stab.strudel");
+    assert_eq!(song.title, "skill-dnb-reese-mid-stab");
+    assert_eq!(song.tracks.len(), 4);
+    assert!(
+        song.bpm.is_some() && (song.bpm.unwrap() - 174.0).abs() < 1e-6,
+        "expected 174 BPM, got {:?}",
+        song.bpm
+    );
+
+    let drums = track(&song, "drums");
+    let sub = track(&song, "sub");
+    let mid = track(&song, "mid");
+    let stab = track(&song, "stab");
+    assert!(
+        drums.code.gain > sub.code.gain,
+        "drums {} must sit above sub {}",
+        drums.code.gain,
+        sub.code.gain
+    );
+    assert!((drums.code.gain - 0.7).abs() < 1e-5);
+    assert_eq!(sub.code.sound, "square");
+    assert!((sub.code.gain - 0.42).abs() < 1e-5);
+    let sub_lpf = sub.code.filter.lpf.expect("square sub needs lpf");
+    assert!((sub_lpf - 120.0).abs() < 1e-3);
+    let sub_scale = sub
+        .code
+        .scale
+        .as_ref()
+        .expect("sub needs .scale")
+        .at_cycle(0);
+    assert_eq!(sub_scale.root_midi, 36, "C2");
+    assert_eq!(sub_scale.intervals, vec![0, 2, 3, 5, 7, 8, 10]);
+
+    assert_eq!(mid.code.sound, "reese-mid");
+    assert!((mid.code.gain - 0.38).abs() < 1e-5);
+    let mid_scale = mid
+        .code
+        .scale
+        .as_ref()
+        .expect("mid needs .scale")
+        .at_cycle(0);
+    assert_eq!(mid_scale.root_midi, 60, "C4 — C2 dumps the 800–1200 band");
+    assert_eq!(mid_scale.intervals, vec![0, 2, 3, 5, 7, 8, 10]);
+
+    assert_eq!(stab.code.sound, "stab-fm_fifth");
+    assert_eq!(stab.code.cut, Some(1));
+    assert!((stab.code.gain - 0.22).abs() < 1e-5);
+    let stab_scale = stab
+        .code
+        .scale
+        .as_ref()
+        .expect("stab needs .scale")
+        .at_cycle(0);
+    assert_eq!(stab_scale.root_midi, 60, "C4");
+    assert_eq!(stab_scale.intervals, vec![0, 2, 3, 5, 7, 8, 10]);
+
+    for t in &song.tracks {
+        assert!(
+            t.code.compressor.is_none(),
+            "no track compressor: {}",
+            t.name
+        );
+        assert!(
+            !t.code.mini_src.contains("db"),
+            "db is not a sample (silent): {}",
+            t.code.mini_src
+        );
+    }
+
+    // Mini *2 tiles the break across the bar. Method .fast(2) would squeeze
+    // one cycle into [0, 0.5) and leave the second half empty.
+    let evs = strudel_rs::mini::events(&drums.code.pattern, 0);
+    assert!(
+        evs.iter().any(|e| e.start >= 0.5),
+        "break should occupy the second half of the bar, starts={:?}",
+        evs.iter().map(|e| e.start).collect::<Vec<_>>()
+    );
+    assert!(evs.iter().any(|e| e.value == "bd"));
+    assert!(evs.iter().any(|e| e.value == "sd"));
+
+    if !samples_available() {
+        eprintln!("skip skill_dnb_reese_mid_stab render: samples/ not found");
+        return;
+    }
+    let bank = load_bank();
+    let bpm = 174.0;
+    let mut e = Engine::new(SR, bpm);
+    e.push_command(Command::LoadSong {
+        deck: 0,
+        song: Box::new(song),
+    });
+    let _ = process_bars(&mut e, &bank, 1, bpm);
+    let buf = process_bars(&mut e, &bank, 2, bpm);
+    assert_finite_bounded(&buf, "skill-dnb-reese-mid-stab");
+    assert!(
+        has_energy(&buf, 0.001),
+        "dnb reese-mid skill should sound, peak={}",
+        peak(&buf)
+    );
+    assert!(
+        clip_rail_ratio(&buf) < 0.05,
+        "dnb reese-mid skill clip rail: {}",
+        clip_rail_ratio(&buf)
+    );
+}

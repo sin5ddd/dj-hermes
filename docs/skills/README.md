@@ -115,6 +115,7 @@ Bundled one-shots: `samples/bd`, `sd`, `hh`, `oh`, `cp` (`samples/cp/00.wav`), p
 | [house-clap-backbeat](./house-clap-backbeat/SKILL.md) | House clap on 2/4 (`[~ cp]*2`, not stacked with `sd`) + C4:minor pluck | `songs/skill-house-clap-backbeat.strudel` |
 | [minor-scale-loop](./minor-scale-loop/SKILL.md) | Short minor bass + triad | `songs/skill-minor-scale-loop.strudel` |
 | [drum-and-bass](./drum-and-bass/SKILL.md) | 174 BPM break, drums above sub, square+saw Reese | `songs/skill-drum-and-bass.strudel` |
+| [dnb-reese-mid-stab](./dnb-reese-mid-stab/SKILL.md) | 174 BPM break, square C2 sub + `reese-mid` at C4 + hollow-fifth stab | `songs/skill-dnb-reese-mid-stab.strudel` |
 | [sidechain-ducking](./sidechain-ducking/SKILL.md) | Techno kick ducks pad **and** bass; short recover; no track compressor | `songs/skill-sidechain-ducking.strudel` |
 | [dnb](./dnb/SKILL.md) | Same mix idea as drum-and-bass (shorter path name) | `songs/skill-dnb.strudel` |
 | [techno-duck](./techno-duck/SKILL.md) | Same duck idea as sidechain-ducking | `songs/skill-techno-duck.strudel` |
@@ -152,6 +153,10 @@ strudel-rs play songs/skill-house-clap-backbeat.strudel --headless --seconds 8
 
 # Dual deck — both files must share one setcpm (here 124/4)
 strudel-rs dj songs/skill-house-clap-backbeat.strudel songs/skill-minor-scale-loop.strudel
+
+# 174 DnB with sampled mid Reese — play solo. Do not pair with 124 house.
+strudel-rs play songs/skill-dnb-reese-mid-stab.strudel --seconds 12
+strudel-rs play songs/skill-dnb-reese-mid-stab.strudel --headless --seconds 8
 ```
 
 Headless hosts without an audio device: `cargo test --test e2e` renders through `Engine::process` (no ALSA).
