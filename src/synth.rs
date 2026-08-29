@@ -713,6 +713,71 @@ mod tests {
     }
 
     #[test]
+    fn lpenv_opens_then_closes_cutoff() {
+        // Per-note filter env: cutoff = base * 2^(lpenv * level).
+        // Attack → peak then decay toward lpsustain. lprelease is unused.
+        let mods = ModParams {
+            lpenv: 4.0,
+            lpa: 0.002,
+            lpd: 0.08,
+            lps: 0.0,
+            ..Default::default()
+        };
+        let filter = FilterParams {
+            lpf: Some(200.0),
+            lpq: 1.2,
+            ..Default::default()
+        };
+        let mut v = Voice::new(
+            OscSource::Wave(Wave::Saw),
+            110.0,
+            1.0,
+            12_000,
+            filter,
+            Adsr {
+                attack: 0.001,
+                decay: 0.0,
+                sustain: 1.0,
+                release: 0.001,
+            },
+            mods,
+            1,
+            None,
+        )
+        .with_adsr_timing(48_000.0, 12_000);
+
+        let start = v.effective_lpf_hz().unwrap();
+        assert!(
+            (start - 200.0).abs() < 1.0,
+            "env start should sit on the base, got {start}"
+        );
+
+        // ~2 ms attack at 48 kHz → peak (env ≈ 1) → 200 * 2^4 = 3200 Hz.
+        for _ in 0..100 {
+            let _ = v.next_sample(48_000.0);
+        }
+        let peak = v.effective_lpf_hz().unwrap();
+        assert!(
+            (peak - 3200.0).abs() < 80.0,
+            "env peak should open ~4 octaves, got {peak}"
+        );
+
+        // After decay (~80 ms) at lps=0 the cutoff returns to the 200 Hz base.
+        for _ in 0..5000 {
+            let _ = v.next_sample(48_000.0);
+        }
+        let closed = v.effective_lpf_hz().unwrap();
+        assert!(
+            (closed - 200.0).abs() < 20.0,
+            "env sustain 0 should close to the base, got {closed}"
+        );
+        assert!(
+            peak > closed * 8.0,
+            "peak {peak} should dwarf closed {closed}"
+        );
+    }
+
+    #[test]
     fn wavetable_builtin() {
         let table = builtin_wavetable("wt_bright").unwrap();
         let mut v = Voice::new(

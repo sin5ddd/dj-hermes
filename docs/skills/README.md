@@ -117,8 +117,11 @@ Bundled one-shots: `samples/bd`, `sd`, `hh`, `oh`. `db` is not a sample. Unknown
 | [sidechain-ducking](./sidechain-ducking/SKILL.md) | Techno kick ducks pad **and** bass; short recover; no track compressor | `songs/skill-sidechain-ducking.strudel` |
 | [dnb](./dnb/SKILL.md) | Same mix idea as drum-and-bass (shorter path name) | `songs/skill-dnb.strudel` |
 | [techno-duck](./techno-duck/SKILL.md) | Same duck idea as sidechain-ducking | `songs/skill-techno-duck.strudel` |
+| [acid-303-filter-envelope](./acid-303-filter-envelope/SKILL.md) | TB-303: per-note `lpenv`, high `lpq`, not static `lpf` + amp ADSR | `songs/skill-acid-303-filter-envelope.strudel` |
 
-Acid (`acid16` 303 / filter envelope) is not in this tree yet. Other demos: `songs/house16.strudel`, `garage16.strudel`, `ambient1.strudel`, `dnb16.strudel`, `techno1.strudel`.
+`songs/acid16.strudel` is the static-cutoff live loop (same 130 BPM). Clock would align; both files are 303 lines, so A/B would double the acid — not a mix reason. Do not treat `acid16` as the envelope recipe.
+
+Other demos: `songs/house16.strudel`, `garage16.strudel`, `ambient1.strudel`, `dnb16.strudel`, `techno1.strudel`.
 
 ## How to try any example
 
@@ -139,6 +142,9 @@ strudel-rs play songs/skill-sidechain-ducking.strudel --headless --seconds 8
 
 # Dual deck — both files must share one setcpm (here 126/4). Do not pair with 174 DnB.
 strudel-rs dj songs/skill-sidechain-ducking.strudel songs/ambient1.strudel
+
+strudel-rs play songs/skill-acid-303-filter-envelope.strudel --seconds 12
+strudel-rs play songs/skill-acid-303-filter-envelope.strudel --headless --seconds 8
 ```
 
 Headless hosts without an audio device: `cargo test --test e2e` renders through `Engine::process` (no ALSA).
