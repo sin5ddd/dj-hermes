@@ -159,6 +159,66 @@ fn ambient1_sounds_without_samples() {
 }
 
 #[test]
+fn skill_four_on_the_floor_sounds_with_samples() {
+    if !samples_available() {
+        eprintln!("skip skill_four_on_the_floor: samples/ not found");
+        return;
+    }
+    let song = load_song_file("skill-four-on-the-floor.strudel");
+    assert_eq!(song.title, "skill-four-on-the-floor");
+    assert_eq!(song.tracks.len(), 1);
+    assert!((song.bpm.unwrap() - 124.0).abs() < 1e-6);
+    let bank = load_bank();
+    let bpm = 124.0;
+    let mut e = Engine::new(SR, bpm);
+    e.push_command(Command::LoadSong {
+        deck: 0,
+        song: Box::new(song),
+    });
+    let _ = process_bars(&mut e, &bank, 1, bpm);
+    let buf = process_bars(&mut e, &bank, 2, bpm);
+    assert_finite_bounded(&buf, "skill-four-on-the-floor");
+    assert!(
+        has_energy(&buf, 0.001),
+        "four-on-the-floor should sound, peak={}",
+        peak(&buf)
+    );
+    assert!(
+        clip_rail_ratio(&buf) < 0.05,
+        "four-on-the-floor clip rail: {}",
+        clip_rail_ratio(&buf)
+    );
+}
+
+#[test]
+fn skill_minor_scale_loop_sounds_without_samples() {
+    let song = load_song_file("skill-minor-scale-loop.strudel");
+    assert_eq!(song.title, "skill-minor-scale-loop");
+    assert_eq!(song.tracks.len(), 2);
+    assert!((song.bpm.unwrap() - 100.0).abs() < 1e-6);
+    let bank = SampleBank::empty();
+    let bpm = 100.0;
+    let mut e = Engine::new(SR, bpm);
+    e.push_command(Command::LoadSong {
+        deck: 0,
+        song: Box::new(song),
+    });
+    let _ = process_bars(&mut e, &bank, 1, bpm);
+    let buf = process_bars(&mut e, &bank, 2, bpm);
+    assert_finite_bounded(&buf, "skill-minor-scale-loop");
+    assert!(
+        has_energy(&buf, 0.001),
+        "minor-scale-loop should sound without SampleBank, peak={}",
+        peak(&buf)
+    );
+    assert!(
+        clip_rail_ratio(&buf) < 0.05,
+        "minor-scale-loop clip rail: {}",
+        clip_rail_ratio(&buf)
+    );
+}
+
+#[test]
 fn techno1_sounds_with_samples() {
     if !samples_available() {
         eprintln!("skip techno1_sounds_with_samples: samples/ not found");

@@ -1,0 +1,6 @@
+// @title skill-four-on-the-floor
+// @genre house
+// @details skill example: kick every beat, snare on 2/4, hats on offbeats
+setcpm(124/4)
+// drums
+$: s("bd*4, [~ sd]*2, [~ hh]*4").gain(0.65)
