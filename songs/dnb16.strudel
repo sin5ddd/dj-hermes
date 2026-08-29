@@ -1,19 +1,25 @@
 // @title dnb16
 // @genre drum and bass
-// @details short live dnb loop @ 174 BPM
+// @details break in front of split Reese (square sub + saw mid) @ 174 BPM
 setcpm(174/4)
 
-// drums — break + hats
-$: s("bd <~ sd> ~ sd ~ <bd ~> <bd sd> <db ~>, hh*4, [~@5 oh ~@2]").fast(2).gain(0.25).lpf(4000)
+// drums — break + hats (gain above sub; bd not db)
+$: s("bd <~ sd> ~ sd ~ <bd ~> <bd sd> <bd ~>, hh*4, [~@5 oh ~@2]").fast(2).gain(0.6).lpf(4000)
 
-// sub
+// sub — square only
 $: note("0 3 0 <0 -1>")
   .scale("C2:minor")
-  .s("square").lpf(120).gain(0.7)
+  .s("square").lpf(120).gain(0.45)
   .attack(0.01).decay(0.5).release(0.4)
+
+// mid reese — saw, 800–1200
+$: note("0 3 0 <0 -1>")
+  .scale("C2:minor")
+  .s("sawtooth").lpf(1000).gain(0.32)
+  .attack(0.01).decay(0.4).release(0.3)
 
 // stab
 $: note("[4@2 <7 9>@2]/2")
   .scale("C2:minor")
-  .s("sawtooth").lpf(2000).gain(0.55)
+  .s("sawtooth").lpf(2000).gain(0.22)
   .attack(0.001).decay(0.12).sustain(0.15).release(0.05)

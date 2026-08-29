@@ -591,6 +591,34 @@ bass: note("c3 e3 g3").s("sawtooth").gain(0.8)
     }
 
     #[test]
+    fn parallel_degrees_schedule_minor_triad() {
+        use crate::code::{note_to_hz, parse_code};
+        let pc =
+            parse_code(r#"note("[0,2,4]").scale("C3:minor").s("triangle").gain(0.3)"#).unwrap();
+        let mut hits = Vec::new();
+        schedule_track_into(&mut hits, &pc, 0, 0, 48_000.0);
+        assert_eq!(hits.len(), 3, "comma-parallel degrees are three voices");
+        let mut freqs: Vec<f32> = hits.iter().map(|h| h.freq).collect();
+        freqs.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        for (got, name) in freqs.iter().zip(["c3", "eb3", "g3"]) {
+            assert!(
+                (*got - note_to_hz(name).unwrap()).abs() < 1.0,
+                "{name}: got {got}"
+            );
+        }
+    }
+
+    #[test]
+    fn chord_suffix_schedules_root_only() {
+        use crate::code::{note_to_hz, parse_code};
+        let pc = parse_code(r#"note("c3'min").s("triangle").gain(0.3)"#).unwrap();
+        let mut hits = Vec::new();
+        schedule_track_into(&mut hits, &pc, 0, 0, 48_000.0);
+        assert_eq!(hits.len(), 1, "deck does not expand chord suffixes");
+        assert!((hits[0].freq - note_to_hz("c3").unwrap()).abs() < 1.0);
+    }
+
+    #[test]
     fn schedule_dyn_lpf_pattern_and_lfo() {
         use crate::code::parse_code;
         let pat = parse_code(r#"s("bd bd").lpf("100 900").gain(0.5)"#).unwrap();

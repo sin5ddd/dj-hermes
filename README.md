@@ -76,6 +76,7 @@ cargo run -- dj songs/techno1.strudel songs/ambient1.strudel
   - 互換: `play --repl` / `play --repl-text` も同じセッションを起動（A/B 2 曲可）
   - 展示向け Hermes 手順・プロンプトインジェクション対策: [docs/exhibit/README.md](./docs/exhibit/README.md)
 - サンプルは `./samples`（Sonic Pi 由来 CC0）。曲は `songs/*.strudel`
+- **記法 → リズム / 和声 / DJ の対応**と再利用スキル: [docs/skills/README.md](./docs/skills/README.md)（例: `songs/skill-four-on-the-floor.strudel`, `songs/skill-minor-scale-loop.strudel`）
 - 出力デバイスが無い環境ではエラー終了（`cargo test` / build はデバイス不要）
 
 ## パターン記法の拡張（Task 23–24）

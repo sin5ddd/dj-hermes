@@ -606,6 +606,58 @@ mod tests {
     }
 
     #[test]
+    fn techno_four_on_the_floor_kick_hat_times() {
+        // Skill docs/skills/four-on-the-floor (techno): kick in front, no snare.
+        let n = parse("bd*4, [~ hh]*4").unwrap();
+        let ev = events(&n, 0);
+        let starts = |name: &str| -> Vec<f64> {
+            ev.iter()
+                .filter(|e| e.value == name)
+                .map(|e| e.start)
+                .collect()
+        };
+        let bd = starts("bd");
+        let hh = starts("hh");
+        assert_eq!(starts("sd").len(), 0);
+        assert_eq!(bd.len(), 4);
+        assert_eq!(hh.len(), 4);
+        for (got, want) in bd.iter().zip([0.0, 0.25, 0.5, 0.75]) {
+            assert!((got - want).abs() < 1e-9, "bd start {got} != {want}");
+        }
+        for (got, want) in hh.iter().zip([0.125, 0.375, 0.625, 0.875]) {
+            assert!((got - want).abs() < 1e-9, "hh start {got} != {want}");
+        }
+    }
+
+    #[test]
+    fn four_on_the_floor_event_times() {
+        // House backbeat grid (not the techno skill default).
+        let n = parse("bd*4, [~ sd]*2, [~ hh]*4").unwrap();
+        let ev = events(&n, 0);
+        let starts = |name: &str| -> Vec<f64> {
+            ev.iter()
+                .filter(|e| e.value == name)
+                .map(|e| e.start)
+                .collect()
+        };
+        let bd = starts("bd");
+        let sd = starts("sd");
+        let hh = starts("hh");
+        assert_eq!(bd.len(), 4);
+        assert_eq!(sd.len(), 2);
+        assert_eq!(hh.len(), 4);
+        for (got, want) in bd.iter().zip([0.0, 0.25, 0.5, 0.75]) {
+            assert!((got - want).abs() < 1e-9, "bd start {got} != {want}");
+        }
+        for (got, want) in sd.iter().zip([0.25, 0.75]) {
+            assert!((got - want).abs() < 1e-9, "sd start {got} != {want}");
+        }
+        for (got, want) in hh.iter().zip([0.125, 0.375, 0.625, 0.875]) {
+            assert!((got - want).abs() < 1e-9, "hh start {got} != {want}");
+        }
+    }
+
+    #[test]
     fn smart_drum_pattern_parses() {
         let src = "bd*4, [~ sd]*2, [~ hh]*4, <~ [~@3 bd ~@4]>";
         let n = parse(src).unwrap();

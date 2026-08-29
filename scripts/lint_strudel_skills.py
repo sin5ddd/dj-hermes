@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""Lint exhibit Strudel skills for strudel-rs-only song format.
+"""Lint Strudel skills for strudel-rs-only song format.
 
-Scans fenced code blocks in docs/profile/dj-hermes/skills/**/SKILL.md and
-fails on patterns that small models copy into strudel_save_song content.
+Scans fenced code blocks in SKILL.md files and fails on patterns that
+must not be copied into .strudel / apply-song content.
 
 Usage:
   python scripts/lint_strudel_skills.py
-  python scripts/lint_strudel_skills.py --root docs/profile/dj-hermes/skills
+  python scripts/lint_strudel_skills.py --root docs/skills
+  python scripts/lint_strudel_skills.py --root docs/skills --root docs/profile/dj-hermes/skills
 """
 
 from __future__ import annotations
@@ -27,6 +28,8 @@ FORBIDDEN = [
     (re.compile(r"\.lfo\s*\("), ".lfo(...) is not implemented in strudel-rs"),
     # .add / .sub / .ply, dyn mini args, sine.range(x) are implemented — do not forbid.
     (re.compile(r'(?<![a-zA-Z_])cp(?![a-zA-Z_])'), "sample 'cp' is not in the default bank (use sd/oh)"),
+    # `db` is not a sample (typo for bd). Unknown atoms are silent.
+    (re.compile(r'(?<![a-zA-Z_])db(?![a-zA-Z_])'), "sample 'db' is not in the default bank (use bd)"),
 ]
 
 # Method args that still cannot be mini patterns (vib etc. remain scalar-only for now).
@@ -71,7 +74,8 @@ def lint_file(path: Path) -> list[str]:
             )
 
     name = path.parent.name
-    if name.startswith("strudel-"):
+    posix = path.as_posix()
+    if name.startswith("strudel-") or "/docs/skills/" in f"/{posix}":
         if not REQUIRES_DOLLAR.search(text):
             errors.append(f"{path}: missing `$:` track example (strudel-rs save format)")
         if not REQUIRES_SETCPM.search(text):
@@ -84,18 +88,25 @@ def main() -> int:
     ap.add_argument(
         "--root",
         type=Path,
-        default=Path("docs/profile/dj-hermes/skills"),
-        help="skills root directory",
+        action="append",
+        dest="roots",
+        help="skills root directory (repeatable). Default: docs/skills and Hermes exhibit skills.",
     )
     args = ap.parse_args()
-    root: Path = args.root
-    if not root.is_dir():
-        print(f"error: skills root not found: {root}", file=sys.stderr)
-        return 2
+    roots: list[Path] = args.roots or [
+        Path("docs/skills"),
+        Path("docs/profile/dj-hermes/skills"),
+    ]
 
-    files = find_skill_files(root)
+    files: list[Path] = []
+    for root in roots:
+        if not root.is_dir():
+            print(f"error: skills root not found: {root}", file=sys.stderr)
+            return 2
+        files.extend(find_skill_files(root))
+    files = sorted(set(files))
     if not files:
-        print(f"error: no SKILL.md under {root}", file=sys.stderr)
+        print(f"error: no SKILL.md under {roots}", file=sys.stderr)
         return 2
 
     all_errors: list[str] = []
