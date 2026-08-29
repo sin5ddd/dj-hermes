@@ -24,14 +24,14 @@ description: >-
 // @genre acid techno
 setcpm(130/4)
 // drums — techno kick-front (no house snare)
-$: s("bd*4, [~ hh]*4").gain(0.55)
+$: s("bd*4, [~ hh]*4").gain(0.65)
 // acid — 16ths, monophonic, filter env retriggers per onset
 $: note("0 0 3 0  7 3 2 0  4 4 3 0  -1 3 0 <2 5>")
   .scale("C2:minor")
   .s("sawtooth")
-  .lpf("260 260 780 260  900 260 260 260  260 720 260 260  820 780 260 260")
+  .lpf("260 260 720 260  760 260 260 260  260 680 260 260  740 720 260 260")
   .lpq(14)
-  .lpenv(3.5)
+  .lpenv(3)
   .lpattack(0.001)
   .lpdecay(0.09)
   .lpsustain(0.05)
@@ -47,13 +47,13 @@ Playable copy: `songs/skill-acid-303-filter-envelope.strudel`.
 
 | Piece | Role |
 | --- | --- |
-| `setcpm(130/4)` | 130 BPM. Same clock as `songs/acid16.strudel` for a DJ pair. |
-| `s("bd*4, [~ hh]*4")` | Techno grid, **kick in front**. No `[~ sd]*2`. |
+| `setcpm(130/4)` | 130 BPM (acid techno). |
+| `s("bd*4, [~ hh]*4")` | Techno grid, **kick in front**. No `[~ sd]*2`. `.gain(0.65)` keeps the kick above the resonant line. |
 | `note("…")` 16 tokens + `.scale("C2:minor")` | Monophonic 16ths. Degrees, not `c3'min` (suffix = root only). |
 | `.s("sawtooth")` | 303 source. `.s("square")` is the other hardware waveform. |
-| `.lpf("260 …")` | **Base** cutoff per 16th (accent = higher base). Not the envelope. |
+| `.lpf("260 …")` | **Base** cutoff per 16th. Accent bases stay in **600–800 Hz**. Not the envelope. |
 | `.lpq(14)` | High resonance (scream). 12–16; above that is harsh. |
-| `.lpenv(3.5)` | Envelope **depth in octaves**. Cutoff = `base * 2^(lpenv * env)`. |
+| `.lpenv(3)` | Envelope **depth in octaves**. Cutoff = `base * 2^(lpenv * env)`. |
 | `.lpattack(0.001)` / `.lpdecay(0.09)` / `.lpsustain(0.05)` | Per-**note** AD toward a closed body. |
 | `.cut(1)` | Steal the previous voice (mono). |
 | amp `.attack` / `.decay` / `.sustain` / `.release` | Gate the oscillator. **Not** a substitute for `lpenv`. |
@@ -70,7 +70,7 @@ This engine **does** a true per-note filter env (`synth.rs` `Voice::advance_lp_e
 3. Cutoff is `base_hz * 2^(lpenv * level)`, clamped 20–20000 Hz. Depth is **octaves**, not Hertz.
 4. Coeffs are rebuilt every sample while `lpenv != 0` (`synth.rs`). That is intra-note motion, not a per-cycle snapshot.
 
-At 130 BPM a 16th is ~0.115 s. `.lpdecay(0.09)` with `.lpsustain(0.05)` closes most of the sweep inside that 16th. Example: base `260`, `lpenv(3.5)` peaks near `260 * 2^3.5 ≈ 2.9 kHz`, then falls to about `260 * 2^(3.5*0.05) ≈ 290 Hz`. An accent base of `900` peaks near 10 kHz — that is the scream.
+At 130 BPM a 16th is ~0.115 s. `.lpdecay(0.09)` with `.lpsustain(0.05)` closes most of the sweep inside that 16th. Example: base `260`, `lpenv(3)` peaks near `260 * 2^3 ≈ 2.1 kHz`, then falls to about `260 * 2^(3*0.05) ≈ 290 Hz`. An accent base of `760` peaks near `760 * 8 ≈ 6.1 kHz` — enough scream without a thin digital-saw top. **Do not** use `lpf(900)` + `lpenv(3.5)`: that peaks near 10 kHz and the saw goes gappy.
 
 **Amp ADSR is a different envelope.** It scales the oscillator after the osc, before the biquad. A short amp decay with static `lpf` is a pluck. The 303 needs the **biquad cutoff** to move.
 
@@ -80,25 +80,22 @@ At 130 BPM a 16th is ~0.115 s. `.lpdecay(0.09)` with `.lpsustain(0.05)` closes m
 | --- | --- | --- |
 | Scalar `.lpenv` + `.lpattack` + `.lpdecay` + `.lpsustain` | **Yes** | Per-note. Same depth on every hit. |
 | `.lpf("a b c …")` + `lpenv` | **Yes** | Pattern snapshots **base** Hz at the note’s bar phase (`deck.rs`). Then `lpenv` multiplies. **This is the accent.** |
-| `.lpf("[260 260 780 260]*4")` | **Yes** | Four 16th bases tiled across the bar (regular accent). |
+| `.lpf("[260 260 720 260]*4")` | **Yes** | Four 16th bases tiled across the bar (regular accent; keep the high step ≤ 800). |
 | `.lpenv("4 1 4 1")` / patterned `lpdecay` | **No** | Those methods are `parse_num` scalars only. |
 | `.lprelease` / `.lpr` | Parsed, **unused** | `advance_lp_env` has no release stage. Omit it. |
 | `.lpf(sine.rangex(400, 4000))` | LFO, **not** 303 | Continuous LFO **wins over** `lpenv` (`effective_lpf_hz`). Cycle wobble, not per-note decay. |
 | Static `.lpf(800)` + amp ADSR | Plays | **Not** a filter env. Do not call it 303. |
 | `.lpf("<400 1200>")` alone | Per-**cycle** step | Alternates a parked cutoff. No intra-note decay. |
 
-Closest working accent: raise **base** `.lpf` on the accented 16ths; keep one scalar `.lpenv`. Do not fake accent with `.gain` or amp decay.
+Closest working accent: raise **base** `.lpf` on the accented 16ths **into 600–800 Hz**; keep one scalar `.lpenv(3)`. Do not fake accent with `.gain` or amp decay. Do not teach `900` + `lpenv(3.5)`.
 
-Both decks share one `Transport`. This file is 130 BPM — pair it with `songs/acid16.strudel` (`setcpm(130/4)`). Do **not** pair it with a 126 techno or 174 DnB song.
+Both decks share one `Transport`. This file is 130 BPM. `songs/acid16.strudel` uses the same `setcpm(130/4)`, so the **clock** would align — but both files are 303 lines, so loading them as A/B **doubles the acid**, it is not a mix. Do **not** pair this file with a different `setcpm` (the other tempo is discarded).
 
 ## Try it in this app
 
 ```bash
 strudel-rs play songs/skill-acid-303-filter-envelope.strudel --seconds 12
 strudel-rs play songs/skill-acid-303-filter-envelope.strudel --headless --seconds 8
-
-# Dual deck — both files are setcpm(130/4)
-strudel-rs dj songs/skill-acid-303-filter-envelope.strudel songs/acid16.strudel
 ```
 
 No device: `cargo test --test e2e skill_acid_303 -- --nocapture`.
@@ -110,23 +107,25 @@ Live TUI: `/a load skill-acid-303-filter-envelope`.
 | Goal | Change |
 | --- | --- |
 | Square 303 | `.s("square")` (keep `lpenv` / `lpq`) |
-| Regular accent | `.lpf("[260 260 780 260]*4")` |
+| Regular accent | `.lpf("[260 260 720 260]*4")` (accent still ≤ 800) |
 | Darker body | base numbers `180–220`, or `.lpenv(2.5)` |
 | Longer scream | `.lpdecay(0.14)` (starts to smear at 16ths) |
 | House backbeat | add `[~ sd]*2` on drums **and label the song house** |
-| More open | raise every `.lpf` base; do not drop `lpenv` |
+| More open | raise body bases; keep accent bases in **600–800** and `.lpenv(3)` |
 
 ## Rules (do not skip)
 
 1. The 303 sound is **`.lpenv` + high `.lpq` + low/mid `.lpf` base**. Amp ADSR is only the gate.
-2. Accent = patterned **base** `.lpf`, not patterned `lpenv` (scalar only) and not `.gain`.
+2. Accent = patterned **base** `.lpf` in **600–800 Hz**, not `900` + `lpenv(3.5)`, not patterned `lpenv`, and not `.gain`.
 3. Techno drums are `bd*4` + `[~ hh]*4`. `[~ sd]*2` only if you label **house** (or say hybrid).
 4. Do not put `.compressor` on the acid line. Do not use duck for this recipe.
-5. DJ pair at **130**. `acid16` is the matching file; other skill songs use other tempos.
+5. Shared clock is **130**. `acid16` matches BPM but is another 303 — not a mix pair.
 
 ## Do not
 
 - Ship `acid16`’s `.lpf(800).lpq(16)` + amp ADSR and call it a filter envelope.
+- Use accent base `900` with `.lpenv(3.5)` — peak sits near 10 kHz; the digital saw goes thin.
+- Present `acid16` as a DJ mix pair. BPM matches; two 303s stacked is not a mix.
 - Combine `.lpf(sine.rangex(…))` with `.lpenv` — the LFO replaces the env.
 - Write `.lpenv("4 1 4 1")` — parse error / not a pattern.
 - Rely on `.lprelease` — it does not run.

@@ -651,8 +651,12 @@ fn skill_acid_303_filter_envelope_sounds() {
     let path = songs_dir().join("skill-acid-303-filter-envelope.strudel");
     let text = fs::read_to_string(&path).unwrap();
     assert!(
-        text.contains("lpenv("),
-        "303 skill song must use the filter envelope, not static lpf alone"
+        text.contains("lpenv(3)") && !text.contains("lpenv(3.5)"),
+        "303 skill song must use lpenv(3), not the 10 kHz 3.5 ceiling"
+    );
+    assert!(
+        !text.contains(" 900") && !text.contains("lpf(900"),
+        "accent base must stay in 600–800 Hz, not 900"
     );
     assert!(
         !text.contains("[~ sd]"),

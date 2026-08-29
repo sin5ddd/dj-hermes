@@ -1531,10 +1531,10 @@ mod tests {
     #[test]
     fn parses_lpenv_scalars_not_patterns() {
         let pc = parse_code(
-            r#"note("0").scale("C2:minor").s("sawtooth").lpf(260).lpq(14).lpenv(3.5).lpattack(0.001).lpdecay(0.09).lpsustain(0.05)"#,
+            r#"note("0").scale("C2:minor").s("sawtooth").lpf(260).lpq(14).lpenv(3).lpattack(0.001).lpdecay(0.09).lpsustain(0.05)"#,
         )
         .unwrap();
-        assert!((pc.mod_params.lpenv - 3.5).abs() < 1e-6);
+        assert!((pc.mod_params.lpenv - 3.0).abs() < 1e-6);
         assert!((pc.mod_params.lpa - 0.001).abs() < 1e-6);
         assert!((pc.mod_params.lpd - 0.09).abs() < 1e-6);
         assert!((pc.mod_params.lps - 0.05).abs() < 1e-6);
