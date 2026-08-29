@@ -535,6 +535,16 @@ fn skill_drum_and_bass_mix_rules() {
             t.code.mini_src
         );
     }
+    // Mini *2 tiles the break across the bar. Method .fast(2) would squeeze
+    // one cycle into [0, 0.5) and leave the second half empty.
+    let evs = strudel_rs::mini::events(&drums.code.pattern, 0);
+    assert!(
+        evs.iter().any(|e| e.start >= 0.5),
+        "break should occupy the second half of the bar, starts={:?}",
+        evs.iter().map(|e| e.start).collect::<Vec<_>>()
+    );
+    assert!(evs.iter().any(|e| e.value == "bd"));
+    assert!(evs.iter().any(|e| e.value == "sd"));
 }
 
 #[test]
