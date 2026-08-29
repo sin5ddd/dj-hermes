@@ -7,15 +7,19 @@ Strudel 記法の曲ファイルをリアルタイム演奏する Rust 製 CLI�
 
 ## インストール
 
-Rust toolchain（stable）が必要です。
+Rust toolchain（stable）が必要です。WAV サンプルは **Git LFS** です（`git-lfs` を入れてからクローン）。詳細は [samples/README.md](./samples/README.md)。
 
 ```bash
+# 初回（マシンごと）
+git lfs install
+
 # GitHub から（private の場合は git 認証済みであること）
 cargo install --git https://github.com/sin5ddd/strudel-rust --locked
 
 # クローン済みリポジトリから
 git clone https://github.com/sin5ddd/strudel-rust.git
 cd strudel-rust
+git lfs pull   # 既にクローン済みで *.wav が数行のポインタなら
 cargo install --path . --locked
 ```
 
@@ -85,7 +89,7 @@ Recipes (Cursor `SKILL.md` + playable `songs/skill-*.strudel`): [docs/skills/](.
   - `--text`: ハイライトなしの rustyline テキスト REPL（**裸コマンドのまま**。Hermes は TUI のみ）
   - 互換: `play --repl` / `play --repl-text` も同じセッションを起動（A/B 2 曲可）
   - 展示向け Hermes 手順・プロンプトインジェクション対策: [docs/exhibit/README.md](./docs/exhibit/README.md)
-- サンプルは `./samples`（Sonic Pi 由来 CC0）。曲は `songs/*.strudel`
+- サンプルは `./samples`（Sonic Pi 由来 CC0、**Git LFS**）。曲は `songs/*.strudel`
 - **記法 → リズム / 和声 / DJ の対応**と再利用スキル: [docs/skills/README.md](./docs/skills/README.md)（例: `songs/skill-four-on-the-floor.strudel`, `songs/skill-minor-scale-loop.strudel`）
 - 出力デバイスが無い環境ではエラー終了（`cargo test` / build はデバイス不要）
 
