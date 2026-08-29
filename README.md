@@ -47,7 +47,15 @@ strudel-rs dj songs/techno1.strudel songs/ambient1.strudel
 strudel-rs dj
 # 開発時
 cargo run -- dj songs/techno1.strudel songs/ambient1.strudel
+# musicality skill examples (same Transport BPM per pair)
+strudel-rs play songs/skill-four-on-the-floor.strudel --seconds 12
+strudel-rs play songs/skill-minor-scale-loop.strudel --headless --seconds 8
+strudel-rs dj songs/skill-four-on-the-floor.strudel songs/skill-minor-scale-loop.strudel
+strudel-rs play songs/skill-drum-and-bass.strudel --seconds 12
+strudel-rs play songs/skill-sidechain-ducking.strudel --headless --seconds 8
 ```
+
+Recipes (Cursor `SKILL.md` + playable `songs/skill-*.strudel`): [docs/skills/](./docs/skills/).
 
 - **既定はループ再生**（終了: TUI なら `q` / Esc、`--headless` なら Ctrl+C）
 - `--seconds N`: N 秒で自動停止（スクリプト向け）
