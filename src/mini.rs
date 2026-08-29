@@ -606,8 +606,32 @@ mod tests {
     }
 
     #[test]
+    fn techno_four_on_the_floor_kick_hat_times() {
+        // Skill docs/skills/four-on-the-floor (techno): kick in front, no snare.
+        let n = parse("bd*4, [~ hh]*4").unwrap();
+        let ev = events(&n, 0);
+        let starts = |name: &str| -> Vec<f64> {
+            ev.iter()
+                .filter(|e| e.value == name)
+                .map(|e| e.start)
+                .collect()
+        };
+        let bd = starts("bd");
+        let hh = starts("hh");
+        assert_eq!(starts("sd").len(), 0);
+        assert_eq!(bd.len(), 4);
+        assert_eq!(hh.len(), 4);
+        for (got, want) in bd.iter().zip([0.0, 0.25, 0.5, 0.75]) {
+            assert!((got - want).abs() < 1e-9, "bd start {got} != {want}");
+        }
+        for (got, want) in hh.iter().zip([0.125, 0.375, 0.625, 0.875]) {
+            assert!((got - want).abs() < 1e-9, "hh start {got} != {want}");
+        }
+    }
+
+    #[test]
     fn four_on_the_floor_event_times() {
-        // Skill docs/skills/four-on-the-floor — lock the timing table.
+        // House backbeat grid (not the techno skill default).
         let n = parse("bd*4, [~ sd]*2, [~ hh]*4").unwrap();
         let ev = events(&n, 0);
         let starts = |name: &str| -> Vec<f64> {

@@ -18,7 +18,7 @@ description: >-
 ```
 // @title skill-minor-scale-loop
 // @details C minor degrees: bass arpeggio + root-position triad
-setcpm(100/4)
+setcpm(124/4)
 // bass
 $: note("0 2 4 0").scale("C2:minor").s("sawtooth").lpf(400).gain(0.55)
 // chords
@@ -27,7 +27,7 @@ $: note("[0,2,4] ~ [0,2,4] ~").scale("C3:minor").s("triangle").lpf(1400).gain(0.
 
 | Piece | Role |
 | --- | --- |
-| `setcpm(100/4)` | 100 BPM — slow enough to hear the triad |
+| `setcpm(124/4)` | 124 BPM — **same** as the four-on-the-floor skill (shared Transport) |
 | `note("0 2 4 0")` | Four degrees, one per beat |
 | `.scale("C2:minor")` | Degree 0 = C2 (bass octave) |
 | `.s("sawtooth").lpf(400)` | Low saw; no drum samples required |
@@ -68,7 +68,7 @@ Saw + low LPF keeps the bass out of the triad’s midrange. Triangle + higher LP
 ```bash
 strudel-rs play songs/skill-minor-scale-loop.strudel --seconds 12
 
-# Against the four-on-the-floor skill
+# Dual deck — both songs are setcpm(124/4). A 100 BPM file would be ignored once mixed.
 strudel-rs dj songs/skill-four-on-the-floor.strudel songs/skill-minor-scale-loop.strudel
 ```
 

@@ -176,6 +176,13 @@ fn skill_four_on_the_floor_sounds_with_samples() {
     assert_eq!(song.title, "skill-four-on-the-floor");
     assert_eq!(song.tracks.len(), 1);
     assert!((song.bpm.unwrap() - 124.0).abs() < 1e-6);
+    let drums = &song.tracks[0].code.mini_src;
+    assert!(drums.contains("bd*4"), "{drums}");
+    assert!(drums.contains("[~ hh]*4"), "{drums}");
+    assert!(
+        !drums.contains("sd"),
+        "techno four-on-the-floor must not use a house snare backbeat: {drums}"
+    );
     let bank = load_bank();
     let bpm = 124.0;
     let mut e = Engine::new(SR, bpm);
@@ -203,9 +210,9 @@ fn skill_minor_scale_loop_sounds_without_samples() {
     let song = load_song_file("skill-minor-scale-loop.strudel");
     assert_eq!(song.title, "skill-minor-scale-loop");
     assert_eq!(song.tracks.len(), 2);
-    assert!((song.bpm.unwrap() - 100.0).abs() < 1e-6);
+    assert!((song.bpm.unwrap() - 124.0).abs() < 1e-6);
     let bank = SampleBank::empty();
-    let bpm = 100.0;
+    let bpm = 124.0;
     let mut e = Engine::new(SR, bpm);
     e.push_command(Command::LoadSong {
         deck: 0,

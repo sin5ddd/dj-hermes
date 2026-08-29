@@ -56,7 +56,7 @@ One **cycle = one bar = four beats**. `events()` in `mini.rs` places each atom i
 | `a@2 b` | Elongate: *a* gets twice *b*'s weight | Uneven grid |
 | `~` | Rest (no event) | Silence |
 
-`setcpm(N)` is cycles per minute. Engine BPM is `N * 4`. `setcpm(124/4)` is 124 BPM. `setcps(x)` is `BPM = x * 240`. Both decks share one master tempo.
+`setcpm(N)` is cycles per minute. Engine BPM is `N * 4`. `setcpm(124/4)` is 124 BPM. `setcps(x)` is `BPM = x * 240`. Both decks share **one** master tempo: a DJ pair must use the same `setcpm` or the second file’s tempo is discarded.
 
 ## Harmony
 
@@ -105,13 +105,13 @@ Bundled one-shots: `samples/bd`, `sd`, `hh`, `oh`. Unknown names fail resolve (p
 - Mixer faders + per-deck Hi/Mid/Lo EQ (shelves at 6 kHz / 1 kHz / 200 Hz) + master LPF/HPF.
 - Crossfade: `gainA = cos(θ)`, `gainB = sin(θ)` for `θ` in `0 … π/2` (`mixer.rs`). Starts on a bar boundary; `hush` is immediate.
 - `.compressor(...)` on a `$:` is **mixer master**, last-write (`engine.rs`) — not a track insert. It will squash the kick.
-- Try a pair: `strudel-rs dj songs/techno1.strudel songs/ambient1.strudel` then `/x 4`.
+- Try a pair **at the same BPM**: `strudel-rs dj songs/techno1.strudel songs/ambient1.strudel` (both `setcpm(126/4)`) then `/x 4`. A second file at another `setcpm` does not keep its own tempo.
 
 ## Skills in this tree
 
 | Skill | When | Example song |
 | --- | --- | --- |
-| [four-on-the-floor](./four-on-the-floor/SKILL.md) | House/techno/disco kick on every beat | `songs/skill-four-on-the-floor.strudel` |
+| [four-on-the-floor](./four-on-the-floor/SKILL.md) | Techno kick+offbeat hats (`bd*4, [~ hh]*4`); house backbeat is labeled separately | `songs/skill-four-on-the-floor.strudel` |
 | [minor-scale-loop](./minor-scale-loop/SKILL.md) | Short minor bass + triad | `songs/skill-minor-scale-loop.strudel` |
 | [dnb](./dnb/SKILL.md) | 174 BPM break, drums above sub, square+saw Reese | `songs/skill-dnb.strudel` |
 | [techno-duck](./techno-duck/SKILL.md) | Kick ducks pad **and** bass; short recover; no track compressor | `songs/skill-techno-duck.strudel` |
@@ -129,7 +129,7 @@ strudel-rs play songs/skill-four-on-the-floor.strudel --seconds 12
 # No TTY / CI
 strudel-rs play songs/skill-minor-scale-loop.strudel --headless --seconds 8
 
-# Dual deck
+# Dual deck — both files must share one setcpm (here 124/4)
 strudel-rs dj songs/skill-four-on-the-floor.strudel songs/skill-minor-scale-loop.strudel
 ```
 
