@@ -713,9 +713,9 @@ mod tests {
     }
 
     #[test]
-    fn lpenv_opens_then_closes_energy() {
+    fn lpenv_opens_then_closes_cutoff() {
         // Per-note filter env: cutoff = base * 2^(lpenv * level).
-        // Attack → peak (bright) then decay toward lpsustain (dark).
+        // Attack → peak then decay toward lpsustain. lprelease is unused.
         let mods = ModParams {
             lpenv: 4.0,
             lpa: 0.002,
@@ -746,29 +746,34 @@ mod tests {
         )
         .with_adsr_timing(48_000.0, 12_000);
 
-        let mut early = 0f32;
-        let mut late = 0f32;
-        // Skip the first ~3 ms (attack still climbing).
-        for _ in 0..160 {
-            let _ = v.next_sample(48_000.0);
-        }
-        for _ in 0..400 {
-            if let Some(s) = v.next_sample(48_000.0) {
-                early += s.abs();
-            }
-        }
-        // After ~80 ms decay at lps=0 the filter should sit on the 200 Hz base.
-        for _ in 0..4000 {
-            let _ = v.next_sample(48_000.0);
-        }
-        for _ in 0..400 {
-            if let Some(s) = v.next_sample(48_000.0) {
-                late += s.abs();
-            }
-        }
+        let start = v.effective_lpf_hz().unwrap();
         assert!(
-            early > late * 1.4,
-            "lpenv peak energy {early} should exceed closed {late}"
+            (start - 200.0).abs() < 1.0,
+            "env start should sit on the base, got {start}"
+        );
+
+        // ~2 ms attack at 48 kHz → peak (env ≈ 1) → 200 * 2^4 = 3200 Hz.
+        for _ in 0..100 {
+            let _ = v.next_sample(48_000.0);
+        }
+        let peak = v.effective_lpf_hz().unwrap();
+        assert!(
+            (peak - 3200.0).abs() < 80.0,
+            "env peak should open ~4 octaves, got {peak}"
+        );
+
+        // After decay (~80 ms) at lps=0 the cutoff returns to the 200 Hz base.
+        for _ in 0..5000 {
+            let _ = v.next_sample(48_000.0);
+        }
+        let closed = v.effective_lpf_hz().unwrap();
+        assert!(
+            (closed - 200.0).abs() < 20.0,
+            "env sustain 0 should close to the base, got {closed}"
+        );
+        assert!(
+            peak > closed * 8.0,
+            "peak {peak} should dwarf closed {closed}"
         );
     }
 
