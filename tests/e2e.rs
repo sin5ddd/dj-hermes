@@ -506,3 +506,132 @@ fn dj_xfade_techno_to_ambient() {
         clip_rail_ratio(&all)
     );
 }
+
+#[test]
+fn skill_drum_and_bass_mix_rules() {
+    let song = load_song_file("skill-drum-and-bass.strudel");
+    assert_eq!(song.title, "skill-drum-and-bass");
+    assert!((song.bpm.unwrap() - 174.0).abs() < 1e-6);
+    let drums = track(&song, "drums");
+    let sub = track(&song, "sub");
+    let mid = track(&song, "mid");
+    assert!(
+        drums.code.gain > sub.code.gain,
+        "drums {} must sit above sub {}",
+        drums.code.gain,
+        sub.code.gain
+    );
+    assert_eq!(sub.code.sound, "square");
+    assert_eq!(mid.code.sound, "sawtooth");
+    let mid_lpf = mid.code.filter.lpf.expect("mid reese needs lpf");
+    assert!(
+        (800.0..=1200.0).contains(&mid_lpf),
+        "mid Reese lpf {mid_lpf} should be 800–1200"
+    );
+    for t in &song.tracks {
+        assert!(
+            !t.code.mini_src.contains("db"),
+            "db is not a sample (silent): {}",
+            t.code.mini_src
+        );
+    }
+}
+
+#[test]
+fn skill_drum_and_bass_sounds_with_samples() {
+    if !samples_available() {
+        eprintln!("skip skill_drum_and_bass: samples/ not found");
+        return;
+    }
+    let song = load_song_file("skill-drum-and-bass.strudel");
+    let bank = load_bank();
+    assert!(
+        !bank.has("db"),
+        "db must not resolve — that atom is silence"
+    );
+    let bpm = 174.0;
+    let mut e = Engine::new(SR, bpm);
+    e.push_command(Command::LoadSong {
+        deck: 0,
+        song: Box::new(song),
+    });
+    let _ = process_bars(&mut e, &bank, 1, bpm);
+    let buf = process_bars(&mut e, &bank, 2, bpm);
+    assert_finite_bounded(&buf, "skill-drum-and-bass");
+    assert!(
+        has_energy(&buf, 0.001),
+        "skill-drum-and-bass peak={}",
+        peak(&buf)
+    );
+    assert!(
+        clip_rail_ratio(&buf) < 0.05,
+        "skill-drum-and-bass clip rail: {}",
+        clip_rail_ratio(&buf)
+    );
+}
+
+#[test]
+fn skill_sidechain_ducking_mix_rules() {
+    let song = load_song_file("skill-sidechain-ducking.strudel");
+    assert_eq!(song.title, "skill-sidechain-ducking");
+    assert!((song.bpm.unwrap() - 126.0).abs() < 1e-6);
+    let kick = track(&song, "kick");
+    let hats = track(&song, "hats");
+    let bass = track(&song, "bass");
+    let pad = track(&song, "pad");
+    assert_eq!(kick.code.duck.count, 1);
+    assert_eq!(kick.code.duck.orbits[0], 2);
+    let atk = kick.code.duck.attack[0];
+    assert!(
+        (0.03..=0.05).contains(&atk),
+        "duckattack {atk} must be 0.03–0.05"
+    );
+    assert_eq!(bass.code.orbit, 2, "bass must be on the ducked orbit");
+    assert_eq!(pad.code.orbit, 2, "pad must be on the ducked orbit");
+    assert!(
+        kick.code.orbit != 2,
+        "kick must not sit on the ducked orbit"
+    );
+    assert!(
+        !hats.code.mini_src.contains("sd"),
+        "techno duck skill must not use a house backbeat: {}",
+        hats.code.mini_src
+    );
+    assert!(
+        hats.code.mini_src.contains("hh"),
+        "techno hats should be [~ hh]*4"
+    );
+    assert!(bass.code.compressor.is_none());
+    assert!(pad.code.compressor.is_none());
+    assert!(kick.code.compressor.is_none());
+    assert!(hats.code.compressor.is_none());
+}
+
+#[test]
+fn skill_sidechain_ducking_sounds_with_samples() {
+    if !samples_available() {
+        eprintln!("skip skill_sidechain_ducking: samples/ not found");
+        return;
+    }
+    let song = load_song_file("skill-sidechain-ducking.strudel");
+    let bank = load_bank();
+    let bpm = 126.0;
+    let mut e = Engine::new(SR, bpm);
+    e.push_command(Command::LoadSong {
+        deck: 0,
+        song: Box::new(song),
+    });
+    let _ = process_bars(&mut e, &bank, 1, bpm);
+    let buf = process_bars(&mut e, &bank, 2, bpm);
+    assert_finite_bounded(&buf, "skill-sidechain-ducking");
+    assert!(
+        has_energy(&buf, 0.001),
+        "skill-sidechain-ducking peak={}",
+        peak(&buf)
+    );
+    assert!(
+        clip_rail_ratio(&buf) < 0.08,
+        "skill-sidechain-ducking clip rail: {}",
+        clip_rail_ratio(&buf)
+    );
+}

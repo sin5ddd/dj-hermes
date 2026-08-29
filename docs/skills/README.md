@@ -23,7 +23,7 @@ PatternCode (code.rs) — note()/s() + method chain
 Deck A / Deck B  ← same Transport (shared BPM, 1 bar = 4 beats)
          │
          ▼
-Mixer — faders, 3-band EQ, master filter, equal-power xfade
+Mixer — faders, 3-band EQ, master filter, compressor, equal-power xfade
          │
          ▼
 AudioBackend (cpal) or Engine::process (NullBackend / tests)
@@ -97,7 +97,7 @@ Genre in this repo is mostly **tempo + drum grid + register + filter**, not a hi
 | `.room` / `.delay` | Space (orbit-shared FX, ids 1–4 per deck) |
 | `.duckorbit` | Kick ducks **that orbit** (put pad **and** bass on it). `duckattack` is recover time |
 
-Bundled one-shots: `samples/bd`, `sd`, `hh`, `oh`. Unknown names fail resolve (performance continues). `stack()`, `.cpm()`, and a bare `s("...")` line without `$:` are not song format.
+Bundled one-shots: `samples/bd`, `sd`, `hh`, `oh`. `db` is not a sample. Unknown names fail resolve (performance continues). `stack()`, `.cpm()`, and a bare `s("...")` line without `$:` are not song format.
 
 ## DJ / mix
 
@@ -105,7 +105,7 @@ Bundled one-shots: `samples/bd`, `sd`, `hh`, `oh`. Unknown names fail resolve (p
 - Mixer faders + per-deck Hi/Mid/Lo EQ (shelves at 6 kHz / 1 kHz / 200 Hz) + master LPF/HPF.
 - Crossfade: `gainA = cos(θ)`, `gainB = sin(θ)` for `θ` in `0 … π/2` (`mixer.rs`). Starts on a bar boundary; `hush` is immediate.
 - `.compressor(...)` on a `$:` is **mixer master**, last-write (`engine.rs`) — not a track insert. It will squash the kick.
-- Try a pair **at the same BPM**: `strudel-rs dj songs/techno1.strudel songs/ambient1.strudel` (both `setcpm(126/4)`) then `/x 4`. A second file at another `setcpm` does not keep its own tempo.
+- Try a pair **at the same BPM**: `strudel-rs dj songs/techno1.strudel songs/ambient1.strudel` (both `setcpm(126/4)`) then `/x 4`. A second file at another `setcpm` does not keep its own tempo. Do not pair 174 DnB with 126 techno.
 
 ## Skills in this tree
 
@@ -113,10 +113,12 @@ Bundled one-shots: `samples/bd`, `sd`, `hh`, `oh`. Unknown names fail resolve (p
 | --- | --- | --- |
 | [four-on-the-floor](./four-on-the-floor/SKILL.md) | Techno kick+offbeat hats (`bd*4, [~ hh]*4`); house backbeat is labeled separately | `songs/skill-four-on-the-floor.strudel` |
 | [minor-scale-loop](./minor-scale-loop/SKILL.md) | Short minor bass + triad | `songs/skill-minor-scale-loop.strudel` |
-| [dnb](./dnb/SKILL.md) | 174 BPM break, drums above sub, square+saw Reese | `songs/skill-dnb.strudel` |
-| [techno-duck](./techno-duck/SKILL.md) | Kick ducks pad **and** bass; short recover; no track compressor | `songs/skill-techno-duck.strudel` |
+| [drum-and-bass](./drum-and-bass/SKILL.md) | 174 BPM break, drums above sub, square+saw Reese | `songs/skill-drum-and-bass.strudel` |
+| [sidechain-ducking](./sidechain-ducking/SKILL.md) | Techno kick ducks pad **and** bass; short recover; no track compressor | `songs/skill-sidechain-ducking.strudel` |
+| [dnb](./dnb/SKILL.md) | Same mix idea as drum-and-bass (shorter path name) | `songs/skill-dnb.strudel` |
+| [techno-duck](./techno-duck/SKILL.md) | Same duck idea as sidechain-ducking | `songs/skill-techno-duck.strudel` |
 
-Acid (`acid16` 303 / filter envelope) is not in this tree yet. Other demos: `songs/house16.strudel`, `garage16.strudel`, `ambient1.strudel`.
+Acid (`acid16` 303 / filter envelope) is not in this tree yet. Other demos: `songs/house16.strudel`, `garage16.strudel`, `ambient1.strudel`, `dnb16.strudel`, `techno1.strudel`.
 
 ## How to try any example
 
@@ -131,6 +133,12 @@ strudel-rs play songs/skill-minor-scale-loop.strudel --headless --seconds 8
 
 # Dual deck — both files must share one setcpm (here 124/4)
 strudel-rs dj songs/skill-four-on-the-floor.strudel songs/skill-minor-scale-loop.strudel
+
+strudel-rs play songs/skill-drum-and-bass.strudel --seconds 12
+strudel-rs play songs/skill-sidechain-ducking.strudel --headless --seconds 8
+
+# Dual deck — both files must share one setcpm (here 126/4). Do not pair with 174 DnB.
+strudel-rs dj songs/skill-sidechain-ducking.strudel songs/ambient1.strudel
 ```
 
 Headless hosts without an audio device: `cargo test --test e2e` renders through `Engine::process` (no ALSA).
@@ -138,6 +146,6 @@ Headless hosts without an audio device: `cargo test --test e2e` renders through 
 ## Adding a skill
 
 1. New directory `docs/skills/<name>/SKILL.md` with YAML `name` and `description` (when to use it).
-2. Include: when, the exact `$:` pattern, **why it sounds that way** (cite mini/scale/mixer behavior), and a play/dj command.
+2. Include: when, the exact `$:` pattern, **why it sounds that way** (cite mini/scale/mixer/duck behavior), and a play/dj command.
 3. Add a playable `songs/skill-<name>.strudel` (or point at an existing demo). Every `songs/*.strudel` is parsed by `tests/e2e.rs`.
-4. Fence only syntax this parser accepts. Lint: `python scripts/lint_strudel_skills.py --root docs/skills`.
+4. Fence only syntax this parser accepts. Lint: `python scripts/lint_strudel_skills.py`.
