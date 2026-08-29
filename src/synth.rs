@@ -713,6 +713,66 @@ mod tests {
     }
 
     #[test]
+    fn lpenv_opens_then_closes_energy() {
+        // Per-note filter env: cutoff = base * 2^(lpenv * level).
+        // Attack → peak (bright) then decay toward lpsustain (dark).
+        let mods = ModParams {
+            lpenv: 4.0,
+            lpa: 0.002,
+            lpd: 0.08,
+            lps: 0.0,
+            ..Default::default()
+        };
+        let filter = FilterParams {
+            lpf: Some(200.0),
+            lpq: 1.2,
+            ..Default::default()
+        };
+        let mut v = Voice::new(
+            OscSource::Wave(Wave::Saw),
+            110.0,
+            1.0,
+            12_000,
+            filter,
+            Adsr {
+                attack: 0.001,
+                decay: 0.0,
+                sustain: 1.0,
+                release: 0.001,
+            },
+            mods,
+            1,
+            None,
+        )
+        .with_adsr_timing(48_000.0, 12_000);
+
+        let mut early = 0f32;
+        let mut late = 0f32;
+        // Skip the first ~3 ms (attack still climbing).
+        for _ in 0..160 {
+            let _ = v.next_sample(48_000.0);
+        }
+        for _ in 0..400 {
+            if let Some(s) = v.next_sample(48_000.0) {
+                early += s.abs();
+            }
+        }
+        // After ~80 ms decay at lps=0 the filter should sit on the 200 Hz base.
+        for _ in 0..4000 {
+            let _ = v.next_sample(48_000.0);
+        }
+        for _ in 0..400 {
+            if let Some(s) = v.next_sample(48_000.0) {
+                late += s.abs();
+            }
+        }
+        assert!(
+            early > late * 1.4,
+            "lpenv peak energy {early} should exceed closed {late}"
+        );
+    }
+
+    #[test]
     fn wavetable_builtin() {
         let table = builtin_wavetable("wt_bright").unwrap();
         let mut v = Voice::new(

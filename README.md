@@ -53,6 +53,8 @@ strudel-rs play songs/skill-minor-scale-loop.strudel --headless --seconds 8
 strudel-rs dj songs/skill-four-on-the-floor.strudel songs/skill-minor-scale-loop.strudel
 strudel-rs play songs/skill-drum-and-bass.strudel --seconds 12
 strudel-rs play songs/skill-sidechain-ducking.strudel --headless --seconds 8
+# 130 BPM acid / 303 filter env (do not DJ-pair with acid16 — two 303s, not a mix)
+strudel-rs play songs/skill-acid-303-filter-envelope.strudel --seconds 12
 ```
 
 Recipes (Cursor `SKILL.md` + playable `songs/skill-*.strudel`): [docs/skills/](./docs/skills/).

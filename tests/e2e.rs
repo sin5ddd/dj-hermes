@@ -645,3 +645,54 @@ fn skill_sidechain_ducking_sounds_with_samples() {
         clip_rail_ratio(&buf)
     );
 }
+
+#[test]
+fn skill_acid_303_filter_envelope_sounds() {
+    let path = songs_dir().join("skill-acid-303-filter-envelope.strudel");
+    let text = fs::read_to_string(&path).unwrap();
+    assert!(
+        text.contains("lpenv("),
+        "303 skill song must use the filter envelope, not static lpf alone"
+    );
+    assert!(
+        !text.contains("[~ sd]"),
+        "acid techno example must not add a house snare unless labeled house"
+    );
+    assert!(
+        !text.contains("duckorbit") && !text.contains("compressor("),
+        "this recipe is the filter env, not duck/compressor"
+    );
+
+    let song = load_song_file("skill-acid-303-filter-envelope.strudel");
+    assert_eq!(song.title, "skill-acid-303-filter-envelope");
+    assert!(
+        song.bpm.is_some() && (song.bpm.unwrap() - 130.0).abs() < 0.1,
+        "expected 130 BPM, got {:?}",
+        song.bpm
+    );
+
+    let bpm = 130.0;
+    let bank = if samples_available() {
+        load_bank()
+    } else {
+        SampleBank::empty()
+    };
+    let mut e = Engine::new(SR, bpm);
+    e.push_command(Command::LoadSong {
+        deck: 0,
+        song: Box::new(song),
+    });
+    let _ = process_bars(&mut e, &bank, 1, bpm);
+    let buf = process_bars(&mut e, &bank, 2, bpm);
+    assert_finite_bounded(&buf, "skill-acid-303");
+    assert!(
+        has_energy(&buf, 0.001),
+        "303 skill song should sound, peak={}",
+        peak(&buf)
+    );
+    assert!(
+        clip_rail_ratio(&buf) < 0.05,
+        "303 skill song heavily at clip rail: {}",
+        clip_rail_ratio(&buf)
+    );
+}
