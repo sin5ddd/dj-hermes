@@ -13,7 +13,7 @@ samples/
   <name>.wav      # also accepted as a single variation
 ```
 
-Bundled extras (same format): `cp/00.wav` (house 2/4 clap), `lead-fm_pluck.wav`, `stab-fm_fifth.wav` (hollow C+G), `reese-mid.wav`.
+Bundled extras (same format): `cp/00.wav` (house 2/4 clap), `lead-fm_pluck.wav`, `stab-fm_fifth.wav` (hollow C+G), `stab-fm_major.wav` (C–E–G), `reese-mid.wav`.
 
 WAV files are stored with **Git LFS**. After clone, or if a `.wav` is a 3-line pointer file:
 
