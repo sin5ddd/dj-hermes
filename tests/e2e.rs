@@ -983,7 +983,7 @@ fn assert_mood_house_drums(text: &str, song: &strudel_rs::song::Song) {
         "expected 124 BPM, got {:?}",
         song.bpm
     );
-    let drums = track(&song, "drums");
+    let drums = track(song, "drums");
     assert_eq!(drums.code.mini_src, r#"bd*4, [~ cp]*2, [~ hh]*4"#);
     assert!((drums.code.gain - 0.6).abs() < 1e-5);
 }
