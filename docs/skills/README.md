@@ -91,13 +91,13 @@ Genre in this repo is mostly **tempo + drum grid + register + filter**, not a hi
 | --- | --- |
 | `setcpm` | House ~120–128, techno ~126–130, DnB ~170+, ambient can sit on a shared DJ BPM |
 | Drum string | Four-on-the-floor vs 2-step vs break |
-| `.s(...)` | `bd`/`sd`/`hh`/`oh`/`cp` samples; factory FM wavs (`lead-fm_pluck`, `stab-fm_*`); `sawtooth`/`square`/`sine`/`triangle` + live `.fm`; `wt_organ` / `wt_bright` |
+| `.s(...)` | `bd`/`sd`/`hh`/`oh`/`cp` samples; factory FM wavs (`lead-fm_pluck`, `stab-fm_*`, `bass-fm_house`, `reese-dark`, `pad-fm_fifth`, `lead-supersaw`, `fx-*`); `sawtooth`/`square`/`sine`/`triangle` + live `.fm`; `wt_organ` / `wt_bright` |
 | `.lpf` / `.lpq` | Dark bass vs acid (high Q) vs open hats |
 | ADSR | Pluck vs pad |
 | `.room` / `.delay` | Space (orbit-shared FX, ids 1–4 per deck) |
 | `.duckorbit` | Kick ducks **that orbit** (put pad **and** bass on it). `duckattack` is recover time |
 
-Bundled one-shots: `samples/bd`, `sd`, `hh`, `oh`, `cp` (`samples/cp/00.wav`), plus factory FM wavs `lead-fm_pluck`, `stab-fm_fifth`, `stab-fm_major`, `reese-mid`. Live 2-op FM is `.s("sine").fm(…)` — not those wavs. `db` is not a sample. Unknown names fail resolve (performance continues). `stack()`, `.cpm()`, and a bare `s("...")` line without `$:` are not song format.
+Bundled one-shots: `samples/bd`, `sd`, `hh`, `oh`, `cp` (`samples/cp/00.wav`), plus factory FM wavs `lead-fm_pluck`, `stab-fm_fifth`, `stab-fm_major`, `reese-mid`, and issue #21 batch 1 (`bass-fm_house`, `bass-fm_sub`, `reese-dark`, `pad-fm_fifth`, `lead-supersaw`, `fx-*` — how to play each: [factory-pcm-usage](./factory-pcm-usage/SKILL.md)). Live 2-op FM is `.s("sine").fm(…)` — not those wavs. `db` is not a sample. Unknown names fail resolve (performance continues). `stack()`, `.cpm()`, and a bare `s("...")` line without `$:` are not song format.
 
 ## DJ / mix
 
@@ -122,6 +122,7 @@ Bundled one-shots: `samples/bd`, `sd`, `hh`, `oh`, `cp` (`samples/cp/00.wav`), p
 | [acid-303-filter-envelope](./acid-303-filter-envelope/SKILL.md) | TB-303: per-note `lpenv`, high `lpq`, not static `lpf` + amp ADSR | `songs/skill-acid-303-filter-envelope.strudel` |
 | [mood-bright-dark](./mood-bright-dark/SKILL.md) | Make a loop brighter/darker (mode, voicing, register, sample, filter) — not a genre change | `songs/skill-mood-dark.strudel` + `songs/skill-mood-bright.strudel` |
 | [fm-sound-design](./fm-sound-design/SKILL.md) | Live 2-op FM for evolving lead/bass only; drums and one-shots are PCM. Not a genre loop | `songs/skill-fm-sound-design.strudel` |
+| [factory-pcm-usage](./factory-pcm-usage/SKILL.md) | How to play each issue #21 batch 1 factory PCM stem (`C4:…` / unpitched FX). Not a genre recipe | `songs/skill-factory-pcm-usage.strudel` + `songs/skill-factory-pcm-reese.strudel` + `songs/skill-factory-pcm-lead.strudel` |
 
 `songs/acid16.strudel` is the static-cutoff live loop (same 130 BPM). Clock would align; both files are 303 lines, so A/B would double the acid — not a mix reason. Do not treat `acid16` as the envelope recipe.
 
@@ -170,6 +171,15 @@ strudel-rs dj songs/skill-mood-dark.strudel songs/skill-mood-bright.strudel
 # Live FM lead+bass at 120 (PCM drums/one-shots). Play solo — not a house/techno/DnB pair.
 strudel-rs play songs/skill-fm-sound-design.strudel --seconds 12
 strudel-rs play songs/skill-fm-sound-design.strudel --headless --seconds 8
+
+# Factory PCM batch 1 — floor (drums+bass+pad), separate Reese bed, supersaw lead.
+strudel-rs play songs/skill-factory-pcm-usage.strudel --seconds 12
+strudel-rs play songs/skill-factory-pcm-usage.strudel --headless --seconds 8
+strudel-rs play songs/skill-factory-pcm-reese.strudel --seconds 12
+strudel-rs play songs/skill-factory-pcm-reese.strudel --headless --seconds 8
+strudel-rs play songs/skill-factory-pcm-lead.strudel --seconds 12
+strudel-rs play songs/skill-factory-pcm-lead.strudel --headless --seconds 8
+strudel-rs dj songs/skill-factory-pcm-usage.strudel songs/skill-factory-pcm-lead.strudel
 ```
 
 Headless hosts without an audio device: `cargo test --test e2e` renders through `Engine::process` (no ALSA).
