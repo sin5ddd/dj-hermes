@@ -31,7 +31,8 @@ These seventeen files are original renders from
 They are dedicated to the public domain under **CC0 1.0 Universal**.
 They are **not** from Sonic Pi / Freesound.
 
-Pitched stems were rendered at **C3 (MIDI 48)**. FX stems use the factory
+Pitched stems target **C3 (~131 Hz)** except `bass-fm_sub`, which is **C2
+(~65 Hz)** so house bass can sit above it. FX stems use the factory
 `default_note` / `default_duration` (no `--note` retune).
 
 | Path | Role |
