@@ -57,7 +57,7 @@ $: s("bd*4, [~ cp]*2, [~ hh]*4").gain(0.6)
 // bass
 $: note("0 2 4 0").scale("C3:major").s("sawtooth").lpf(1400).gain(0.36)
 // chords
-$: note("[0,4,9] ~ [0,4,9] ~").scale("C4:major").s("lead-fm_pluck").gain(0.34).cut(1)
+$: note("[0,4,9] ~ [0,4,9] ~").scale("C4:major").s("lead-fm_pluck").gain(0.34)
 ```
 
 | Kept | Changed |
@@ -102,6 +102,8 @@ Deck scheduling (`deck.rs`) resolves **one pitch per mini event**. Real chords a
 
 `[0,4,9]` is wider because degree **9** = 7+2 = octave + the third. In major that is the major tenth (E above C). In minor it is still a minor tenth (Eb) — spread does not invent a major third.
 
+The 9th is degree **8** (octave + degree 1 → D in C major). Degree **11** is 7+4 = G an octave up, so `[0,4,7,11]` is C–G–C–G, not a 9th. Wider-than-spread: `[0,4,7,8]`.
+
 Space-separated `0 2 4` is an **arpeggio** (one pitch per slot), not a block chord.
 
 ## 3. Register
@@ -131,11 +133,12 @@ Square sub stays a **synth**. `s("square")` resolves in `sound.rs` before the ba
 
 | Key | Disk | Mood role | Constraint |
 | --- | --- | --- | --- |
-| `lead-fm_pluck` | `samples/lead-fm_pluck.wav` | brighter one-shot (underscore before `pluck`) | melody at `C4:major` / `C4:minor`; `.cut(1)` |
+| `lead-fm_pluck` | `samples/lead-fm_pluck.wav` | brighter one-shot (underscore before `pluck`) | melody at `C4:major` / `C4:minor`. `.cut(1)` on **monophonic** hits only |
 | `reese-mid` | `samples/reese-mid.wav` | darker mid glue (800–1200 Hz, no sub) | **C4 only**; hyphen, not `reese_mid` |
 | `square` | synth | darker basement | real Hz at `C2`; `lpf` around 120–180 |
 | `sawtooth` | synth | more open mid-bass | raise `.lpf` when brightening |
 | `cp` | `samples/cp/00.wav` | house 2/4 clap | keep on this 124 grid; do not put it on techno |
+| `stab-fm_major` | key `stab-fm_major` (C3+E3+G3 in the wav) | brighter triad one-shot | `note("0 ~ 0 ~")` only — [do not stack degrees](#stab-fm_major-is-already-a-triad). Not this pair |
 | `stab-fm_fifth` | `samples/stab-fm_fifth.wav` | hollow C–G **only** | **cannot** carry major/minor — [gap](#gap-no-third-in-the-stab) |
 
 Write stems exactly. `lead-fm-pluck` and `stab-fm-fifth` do not resolve (silent; performance continues).
@@ -166,11 +169,29 @@ TUI: `/eq a hi 0.8` (brighter A) vs `/eq b hi 0.2` (darker B). That is the booth
 
 `expand_chord` in `code.rs` knows `maj` / `min` / `maj7` / `min7` / `dim` / `aug` / `sus2` / `sus4`, but **the deck never calls it**. `note("c3'maj")` plays **C3**. Use `[0,2,4]` or `[0,4,9]`.
 
-### Gap: no third in the stab
+### Gap: no third in the hollow stab
 
 `samples/stab-fm_fifth.wav` is a C3 hollow fifth: **C and G only** (ratios 1 and 3/2). `note().s("stab-fm_fifth")` only transposes that recording. There is no major or minor third in the wav, and this engine will not invent one.
 
-Do not write `note("c3'maj").s("stab-fm_fifth")` (root only, still no third). Do not rewrite stab degrees to `2` and call it a major triad. **There is no bundled brighter/darker chord-stab with a third.** For quality, use parallel degrees on a synth or on `reese-mid` / `lead-fm_pluck`.
+Do not write `note("c3'maj").s("stab-fm_fifth")` (root only, still no third). Do not rewrite stab degrees to `2` and call it a major triad. For a triad you write the degrees (`[0,2,4]` / `[0,4,9]`) on a synth, `reese-mid`, or `lead-fm_pluck` — or trigger `stab-fm_major` as a **single** degree (below).
+
+### `stab-fm_major` is already a triad
+
+Key `stab-fm_major`: recorded **C3+E3+G3**. The third is in the wav. Trigger with a **single** degree so the recording plays once:
+
+```
+$: note("0 ~ 0 ~").scale("C4:major").s("stab-fm_major").gain(0.22)
+```
+
+Do **not** write `note("[0,2,4]").s("stab-fm_major")`. Deck scheduling starts one voice per parallel degree; each voice plays the whole triad already in the sample, so you hear three stacked triads. `.cut(1)` on that parallel form would also steal sibling voices.
+
+This pair does not use the major stab (no new WAV in this skill). Hollow `stab-fm_fifth` still cannot carry major/minor.
+
+### `.cut(1)` on a parallel chord
+
+`.cut(1)` is for **monophonic** one-shots (a single-note pluck or stab hit). `Deck::alloc_voice` drops earlier voices in that cut group. On `[0,4,9]` the three degrees allocate in one span: the second voice kills the first, the third kills the second — you hear one note, not a chord.
+
+Keep `.cut(1)` on lines like house `note("4 ~ 7 4  2 0 ~ -1")` (eighths shorter than the ~0.4 s wav). Do not put it on `[0,2,4]` / `[0,4,9]`.
 
 ### Other dead ends
 
@@ -185,7 +206,7 @@ Do not write `note("c3'maj").s("stab-fm_fifth")` (root only, still no third). Do
 
 `C2:minor` degree 2 is **Eb2**. `C3:major` degree 2 is **E3**. That is quality **and** a synth-octave lift.
 
-Close `[0,2,4]` on `C4:minor` + `reese-mid` is three mid-band voices on C–Eb–G (written C4, ratio 1.0 → recorded C3 cluster). Spread `[0,4,9]` on `C4:major` + `lead-fm_pluck` is C–G–E+oct (heard a major tenth above the recording). `.cut(1)` steals the previous pluck one-shot so tails do not stack (`Deck::alloc_voice`).
+Close `[0,2,4]` on `C4:minor` + `reese-mid` is three mid-band voices on C–Eb–G (written C4, ratio 1.0 → recorded C3 cluster). Spread `[0,4,9]` on `C4:major` + `lead-fm_pluck` is C–G–E+oct (heard a major tenth above the recording). No `.cut(1)` on that chord: cut steals earlier voices in the same group, so the triad dies one note at a time. At 124, `[…] ~ […] ~` is four quarter slots (~0.48 s); the ~0.4 s one-shot ends in the rest before the next stab.
 
 Square + `lpf(140)` vs saw + `lpf(1400)` is the synth-spectrum move. Drums stay `[~ cp]*2` at 124 so the ear compares harmony/timbre, not the kit.
 
@@ -212,17 +233,19 @@ Live TUI: `/a load skill-mood-dark` then `/b load skill-mood-bright`. `/x 4` cro
 | --- | --- |
 | Brighten without raising the bass | keep `.scale("C2:major")` on the square/saw; only flip the chord to `[0,4,9]` + `C4:major` |
 | Darken without the Reese sample | `[0,2,4]` on `triangle` + `.lpf(800)` at `C3:minor` (synth-only; empty bank still plays) |
-| Wider than `[0,4,9]` | `[0,4,7,11]` (root, fifth, octave, 9th in major) |
+| Wider than `[0,4,9]` | `[0,4,7,8]` (C major: C–G–C–**D**, the 9th is degree **8**; degree 11 is G+oct) |
 | Live only | mixer Hi / master LPF — do not rewrite the file |
 
-Do not add `stab-fm_fifth` to “make a major stab”. Do not drop `[~ cp]*2` onto [four-on-the-floor](../four-on-the-floor/SKILL.md).
+Do not add `stab-fm_fifth` to “make a major stab”. Do not play `stab-fm_major` as `[0,2,4]`. Do not drop `[~ cp]*2` onto [four-on-the-floor](../four-on-the-floor/SKILL.md).
 
 ## Do not
 
 - `note("c3'maj")` / `'min` when you want a chord.
 - Treat `stab-fm_fifth` as a major/minor carrier (wav has no third).
+- Play `stab-fm_major` as `note("[0,2,4]")` — the wav is already C–E–G; use `note("0 ~ 0 ~")`.
+- Put `.cut(1)` on parallel-degree chords (`[0,2,4]`, `[0,4,9]`).
 - Put `reese-mid` or `lead-fm_pluck` on `C3` / `C2` (band/register dump).
-- Write `lead-fm-pluck`, `reese_mid`, or `stab-fm-fifth`.
+- Write `lead-fm-pluck`, `reese_mid`, `stab-fm-fifth`, or `stab-fm-major`.
 - Put house `cp` on techno `bd*4, [~ hh]*4`.
 - Pair this 124 pair with 174 DnB or any other `setcpm`.
 - Use amp ADSR or `.compressor` as the bright/dark control.
