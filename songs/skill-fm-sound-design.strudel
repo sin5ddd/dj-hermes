@@ -1,0 +1,46 @@
+// @title skill-fm-sound-design
+// @details live 2-op FM recipes (not rust-fm-synthe one-shots)
+setcpm(120/4)
+// pulse
+$: s("bd*4").gain(0.28)
+// bass
+$: note("0 0 3 0").scale("C2:minor")
+  .s("sine").fm(2.5).fmh(1)
+  .fmattack(0.001).fmdecay(0.22).fmsustain(0.5)
+  .lpf(420)
+  .attack(0.008).decay(0.18).sustain(0.45).release(0.08)
+  .gain(0.4)
+// pluck
+$: note("4 ~ 7 4  ~ 0 ~ -1").scale("C4:minor")
+  .s("sine").fm(4).fmh(2)
+  .fmattack(0.001).fmdecay(0.07).fmsustain(0)
+  .attack(0.001).decay(0.15).sustain(0).release(0.04)
+  .cut(1).gain(0.28)
+// bell
+$: note("~ ~ 7 11").scale("C4:minor")
+  .s("sine").fm(2.8).fmh(3.5)
+  .fmattack(0.001).fmdecay(0.45).fmsustain(0)
+  .attack(0.002).decay(0.7).sustain(0).release(0.25)
+  .gain(0.2)
+// metallic
+$: note("~ ~ ~ ~  ~ ~ ~ 4").scale("C5:minor")
+  .s("sine").fm(4).fmh(7)
+  .fmattack(0.001).fmdecay(0.2).fmsustain(0)
+  .noise(0.12)
+  .attack(0.001).decay(0.25).sustain(0).release(0.08)
+  .cut(1).gain(0.16)
+// pad
+$: note("[0,4]").scale("C3:minor")
+  .s("sine").fm(1.2).fmh(1)
+  .fmattack(0.3).fmdecay(0.4).fmsustain(0.55)
+  .attack(0.2).decay(0.3).sustain(0.55).release(0.25)
+  .lpf(1800)
+  .room(0.3).orbit(2)
+  .gain(0.18)
+// stab
+$: note("~ 4 ~ 0").scale("C4:minor")
+  .s("sine").fm(5).fmh(2)
+  .fmattack(0.001).fmdecay(0.06).fmsustain(0)
+  .attack(0.001).decay(0.1).sustain(0.05).release(0.04)
+  .lpf(2400)
+  .cut(1).gain(0.22)

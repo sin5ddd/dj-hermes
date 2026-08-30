@@ -1190,3 +1190,223 @@ fn skill_mood_pair_shares_clock_and_drum_grid() {
         clip_rail_ratio(&buf)
     );
 }
+
+#[test]
+fn skill_fm_sound_design_live_sounds() {
+    let path = songs_dir().join("skill-fm-sound-design.strudel");
+    let text = fs::read_to_string(&path).unwrap();
+    assert!(
+        text.contains("setcpm(120/4)"),
+        "live FM demo is 120 BPM: {text}"
+    );
+    assert!(
+        !text.contains("lead-fm_pluck")
+            && !text.contains("stab-fm_fifth")
+            && !text.contains("stab-fm_major"),
+        "live song must not trigger factory wavs: {text}"
+    );
+    assert!(
+        !text.contains("duckorbit") && !text.contains("compressor("),
+        "no duck / track compressor: {text}"
+    );
+    assert!(
+        !text.contains("[~ cp]") && !text.contains("[~ hh]") && !text.contains("[~ sd]"),
+        "pulse is bd*4 only — do not borrow a genre grid: {text}"
+    );
+    assert!(
+        !text.contains("fmh2") && !text.contains("fmenv"),
+        "no 4-op API: {text}"
+    );
+
+    let song = load_song_file("skill-fm-sound-design.strudel");
+    assert_eq!(song.title, "skill-fm-sound-design");
+    assert_eq!(song.tracks.len(), 7);
+    assert!(
+        song.bpm.is_some() && (song.bpm.unwrap() - 120.0).abs() < 1e-6,
+        "expected 120 BPM, got {:?}",
+        song.bpm
+    );
+
+    let pulse = track(&song, "pulse");
+    assert!(
+        pulse.code.mini_src.contains("bd*4"),
+        "{}",
+        pulse.code.mini_src
+    );
+
+    let bass = track(&song, "bass");
+    assert_eq!(bass.code.sound, "sine");
+    assert!((bass.code.mod_params.fm - 2.5).abs() < 1e-5);
+    assert!((bass.code.mod_params.fmh - 1.0).abs() < 1e-5);
+    assert!(bass.code.mod_params.fm_sustain > 0.3);
+    let bass_lpf = bass.code.filter.lpf.expect("bass needs parked lpf");
+    assert!((bass_lpf - 420.0).abs() < 1e-3);
+
+    let pluck = track(&song, "pluck");
+    assert_eq!(pluck.code.sound, "sine");
+    assert!((pluck.code.mod_params.fm - 4.0).abs() < 1e-5);
+    assert!((pluck.code.mod_params.fmh - 2.0).abs() < 1e-5);
+    assert!(pluck.code.mod_params.fm_sustain.abs() < 1e-5);
+    assert!((pluck.code.adsr.decay - 0.15).abs() < 1e-5);
+    assert_eq!(pluck.code.cut, Some(1));
+
+    let bell = track(&song, "bell");
+    assert_eq!(bell.code.sound, "sine");
+    let bell_fmh = bell.code.mod_params.fmh;
+    assert!(
+        (bell_fmh - bell_fmh.round()).abs() > 0.1,
+        "bell fmh should be inharmonic, got {bell_fmh}"
+    );
+
+    let metallic = track(&song, "metallic");
+    assert_eq!(metallic.code.sound, "sine");
+    assert!(metallic.code.mod_params.fmh >= 5.0);
+    assert!(metallic.code.mod_params.noise_mix > 0.0);
+
+    let pad = track(&song, "pad");
+    assert_eq!(pad.code.sound, "sine");
+    assert!(pad.code.mod_params.fm < 2.0);
+    assert!(pad.code.mod_params.fm_attack >= 0.2);
+    assert!(pad.code.mod_params.fm_sustain > 0.4);
+    assert!(pad.code.room > 0.0);
+    assert_eq!(pad.code.orbit, 2);
+
+    let stab = track(&song, "stab");
+    assert_eq!(stab.code.sound, "sine");
+    assert!(stab.code.mod_params.fm >= 4.0);
+    assert_eq!(stab.code.cut, Some(1));
+
+    for t in &song.tracks {
+        assert!(
+            t.code.compressor.is_none(),
+            "no track compressor: {}",
+            t.name
+        );
+        if t.name != "pulse" {
+            assert!(
+                t.code.mod_params.fm.abs() > 1e-6,
+                "{} should be live FM",
+                t.name
+            );
+        }
+    }
+
+    let bank = if samples_available() {
+        load_bank()
+    } else {
+        SampleBank::empty()
+    };
+    let bpm = 120.0;
+    let mut e = Engine::new(SR, bpm);
+    e.push_command(Command::LoadSong {
+        deck: 0,
+        song: Box::new(song),
+    });
+    let _ = process_bars(&mut e, &bank, 1, bpm);
+    let buf = process_bars(&mut e, &bank, 2, bpm);
+    assert_finite_bounded(&buf, "skill-fm-sound-design");
+    assert!(
+        has_energy(&buf, 0.001),
+        "live FM skill should sound, peak={}",
+        peak(&buf)
+    );
+    assert!(
+        clip_rail_ratio(&buf) < 0.05,
+        "live FM skill clip rail: {}",
+        clip_rail_ratio(&buf)
+    );
+}
+
+#[test]
+fn skill_fm_sound_design_sampled_sounds() {
+    let path = songs_dir().join("skill-fm-sound-design-sampled.strudel");
+    let text = fs::read_to_string(&path).unwrap();
+    assert!(
+        text.contains("setcpm(120/4)"),
+        "sampled factory demo shares 120 with the live file: {text}"
+    );
+    assert!(
+        text.contains("lead-fm_pluck") && !text.contains("lead-fm-pluck"),
+        "pluck key is lead-fm_pluck: {text}"
+    );
+    assert!(
+        text.contains("stab-fm_major") && text.contains(r#"note("0 ~ 0 ~")"#),
+        "major triad wav uses a single degree, not [0,2,4]: {text}"
+    );
+    assert!(
+        !text.contains("[0,2,4]"),
+        "do not triple stab-fm_major: {text}"
+    );
+    assert!(
+        text.contains("stab-fm_fifth") && !text.contains("stab-fm-fifth"),
+        "fifth key uses underscore: {text}"
+    );
+    assert!(
+        !text.contains(".fm(") && !text.contains(".fmh("),
+        "sampled song must not pretend live .fm is the factory: {text}"
+    );
+    assert!(
+        text.contains("C4:minor") && text.contains("C4:major") && !text.contains("C3:"),
+        "C3 wavs must be written at C4: {text}"
+    );
+
+    let song = load_song_file("skill-fm-sound-design-sampled.strudel");
+    assert_eq!(song.title, "skill-fm-sound-design-sampled");
+    assert_eq!(song.tracks.len(), 3);
+    assert!(
+        song.bpm.is_some() && (song.bpm.unwrap() - 120.0).abs() < 1e-6,
+        "expected 120 BPM, got {:?}",
+        song.bpm
+    );
+
+    let pluck = track(&song, "pluck");
+    assert_eq!(pluck.code.sound, "lead-fm_pluck");
+    assert_eq!(pluck.code.cut, Some(1));
+    let pluck_scale = pluck
+        .code
+        .scale
+        .as_ref()
+        .expect("pluck needs .scale")
+        .at_cycle(0);
+    assert_eq!(pluck_scale.root_midi, 60, "C4");
+
+    let major = track(&song, "major");
+    assert_eq!(major.code.sound, "stab-fm_major");
+    assert_eq!(major.code.cut, Some(2));
+    let major_scale = major
+        .code
+        .scale
+        .as_ref()
+        .expect("major needs .scale")
+        .at_cycle(0);
+    assert_eq!(major_scale.root_midi, 60, "C4");
+
+    let fifth = track(&song, "fifth");
+    assert_eq!(fifth.code.sound, "stab-fm_fifth");
+    assert_eq!(fifth.code.cut, Some(3));
+
+    if !samples_available() {
+        eprintln!("skip skill_fm_sound_design_sampled render: samples/ not found");
+        return;
+    }
+    let bank = load_bank();
+    let bpm = 120.0;
+    let mut e = Engine::new(SR, bpm);
+    e.push_command(Command::LoadSong {
+        deck: 0,
+        song: Box::new(song),
+    });
+    let _ = process_bars(&mut e, &bank, 1, bpm);
+    let buf = process_bars(&mut e, &bank, 2, bpm);
+    assert_finite_bounded(&buf, "skill-fm-sound-design-sampled");
+    assert!(
+        has_energy(&buf, 0.001),
+        "sampled FM skill should sound, peak={}",
+        peak(&buf)
+    );
+    assert!(
+        clip_rail_ratio(&buf) < 0.05,
+        "sampled FM skill clip rail: {}",
+        clip_rail_ratio(&buf)
+    );
+}

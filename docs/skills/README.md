@@ -91,13 +91,13 @@ Genre in this repo is mostly **tempo + drum grid + register + filter**, not a hi
 | --- | --- |
 | `setcpm` | House ~120–128, techno ~126–130, DnB ~170+, ambient can sit on a shared DJ BPM |
 | Drum string | Four-on-the-floor vs 2-step vs break |
-| `.s(...)` | `bd`/`sd`/`hh`/`oh`/`cp` samples; `lead-fm_pluck`; `sawtooth`/`square`/`sine`/`triangle`; `wt_organ` / `wt_bright` |
+| `.s(...)` | `bd`/`sd`/`hh`/`oh`/`cp` samples; factory FM wavs (`lead-fm_pluck`, `stab-fm_*`); `sawtooth`/`square`/`sine`/`triangle` + live `.fm`; `wt_organ` / `wt_bright` |
 | `.lpf` / `.lpq` | Dark bass vs acid (high Q) vs open hats |
 | ADSR | Pluck vs pad |
 | `.room` / `.delay` | Space (orbit-shared FX, ids 1–4 per deck) |
 | `.duckorbit` | Kick ducks **that orbit** (put pad **and** bass on it). `duckattack` is recover time |
 
-Bundled one-shots: `samples/bd`, `sd`, `hh`, `oh`, `cp` (`samples/cp/00.wav`), plus `lead-fm_pluck`. `db` is not a sample. Unknown names fail resolve (performance continues). `stack()`, `.cpm()`, and a bare `s("...")` line without `$:` are not song format.
+Bundled one-shots: `samples/bd`, `sd`, `hh`, `oh`, `cp` (`samples/cp/00.wav`), plus factory FM wavs `lead-fm_pluck`, `stab-fm_fifth`, `stab-fm_major`, `reese-mid`. Live 2-op FM is `.s("sine").fm(…)` — not those wavs. `db` is not a sample. Unknown names fail resolve (performance continues). `stack()`, `.cpm()`, and a bare `s("...")` line without `$:` are not song format.
 
 ## DJ / mix
 
@@ -121,6 +121,7 @@ Bundled one-shots: `samples/bd`, `sd`, `hh`, `oh`, `cp` (`samples/cp/00.wav`), p
 | [techno-duck](./techno-duck/SKILL.md) | Same duck idea as sidechain-ducking | `songs/skill-techno-duck.strudel` |
 | [acid-303-filter-envelope](./acid-303-filter-envelope/SKILL.md) | TB-303: per-note `lpenv`, high `lpq`, not static `lpf` + amp ADSR | `songs/skill-acid-303-filter-envelope.strudel` |
 | [mood-bright-dark](./mood-bright-dark/SKILL.md) | Make a loop brighter/darker (mode, voicing, register, sample, filter) — not a genre change | `songs/skill-mood-dark.strudel` + `songs/skill-mood-bright.strudel` |
+| [fm-sound-design](./fm-sound-design/SKILL.md) | Live 2-op FM recipes (`.fm` / `.fmh` / FM env). Not a genre loop; factory WAVs are samples | `songs/skill-fm-sound-design.strudel` + `songs/skill-fm-sound-design-sampled.strudel` |
 
 `songs/acid16.strudel` is the static-cutoff live loop (same 130 BPM). Clock would align; both files are 303 lines, so A/B would double the acid — not a mix reason. Do not treat `acid16` as the envelope recipe.
 
@@ -165,6 +166,12 @@ strudel-rs play songs/skill-mood-bright.strudel --seconds 12
 strudel-rs play songs/skill-mood-dark.strudel --headless --seconds 8
 strudel-rs play songs/skill-mood-bright.strudel --headless --seconds 8
 strudel-rs dj songs/skill-mood-dark.strudel songs/skill-mood-bright.strudel
+
+# Live 2-op FM recipes (120). Play solo — not a house/techno/DnB pair.
+strudel-rs play songs/skill-fm-sound-design.strudel --seconds 12
+strudel-rs play songs/skill-fm-sound-design.strudel --headless --seconds 8
+strudel-rs play songs/skill-fm-sound-design-sampled.strudel --seconds 12
+strudel-rs play songs/skill-fm-sound-design-sampled.strudel --headless --seconds 8
 ```
 
 Headless hosts without an audio device: `cargo test --test e2e` renders through `Engine::process` (no ALSA).

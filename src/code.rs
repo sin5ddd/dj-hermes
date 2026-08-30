@@ -1529,6 +1529,31 @@ mod tests {
     }
 
     #[test]
+    fn parses_fm_scalars_and_aliases() {
+        let pc = parse_code(
+            r#"note("0").s("sine").fm(4).fmh(2).fmatt(0.002).fmdec(0.08).fmsus(0.1).noise(0.12)"#,
+        )
+        .unwrap();
+        assert!((pc.mod_params.fm - 4.0).abs() < 1e-6);
+        assert!((pc.mod_params.fmh - 2.0).abs() < 1e-6);
+        assert!((pc.mod_params.fm_attack - 0.002).abs() < 1e-6);
+        assert!((pc.mod_params.fm_decay - 0.08).abs() < 1e-6);
+        assert!((pc.mod_params.fm_sustain - 0.1).abs() < 1e-6);
+        assert!((pc.mod_params.noise_mix - 0.12).abs() < 1e-6);
+        let long = parse_code(
+            r#"note("0").s("sine").fm(3).fmh(1.5).fmattack(0.01).fmdecay(0.2).fmsustain(0.4)"#,
+        )
+        .unwrap();
+        assert!((long.mod_params.fm - 3.0).abs() < 1e-6);
+        assert!((long.mod_params.fmh - 1.5).abs() < 1e-6);
+        assert!((long.mod_params.fm_attack - 0.01).abs() < 1e-6);
+        assert!((long.mod_params.fm_decay - 0.2).abs() < 1e-6);
+        assert!((long.mod_params.fm_sustain - 0.4).abs() < 1e-6);
+        assert!(parse_code(r#"note("0").s("sine").fm("3 5")"#).is_err());
+        assert!(parse_code(r#"note("0").s("sine").fmh("<1 2>")"#).is_err());
+    }
+
+    #[test]
     fn parses_lpenv_scalars_not_patterns() {
         let pc = parse_code(
             r#"note("0").scale("C2:minor").s("sawtooth").lpf(260).lpq(14).lpenv(3).lpattack(0.001).lpdecay(0.09).lpsustain(0.05)"#,
