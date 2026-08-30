@@ -6,7 +6,7 @@ use std::fs;
 use std::path::PathBuf;
 
 use strudel_rs::engine::{Command, Engine};
-use strudel_rs::sample::SampleBank;
+use strudel_rs::sample::{SampleBank, SAMPLE_ROOT_HZ};
 use strudel_rs::song::parse_song;
 
 const SR: u32 = 48_000;
@@ -1340,6 +1340,461 @@ fn skill_fm_sound_design_sounds() {
     assert!(
         clip_rail_ratio(&buf) < 0.05,
         "FM skill song clip rail: {}",
+        clip_rail_ratio(&buf)
+    );
+}
+
+#[test]
+fn sample_root_hz_is_c4_not_recorded_octave() {
+    // SAMPLE_ROOT_HZ comment says C3; the value is C4. Ratio 1.0 = native wav pitch.
+    assert!((SAMPLE_ROOT_HZ - 261.6256).abs() < 1e-4);
+    assert!(
+        (130.8128 / SAMPLE_ROOT_HZ - 0.5).abs() < 1e-3,
+        "C3 dumps an octave"
+    );
+    assert!(
+        (65.4064 / SAMPLE_ROOT_HZ - 0.25).abs() < 1e-3,
+        "C2 dumps two octaves"
+    );
+}
+
+#[test]
+fn factory_pcm_flat_stems_resolve_exactly() {
+    if !samples_available() {
+        eprintln!("skip factory_pcm stems: samples/ not found");
+        return;
+    }
+    let bank = load_bank();
+    if !factory_pcm_bank_ready(&bank) {
+        eprintln!("skip factory_pcm stems: factory wavs not loaded (LFS?)");
+        return;
+    }
+    assert!(bank.has("bass-fm_house"));
+    assert!(bank.has("bass-fm_sub"));
+    assert!(bank.has("reese-dark"));
+    assert!(bank.has("pad-fm_fifth"));
+    assert!(bank.has("lead-supersaw"));
+    assert!(bank.has("fx-uplifter"));
+    assert!(bank.has("fx-riser_noise"));
+    assert!(bank.has("fx-impact_dnb"));
+    assert!(bank.has("fx-sub_drop"));
+    assert!(!bank.has("bass-fm-house"), "underscore is not a hyphen");
+    assert!(!bank.has("reese_dark"), "hyphen is not an underscore");
+    assert!(!bank.has("pad-fm-fifth"));
+    assert!(!bank.has("fx-riser-noise"));
+    assert!(!bank.has("lead_supersaw"));
+}
+
+fn factory_pcm_bank_ready(bank: &SampleBank) -> bool {
+    [
+        "bass-fm_house",
+        "pad-fm_fifth",
+        "reese-dark",
+        "fx-uplifter",
+        "lead-supersaw",
+        "bd",
+        "cp",
+        "hh",
+    ]
+    .iter()
+    .all(|k| bank.has(k))
+}
+
+#[test]
+fn skill_factory_pcm_usage_sounds() {
+    let path = songs_dir().join("skill-factory-pcm-usage.strudel");
+    let text = fs::read_to_string(&path).unwrap();
+    assert!(
+        text.contains("setcpm(124/4)"),
+        "factory PCM house check is 124: {text}"
+    );
+    assert!(
+        text.contains(r#"s("bd*4, [~ cp]*2, [~ hh]*4").gain(0.65)"#),
+        "signed-off house grid must not be rewritten: {text}"
+    );
+    assert!(
+        text.contains(r#"note("0 0 4 0").scale("C4:minor").s("bass-fm_house").gain(0.45)"#),
+        "house floor stays C4:minor bass-fm_house: {text}"
+    );
+    assert!(
+        text.contains(r#"note("0 ~ 0 ~").scale("C4:minor").s("pad-fm_fifth").gain(0.25)"#),
+        "fifth pad stays sparse C4:minor: {text}"
+    );
+    assert!(
+        text.contains(r#"s("<fx-uplifter ~ ~ ~>").gain(0.3)"#),
+        "uplifter is once per 4 bars via <> (not every bar): {text}"
+    );
+    assert!(
+        !text.contains(r#".s("reese-dark")"#) && !text.contains(r#"s("reese-dark")"#),
+        "reese-dark is a different bed (has sub, like bass-fm_house): {text}"
+    );
+    assert!(
+        !text.contains("C3:") && !text.contains("C2:"),
+        "pitched batch-1 stems must be written at C4: {text}"
+    );
+    assert!(
+        !text.contains("bass-fm-house") && !text.contains("pad-fm-fifth"),
+        "wrong stems (hyphen/underscore swap) must not appear: {text}"
+    );
+    assert!(
+        !text.contains("[0,2,4]"),
+        "do not play pad-fm_fifth as a triad: {text}"
+    );
+    assert!(
+        !text.contains("bass-fm_sub") && !text.contains(r#".s("square")"#),
+        "floor is house bass only — no extra sub: {text}"
+    );
+    assert!(
+        !text.contains("lead-supersaw") && !text.contains("reese-mid"),
+        "supersaw / reese-mid are not this floor: {text}"
+    );
+    assert!(
+        !text.contains(r#".s("fx-uplifter")"#) && !text.contains(r#"s("fx-uplifter")"#),
+        "fx-uplifter must be a bare s() head with <> , not every-bar s(): {text}"
+    );
+    assert!(
+        !text.contains("duckorbit") && !text.contains("compressor("),
+        "no duck / track compressor: {text}"
+    );
+
+    let song = load_song_file("skill-factory-pcm-usage.strudel");
+    assert_eq!(song.title, "skill-factory-pcm-usage");
+    assert_eq!(song.tracks.len(), 4);
+    assert!(
+        song.bpm.is_some() && (song.bpm.unwrap() - 124.0).abs() < 1e-6,
+        "expected 124 BPM, got {:?}",
+        song.bpm
+    );
+
+    let drums = track(&song, "drums");
+    assert!(
+        drums.code.mini_src.contains("bd*4"),
+        "{}",
+        drums.code.mini_src
+    );
+    assert!(!drums.code.is_note);
+
+    let bass = track(&song, "bass");
+    assert_eq!(bass.code.sound, "bass-fm_house");
+    assert!(bass.code.is_note);
+    assert!((bass.code.gain - 0.45).abs() < 1e-5);
+    let bass_scale = bass
+        .code
+        .scale
+        .as_ref()
+        .expect("bass needs .scale")
+        .at_cycle(0);
+    assert_eq!(bass_scale.root_midi, 60, "C4 — C3 dumps the C2 floor");
+    assert_eq!(bass_scale.intervals, vec![0, 2, 3, 5, 7, 8, 10]);
+
+    let pad = track(&song, "pad");
+    assert_eq!(pad.code.sound, "pad-fm_fifth");
+    assert!(pad.code.is_note);
+    assert!((pad.code.gain - 0.25).abs() < 1e-5);
+    assert!(
+        pad.code.mini_src.contains("0 ~ 0 ~"),
+        "{}",
+        pad.code.mini_src
+    );
+    let pad_scale = pad
+        .code
+        .scale
+        .as_ref()
+        .expect("pad needs .scale")
+        .at_cycle(0);
+    assert_eq!(pad_scale.root_midi, 60, "C4");
+
+    let fx = track(&song, "fx");
+    assert_eq!(fx.code.sound, "fx-uplifter");
+    assert!(!fx.code.is_note, "FX must stay unpitched (ratio 1.0)");
+    assert!(fx.code.scale.is_none());
+    assert!((fx.code.gain - 0.3).abs() < 1e-5);
+    assert!(
+        fx.code.mini_src.contains("<fx-uplifter ~ ~ ~>"),
+        "{}",
+        fx.code.mini_src
+    );
+    let fx0 = strudel_rs::mini::events(&fx.code.pattern, 0);
+    assert!(
+        fx0.iter().any(|e| e.value == "fx-uplifter"),
+        "cycle 0 should fire the uplifter, got {fx0:?}"
+    );
+    let fx1 = strudel_rs::mini::events(&fx.code.pattern, 1);
+    assert!(
+        fx1.is_empty(),
+        "cycles 1–3 are rests so the ~2.8s shot does not overlap, got {fx1:?}"
+    );
+
+    for t in &song.tracks {
+        assert!(
+            t.code.compressor.is_none(),
+            "no track compressor: {}",
+            t.name
+        );
+    }
+
+    if !samples_available() {
+        eprintln!("skip skill_factory_pcm_usage render: samples/ not found");
+        return;
+    }
+    let bank = load_bank();
+    if !factory_pcm_bank_ready(&bank) {
+        eprintln!("skip skill_factory_pcm_usage render: factory stems not loaded (LFS?)");
+        return;
+    }
+    let bpm = 124.0;
+    let mut e = Engine::new(SR, bpm);
+    e.push_command(Command::LoadSong {
+        deck: 0,
+        song: Box::new(song),
+    });
+    let _ = process_bars(&mut e, &bank, 1, bpm);
+    let buf = process_bars(&mut e, &bank, 2, bpm);
+    assert_finite_bounded(&buf, "skill-factory-pcm-usage");
+    assert!(
+        has_energy(&buf, 0.001),
+        "factory PCM usage song should sound, peak={}",
+        peak(&buf)
+    );
+    assert!(
+        clip_rail_ratio(&buf) < 0.05,
+        "factory PCM usage clip rail: {}",
+        clip_rail_ratio(&buf)
+    );
+}
+
+#[test]
+fn skill_factory_pcm_lead_sounds() {
+    let path = songs_dir().join("skill-factory-pcm-lead.strudel");
+    let text = fs::read_to_string(&path).unwrap();
+    assert!(
+        text.contains("setcpm(124/4)"),
+        "lead song shares the 124 clock: {text}"
+    );
+    assert!(
+        text.contains(r#"note("4 ~ 7 4").scale("C4:minor").s("lead-supersaw")"#),
+        "supersaw melody stays C4:minor: {text}"
+    );
+    assert!(
+        text.contains("cut(1)"),
+        "long supersaw one-shot needs cut(1): {text}"
+    );
+    assert!(
+        !text.contains("pad-fm_fifth") && !text.contains("reese-dark"),
+        "do not stack supersaw on the pad+reese mid bed: {text}"
+    );
+    assert!(
+        !text.contains("C3:") && !text.contains("lead_supersaw"),
+        "C4 + hyphen stem: {text}"
+    );
+    assert!(
+        !text.contains("duckorbit") && !text.contains("compressor("),
+        "no duck / track compressor: {text}"
+    );
+
+    let song = load_song_file("skill-factory-pcm-lead.strudel");
+    assert_eq!(song.title, "skill-factory-pcm-lead");
+    assert_eq!(song.tracks.len(), 3);
+    assert!(
+        song.bpm.is_some() && (song.bpm.unwrap() - 124.0).abs() < 1e-6,
+        "expected 124 BPM, got {:?}",
+        song.bpm
+    );
+
+    let bass = track(&song, "bass");
+    assert_eq!(bass.code.sound, "bass-fm_house");
+    let bass_scale = bass
+        .code
+        .scale
+        .as_ref()
+        .expect("bass needs .scale")
+        .at_cycle(0);
+    assert_eq!(bass_scale.root_midi, 60, "C4");
+
+    let lead = track(&song, "lead");
+    assert_eq!(lead.code.sound, "lead-supersaw");
+    assert!(lead.code.is_note);
+    assert_eq!(lead.code.cut, Some(1));
+    assert!((lead.code.gain - 0.28).abs() < 1e-5);
+    let lead_scale = lead
+        .code
+        .scale
+        .as_ref()
+        .expect("lead needs .scale")
+        .at_cycle(0);
+    assert_eq!(lead_scale.root_midi, 60, "C4 — same rule as lead-fm_pluck");
+
+    if !samples_available() {
+        eprintln!("skip skill_factory_pcm_lead render: samples/ not found");
+        return;
+    }
+    let bank = load_bank();
+    if !factory_pcm_bank_ready(&bank) {
+        eprintln!("skip skill_factory_pcm_lead render: factory stems not loaded (LFS?)");
+        return;
+    }
+    let bpm = 124.0;
+    let mut e = Engine::new(SR, bpm);
+    e.push_command(Command::LoadSong {
+        deck: 0,
+        song: Box::new(song),
+    });
+    let _ = process_bars(&mut e, &bank, 1, bpm);
+    let buf = process_bars(&mut e, &bank, 2, bpm);
+    assert_finite_bounded(&buf, "skill-factory-pcm-lead");
+    assert!(
+        has_energy(&buf, 0.001),
+        "factory PCM lead song should sound, peak={}",
+        peak(&buf)
+    );
+    assert!(
+        clip_rail_ratio(&buf) < 0.05,
+        "factory PCM lead clip rail: {}",
+        clip_rail_ratio(&buf)
+    );
+}
+
+#[test]
+fn skill_factory_pcm_reese_sounds() {
+    let path = songs_dir().join("skill-factory-pcm-reese.strudel");
+    let text = fs::read_to_string(&path).unwrap();
+    assert!(
+        text.contains("setcpm(124/4)"),
+        "reese bed shares the 124 clock: {text}"
+    );
+    assert!(
+        text.contains(r#"note("0 3 0 <0 -1>").scale("C4:minor").s("reese-dark").gain(0.35)"#),
+        "reese-dark stays C4:minor (hyphen): {text}"
+    );
+    assert!(
+        !text.contains("bass-fm_house") && !text.contains(r#".s("square")"#),
+        "reese-dark already has sub — no house floor or square: {text}"
+    );
+    assert!(
+        !text.contains("bass-fm_sub") && !text.contains("pad-fm_fifth"),
+        "different bed from the house floor: {text}"
+    );
+    assert!(
+        !text.contains("C3:") && !text.contains("reese_dark"),
+        "C4 + hyphen stem: {text}"
+    );
+    assert!(
+        !text.contains("duckorbit") && !text.contains("compressor("),
+        "no duck / track compressor: {text}"
+    );
+
+    let song = load_song_file("skill-factory-pcm-reese.strudel");
+    assert_eq!(song.title, "skill-factory-pcm-reese");
+    assert_eq!(song.tracks.len(), 2);
+    assert!(
+        song.bpm.is_some() && (song.bpm.unwrap() - 124.0).abs() < 1e-6,
+        "expected 124 BPM, got {:?}",
+        song.bpm
+    );
+
+    let reese = track(&song, "reese");
+    assert_eq!(reese.code.sound, "reese-dark");
+    assert!(reese.code.is_note);
+    assert!((reese.code.gain - 0.35).abs() < 1e-5);
+    let reese_scale = reese
+        .code
+        .scale
+        .as_ref()
+        .expect("reese needs .scale")
+        .at_cycle(0);
+    assert_eq!(reese_scale.root_midi, 60, "C4");
+
+    for t in &song.tracks {
+        assert!(
+            t.code.compressor.is_none(),
+            "no track compressor: {}",
+            t.name
+        );
+    }
+
+    if !samples_available() {
+        eprintln!("skip skill_factory_pcm_reese render: samples/ not found");
+        return;
+    }
+    let bank = load_bank();
+    if !factory_pcm_bank_ready(&bank) {
+        eprintln!("skip skill_factory_pcm_reese render: factory stems not loaded (LFS?)");
+        return;
+    }
+    let bpm = 124.0;
+    let mut e = Engine::new(SR, bpm);
+    e.push_command(Command::LoadSong {
+        deck: 0,
+        song: Box::new(song),
+    });
+    let _ = process_bars(&mut e, &bank, 1, bpm);
+    let buf = process_bars(&mut e, &bank, 2, bpm);
+    assert_finite_bounded(&buf, "skill-factory-pcm-reese");
+    assert!(
+        has_energy(&buf, 0.001),
+        "factory PCM reese song should sound, peak={}",
+        peak(&buf)
+    );
+    assert!(
+        clip_rail_ratio(&buf) < 0.05,
+        "factory PCM reese clip rail: {}",
+        clip_rail_ratio(&buf)
+    );
+}
+
+#[test]
+fn skill_factory_pcm_pair_shares_clock() {
+    let usage = load_song_file("skill-factory-pcm-usage.strudel");
+    let lead = load_song_file("skill-factory-pcm-lead.strudel");
+    let reese = load_song_file("skill-factory-pcm-reese.strudel");
+    assert!(
+        (usage.bpm.unwrap() - lead.bpm.unwrap()).abs() < 1e-6,
+        "DJ pair must share one BPM, got {:?} vs {:?}",
+        usage.bpm,
+        lead.bpm
+    );
+    assert!(
+        (usage.bpm.unwrap() - reese.bpm.unwrap()).abs() < 1e-6,
+        "reese bed must share the 124 clock, got {:?} vs {:?}",
+        usage.bpm,
+        reese.bpm
+    );
+    assert_eq!(
+        track(&usage, "drums").code.mini_src,
+        track(&lead, "drums").code.mini_src,
+        "same 124 house grid so the pair can dj"
+    );
+
+    if !samples_available() {
+        eprintln!("skip skill_factory_pcm_pair render: samples/ not found");
+        return;
+    }
+    let bank = load_bank();
+    if !factory_pcm_bank_ready(&bank) {
+        eprintln!("skip skill_factory_pcm_pair render: factory stems not loaded (LFS?)");
+        return;
+    }
+    let bpm = 124.0;
+    let mut e = Engine::new(SR, bpm);
+    e.push_command(Command::LoadSong {
+        deck: 0,
+        song: Box::new(usage),
+    });
+    e.push_command(Command::LoadSong {
+        deck: 1,
+        song: Box::new(lead),
+    });
+    let _ = process_bars(&mut e, &bank, 1, bpm);
+    let buf = process_bars(&mut e, &bank, 2, bpm);
+    assert_finite_bounded(&buf, "skill-factory-pcm pair");
+    assert!(
+        has_energy(&buf, 0.001),
+        "factory PCM pair should sound on two decks, peak={}",
+        peak(&buf)
+    );
+    assert!(
+        clip_rail_ratio(&buf) < 0.05,
+        "factory PCM pair clip rail: {}",
         clip_rail_ratio(&buf)
     );
 }

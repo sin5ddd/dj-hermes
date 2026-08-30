@@ -27,7 +27,7 @@ $: s("bd*4, [~ cp]*2, [~ hh]*4").gain(0.65)
 $: note("4 ~ 7 4  2 0 ~ -1").scale("C4:minor").s("lead-fm_pluck").gain(0.4).cut(1)
 ```
 
-Playable copy: `songs/skill-house-clap-backbeat.strudel`. Do not “improve” the degrees.
+Playable copy: `songs/skill-house-clap-backbeat.strudel`. Do not “improve” the degrees. Supersaw lead is a different stem (`lead-supersaw` at `C4:minor`) — [factory-pcm-usage](../factory-pcm-usage/SKILL.md).
 
 | Piece | Role |
 | --- | --- |

@@ -10,7 +10,7 @@ description: >-
 
 Live `.fm` / `.fmh` is **only** for **time-varying lead and bass synths**. Drums and one-shots are **PCM** (`s("bd")`, `s("cp")`, `s("lead-fm_pluck")`, `s("stab-fm_fifth")`, …). Do not build pluck / bell / metal-hit as live 2-op one-shots.
 
-Playable copy: `songs/skill-fm-sound-design.strudel` (`setcpm(124/4)`).
+Playable copy: `songs/skill-fm-sound-design.strudel` (`setcpm(120/4)`). How to trigger issue #21 batch 1 factory stems (`C4:…` / unpitched FX): [factory-pcm-usage](../factory-pcm-usage/SKILL.md).
 
 ## When to use
 

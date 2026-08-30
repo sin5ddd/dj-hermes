@@ -32,7 +32,7 @@ $: note("0 3 0 <0 -1>").scale("C4:minor").s("reese-mid").gain(0.38)
 $: note("~ 4 ~ <7 4>").scale("C4:minor").s("stab-fm_fifth").gain(0.22).cut(1)
 ```
 
-Playable copy: `songs/skill-dnb-reese-mid-stab.strudel`. Do not “improve” the degrees or the drum grid.
+Playable copy: `songs/skill-dnb-reese-mid-stab.strudel`. Do not “improve” the degrees or the drum grid. Full-range Reese with sub is `reese-dark`, not a swap for this mid glue — [factory-pcm-usage](../factory-pcm-usage/SKILL.md).
 
 | Piece | Role |
 | --- | --- |
