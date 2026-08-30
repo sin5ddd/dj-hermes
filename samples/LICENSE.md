@@ -26,7 +26,7 @@ under CC0. Conversion does not change the license.
 
 ## Bundled FM one-shots (CC0)
 
-These four files are original renders from
+These five files are original renders from
 [rust-fm-synthe](https://github.com/sin5ddd/rust-fm-synthe) (4-op FM, offline).
 They are dedicated to the public domain under **CC0 1.0 Universal**.
 They are **not** from Sonic Pi / Freesound.
@@ -36,6 +36,7 @@ They are **not** from Sonic Pi / Freesound.
 | `cp/00.wav` | Dry house 2/4 clap (unpitched HP noise-ish FM). Not a snare stand-in. |
 | `lead-fm_pluck.wav` | C3 (MIDI 48) short FM pluck |
 | `stab-fm_fifth.wav` | C3 hollow fifth: C and G only (ratios 1 and 3/2). No major third. |
+| `stab-fm_major.wav` | C3 major triad: C–E–G (ratios 1, 5/4, 3/2). Bright counterpart to the hollow fifth. |
 | `reese-mid.wav` | C3 mid Reese glue, band-pass 800–1200 Hz, no sub |
 
 ## Custom samples
