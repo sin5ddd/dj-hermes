@@ -135,6 +135,9 @@ samples/
   oh/00.wav
   cp/00.wav          # house 2/4 dry clap (FM)
   lead-fm_pluck.wav  # C3 short FM pluck
+  lead-fm_bell.wav   # C3 inharmonic bell / glass (ratio 3.5)
+  keys-fm_ep.wav     # C3 electric-piano-ish FM one-shot
+  perc-fm_metal.wav  # unpitched metallic hit (not a stab or kick)
   stab-fm_fifth.wav  # hollow C+G fifth (no third)
   stab-fm_major.wav  # C3 major triad C–E–G (bright counterpart)
   reese-mid.wav      # C3 mid Reese glue, 800–1200 Hz
