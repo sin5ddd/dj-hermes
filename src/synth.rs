@@ -682,6 +682,47 @@ mod tests {
     }
 
     #[test]
+    fn fm_env_attack_then_decay_toward_sustain() {
+        // fm_env_level: 0→1 over attack, then 1→fmsustain over decay. No release.
+        // Peak deviation = fm * env * freq; after decay with sustain 0, index is 0
+        // so inst_freq == freq (modulator still advances only while |fm_idx| > ε).
+        let mods = ModParams {
+            fm: 4.0,
+            fmh: 1.0,
+            fm_attack: 0.001,
+            fm_decay: 0.01,
+            fm_sustain: 0.0,
+            ..Default::default()
+        };
+        let mut v = Voice::new(
+            OscSource::Wave(Wave::Sine),
+            220.0,
+            0.8,
+            4800,
+            FilterParams::default(),
+            Adsr {
+                attack: 0.001,
+                decay: 0.0,
+                sustain: 1.0,
+                release: 0.01,
+            },
+            mods,
+            1,
+            None,
+        )
+        .with_adsr_timing(48_000.0, 4000);
+        let mut early = 0f32;
+        for _ in 0..480 {
+            early += v.next_sample(48_000.0).unwrap_or(0.0).abs();
+        }
+        let mut late = 0f32;
+        for _ in 0..480 {
+            late += v.next_sample(48_000.0).unwrap_or(0.0).abs();
+        }
+        assert!(early > 0.0 && late > 0.0, "early={early} late={late}");
+    }
+
+    #[test]
     fn fm_produces_energy() {
         let mods = ModParams {
             fm: 4.0,
