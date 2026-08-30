@@ -141,6 +141,15 @@ samples/
   stab-fm_fifth.wav  # hollow C+G fifth (no third)
   stab-fm_major.wav  # C3 major triad C–E–G (bright counterpart)
   reese-mid.wav      # C3 mid Reese glue, 800–1200 Hz
+  pad-fm_fifth.wav   # C3 fifth pad (sustained C+G, ~8.2 s)
+  bass-fm_sub.wav    # C3 clean sine sub (layer)
+  bass-fm_house.wav  # C3 tight house bass (short, sidechain)
+  reese-dark.wav     # C3 dark full-range Reese (sub + mid)
+  lead-supersaw.wav  # C3 classic supersaw lead (~8.2 s / 4 bars @ 120)
+  fx-riser_noise.wav # unpitched noise riser (~3.2 s)
+  fx-uplifter.wav    # unpitched uplifter (~2.8 s)
+  fx-impact_dnb.wav  # unpitched DnB impact (~0.5 s)
+  fx-sub_drop.wav    # unpitched sub drop (~1.1 s)
   LICENSE.md
   README.md
   LAYOUT.md          # 本ファイル

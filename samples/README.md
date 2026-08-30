@@ -13,7 +13,7 @@ samples/
   <name>.wav      # also accepted as a single variation
 ```
 
-Bundled extras (same format): `cp/00.wav` (house 2/4 clap), `lead-fm_pluck.wav`, `lead-fm_bell.wav` (C3 inharmonic bell), `keys-fm_ep.wav` (C3 EP, 2×/3× tines), `perc-fm_metal.wav` (unpitched metal), `stab-fm_fifth.wav` (hollow C+G), `stab-fm_major.wav` (C–E–G), `reese-mid.wav`.
+Bundled extras (same format): `cp/00.wav` (house 2/4 clap), `lead-fm_pluck.wav`, `lead-fm_bell.wav` (C3 inharmonic bell), `keys-fm_ep.wav` (C3 EP, 2×/3× tines), `perc-fm_metal.wav` (unpitched metal), `stab-fm_fifth.wav` (hollow C+G), `stab-fm_major.wav` (C–E–G), `reese-mid.wav`, `pad-fm_fifth.wav` (C3 fifth pad), `bass-fm_sub.wav` / `bass-fm_house.wav` (C3), `reese-dark.wav` (C3 full-range Reese), `lead-supersaw.wav` (C3, ~8 s), `fx-riser_noise.wav`, `fx-uplifter.wav`, `fx-impact_dnb.wav`, `fx-sub_drop.wav` (unpitched FX).
 
 WAV files are stored with **Git LFS**. After clone, or if a `.wav` is a 3-line pointer file:
 
