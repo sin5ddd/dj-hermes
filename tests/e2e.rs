@@ -1081,8 +1081,8 @@ fn skill_mood_bright_sounds() {
         "pluck key is lead-fm_pluck (underscore): {text}"
     );
     assert!(
-        text.contains("cut(1)"),
-        "pluck one-shot needs cut(1): {text}"
+        !text.contains("cut(1)") && !text.contains(".cut("),
+        "cut on a parallel chord kills voices one at a time: {text}"
     );
     assert!(
         !text.contains(".scale(\"C3:major\").s(\"lead-fm_pluck\")")
@@ -1109,7 +1109,7 @@ fn skill_mood_bright_sounds() {
 
     let chords = track(&song, "chords");
     assert_eq!(chords.code.sound, "lead-fm_pluck");
-    assert_eq!(chords.code.cut, Some(1));
+    assert_eq!(chords.code.cut, None, "no cut on [0,4,9] parallel chord");
     let chord_scale = chords
         .code
         .scale
