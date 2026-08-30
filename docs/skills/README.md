@@ -121,7 +121,7 @@ Bundled one-shots: `samples/bd`, `sd`, `hh`, `oh`, `cp` (`samples/cp/00.wav`), p
 | [techno-duck](./techno-duck/SKILL.md) | Same duck idea as sidechain-ducking | `songs/skill-techno-duck.strudel` |
 | [acid-303-filter-envelope](./acid-303-filter-envelope/SKILL.md) | TB-303: per-note `lpenv`, high `lpq`, not static `lpf` + amp ADSR | `songs/skill-acid-303-filter-envelope.strudel` |
 | [mood-bright-dark](./mood-bright-dark/SKILL.md) | Make a loop brighter/darker (mode, voicing, register, sample, filter) — not a genre change | `songs/skill-mood-dark.strudel` + `songs/skill-mood-bright.strudel` |
-| [fm-sound-design](./fm-sound-design/SKILL.md) | Live 2-op FM for evolving lead/bass only; drums and one-shots are PCM. Not a genre loop | `songs/skill-fm-sound-design.strudel` |
+| [fm-sound-design](./fm-sound-design/SKILL.md) | Live 2-op FM for evolving lead/bass only (124); drums are PCM. Not a genre loop | `songs/skill-fm-sound-design.strudel` |
 | [factory-pcm-usage](./factory-pcm-usage/SKILL.md) | How to play each issue #21 batch 1 factory PCM stem (`C4:…` / unpitched FX). Not a genre recipe | `songs/skill-factory-pcm-usage.strudel` + `songs/skill-factory-pcm-reese.strudel` + `songs/skill-factory-pcm-lead.strudel` |
 
 `songs/acid16.strudel` is the static-cutoff live loop (same 130 BPM). Clock would align; both files are 303 lines, so A/B would double the acid — not a mix reason. Do not treat `acid16` as the envelope recipe.
