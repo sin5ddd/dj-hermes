@@ -168,7 +168,8 @@ strudel-rs play songs/skill-mood-dark.strudel --headless --seconds 8
 strudel-rs play songs/skill-mood-bright.strudel --headless --seconds 8
 strudel-rs dj songs/skill-mood-dark.strudel songs/skill-mood-bright.strudel
 
-# Live FM lead+bass at 120 (PCM drums/one-shots). Play solo — not a house/techno/DnB pair.
+# Live FM growl+lead+pad at 124 (PCM drums). Same clock as house/mood.
+# Do not DJ-pair a leftover 120 file with this 124 file.
 strudel-rs play songs/skill-fm-sound-design.strudel --seconds 12
 strudel-rs play songs/skill-fm-sound-design.strudel --headless --seconds 8
 

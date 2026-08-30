@@ -1,6 +1,6 @@
 // @title skill-fm-sound-design
-// @details live FM lead+bass; drums and one-shots are PCM
-setcpm(120/4)
+// @details live FM growl+lead+pad; drums are PCM
+setcpm(124/4)
 // drums
 $: s("bd*4").gain(0.3)
 // bass
@@ -8,18 +8,12 @@ $: note("0 0 3 0").scale("C2:minor")
   .s("sawtooth").fm(4).fmh(1).fmdec(0.25).fmsus(0.2)
   .lpf(400).lpenv(3)
   .gain(0.38)
-// ep
-$: note("0 ~ 4 2").scale("C4:minor")
-  .s("sine").fm(2).fmh(1).fmdec(0.6).fmsus(0.15)
-  .gain(0.28)
+// lead
+$: note("4 2 0 2").scale("C4:minor")
+  .s("sine").fm(3).fmh(2).fmatt(0.01).fmdec(0.3).fmsus(0.25)
+  .lpf(1800).lpenv(2).gain(0.3)
 // pad
 $: note("[0,4]").scale("C4:minor")
   .s("sine").fm(1.2).fmh(1).fmdec(0.8).fmsus(0.4)
   .room(0.3).orbit(2)
   .gain(0.16)
-// pluck
-$: note("4 ~ 7 4  ~ 0 ~ -1").scale("C4:minor")
-  .s("lead-fm_pluck").gain(0.2).cut(1)
-// stab
-$: note("0 ~ 0 ~").scale("C4:major")
-  .s("stab-fm_major").gain(0.14).cut(2)
