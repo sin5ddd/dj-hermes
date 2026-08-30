@@ -121,7 +121,7 @@ Bundled one-shots: `samples/bd`, `sd`, `hh`, `oh`, `cp` (`samples/cp/00.wav`), p
 | [techno-duck](./techno-duck/SKILL.md) | Same duck idea as sidechain-ducking | `songs/skill-techno-duck.strudel` |
 | [acid-303-filter-envelope](./acid-303-filter-envelope/SKILL.md) | TB-303: per-note `lpenv`, high `lpq`, not static `lpf` + amp ADSR | `songs/skill-acid-303-filter-envelope.strudel` |
 | [mood-bright-dark](./mood-bright-dark/SKILL.md) | Make a loop brighter/darker (mode, voicing, register, sample, filter) — not a genre change | `songs/skill-mood-dark.strudel` + `songs/skill-mood-bright.strudel` |
-| [fm-sound-design](./fm-sound-design/SKILL.md) | Live 2-op FM recipes (`.fm` / `.fmh` / FM env). Not a genre loop; factory WAVs are samples | `songs/skill-fm-sound-design.strudel` + `songs/skill-fm-sound-design-sampled.strudel` |
+| [fm-sound-design](./fm-sound-design/SKILL.md) | Live 2-op FM for evolving lead/bass only; drums and one-shots are PCM. Not a genre loop | `songs/skill-fm-sound-design.strudel` |
 
 `songs/acid16.strudel` is the static-cutoff live loop (same 130 BPM). Clock would align; both files are 303 lines, so A/B would double the acid — not a mix reason. Do not treat `acid16` as the envelope recipe.
 
@@ -167,11 +167,9 @@ strudel-rs play songs/skill-mood-dark.strudel --headless --seconds 8
 strudel-rs play songs/skill-mood-bright.strudel --headless --seconds 8
 strudel-rs dj songs/skill-mood-dark.strudel songs/skill-mood-bright.strudel
 
-# Live 2-op FM recipes (120). Play solo — not a house/techno/DnB pair.
+# Live FM lead+bass at 120 (PCM drums/one-shots). Play solo — not a house/techno/DnB pair.
 strudel-rs play songs/skill-fm-sound-design.strudel --seconds 12
 strudel-rs play songs/skill-fm-sound-design.strudel --headless --seconds 8
-strudel-rs play songs/skill-fm-sound-design-sampled.strudel --seconds 12
-strudel-rs play songs/skill-fm-sound-design-sampled.strudel --headless --seconds 8
 ```
 
 Headless hosts without an audio device: `cargo test --test e2e` renders through `Engine::process` (no ALSA).
