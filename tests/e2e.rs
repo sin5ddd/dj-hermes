@@ -959,3 +959,234 @@ fn skill_dnb_reese_mid_stab_sounds() {
         clip_rail_ratio(&buf)
     );
 }
+
+fn assert_mood_house_drums(text: &str, song: &strudel_rs::song::Song) {
+    assert!(
+        text.contains("[~ cp]*2"),
+        "mood pair keeps the house 2/4 clap: {text}"
+    );
+    assert!(
+        !text.contains("[~ sd]") && !text.contains(",sd") && !text.contains("sd*"),
+        "do not stack or substitute sd on the clap grid: {text}"
+    );
+    assert!(
+        !text.contains("stab-fm_fifth") && !text.contains("'maj") && !text.contains("'min"),
+        "no hollow-fifth stab / chord-suffix fake quality: {text}"
+    );
+    assert!(
+        !text.contains("duckorbit") && !text.contains("compressor("),
+        "no duck / track compressor in this recipe: {text}"
+    );
+    assert_eq!(song.tracks.len(), 3);
+    assert!(
+        song.bpm.is_some() && (song.bpm.unwrap() - 124.0).abs() < 1e-6,
+        "expected 124 BPM, got {:?}",
+        song.bpm
+    );
+    let drums = track(song, "drums");
+    assert_eq!(drums.code.mini_src, r#"bd*4, [~ cp]*2, [~ hh]*4"#);
+    assert!((drums.code.gain - 0.6).abs() < 1e-5);
+}
+
+#[test]
+fn skill_mood_dark_sounds() {
+    let path = songs_dir().join("skill-mood-dark.strudel");
+    let text = fs::read_to_string(&path).unwrap();
+    assert!(
+        text.contains(r#"note("0 2 4 0").scale("C2:minor").s("square")"#),
+        "dark bass stays C2:minor square: {text}"
+    );
+    assert!(
+        text.contains(r#"note("[0,2,4] ~ [0,2,4] ~").scale("C4:minor").s("reese-mid")"#),
+        "dark close triad must stay C4:minor reese-mid: {text}"
+    );
+    assert!(
+        !text.contains("reese_mid"),
+        "sound key is reese-mid, not reese_mid: {text}"
+    );
+    assert!(
+        !text.contains(".scale(\"C2:minor\").s(\"reese-mid\")")
+            && !text.contains(".scale(\"C3:minor\").s(\"reese-mid\")"),
+        "reese-mid C2/C3 dumps the 800–1200 band: {text}"
+    );
+
+    let song = load_song_file("skill-mood-dark.strudel");
+    assert_eq!(song.title, "skill-mood-dark");
+    assert_mood_house_drums(&text, &song);
+
+    let bass = track(&song, "bass");
+    assert_eq!(bass.code.sound, "square");
+    let bass_lpf = bass.code.filter.lpf.expect("square sub needs lpf");
+    assert!((bass_lpf - 140.0).abs() < 1e-3);
+    let bass_scale = bass
+        .code
+        .scale
+        .as_ref()
+        .expect("bass needs .scale")
+        .at_cycle(0);
+    assert_eq!(bass_scale.root_midi, 36, "C2");
+    assert_eq!(bass_scale.intervals, vec![0, 2, 3, 5, 7, 8, 10]);
+
+    let chords = track(&song, "chords");
+    assert_eq!(chords.code.sound, "reese-mid");
+    let chord_scale = chords
+        .code
+        .scale
+        .as_ref()
+        .expect("chords need .scale")
+        .at_cycle(0);
+    assert_eq!(chord_scale.root_midi, 60, "C4 — C2/C3 dumps the mid band");
+    assert_eq!(chord_scale.intervals, vec![0, 2, 3, 5, 7, 8, 10]);
+
+    if !samples_available() {
+        eprintln!("skip skill_mood_dark render: samples/ not found");
+        return;
+    }
+    let bank = load_bank();
+    let bpm = 124.0;
+    let mut e = Engine::new(SR, bpm);
+    e.push_command(Command::LoadSong {
+        deck: 0,
+        song: Box::new(song),
+    });
+    let _ = process_bars(&mut e, &bank, 1, bpm);
+    let buf = process_bars(&mut e, &bank, 2, bpm);
+    assert_finite_bounded(&buf, "skill-mood-dark");
+    assert!(
+        has_energy(&buf, 0.001),
+        "mood-dark skill should sound, peak={}",
+        peak(&buf)
+    );
+    assert!(
+        clip_rail_ratio(&buf) < 0.05,
+        "mood-dark skill clip rail: {}",
+        clip_rail_ratio(&buf)
+    );
+}
+
+#[test]
+fn skill_mood_bright_sounds() {
+    let path = songs_dir().join("skill-mood-bright.strudel");
+    let text = fs::read_to_string(&path).unwrap();
+    assert!(
+        text.contains(r#"note("0 2 4 0").scale("C3:major").s("sawtooth")"#),
+        "bright bass is C3:major saw: {text}"
+    );
+    assert!(
+        text.contains(r#"note("[0,4,9] ~ [0,4,9] ~").scale("C4:major").s("lead-fm_pluck")"#),
+        "bright spread voicing must stay C4:major pluck: {text}"
+    );
+    assert!(
+        text.contains("lead-fm_pluck") && !text.contains("lead-fm-pluck"),
+        "pluck key is lead-fm_pluck (underscore): {text}"
+    );
+    assert!(
+        text.contains("cut(1)"),
+        "pluck one-shot needs cut(1): {text}"
+    );
+    assert!(
+        !text.contains(".scale(\"C3:major\").s(\"lead-fm_pluck\")")
+            && !text.contains(".scale(\"C2:major\").s(\"lead-fm_pluck\")"),
+        "pluck C2/C3 dumps to bass: {text}"
+    );
+
+    let song = load_song_file("skill-mood-bright.strudel");
+    assert_eq!(song.title, "skill-mood-bright");
+    assert_mood_house_drums(&text, &song);
+
+    let bass = track(&song, "bass");
+    assert_eq!(bass.code.sound, "sawtooth");
+    let bass_lpf = bass.code.filter.lpf.expect("bright saw needs open lpf");
+    assert!((bass_lpf - 1400.0).abs() < 1e-3);
+    let bass_scale = bass
+        .code
+        .scale
+        .as_ref()
+        .expect("bass needs .scale")
+        .at_cycle(0);
+    assert_eq!(bass_scale.root_midi, 48, "C3");
+    assert_eq!(bass_scale.intervals, vec![0, 2, 4, 5, 7, 9, 11]);
+
+    let chords = track(&song, "chords");
+    assert_eq!(chords.code.sound, "lead-fm_pluck");
+    assert_eq!(chords.code.cut, Some(1));
+    let chord_scale = chords
+        .code
+        .scale
+        .as_ref()
+        .expect("chords need .scale")
+        .at_cycle(0);
+    assert_eq!(chord_scale.root_midi, 60, "C4");
+    assert_eq!(chord_scale.intervals, vec![0, 2, 4, 5, 7, 9, 11]);
+
+    if !samples_available() {
+        eprintln!("skip skill_mood_bright render: samples/ not found");
+        return;
+    }
+    let bank = load_bank();
+    let bpm = 124.0;
+    let mut e = Engine::new(SR, bpm);
+    e.push_command(Command::LoadSong {
+        deck: 0,
+        song: Box::new(song),
+    });
+    let _ = process_bars(&mut e, &bank, 1, bpm);
+    let buf = process_bars(&mut e, &bank, 2, bpm);
+    assert_finite_bounded(&buf, "skill-mood-bright");
+    assert!(
+        has_energy(&buf, 0.001),
+        "mood-bright skill should sound, peak={}",
+        peak(&buf)
+    );
+    assert!(
+        clip_rail_ratio(&buf) < 0.05,
+        "mood-bright skill clip rail: {}",
+        clip_rail_ratio(&buf)
+    );
+}
+
+#[test]
+fn skill_mood_pair_shares_clock_and_drum_grid() {
+    let dark = load_song_file("skill-mood-dark.strudel");
+    let bright = load_song_file("skill-mood-bright.strudel");
+    assert!(
+        (dark.bpm.unwrap() - bright.bpm.unwrap()).abs() < 1e-6,
+        "DJ pair must share one BPM, got {:?} vs {:?}",
+        dark.bpm,
+        bright.bpm
+    );
+    assert_eq!(
+        track(&dark, "drums").code.mini_src,
+        track(&bright, "drums").code.mini_src,
+        "drum grid must stay stable so contrast is harmonic/timbre"
+    );
+
+    if !samples_available() {
+        eprintln!("skip skill_mood_pair render: samples/ not found");
+        return;
+    }
+    let bank = load_bank();
+    let bpm = 124.0;
+    let mut e = Engine::new(SR, bpm);
+    e.push_command(Command::LoadSong {
+        deck: 0,
+        song: Box::new(dark),
+    });
+    e.push_command(Command::LoadSong {
+        deck: 1,
+        song: Box::new(bright),
+    });
+    let _ = process_bars(&mut e, &bank, 1, bpm);
+    let buf = process_bars(&mut e, &bank, 2, bpm);
+    assert_finite_bounded(&buf, "skill-mood pair");
+    assert!(
+        has_energy(&buf, 0.001),
+        "mood pair should sound on two decks, peak={}",
+        peak(&buf)
+    );
+    assert!(
+        clip_rail_ratio(&buf) < 0.05,
+        "mood pair clip rail: {}",
+        clip_rail_ratio(&buf)
+    );
+}

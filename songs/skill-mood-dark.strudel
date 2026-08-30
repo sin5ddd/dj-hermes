@@ -1,0 +1,9 @@
+// @title skill-mood-dark
+// @details skill example: darker — C minor, close triad, square + reese-mid (124 house grid)
+setcpm(124/4)
+// drums
+$: s("bd*4, [~ cp]*2, [~ hh]*4").gain(0.6)
+// bass
+$: note("0 2 4 0").scale("C2:minor").s("square").lpf(140).gain(0.4)
+// chords
+$: note("[0,2,4] ~ [0,2,4] ~").scale("C4:minor").s("reese-mid").gain(0.22)
