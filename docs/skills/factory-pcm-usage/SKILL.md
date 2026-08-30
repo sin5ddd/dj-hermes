@@ -10,8 +10,8 @@ description: >-
 
 This skill is **how each factory one-shot is triggered** — keys, register, and
 what the wav already contains. It is **not** a house / techno / DnB loop recipe.
-Those skills own the drum grids. The 124 house song below is only a beatmaker
-check that the signed-off stems sit together.
+Those skills own the drum grids. Playable files are **separate beds** at the
+same 124 clock: floor (drums + house bass + pad), dark Reese, supersaw lead.
 
 Existing stems stay on their own skills. Do not rewrite those recipes:
 
@@ -79,7 +79,7 @@ $: note("0 0 4 0").scale("C4:minor").s("bass-fm_sub").gain(0.5)
 ```
 
 Clean sine sub. `C4:…` yields native C2. **Floor only.** Do **not** stack with
-`reese-dark` or a square sub (double basement). Not in the pad+reese demo.
+`reese-dark` or a square sub (double basement). Not in the house-floor song.
 
 ### `reese-dark` — dark Reese **with** ~65 Hz sub
 
@@ -91,7 +91,9 @@ $: note("0 3 0 <0 -1>").scale("C4:minor").s("reese-dark").gain(0.35)
 Full-range dark Reese (sub + mid). **Not** a band-swap for `reese-mid`.
 `reese-mid` is 800–1200 Hz glue with **no** sub and still needs a square C2
 ([dnb-reese-mid-stab](../dnb-reese-mid-stab/SKILL.md)). `reese-dark` already
-owns ~65 Hz. Do **not** stack with square sub or `bass-fm_sub`.
+owns ~65 Hz. Do **not** stack with square sub, `bass-fm_sub`, or
+`bass-fm_house` (all have sub). This is a **different bed** from the house
+floor — own file, not the pad + `bass-fm_house` song.
 Key is `reese-dark` (hyphen). Not `reese_dark`.
 
 ### `pad-fm_fifth` — hollow C3+G3, **no third**
@@ -110,8 +112,8 @@ Not a swap for `stab-fm_fifth` (that one is a short stab).
 
 ### `lead-supersaw` — recorded C3, melody at `C4:minor`
 
-Same register rule as `lead-fm_pluck`. Do **not** stack this on the same mids
-as the pad+reese demo (it fills up). Separate song at the same 124 clock.
+Same register rule as `lead-fm_pluck`. Do **not** stack this on the floor pad
+or the dark-Reese bed (it fills the mids). Separate song at the same 124 clock.
 
 ```
 setcpm(124/4)
@@ -134,12 +136,23 @@ These four are gestures, not pitched instruments. Bare `s("…")`. No `.scale`.
 | `samples/fx-impact_dnb.wav` | `fx-impact_dnb` | DnB impact (~0.5 s). Underscore before `dnb` |
 | `samples/fx-sub_drop.wav` | `fx-sub_drop` | Sub drop (~50 Hz, ~1.1 s). Underscore before `drop` |
 
+Long one-shots must **not** fire every bar. `fx-uplifter` is ~2.8 s; a bar at
+124 BPM is ~1.94 s. `s("fx-uplifter")` overlaps itself. Mini `<>` picks one
+child **per cycle** (`mini.rs` `Node::Stack`):
+
 ```
 setcpm(124/4)
-$: s("fx-uplifter").gain(0.3)
-$: s("fx-riser_noise").gain(0.28)
+$: s("<fx-uplifter ~ ~ ~>").gain(0.3)
+```
+
+That is once per **4 bars**. Same idea for the other long FX (`fx-riser_noise`
+~3.2 s). Short hits (`fx-impact_dnb` ~0.5 s) can sit on a denser grid.
+
+```
+setcpm(124/4)
+$: s("<fx-riser_noise ~ ~ ~>").gain(0.28)
 $: s("fx-impact_dnb").gain(0.35)
-$: s("fx-sub_drop").gain(0.35)
+$: s("<fx-sub_drop ~ ~ ~>").gain(0.35)
 ```
 
 `fx-sub_drop` is already ~50 Hz. It still gets **no** `note()`. Kick-lead-in,
@@ -193,8 +206,9 @@ not this stem.
 | Swap? | Not a dark version of the other | Not a mid-band replacement |
 
 Do not put `reese-dark` on the DnB mid track and drop the square. Do not put
-`reese-mid` under this house demo. Do not stack `reese-dark` with
-`bass-fm_sub` or `s("square")` + `lpf(120)`.
+`reese-mid` under the house floor. Do not put `reese-dark` on the same `$:`
+list as `bass-fm_house` (both have sub). Do not stack it with `bass-fm_sub`
+or `s("square")` + `lpf(120)`.
 
 ## Sample keys (flat stems)
 
@@ -218,8 +232,10 @@ No `.bank(...)` on these names. This batch did not add a `bd/` kit.
 
 ## Playable songs (do not “improve”)
 
-Beatmaker 124 house grid — signed-off degrees and gains. Pad + dark Reese
-together; house floor under the kick; one unpitched uplifter.
+**Floor** = drums + `bass-fm_house` + `pad-fm_fifth` only. House bass is
+`0 0 4 0` (i and 5). Pad stays `0 ~ 0 ~`. FX is `<fx-uplifter ~ ~ ~>` —
+once per 4 bars, not every bar. **No** `reese-dark` here (both that stem and
+the house bass have sub).
 
 ```
 // @title skill-factory-pcm-usage
@@ -227,13 +243,29 @@ setcpm(124/4)
 $: s("bd*4, [~ cp]*2, [~ hh]*4").gain(0.65)
 $: note("0 0 4 0").scale("C4:minor").s("bass-fm_house").gain(0.45)
 $: note("0 ~ 0 ~").scale("C4:minor").s("pad-fm_fifth").gain(0.25)
-$: note("0 3 0 <0 -1>").scale("C4:minor").s("reese-dark").gain(0.35)
-$: s("fx-uplifter").gain(0.3)
+$: s("<fx-uplifter ~ ~ ~>").gain(0.3)
 ```
 
 Copy: `songs/skill-factory-pcm-usage.strudel`.
 
-### Lead only (same clock, not stacked on that mid bed)
+### Dark Reese (different bed, same 124 clock)
+
+No `bass-fm_house`, no square sub.
+
+```
+// @title skill-factory-pcm-reese
+setcpm(124/4)
+$: s("bd*4, [~ cp]*2, [~ hh]*4").gain(0.65)
+$: note("0 3 0 <0 -1>").scale("C4:minor").s("reese-dark").gain(0.35)
+```
+
+Copy: `songs/skill-factory-pcm-reese.strudel`. Play **solo**. Do not `dj` this
+with the floor or the lead (those files already have `bass-fm_house`).
+
+### Lead only (same clock, not stacked on the floor pad)
+
+Signed-off: degrees `4 ~ 7 4` (C minor 5–1–5). The wav is ~8 s so `.cut(1)`
+is required. Do not change this grid.
 
 ```
 // @title skill-factory-pcm-lead
@@ -244,7 +276,7 @@ $: note("4 ~ 7 4").scale("C4:minor").s("lead-supersaw").gain(0.28).cut(1)
 ```
 
 Copy: `songs/skill-factory-pcm-lead.strudel`. Shared `setcpm(124/4)` so the
-pair can `dj`. Do not add pad + `reese-dark` on this file.
+floor + lead pair can `dj`. Do not add pad or `reese-dark` on this file.
 
 ## Try it in this app
 
@@ -252,10 +284,13 @@ pair can `dj`. Do not add pad + `reese-dark` on this file.
 strudel-rs play songs/skill-factory-pcm-usage.strudel --seconds 12
 strudel-rs play songs/skill-factory-pcm-usage.strudel --headless --seconds 8
 
+strudel-rs play songs/skill-factory-pcm-reese.strudel --seconds 12
+strudel-rs play songs/skill-factory-pcm-reese.strudel --headless --seconds 8
+
 strudel-rs play songs/skill-factory-pcm-lead.strudel --seconds 12
 strudel-rs play songs/skill-factory-pcm-lead.strudel --headless --seconds 8
 
-# Dual deck — both files are setcpm(124/4)
+# Dual deck — floor + lead, both setcpm(124/4). Do not pair reese-dark onto either.
 strudel-rs dj songs/skill-factory-pcm-usage.strudel songs/skill-factory-pcm-lead.strudel
 ```
 
@@ -267,12 +302,15 @@ Live TUI: `/a load skill-factory-pcm-usage`.
 
 - Write `C3:…` or `C2:…` on these pitched stems — that dumps octaves.
 - Put `bass-fm_house` at C3 (on top of the kick) or hear it as a mid-bass.
+- Put `reese-dark` on the same song as `bass-fm_house` (both have sub).
 - Stack `reese-dark` with `bass-fm_sub` or square sub.
 - Treat `reese-dark` as a darker `reese-mid` (or the reverse).
 - Use `pad-fm_fifth` to brighten, or play it as `[0,2,4]`.
+- Fire `fx-uplifter` every bar (`s("fx-uplifter")` overlaps; use `<>`).
 - Put `note()` / `.scale` on `fx-uplifter`, `fx-riser_noise`, `fx-impact_dnb`,
   or `fx-sub_drop` (including the ~50 Hz drop).
-- Stack `lead-supersaw` on the pad+reese demo.
+- Stack `lead-supersaw` on the floor pad or the Reese bed.
+- Rewrite the lead degrees `4 ~ 7 4` or drop `.cut(1)`.
 - Rewrite `reese-mid` / `lead-fm_pluck` / live 2-op recipes to these stems.
 - Add a `bd/` bank or a third-party drum kit from this batch.
 - Write `bass-fm-house`, `pad-fm-fifth`, `reese_dark`, `fx-riser-noise`.
