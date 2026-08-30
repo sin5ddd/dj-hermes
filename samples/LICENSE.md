@@ -45,10 +45,10 @@ Pitched stems were rendered at **C3 (MIDI 48)**. FX stems use the factory
 | `stab-fm_major.wav` | C3 major triad: C–E–G (ratios 1, 5/4, 3/2). Bright counterpart to the hollow fifth. |
 | `reese-mid.wav` | C3 mid Reese glue, band-pass 800–1200 Hz, no sub |
 | `pad-fm_fifth.wav` | C3 (MIDI 48) fifth pad: sustained C+G, thin harmonics (~8.2 s). Not a stab. |
-| `bass-fm_sub.wav` | C3 (MIDI 48) clean sine sub. Almost no click or grit. Layer under other bass. |
-| `bass-fm_house.wav` | C3 (MIDI 48) tight house bass. Short decay, sidechain-friendly. Not a long Reese or 808. |
+| `bass-fm_sub.wav` | C2 (~65 Hz) clean sine sub (factory ratio 0.5). Almost no click or grit. Layer under `bass-fm_house`. |
+| `bass-fm_house.wav` | C3 (~131 Hz) tight house bass. Short decay, sidechain-friendly. Not Eb (factory +3.5 st scoop). Sits above `bass-fm_sub`. |
 | `reese-dark.wav` | C3 (MIDI 48) dark full-range Reese (sub + mid). Not the 800–1200 Hz `reese-mid` glue. |
-| `lead-supersaw.wav` | C3 (MIDI 48) classic supersaw lead. ~8.2 s hold (4 bars @ 120). HP cuts the sub. |
+| `lead-supersaw.wav` | C3 (~131 Hz) classic supersaw lead. ~8.2 s hold (4 bars @ 120). Factory HP 220 Hz hid C3; this stem lets the C3 fundamental through. |
 | `fx-riser_noise.wav` | Unpitched noise riser (~3.2 s). Factory default_note/duration. |
 | `fx-uplifter.wav` | Unpitched uplifter: pitch + filter open (~2.8 s). Factory duration. |
 | `fx-impact_dnb.wav` | Unpitched DnB impact: tight mid hit + short grit (~0.5 s). |
