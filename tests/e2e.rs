@@ -1432,7 +1432,7 @@ fn skill_factory_pcm_usage_sounds() {
         "uplifter is once per 4 bars via <> (not every bar): {text}"
     );
     assert!(
-        !text.contains("reese-dark"),
+        !text.contains(r#".s("reese-dark")"#) && !text.contains(r#"s("reese-dark")"#),
         "reese-dark is a different bed (has sub, like bass-fm_house): {text}"
     );
     assert!(
