@@ -609,6 +609,25 @@ bass: note("c3 e3 g3").s("sawtooth").gain(0.8)
     }
 
     #[test]
+    fn parallel_degrees_schedule_spread_major() {
+        use crate::code::{note_to_hz, parse_code};
+        let pc =
+            parse_code(r#"note("[0,4,9]").scale("C4:major").s("triangle").gain(0.3)"#).unwrap();
+        let mut hits = Vec::new();
+        schedule_track_into(&mut hits, &pc, 0, 0, 48_000.0);
+        assert_eq!(hits.len(), 3, "spread parallel degrees are three voices");
+        let mut freqs: Vec<f32> = hits.iter().map(|h| h.freq).collect();
+        freqs.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        // C major: 0=C4, 4=G4, 9=octave+third=E5. Not a voicing helper.
+        for (got, name) in freqs.iter().zip(["c4", "g4", "e5"]) {
+            assert!(
+                (*got - note_to_hz(name).unwrap()).abs() < 1.0,
+                "{name}: got {got}"
+            );
+        }
+    }
+
+    #[test]
     fn chord_suffix_schedules_root_only() {
         use crate::code::{note_to_hz, parse_code};
         let pc = parse_code(r#"note("c3'min").s("triangle").gain(0.3)"#).unwrap();

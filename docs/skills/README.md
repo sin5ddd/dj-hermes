@@ -120,6 +120,7 @@ Bundled one-shots: `samples/bd`, `sd`, `hh`, `oh`, `cp` (`samples/cp/00.wav`), p
 | [dnb](./dnb/SKILL.md) | Same mix idea as drum-and-bass (shorter path name) | `songs/skill-dnb.strudel` |
 | [techno-duck](./techno-duck/SKILL.md) | Same duck idea as sidechain-ducking | `songs/skill-techno-duck.strudel` |
 | [acid-303-filter-envelope](./acid-303-filter-envelope/SKILL.md) | TB-303: per-note `lpenv`, high `lpq`, not static `lpf` + amp ADSR | `songs/skill-acid-303-filter-envelope.strudel` |
+| [mood-bright-dark](./mood-bright-dark/SKILL.md) | Make a loop brighter/darker (mode, voicing, register, sample, filter) — not a genre change | `songs/skill-mood-dark.strudel` + `songs/skill-mood-bright.strudel` |
 
 `songs/acid16.strudel` is the static-cutoff live loop (same 130 BPM). Clock would align; both files are 303 lines, so A/B would double the acid — not a mix reason. Do not treat `acid16` as the envelope recipe.
 
@@ -157,6 +158,13 @@ strudel-rs dj songs/skill-house-clap-backbeat.strudel songs/skill-minor-scale-lo
 # 174 DnB with sampled mid Reese — play solo. Do not pair with 124 house.
 strudel-rs play songs/skill-dnb-reese-mid-stab.strudel --seconds 12
 strudel-rs play songs/skill-dnb-reese-mid-stab.strudel --headless --seconds 8
+
+# Mood pair — same 124 house grid; contrast is harmonic/timbre. Do not pair with 174.
+strudel-rs play songs/skill-mood-dark.strudel --seconds 12
+strudel-rs play songs/skill-mood-bright.strudel --seconds 12
+strudel-rs play songs/skill-mood-dark.strudel --headless --seconds 8
+strudel-rs play songs/skill-mood-bright.strudel --headless --seconds 8
+strudel-rs dj songs/skill-mood-dark.strudel songs/skill-mood-bright.strudel
 ```
 
 Headless hosts without an audio device: `cargo test --test e2e` renders through `Engine::process` (no ALSA).
