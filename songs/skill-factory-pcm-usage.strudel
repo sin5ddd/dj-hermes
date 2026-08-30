@@ -1,0 +1,13 @@
+// @title skill-factory-pcm-usage
+// @details factory PCM batch 1: house floor + fifth pad + dark Reese (124)
+setcpm(124/4)
+// drums
+$: s("bd*4, [~ cp]*2, [~ hh]*4").gain(0.65)
+// bass
+$: note("0 0 4 0").scale("C4:minor").s("bass-fm_house").gain(0.45)
+// pad
+$: note("0 ~ 0 ~").scale("C4:minor").s("pad-fm_fifth").gain(0.25)
+// reese
+$: note("0 3 0 <0 -1>").scale("C4:minor").s("reese-dark").gain(0.35)
+// fx
+$: s("fx-uplifter").gain(0.3)
