@@ -1195,7 +1195,11 @@ fn skill_mood_pair_shares_clock_and_drum_grid() {
 fn skill_fm_sound_design_sounds() {
     let path = songs_dir().join("skill-fm-sound-design.strudel");
     let text = fs::read_to_string(&path).unwrap();
-    assert!(text.contains("setcpm(120/4)"), "FM demo is 120 BPM: {text}");
+    assert!(text.contains("setcpm(124/4)"), "FM demo is 124 BPM: {text}");
+    assert!(
+        !text.contains("setcpm(120"),
+        "120 is isolated — this file is 124: {text}"
+    );
     assert!(
         !text.contains("duckorbit") && !text.contains("compressor("),
         "no duck / track compressor: {text}"
@@ -1209,20 +1213,24 @@ fn skill_fm_sound_design_sounds() {
         "no 4-op API or .fm(8) on this song: {text}"
     );
     assert!(
+        !text.contains("fmh(1.5)"),
+        "do not copy techno1 fmh(1.5) into this demo: {text}"
+    );
+    assert!(
         !text.contains("reese-mid") && !text.contains(r#".s("square")"#),
         "do not stack square sub or reese-mid under the growl: {text}"
     );
     assert!(
-        text.contains("lead-fm_pluck") && !text.contains("lead-fm-pluck"),
-        "pluck is PCM lead-fm_pluck: {text}"
+        !text.contains("lead-fm_pluck") && !text.contains("keys-fm_ep"),
+        "do not stack PCM pluck or keys-fm_ep on this mix: {text}"
     );
     assert!(
-        text.contains("stab-fm_major") && text.contains(r#"note("0 ~ 0 ~")"#),
-        "major triad wav uses a single degree: {text}"
+        !text.contains("stab-fm_major") && !text.contains("stab-fm_fifth"),
+        "no stab on this minor demo (prefer none): {text}"
     );
     assert!(
-        !text.contains("[0,2,4]"),
-        "do not triple stab-fm_major: {text}"
+        !text.contains("// ep") && !text.contains(r#"note("0 ~ 4 2")"#),
+        "live EP recipe is retired: {text}"
     );
     assert!(
         !text.contains("C3:"),
@@ -1231,10 +1239,10 @@ fn skill_fm_sound_design_sounds() {
 
     let song = load_song_file("skill-fm-sound-design.strudel");
     assert_eq!(song.title, "skill-fm-sound-design");
-    assert_eq!(song.tracks.len(), 6);
+    assert_eq!(song.tracks.len(), 4);
     assert!(
-        song.bpm.is_some() && (song.bpm.unwrap() - 120.0).abs() < 1e-6,
-        "expected 120 BPM, got {:?}",
+        song.bpm.is_some() && (song.bpm.unwrap() - 124.0).abs() < 1e-6,
+        "expected 124 BPM, got {:?}",
         song.bpm
     );
 
@@ -1263,14 +1271,28 @@ fn skill_fm_sound_design_sounds() {
         .at_cycle(0);
     assert_eq!(bass_scale.root_midi, 36, "C2");
 
-    let ep = track(&song, "ep");
-    assert_eq!(ep.code.sound, "sine");
-    assert!((ep.code.mod_params.fm - 2.0).abs() < 1e-5);
-    assert!((ep.code.mod_params.fmh - 1.0).abs() < 1e-5);
-    assert!((ep.code.mod_params.fm_decay - 0.6).abs() < 1e-5);
-    assert!((ep.code.mod_params.fm_sustain - 0.15).abs() < 1e-5);
-    let ep_scale = ep.code.scale.as_ref().expect("ep needs .scale").at_cycle(0);
-    assert_eq!(ep_scale.root_midi, 60, "C4");
+    let lead = track(&song, "lead");
+    assert_eq!(lead.code.sound, "sine");
+    assert!((lead.code.mod_params.fm - 3.0).abs() < 1e-5);
+    assert!((lead.code.mod_params.fmh - 2.0).abs() < 1e-5);
+    assert!((lead.code.mod_params.fm_attack - 0.01).abs() < 1e-5);
+    assert!((lead.code.mod_params.fm_decay - 0.3).abs() < 1e-5);
+    assert!((lead.code.mod_params.fm_sustain - 0.25).abs() < 1e-5);
+    let lead_lpf = lead.code.filter.lpf.expect("lead needs lpf(1800)");
+    assert!((lead_lpf - 1800.0).abs() < 1e-3);
+    assert!((lead.code.mod_params.lpenv - 2.0).abs() < 1e-5);
+    assert!(
+        lead.code.mini_src.contains("4 2 0 2"),
+        "lead degrees 4 2 0 2 (5–b3–1–b3): {}",
+        lead.code.mini_src
+    );
+    let lead_scale = lead
+        .code
+        .scale
+        .as_ref()
+        .expect("lead needs .scale")
+        .at_cycle(0);
+    assert_eq!(lead_scale.root_midi, 60, "C4");
 
     let pad = track(&song, "pad");
     assert_eq!(pad.code.sound, "sine");
@@ -1288,35 +1310,6 @@ fn skill_fm_sound_design_sounds() {
         .at_cycle(0);
     assert_eq!(pad_scale.root_midi, 60, "C4");
 
-    let pluck = track(&song, "pluck");
-    assert_eq!(pluck.code.sound, "lead-fm_pluck");
-    assert!(pluck.code.mod_params.fm.abs() < 1e-6);
-    assert_eq!(pluck.code.cut, Some(1));
-    let pluck_scale = pluck
-        .code
-        .scale
-        .as_ref()
-        .expect("pluck needs .scale")
-        .at_cycle(0);
-    assert_eq!(pluck_scale.root_midi, 60, "C4");
-
-    let stab = track(&song, "stab");
-    assert_eq!(stab.code.sound, "stab-fm_major");
-    assert!(stab.code.mod_params.fm.abs() < 1e-6);
-    assert_eq!(stab.code.cut, Some(2));
-    assert!(
-        stab.code.mini_src.contains("0 ~ 0 ~"),
-        "{}",
-        stab.code.mini_src
-    );
-    let stab_scale = stab
-        .code
-        .scale
-        .as_ref()
-        .expect("stab needs .scale")
-        .at_cycle(0);
-    assert_eq!(stab_scale.root_midi, 60, "C4");
-
     for t in &song.tracks {
         assert!(
             t.code.compressor.is_none(),
@@ -1330,7 +1323,7 @@ fn skill_fm_sound_design_sounds() {
     } else {
         SampleBank::empty()
     };
-    let bpm = 120.0;
+    let bpm = 124.0;
     let mut e = Engine::new(SR, bpm);
     e.push_command(Command::LoadSong {
         deck: 0,
