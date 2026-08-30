@@ -31,9 +31,10 @@ These seventeen files are original renders from
 They are dedicated to the public domain under **CC0 1.0 Universal**.
 They are **not** from Sonic Pi / Freesound.
 
-Pitched stems target **C3 (~131 Hz)** except `bass-fm_sub`, which is **C2
-(~65 Hz)** so house bass can sit above it. FX stems use the factory
-`default_note` / `default_duration` (no `--note` retune).
+Pitched stems target **C3 (~131 Hz)** except the two bass one-shots
+(`bass-fm_sub`, `bass-fm_house`), which are native **C2 (~65 Hz)** — same
+`C4:…` playback convention as each other (house floor sits with the kick).
+FX stems use the factory `default_note` / `default_duration` (no `--note` retune).
 
 | Path | Role |
 |------|------|
@@ -46,8 +47,8 @@ Pitched stems target **C3 (~131 Hz)** except `bass-fm_sub`, which is **C2
 | `stab-fm_major.wav` | C3 major triad: C–E–G (ratios 1, 5/4, 3/2). Bright counterpart to the hollow fifth. |
 | `reese-mid.wav` | C3 mid Reese glue, band-pass 800–1200 Hz, no sub |
 | `pad-fm_fifth.wav` | C3 (MIDI 48) fifth pad: sustained C+G, thin harmonics (~8.2 s). Not a stab. |
-| `bass-fm_sub.wav` | C2 (~65 Hz) clean sine sub (factory ratio 0.5). Almost no click or grit. Layer under `bass-fm_house`. |
-| `bass-fm_house.wav` | C3 (~131 Hz) tight house bass. Short decay, sidechain-friendly. Not Eb (factory +3.5 st scoop). Sits above `bass-fm_sub`. |
+| `bass-fm_sub.wav` | C2 (~65 Hz) clean sine sub (factory ratio 0.5). Almost no click or grit. Same native-C2 / `C4:…` convention as `bass-fm_house`. |
+| `bass-fm_house.wav` | C2 (~65 Hz) tight house floor bass. Short decay, sidechain-friendly. Not Eb (factory +3.5 st scoop). Sits with the kick, not on top of it. |
 | `reese-dark.wav` | C3 (MIDI 48) dark full-range Reese (sub + mid). Not the 800–1200 Hz `reese-mid` glue. |
 | `lead-supersaw.wav` | C3 (~131 Hz) classic supersaw lead. ~8.2 s hold (4 bars @ 120). Factory HP 220 Hz hid C3; this stem lets the C3 fundamental through. |
 | `fx-riser_noise.wav` | Unpitched noise riser (~3.2 s). Factory default_note/duration. |

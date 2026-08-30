@@ -142,8 +142,8 @@ samples/
   stab-fm_major.wav  # C3 major triad C–E–G (bright counterpart)
   reese-mid.wav      # C3 mid Reese glue, 800–1200 Hz
   pad-fm_fifth.wav   # C3 fifth pad (sustained C+G, ~8.2 s)
-  bass-fm_sub.wav    # C2 clean sine sub (layer under house)
-  bass-fm_house.wav  # C3 tight house bass (short, sidechain; not Eb)
+  bass-fm_sub.wav    # C2 clean sine sub (native C2 / C4:… like house)
+  bass-fm_house.wav  # C2 tight house floor bass (with the kick; not Eb)
   reese-dark.wav     # C3 dark full-range Reese (sub + mid)
   lead-supersaw.wav  # C3 classic supersaw lead (~8.2 s / 4 bars @ 120)
   fx-riser_noise.wav # unpitched noise riser (~3.2 s)
