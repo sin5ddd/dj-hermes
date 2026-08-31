@@ -245,6 +245,25 @@ fn tools_list() -> Value {
                 }
             },
             {
+                "name": "strudel_mix",
+                "description": "DJ mix move in one call. Prefer this over calling mixer_eq multiple times. move=long: EQ bass-swap + xfade. move=cut: next-bar 100% fader, optional EQ reset. move=fill: delay|lpf|flash|riser|switch then cut-in. move=hold: freeze xfade. Switch is AB 100:0 chops (not flash).",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "move": { "type": "string", "description": "long | cut | fill | hold" },
+                        "to": { "type": "string", "description": "A or B (required unless hold)" },
+                        "bars": { "type": "integer", "description": "long default 8, fill default 1 (riser 2)" },
+                        "eq": { "type": "boolean", "description": "long: apply bass-swap EQ (default true)" },
+                        "reset_eq": { "type": "boolean", "description": "cut/fill: flatten EQ at the end (default true)" },
+                        "kind": { "type": "string", "description": "fill only: delay | lpf | flash | riser | switch" },
+                        "grid": { "type": "string", "description": "switch/flash: 8n or 4n (default 8n)" },
+                        "mute_track": { "type": "string", "description": "optional track name to mute on the outgoing deck" },
+                        "phrase": { "type": "integer", "description": "1, 4, or 8 — start on that bar boundary (default 1)" }
+                    },
+                    "required": ["move"]
+                }
+            },
+            {
                 "name": "strudel_set_bpm",
                 "description": "Mixer: set master BPM (applies next bar).",
                 "inputSchema": {
@@ -483,6 +502,26 @@ fn tools_call_http(
                 json!({ "to": to, "bars": bars }),
             )
         }
+        "strudel_mix" => {
+            let mut body = Map::new();
+            let mv = arg_str(args, "move")?;
+            body.insert("move".into(), json!(mv));
+            for key in [
+                "to",
+                "bars",
+                "eq",
+                "reset_eq",
+                "kind",
+                "grid",
+                "mute_track",
+                "phrase",
+            ] {
+                if let Some(v) = args.get(key) {
+                    body.insert(key.into(), v.clone());
+                }
+            }
+            http_post(client, &format!("{base}/mix"), Value::Object(body))
+        }
         "strudel_set_bpm" => {
             let bpm = args
                 .get("bpm")
@@ -617,6 +656,7 @@ fn tools_call_local(state: &AppState, name: &str, args: &Value) -> Result<Value,
         "strudel_mixer_filter" => local_mixer_filter(state, args),
         "strudel_mixer_crossfader" => local_mixer_crossfader(state, args),
         "strudel_xfade" => local_xfade(state, args),
+        "strudel_mix" => local_mix(state, args),
         "strudel_set_bpm" => local_set_bpm(state, args),
         "strudel_load_song" => local_load_song(state, args),
         "strudel_apply_song" => local_apply_song(state, args),
@@ -720,6 +760,66 @@ fn local_mixer_crossfader(state: &AppState, args: &Value) -> Result<String, Stri
         return Err(format!("pos must be finite: {pos}"));
     }
     send_cmd(state, Command::SetCrossfader((pos as f32).clamp(0.0, 1.0)))?;
+    Ok("ok".into())
+}
+
+fn local_mix(state: &AppState, args: &Value) -> Result<String, String> {
+    let move_name = args
+        .get("move")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| "move required (long|cut|fill|hold)".to_string())?;
+    let req = crate::api::MixReq {
+        move_name: move_name.to_string(),
+        to: args
+            .get("to")
+            .and_then(|v| v.as_str())
+            .map(|s| s.to_string()),
+        bars: args.get("bars").and_then(|v| v.as_u64()).map(|n| n as u32),
+        eq: args.get("eq").and_then(|v| v.as_bool()),
+        reset_eq: args.get("reset_eq").and_then(|v| v.as_bool()),
+        kind: args
+            .get("kind")
+            .and_then(|v| v.as_str())
+            .map(|s| s.to_string()),
+        grid: args
+            .get("grid")
+            .and_then(|v| v.as_str())
+            .map(|s| s.to_string()),
+        mute_track: args
+            .get("mute_track")
+            .and_then(|v| v.as_str())
+            .map(|s| s.to_string()),
+        phrase: args
+            .get("phrase")
+            .and_then(|v| v.as_u64())
+            .map(|n| n as u32),
+    };
+    let cmd = crate::api::mix_command_from_req(&req)?;
+    if !matches!(cmd, Command::HoldXFade) {
+        let e = state
+            .engine
+            .lock()
+            .map_err(|e| format!("engine lock: {e}"))?;
+        let a = e.decks[0].song_title().is_some();
+        let b = e.decks[1].song_title().is_some();
+        drop(e);
+        let both = matches!(
+            &cmd,
+            Command::Mix(m)
+                if m.action == crate::mixer::MixAction::Long
+                    || m.fill == Some(crate::mixer::FillKind::Switch)
+        );
+        if both && !(a && b) {
+            return Err("both decks need a song loaded for long mix / switch".into());
+        }
+        if let Command::Mix(m) = &cmd {
+            let loaded = if m.to_deck == 1 { b } else { a };
+            if !loaded {
+                return Err("target deck has no song loaded".into());
+            }
+        }
+    }
+    send_cmd(state, cmd)?;
     Ok("ok".into())
 }
 
@@ -1253,13 +1353,14 @@ mod tests {
     fn tools_list_mixer_deck_transport_no_set_code() {
         let v = tools_list();
         let tools = v["tools"].as_array().unwrap();
-        assert_eq!(tools.len(), 16);
+        assert_eq!(tools.len(), 17);
         let names: Vec<_> = tools.iter().filter_map(|t| t["name"].as_str()).collect();
         assert!(!names.contains(&"strudel_set_code"));
         assert_eq!(names[0], "strudel_mixer_eq");
         assert_eq!(names[1], "strudel_mixer_filter");
         assert_eq!(names[2], "strudel_mixer_crossfader");
         assert!(names.contains(&"strudel_xfade"));
+        assert!(names.contains(&"strudel_mix"));
         assert!(names.contains(&"strudel_set_bpm"));
         assert!(names.contains(&"strudel_load_song"));
         assert!(names.contains(&"strudel_apply_song"));
@@ -1362,7 +1463,7 @@ mod tests {
             "method": "tools/list"
         });
         let resp = handle_rpc(&list, &backend).expect("list reply");
-        assert_eq!(resp["result"]["tools"].as_array().unwrap().len(), 16);
+        assert_eq!(resp["result"]["tools"].as_array().unwrap().len(), 17);
     }
 
     #[test]

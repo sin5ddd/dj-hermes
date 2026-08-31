@@ -33,6 +33,10 @@ a|b head <bar>      cue song bar (1-based; applies next bar). alias: cue
 x [bars]            xfade to the other deck (default 4)
 a x [bars]          xfade to deck A
 b x [bars]          xfade to deck B
+mix long A|B [bars] long mix (EQ bass-swap + xfade, next phrase)
+mix cut A|B         cut-in next bar (EQ reset)
+mix fill <kind> A|B [8n|4n]  delay|lpf|flash|riser|switch then cut-in
+mix hold            freeze xfade now
 bpm <n>             BPM from next bar
 hush                stop all (immediate)  [operator]
 status
@@ -172,6 +176,7 @@ pub fn exec(
             };
         }
         "status" => return status(deck_paths, engine),
+        "mix" => return exec_mix(&args, tx, engine),
         "x" | "xfade" => {
             let bars = args
                 .get(1)
@@ -399,6 +404,123 @@ fn save_deck_song(
     ExecResult::msg(format!("saved {} → {}", label, dest.display()))
 }
 
+fn exec_mix(
+    args: &[&str],
+    tx: &Sender<Command>,
+    engine: Option<&Arc<Mutex<Engine>>>,
+) -> ExecResult {
+    use crate::mixer::{FillKind, MixAction, MixCommand, MixGrid};
+    if args.len() < 2 {
+        return ExecResult::msg("usage: mix long|cut|fill|hold …");
+    }
+    let mv = args[1];
+    if mv.eq_ignore_ascii_case("hold") {
+        let _ = tx.send(Command::HoldXFade);
+        return ExecResult::msg("xfade hold (now)");
+    }
+    let action = match MixAction::parse(mv) {
+        Ok(a) => a,
+        Err(e) => return ExecResult::msg(e),
+    };
+    if action == MixAction::Fill {
+        if args.len() < 4 {
+            return ExecResult::msg("usage: mix fill delay|lpf|flash|riser|switch A|B [8n|4n]");
+        }
+        let kind = match FillKind::parse(args[2]) {
+            Ok(k) => k,
+            Err(e) => return ExecResult::msg(e),
+        };
+        let to = match parse_deck(args[3]) {
+            Some(d) => d,
+            None => return ExecResult::msg(format!("deck must be A or B: {}", args[3])),
+        };
+        let grid = match args.get(4) {
+            None => MixGrid::Eighth,
+            Some(s) => match MixGrid::parse(s) {
+                Ok(g) => g,
+                Err(e) => return ExecResult::msg(e),
+            },
+        };
+        if let Some(msg) = mix_deck_guard(engine, action, Some(kind), to) {
+            return ExecResult::msg(msg);
+        }
+        let _ = tx.send(Command::Mix(MixCommand {
+            action,
+            to_deck: to,
+            bars: kind.default_bars(),
+            eq: true,
+            reset_eq: true,
+            fill: Some(kind),
+            grid,
+            mute_track: None,
+            phrase: 1,
+        }));
+        return ExecResult::msg(format!(
+            "mix fill {} → {} (次の小節から)",
+            kind.as_str(),
+            if to == 0 { "A" } else { "B" }
+        ));
+    }
+    if args.len() < 3 {
+        return ExecResult::msg("usage: mix long|cut A|B [bars]");
+    }
+    let to = match parse_deck(args[2]) {
+        Some(d) => d,
+        None => return ExecResult::msg(format!("deck must be A or B: {}", args[2])),
+    };
+    let bars = args
+        .get(3)
+        .and_then(|s| s.parse().ok())
+        .unwrap_or_else(|| action.default_bars(None))
+        .clamp(1, 32);
+    if let Some(msg) = mix_deck_guard(engine, action, None, to) {
+        return ExecResult::msg(msg);
+    }
+    let _ = tx.send(Command::Mix(MixCommand {
+        action,
+        to_deck: to,
+        bars,
+        eq: true,
+        reset_eq: true,
+        fill: None,
+        grid: MixGrid::Eighth,
+        mute_track: None,
+        phrase: 1,
+    }));
+    let label = if to == 0 { "A" } else { "B" };
+    match action {
+        MixAction::Long => {
+            ExecResult::msg(format!("mix long → {label} ({bars} bars, 次の小節から)"))
+        }
+        MixAction::Cut => ExecResult::msg(format!("mix cut → {label} (次の小節から)")),
+        MixAction::Fill => ExecResult::msg("fill needs kind"),
+    }
+}
+
+fn mix_deck_guard(
+    engine: Option<&Arc<Mutex<Engine>>>,
+    action: crate::mixer::MixAction,
+    fill: Option<crate::mixer::FillKind>,
+    to: usize,
+) -> Option<String> {
+    let eng = engine?;
+    let Ok(e) = eng.try_lock() else {
+        return None;
+    };
+    let a = e.decks[0].song_title().is_some();
+    let b = e.decks[1].song_title().is_some();
+    let both =
+        action == crate::mixer::MixAction::Long || fill == Some(crate::mixer::FillKind::Switch);
+    if both && !(a && b) {
+        return Some("both decks need a song loaded for long mix / switch".into());
+    }
+    let loaded = if to == 1 { b } else { a };
+    if !loaded {
+        return Some("target deck has no song loaded".into());
+    }
+    None
+}
+
 fn status(deck_paths: &DeckPaths, engine: Option<&Arc<Mutex<Engine>>>) -> ExecResult {
     let mut messages = Vec::new();
     if let Ok(dp) = deck_paths.lock() {
@@ -536,6 +658,25 @@ mod tests {
                 assert_eq!(bars, 2);
             }
             _ => panic!("expected XFade"),
+        }
+    }
+
+    #[test]
+    fn mix_hold_and_fill_switch() {
+        let (tx, rx) = unbounded();
+        let paths = new_deck_paths();
+        let r = exec("mix hold", &tx, &paths, None);
+        assert!(r.messages[0].contains("hold"));
+        assert!(matches!(rx.try_recv().unwrap(), Command::HoldXFade));
+        let r = exec("mix fill switch A 8n", &tx, &paths, None);
+        // no engine → no deck guard
+        assert!(r.messages[0].contains("switch"));
+        match rx.try_recv().unwrap() {
+            Command::Mix(m) => {
+                assert_eq!(m.to_deck, 0);
+                assert_eq!(m.fill, Some(crate::mixer::FillKind::Switch));
+            }
+            _ => panic!("expected Mix"),
         }
     }
 

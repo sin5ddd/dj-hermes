@@ -16,6 +16,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::code::parse_code;
 use crate::engine::{Command, Engine};
+use crate::mixer::{FillKind, MixAction, MixCommand, MixGrid, MixStatus};
 use crate::song::{
     ensure_user_songs_dir, list_bundled_songs, list_user_library_songs, parse_song,
     resolve_song_path, resolve_user_song_save_path, Song, Track, MAX_SONG_CONTENT_BYTES,
@@ -89,6 +90,30 @@ pub struct StatusInfo {
     pub hpf_hz: Option<f32>,
     /// Equal-power crossfader 0=A … 1=B.
     pub crossfader: f32,
+    /// Active mix macro, if any.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub mix: Option<MixStatusInfo>,
+}
+
+#[derive(Clone, Debug, Serialize, PartialEq)]
+pub struct MixStatusInfo {
+    #[serde(rename = "move")]
+    pub move_name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub kind: Option<String>,
+    pub to: String,
+    pub bars_left: u32,
+}
+
+impl MixStatusInfo {
+    fn from_mixer(s: &MixStatus) -> Self {
+        Self {
+            move_name: s.move_name.clone(),
+            kind: s.kind.clone(),
+            to: s.to.clone(),
+            bars_left: s.bars_left,
+        }
+    }
 }
 
 #[derive(Deserialize)]
@@ -287,6 +312,21 @@ pub struct MixerCrossfaderReq {
     pub pos: f32,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct MixReq {
+    /// `long` | `cut` | `fill` | `hold`
+    #[serde(rename = "move")]
+    pub move_name: String,
+    pub to: Option<String>,
+    pub bars: Option<u32>,
+    pub eq: Option<bool>,
+    pub reset_eq: Option<bool>,
+    pub kind: Option<String>,
+    pub grid: Option<String>,
+    pub mute_track: Option<String>,
+    pub phrase: Option<u32>,
+}
+
 #[derive(Serialize)]
 pub struct ErrRes {
     pub error: String,
@@ -323,6 +363,75 @@ pub(crate) fn snapshot(engine: &Arc<Mutex<Engine>>) -> StatusInfo {
         lpf_hz: e.mixer.lpf_hz,
         hpf_hz: e.mixer.hpf_hz,
         crossfader: e.mixer.crossfader_pos(),
+        mix: e.mixer.mix_status().map(MixStatusInfo::from_mixer),
+    }
+}
+
+fn parse_phrase(v: u32) -> Result<u32, String> {
+    match v {
+        1 | 4 | 8 => Ok(v),
+        other => Err(format!("phrase must be 1, 4, or 8: {other}")),
+    }
+}
+
+pub(crate) fn mix_command_from_req(r: &MixReq) -> Result<Command, String> {
+    let move_l = r.move_name.trim().to_ascii_lowercase();
+    if move_l == "hold" {
+        return Ok(Command::HoldXFade);
+    }
+    let action = MixAction::parse(&r.move_name)?;
+    let to_s =
+        r.to.as_deref()
+            .ok_or("to required (A or B) unless move=hold")?;
+    let to_deck = deck_idx(to_s)?;
+    let fill = match action {
+        MixAction::Fill => {
+            let k = r
+                .kind
+                .as_deref()
+                .ok_or("kind required for move=fill (delay|lpf|flash|riser|switch)")?;
+            Some(FillKind::parse(k)?)
+        }
+        _ => None,
+    };
+    let grid = match r.grid.as_deref() {
+        None => MixGrid::Eighth,
+        Some(s) => MixGrid::parse(s)?,
+    };
+    let phrase = parse_phrase(r.phrase.unwrap_or(1))?;
+    let bars = r
+        .bars
+        .unwrap_or_else(|| action.default_bars(fill))
+        .clamp(1, 32);
+    Ok(Command::Mix(MixCommand {
+        action,
+        to_deck,
+        bars,
+        eq: r.eq.unwrap_or(true),
+        reset_eq: r.reset_eq.unwrap_or(true),
+        fill,
+        grid,
+        mute_track: r
+            .mute_track
+            .as_ref()
+            .map(|s| s.trim().to_string())
+            .filter(|s| !s.is_empty()),
+        phrase,
+    }))
+}
+
+fn mix_requires_both_decks(cmd: &Command) -> bool {
+    match cmd {
+        Command::Mix(m) if m.action == MixAction::Long => true,
+        Command::Mix(m) if m.fill == Some(FillKind::Switch) => true,
+        _ => false,
+    }
+}
+
+fn mix_target_deck(cmd: &Command) -> Option<usize> {
+    match cmd {
+        Command::Mix(m) => Some(m.to_deck),
+        _ => None,
     }
 }
 
@@ -712,6 +821,38 @@ async fn mixer_filter(
     Ok(StatusCode::NO_CONTENT)
 }
 
+async fn mix(
+    State(s): State<AppState>,
+    Json(r): Json<MixReq>,
+) -> Result<StatusCode, (StatusCode, Json<ErrRes>)> {
+    let cmd = mix_command_from_req(&r).map_err(bad)?;
+    if !matches!(cmd, Command::HoldXFade) {
+        let (a, b) = {
+            let e = s.engine.lock().map_err(|e| bad(e.to_string()))?;
+            (
+                e.decks[0].song_title().is_some(),
+                e.decks[1].song_title().is_some(),
+            )
+        };
+        if mix_requires_both_decks(&cmd) && !(a && b) {
+            return Err(bad("both decks need a song loaded for long mix / switch"));
+        }
+        if let Some(to) = mix_target_deck(&cmd) {
+            let loaded = if to == 1 { b } else { a };
+            if !loaded {
+                return Err(bad("target deck has no song loaded"));
+            }
+        }
+    }
+    let status = if matches!(cmd, Command::HoldXFade) {
+        StatusCode::NO_CONTENT
+    } else {
+        StatusCode::ACCEPTED
+    };
+    s.tx.send(cmd).map_err(|e| bad(e.to_string()))?;
+    Ok(status)
+}
+
 async fn mixer_crossfader(
     State(s): State<AppState>,
     Json(r): Json<MixerCrossfaderReq>,
@@ -770,6 +911,7 @@ pub fn router(state: AppState) -> Router {
         .route("/mixer/eq", post(mixer_eq))
         .route("/mixer/filter", post(mixer_filter))
         .route("/mixer/crossfader", post(mixer_crossfader))
+        .route("/mix", post(mix))
         .route("/status", get(get_status))
         .route("/events", get(events))
         // Hermes Streamable HTTP MCP (in-process tools → Command channel).
@@ -843,6 +985,7 @@ pub fn path_display(p: &Path) -> String {
 #[allow(clippy::await_holding_lock)] // HOME mutex serializes tests that call .await
 mod tests {
     use super::*;
+    use crate::mixer::{FillKind, MixAction, MixGrid};
     use axum::body::Body;
     use axum::http::{Request, StatusCode};
     use crossbeam::channel::unbounded;
@@ -1521,6 +1664,85 @@ mod tests {
         match rx.try_recv().unwrap() {
             Command::SetCrossfader(p) => assert!((p - 0.35).abs() < 1e-5),
             _ => panic!("expected SetCrossfader"),
+        }
+    }
+
+    #[tokio::test]
+    async fn mix_hold_no_song_ok() {
+        let (state, rx) = test_state();
+        let app = router(state);
+        let res = app
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/mix")
+                    .header("content-type", "application/json")
+                    .body(Body::from(r#"{"move":"hold"}"#))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(res.status(), StatusCode::NO_CONTENT);
+        assert!(matches!(rx.try_recv().unwrap(), Command::HoldXFade));
+    }
+
+    #[tokio::test]
+    async fn mix_long_requires_both_decks() {
+        let (state, rx) = test_state();
+        let app = router(state);
+        let res = app
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/mix")
+                    .header("content-type", "application/json")
+                    .body(Body::from(r#"{"move":"long","to":"B"}"#))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(res.status(), StatusCode::BAD_REQUEST);
+        assert!(rx.try_recv().is_err());
+    }
+
+    #[tokio::test]
+    async fn mix_fill_switch_queues() {
+        let (state, rx) = test_state();
+        {
+            let song = parse_song(
+                r#"---
+b: note("c3").s("sawtooth").gain(0.8)
+"#,
+                "t",
+            )
+            .unwrap();
+            let mut e = state.engine.lock().unwrap();
+            e.load_song_immediate(0, song.clone());
+            e.load_song_immediate(1, song);
+        }
+        let app = router(state);
+        let res = app
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/mix")
+                    .header("content-type", "application/json")
+                    .body(Body::from(
+                        r#"{"move":"fill","kind":"switch","to":"A","grid":"8n"}"#,
+                    ))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(res.status(), StatusCode::ACCEPTED);
+        match rx.try_recv().unwrap() {
+            Command::Mix(m) => {
+                assert_eq!(m.action, MixAction::Fill);
+                assert_eq!(m.fill, Some(FillKind::Switch));
+                assert_eq!(m.to_deck, 0);
+                assert_eq!(m.grid, MixGrid::Eighth);
+            }
+            _ => panic!("expected Mix"),
         }
     }
 

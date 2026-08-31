@@ -15,6 +15,7 @@ skills/
   creative/
     strudel-composition/   # 正本（ライブ短いループ + mini）
     strudel-live-edit/     # 自然言語 → 差分編集（メロディ/フィル/転調/明暗）
+    strudel-dj-mix/        # A/B ミックス（strudel_mix 1 呼び）
     strudel-data-format/   # ファイル形式
     strudel-sound-design/  # 音色・FX・サンプル用法（bank / フルネーム）・役割レシピ
     strudel-pcm-catalog/   # rust-fm-synthe part:slug（INDEX 付き）

@@ -122,6 +122,7 @@ Cross-cutting:
 | [strudel-minor-scale-loop](./strudel-minor-scale-loop/SKILL.md) | Short minor bass + triad | `songs/skill-minor-scale-loop.strudel` |
 | [strudel-mood-bright-dark](./strudel-mood-bright-dark/SKILL.md) | Brighter/darker (mode, voicing, register, sample, filter) — not a genre change | `songs/skill-mood-dark.strudel` + `songs/skill-mood-bright.strudel` |
 | [strudel-live-edit](./strudel-live-edit/SKILL.md) | Natural language → one-track / one-method live edits | — |
+| [strudel-dj-mix](./strudel-dj-mix/SKILL.md) | A/B mix macros (`strudel_mix` one call: long / cut / fill / switch / hold) | — |
 
 Genre recipes (`strudel-genre-*`):
 

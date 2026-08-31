@@ -37,8 +37,10 @@ impl CompleteResult {
 }
 
 const TOP_LEVEL: &[&str] = &[
-    "a", "b", "x", "bpm", "hush", "status", "help", "quit", "viz", "vfx", "dopa", "flash",
+    "a", "b", "x", "mix", "bpm", "hush", "status", "help", "quit", "viz", "vfx", "dopa", "flash",
 ];
+const MIX_MOVES: &[&str] = &["long", "cut", "fill", "hold"];
+const MIX_KINDS: &[&str] = &["delay", "lpf", "flash", "riser", "switch"];
 const DECK_VERBS: &[&str] = &["load", "mute", "unmute", "gain", "head", "x"];
 const VIZ_ARGS: &[&str] = &["on", "off"];
 
@@ -221,6 +223,10 @@ fn stage_suggest(
         }
         ["bpm"] => hint_only(replace_from, "<bpm>"),
         ["x"] | ["xfade"] => hint_only(replace_from, "<bars>"),
+        ["mix"] => list_result(filter_static(MIX_MOVES, partial), replace_from, None),
+        ["mix", "long"] | ["mix", "cut"] => hint_only(replace_from, "A|B"),
+        ["mix", "fill"] => list_result(filter_static(MIX_KINDS, partial), replace_from, None),
+        ["mix", "fill", _] => hint_only(replace_from, "A|B"),
         // Completing first token (complete empty, partial is first word) already handled by [].
         // If complete has one non-deck token and we're still typing more — no further suggest.
         _ => CompleteResult::empty(),
