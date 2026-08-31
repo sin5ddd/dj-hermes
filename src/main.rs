@@ -96,7 +96,7 @@ Usage:
   dj: left=A / right=B highlight, » prompt at bottom.
   Live TUI input:
     bare text     → Hermes (profile dj-hermes; needs API + MCP)
-    F12           → voice (xAI STT → Hermes; needs XAI_API_KEY)
+    F12           → voice (local STT → Hermes; needs STRUDEL_STT_BASE_URL)
     /cmd …        → local (e.g. /a load smoke  /x 4  /bpm 128  /viz  /vfx  /help)
     --no-hermes   → bare text is local again (text REPL always local)
   Flags: --no-hermes  --no-voice  --hermes-bin PATH  --hermes-profile NAME  -d/--debug
@@ -591,15 +591,23 @@ fn cmd_live_session(opts: LiveSessionOpts) -> Result<(), String> {
     Ok(())
 }
 
-/// Start voice capture worker when xAI STT credentials are present.
+/// Start voice capture worker when `STRUDEL_STT_BASE_URL` is set.
 fn start_voice_for_tui() -> Option<strudel_rs::voice_input::VoiceHandle> {
     let Some(cfg) = strudel_rs::voice_input::SttConfig::from_env() else {
-        eprintln!("voice: disabled (set XAI_API_KEY or STRUDEL_STT_API_KEY for F12 STT → Hermes)");
+        eprintln!("voice: disabled (set STRUDEL_STT_BASE_URL for F12/VAD STT → Hermes)");
         return None;
     };
+    let mode = cfg.mode;
     match strudel_rs::voice_input::VoiceHandle::start(cfg) {
         Ok(h) => {
-            eprintln!("voice: F12 push-to-talk (xAI STT → Hermes)");
+            match mode {
+                strudel_rs::voice_input::VoiceMode::Vad => {
+                    eprintln!("voice: VAD listen → local STT → Hermes (F12 pauses)");
+                }
+                strudel_rs::voice_input::VoiceMode::Push => {
+                    eprintln!("voice: F12 push-to-talk → local STT → Hermes");
+                }
+            }
             Some(h)
         }
         Err(e) => {

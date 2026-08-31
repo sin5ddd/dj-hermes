@@ -31,11 +31,12 @@ use crate::highlight::{
 use crate::live_fx::{self, FxState};
 use crate::song::Song;
 use crate::viz::{self, VizModel};
-use crate::voice_input::{VoiceEvent, VoiceHandle};
+use crate::voice_input::{VoiceEvent, VoiceHandle, VoiceMode};
 
 const HELP_LINE: &str = "F9 vfx  F10 viz  F12音声  ↑↓候補  drag xf/EQ  /a load  /x  /bpm  /help";
 /// Max candidate rows inside the suggest overlay (scroll window).
 const SUGGEST_MAX_ROWS: usize = 10;
+const HELP_LINE_LISTEN: &str = "VAD 待ち  話してね  F12 で一時停止";
 const HELP_LINE_REC: &str = "● REC  F12 で停止（最大7秒）";
 const HELP_LINE_STT: &str = "… STT  認識中…";
 
@@ -95,6 +96,7 @@ enum DragTarget {
 enum VoicePhase {
     #[default]
     Idle,
+    Listening,
     Recording,
     Stt,
 }
@@ -245,7 +247,7 @@ impl LiveState {
 ///
 /// `initial_a` / `initial_b` seed deck highlight models (e.g. songs passed to `dj`).
 /// `hermes` when `Some` routes bare natural language to Hermes (local cmds need `/`).
-/// `voice` when `Some` enables F12 push-to-talk (cloud STT → Hermes).
+/// `voice` when `Some` enables F12 / VAD (local STT → Hermes).
 #[allow(clippy::too_many_arguments)]
 pub fn run(
     tx: Sender<Command>,
@@ -300,8 +302,15 @@ pub fn run(
         state.set_model(1, model);
     }
     if hermes.is_some() {
-        if voice.is_some() {
-            state.push_log("live UI · F12 音声→Hermes  /cmd ローカル  drag xf/EQ");
+        if let Some(ref v) = voice {
+            match v.mode() {
+                VoiceMode::Vad => {
+                    state.push_log("live UI · VAD 音声→Hermes  F12 一時停止  /cmd ローカル");
+                }
+                VoiceMode::Push => {
+                    state.push_log("live UI · F12 音声→Hermes  /cmd ローカル  drag xf/EQ");
+                }
+            }
         } else {
             state.push_log("live UI · 自然文→Hermes  /cmd ローカル  drag xf/EQ");
         }
@@ -364,9 +373,7 @@ pub fn run(
                                 if let Some(ref v) = voice {
                                     v.toggle();
                                 } else if hermes.is_some() {
-                                    state.push_log(
-                                        "voice: 無効（XAI_API_KEY / STRUDEL_STT_API_KEY を設定）",
-                                    );
+                                    state.push_log("voice: 無効（STRUDEL_STT_BASE_URL を設定）");
                                 } else {
                                     state.push_log("voice: Hermes off では使えません");
                                 }
@@ -1027,6 +1034,7 @@ fn gather_punchcard_hits(
 
 fn format_help_line(vfx_on: bool, voice: VoicePhase, cols: usize, row: u16) -> (String, SliderHit) {
     let left = match voice {
+        VoicePhase::Listening => HELP_LINE_LISTEN,
         VoicePhase::Recording => HELP_LINE_REC,
         VoicePhase::Stt => HELP_LINE_STT,
         VoicePhase::Idle => HELP_LINE,
@@ -1605,6 +1613,16 @@ fn drain_hermes_events(state: &mut LiveState, hermes: &HermesHandle) {
 fn drain_voice_events(state: &mut LiveState, voice: &VoiceHandle, hermes: Option<&HermesHandle>) {
     for ev in voice.drain_events() {
         match ev {
+            VoiceEvent::ListeningStarted => {
+                state.voice_phase = VoicePhase::Listening;
+                state.invalidate_frame();
+                state.push_log("voice: VAD 待ち（F12 で一時停止）");
+            }
+            VoiceEvent::ListeningPaused => {
+                state.voice_phase = VoicePhase::Idle;
+                state.invalidate_frame();
+                state.push_log("voice: VAD 一時停止（F12 で再開）");
+            }
             VoiceEvent::RecordingStarted => {
                 state.voice_phase = VoicePhase::Recording;
                 state.invalidate_frame();
@@ -1619,7 +1637,9 @@ fn drain_voice_events(state: &mut LiveState, voice: &VoiceHandle, hermes: Option
                 state.push_log("voice: … STT");
             }
             VoiceEvent::Transcript { text } => {
-                state.voice_phase = VoicePhase::Idle;
+                if state.voice_phase != VoicePhase::Listening {
+                    state.voice_phase = VoicePhase::Idle;
+                }
                 state.invalidate_frame();
                 state.push_log(format!("voice: 「{text}」"));
                 if let Some(h) = hermes {
