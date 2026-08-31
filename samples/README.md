@@ -22,6 +22,8 @@ git lfs install   # once per machine (clean/smudge hooks)
 git lfs pull
 ```
 
+If a `.wav` on disk is still a pointer, the engine follows it into `.git/lfs/objects`. `git lfs pull` is still required so the objects exist locally. Prefer `git lfs checkout` so the working tree has real WAVs.
+
 ## Refresh from Sonic Pi (maintainers)
 
 Upstream ships FLAC; this repo only commits 16-bit mono 48 kHz WAV **under subfolders** (e.g. `bd/00.wav`).

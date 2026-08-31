@@ -29,7 +29,7 @@ mcps/
 terminals/
 agent-tools/
 
-# Jujutsu (colocated with .git; local only — do not commit)
+# Jujutsu leftover (do not colocate; Git LFS). Local only if present.
 .jj/
 
 # Env / secrets

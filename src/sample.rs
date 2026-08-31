@@ -127,9 +127,91 @@ fn is_wav(p: &Path) -> bool {
         .is_some_and(|e| e.eq_ignore_ascii_case("wav"))
 }
 
+const LFS_POINTER_VERSION: &str = "version https://git-lfs.github.com/spec/v1";
+
+/// Git LFS pointer `oid sha256:` value, or `None` if `bytes` is not a pointer.
+fn parse_lfs_oid(bytes: &[u8]) -> Option<String> {
+    let text = std::str::from_utf8(bytes).ok()?.trim();
+    if !text.starts_with(LFS_POINTER_VERSION) {
+        return None;
+    }
+    for line in text.lines() {
+        let line = line.trim();
+        let Some(oid) = line.strip_prefix("oid sha256:") else {
+            continue;
+        };
+        let oid = oid.trim();
+        if oid.len() == 64 && oid.bytes().all(|b| b.is_ascii_hexdigit()) {
+            return Some(oid.to_ascii_lowercase());
+        }
+        return None;
+    }
+    None
+}
+
+fn git_dir_from_gitfile(gitfile: &Path) -> Option<std::path::PathBuf> {
+    let text = std::fs::read_to_string(gitfile).ok()?;
+    for line in text.lines() {
+        let line = line.trim();
+        let Some(rest) = line.strip_prefix("gitdir:") else {
+            continue;
+        };
+        let raw = rest.trim();
+        let path = Path::new(raw);
+        let resolved = if path.is_absolute() {
+            path.to_path_buf()
+        } else {
+            gitfile.parent()?.join(path)
+        };
+        return Some(resolved);
+    }
+    None
+}
+
+fn lfs_object_path(wav_path: &Path, oid: &str) -> Option<std::path::PathBuf> {
+    let prefix1 = &oid[..2];
+    let prefix2 = &oid[2..4];
+    let mut dir = wav_path.parent()?;
+    loop {
+        let git = dir.join(".git");
+        let git_dir = if git.is_dir() {
+            Some(git)
+        } else if git.is_file() {
+            git_dir_from_gitfile(&git)
+        } else {
+            None
+        };
+        if let Some(git_dir) = git_dir {
+            let obj = git_dir
+                .join("lfs")
+                .join("objects")
+                .join(prefix1)
+                .join(prefix2)
+                .join(oid);
+            if obj.is_file() {
+                return Some(obj);
+            }
+        }
+        dir = dir.parent()?;
+    }
+}
+
 /// 16-bit PCM WAV → mono f32, nearest-neighbour resample to `target_sr`.
+///
+/// Git LFS pointer files (what colocated `jj` writes; smudge-skipped checkouts)
+/// are resolved from `.git/lfs/objects`. Missing objects need `git lfs pull`.
 pub fn load_wav(path: &Path, target_sr: u32) -> Result<Vec<f32>, String> {
     let bytes = std::fs::read(path).map_err(|e| e.to_string())?;
+    if let Some(oid) = parse_lfs_oid(&bytes) {
+        let obj = lfs_object_path(path, &oid).ok_or_else(|| {
+            format!(
+                "git lfs object missing for {} (oid {oid}): run git lfs pull",
+                path.display()
+            )
+        })?;
+        let obj_bytes = std::fs::read(&obj).map_err(|e| e.to_string())?;
+        return decode_wav_bytes(&obj_bytes, target_sr);
+    }
     decode_wav_bytes(&bytes, target_sr)
 }
 
@@ -514,6 +596,67 @@ mod tests {
         assert_ne!(a.len(), b.len());
         let c = bank.get("bd", Some(2)).unwrap(); // wraps
         assert_eq!(a.len(), c.len());
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn loads_git_lfs_pointer() {
+        let dir = std::env::temp_dir().join("strudel_test_samples_lfs");
+        let _ = std::fs::remove_dir_all(&dir);
+        let samples = dir.join("samples");
+        std::fs::create_dir_all(&samples).unwrap();
+        let wav_path = samples.join("bd.wav");
+        write_test_wav(&wav_path, 48_000);
+        let pcm = std::fs::read(&wav_path).unwrap();
+        let oid = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+        let obj_dir = dir
+            .join(".git")
+            .join("lfs")
+            .join("objects")
+            .join("aa")
+            .join("aa");
+        std::fs::create_dir_all(&obj_dir).unwrap();
+        std::fs::write(obj_dir.join(oid), &pcm).unwrap();
+        std::fs::write(
+            &wav_path,
+            format!(
+                "{LFS_POINTER_VERSION}\noid sha256:{oid}\nsize {}\n",
+                pcm.len()
+            ),
+        )
+        .unwrap();
+        let bank = SampleBank::load_dir(&samples, 48_000);
+        let s = bank.get("bd", None).expect("bd via lfs");
+        assert!(s.len() > 4000);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn loads_bundled_bd_even_if_lfs_pointer() {
+        let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("samples");
+        let bank = SampleBank::load_dir(&dir, 48_000);
+        let s = bank
+            .get("bd", None)
+            .expect("bundled bd (wav or git lfs pointer)");
+        assert!(s.len() > 100);
+    }
+
+    #[test]
+    fn git_lfs_pointer_without_object_is_skipped() {
+        let dir = std::env::temp_dir().join("strudel_test_samples_lfs_missing");
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let wav_path = dir.join("bd.wav");
+        std::fs::write(
+            &wav_path,
+            format!(
+                "{LFS_POINTER_VERSION}\noid sha256:{}\nsize 1\n",
+                "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            ),
+        )
+        .unwrap();
+        let bank = SampleBank::load_dir(&dir, 48_000);
+        assert!(bank.get("bd", None).is_none());
         let _ = std::fs::remove_dir_all(&dir);
     }
 
