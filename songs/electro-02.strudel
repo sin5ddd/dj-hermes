@@ -1,0 +1,9 @@
+// @title electro-02
+// @genre electro
+// @details darker electro: closed kit, bass lpf 360 @ 124
+setcpm(124/4)
+// drums
+$: s("bd:hf*4, [~ sd:hd]*2, hh:dk*8").gain(0.58).lpf(3500)
+// bass
+$: note("0 ~ 0 3 0 ~ 2 0").scale("C2:minor").s("square").lpf(360).gain(0.5)
+  .attack(0.001).decay(0.1).sustain(0.18).release(0.05)

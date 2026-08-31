@@ -1,0 +1,9 @@
+// @title dubstep-03
+// @genre dubstep
+// @details brighter wobble (rangex 120–1100) @ 140
+setcpm(140/4)
+// drums
+$: s("bd:9p ~ ~ ~, [~ ~ sd:tr ~], hh:cl*8").gain(0.55)
+// wobble
+$: note("0 ~ 3 ~").scale("C2:minor").s("sawtooth").lpf(sine.rangex(120, 1100)).lpq(5).gain(0.48)
+  .attack(0.008).decay(0.16).sustain(0.4).release(0.08)

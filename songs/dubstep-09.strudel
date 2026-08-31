@@ -1,0 +1,10 @@
+// @title dubstep-09
+// @genre dubstep
+// @details evolving FM wobble bass (live 2-op), half-time @ 140
+setcpm(140/4)
+// drums
+$: s("bd:tc ~ ~ ~, [~ ~ sd:fb ~], [~ hh:dk]*4").gain(0.55)
+// wobble
+$: note("0 ~ 0 -1").scale("C2:minor").s("sine").fm(3).fmh(1.5)
+  .lpf(sine.rangex(80, 500)).lpq(7).gain(0.5)
+  .attack(0.01).decay(0.2).sustain(0.4).release(0.1)

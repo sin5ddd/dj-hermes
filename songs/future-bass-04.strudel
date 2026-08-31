@@ -1,0 +1,11 @@
+// @title future-bass-04
+// @genre future-bass
+// @details drop: thinned kick, heavier sub @ 145
+setcpm(145/4)
+// drums
+$: s("bd:hf ~ bd:hf ~, [~ sd:hd]*2, [~ hh:hs]*2").gain(0.5)
+// chords
+$: note("[0,2,4] ~ ~ ~").scale("C3:minor").s("sawtooth").lpf(1100).gain(0.26)
+  .attack(0.03).decay(0.25).sustain(0.35).release(0.2)
+// sub
+$: note("0 ~ 0 ~").scale("C4:minor").s("bs:su").gain(0.52)

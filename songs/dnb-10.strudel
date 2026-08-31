@@ -1,0 +1,12 @@
+// @title dnb-10
+// @genre drum and bass
+// @details neuro-darker amen (growl kick, mid 800) @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:ng <~ sd:ng> ~ sd:ng ~ <bd:ng ~> <bd:ng sd:ng> <bd:ng ~>, hh:dk*4, [~@5 oh:dn ~@2]]*2").gain(0.68).lpf(2400)
+// sub
+$: note("0 3 0 <0 -1>").scale("C2:minor").s("square").lpf(115).gain(0.43)
+  .attack(0.01).decay(0.55).release(0.4)
+// mid
+$: note("0 3 0 <0 -1>").scale("C2:minor").s("sawtooth").lpf(800).gain(0.34)
+  .attack(0.01).decay(0.45).release(0.32)

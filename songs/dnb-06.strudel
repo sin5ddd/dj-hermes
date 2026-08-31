@@ -1,0 +1,12 @@
+// @title dnb-06
+// @genre drum and bass
+// @details drop weight: same 8-slot, sparser hats, darker mid @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:dn <~ sd:dn> ~ sd:dn ~ <bd:dn ~> <bd:dn sd:dn> <bd:dn ~>, [~ hh:dk]*2, [~@5 oh:dn ~@2]]*2").gain(0.68).lpf(2800)
+// sub
+$: note("0 3 0 <0 -1>").scale("C2:minor").s("square").lpf(110).gain(0.44)
+  .attack(0.01).decay(0.55).release(0.45)
+// mid
+$: note("0 3 0 <0 -1>").scale("C2:minor").s("sawtooth").lpf(820).gain(0.34)
+  .attack(0.01).decay(0.45).release(0.35)

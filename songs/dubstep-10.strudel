@@ -1,0 +1,11 @@
+// @title dubstep-10
+// @genre dubstep
+// @details half-time + fx:up once per 4 bars @ 140
+setcpm(140/4)
+// drums
+$: s("bd:9p ~ ~ ~, [~ ~ sd:fb ~], [~ hh:cl]*4").gain(0.56)
+// wobble
+$: note("0 ~ 0 ~").scale("C2:minor").s("sawtooth").lpf(sine.rangex(80, 600)).lpq(6).gain(0.5)
+  .attack(0.01).decay(0.2).sustain(0.4).release(0.1)
+// fx
+$: s("<fx:up ~ ~ ~>").gain(0.26)

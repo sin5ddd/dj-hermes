@@ -1,0 +1,13 @@
+// @title future-bass-09
+// @genre future-bass
+// @details brighter dorian chords @ 148
+setcpm(148/4)
+// drums
+$: s("bd:hf*4, [~ sd:9s]*2, hh:hs*8").gain(0.48)
+// chords
+$: note("[0,2,4] ~ [0,2,5] ~").scale("C3:dorian").s("sawtooth").lpf(2000).gain(0.24)
+  .attack(0.018).decay(0.16).sustain(0.42).release(0.12)
+// lead
+$: note("7 9 11 9").scale("C4:dorian").s("square").lpf(3400).gain(0.15)
+// sub
+$: note("0 ~ 0 ~").scale("C4:dorian").s("bs:su").gain(0.46)

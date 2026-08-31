@@ -1,0 +1,12 @@
+// @title dnb-07
+// @genre drum and bass
+// @details brighter amen: open kit, mid 1200, hats *8 @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:dn <~ sd:dn> ~ sd:dn ~ <bd:dn ~> <bd:dn sd:dn> <bd:dn ~>, hh:cl*8, [~@5 oh:op ~@2]]*2").gain(0.7).lpf(8000)
+// sub
+$: note("0 3 0 <0 -1>").scale("C2:minor").s("square").lpf(120).gain(0.4)
+  .attack(0.01).decay(0.5).release(0.4)
+// mid
+$: note("0 3 0 <0 -1>").scale("C2:minor").s("sawtooth").lpf(1200).gain(0.34)
+  .attack(0.01).decay(0.35).release(0.25)

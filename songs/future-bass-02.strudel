@@ -1,0 +1,11 @@
+// @title future-bass-02
+// @genre future-bass
+// @details darker chords (lpf 800) @ 140
+setcpm(140/4)
+// drums
+$: s("bd:hf*4, [~ sd:hd]*2, [~ hh:dk]*4").gain(0.5).lpf(4000)
+// chords
+$: note("[0,2,4] ~ [0,2,5] ~").scale("C3:minor").s("sawtooth").lpf(800).gain(0.26)
+  .attack(0.03).decay(0.22).sustain(0.38).release(0.18)
+// sub
+$: note("0 ~ 0 ~").scale("C4:minor").s("bs:su").gain(0.5)

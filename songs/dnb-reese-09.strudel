@@ -1,0 +1,12 @@
+// @title dnb-reese-09
+// @genre drum and bass
+// @details neuro-darker mid-Reese (growl kit) @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:ng <~ sd:ng> ~ sd:ng ~ <bd:ng ~> <bd:ng sd:ng> <bd:ng ~>, hh:dk*4, [~@5 oh:dn ~@2]]*2").gain(0.68).lpf(2400)
+// sub
+$: note("0 3 0 <0 -1>").scale("C2:minor").s("square").lpf(115).gain(0.43)
+// mid
+$: note("0 3 0 <0 -1>").scale("C4:minor").s("bs:rm").gain(0.34)
+// stab
+$: note("0 ~ 0 ~").scale("C4:minor").s("plk:s5").gain(0.16).cut(1)

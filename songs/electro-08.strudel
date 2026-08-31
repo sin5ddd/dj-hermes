@@ -1,0 +1,9 @@
+// @title electro-08
+// @genre electro
+// @details drop-weight: sparser hats, heavier square @ 126
+setcpm(126/4)
+// drums
+$: s("bd:ez*4, [~ sd:8s]*2, [~ hh:dk]*2").gain(0.58)
+// bass
+$: note("0 ~ 0 ~ 3 ~ 0 -1").scale("C2:minor").s("square").lpf(420).gain(0.52)
+  .attack(0.002).decay(0.12).sustain(0.22).release(0.06)

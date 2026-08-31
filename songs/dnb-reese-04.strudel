@@ -1,0 +1,12 @@
+// @title dnb-reese-04
+// @genre drum and bass
+// @details A-minor split: A2 square + A4 bs:rm / plk:s5 @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:dn <~ sd:dn> ~ sd:dn ~ <bd:dn ~> <bd:dn sd:dn> <bd:dn ~>, hh:dn*4, [~@5 oh:dn ~@2]]*2").gain(0.7).lpf(4000)
+// sub
+$: note("0 3 0 <0 -1>").scale("A2:minor").s("square").lpf(120).gain(0.42)
+// mid
+$: note("0 3 0 <0 -1>").scale("A4:minor").s("bs:rm").gain(0.38)
+// stab
+$: note("~ 4 ~ <7 4>").scale("A4:minor").s("plk:s5").gain(0.22).cut(1)

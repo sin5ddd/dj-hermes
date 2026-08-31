@@ -1,0 +1,13 @@
+// @title future-bass-06
+// @genre future-bass
+// @details glass pluck melody (plk:fg) @ 144
+setcpm(144/4)
+// drums
+$: s("bd:hf*4, [~ sd:hd]*2, [~ hh:hs]*4").gain(0.5)
+// chords
+$: note("[0,2,4] ~ [0,2,4] ~").scale("C3:minor").s("sawtooth").lpf(1500).gain(0.24)
+  .attack(0.02).decay(0.2).sustain(0.38).release(0.14)
+// lead
+$: note("7 ~ 9 7 4 2 ~ 0").scale("C4:minor").s("plk:fg").gain(0.22).cut(1)
+// sub
+$: note("0 ~ 0 ~").scale("C4:minor").s("bs:su").gain(0.48)

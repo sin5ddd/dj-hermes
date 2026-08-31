@@ -1,0 +1,12 @@
+// @title dnb-reese-10
+// @genre drum and bass
+// @details jungle-rounder kit, same C2/C4 split @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:jg <~ sd:jg> ~ sd:jg ~ <bd:jg ~> <bd:jg sd:jg> <bd:jg ~>, hh:dn*4, [~@5 oh:dn ~@2]]*2").gain(0.7).lpf(3600)
+// sub
+$: note("0 3 0 <0 -1>").scale("C2:minor").s("square").lpf(120).gain(0.42)
+// mid
+$: note("0 3 0 <0 -1>").scale("C4:minor").s("bs:rm").gain(0.36)
+// stab
+$: note("~ 4 ~ <7 4>").scale("C4:minor").s("plk:s5").gain(0.2).cut(1)

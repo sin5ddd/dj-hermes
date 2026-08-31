@@ -1,0 +1,10 @@
+// @title electro-09
+// @genre electro
+// @details evolving FM square-ish bass (live 2-op) @ 126
+setcpm(126/4)
+// drums
+$: s("bd:ez*4, [~ sd:8s]*2, hh:tt*8").gain(0.56)
+// bass
+$: note("0 0 3 0 <2 5> 0 4 0").scale("C2:minor").s("sine").fm(3).fmh(2)
+  .lpf(700).gain(0.46)
+  .attack(0.001).decay(0.08).sustain(0.2).release(0.04)

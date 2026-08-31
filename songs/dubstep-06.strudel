@@ -1,0 +1,8 @@
+// @title dubstep-06
+// @genre dubstep
+// @details bs:wb one-shot wobble at C4 (no extra sub) @ 140
+setcpm(140/4)
+// drums
+$: s("bd:tc ~ ~ ~, [~ ~ sd:8s ~], [~ hh:cl]*4").gain(0.56)
+// wobble
+$: note("0 ~ 0 <3 0>").scale("C4:minor").s("bs:wb").gain(0.42)
