@@ -1,11 +1,10 @@
 // @title dnb-04
 // @genre drum and bass
-// @details amen, square + tight plk:dt hook @ 174
+// @details amen, bs:sb + tight plk:dt hook @ 174
 setcpm(174/4)
 // drums
 $: s("[bd:dn sd:dn ~ sd:dn bd:dn ~ bd:dn sd:dn, hh:dn*4]*2").gain(0.68).lpf(4000)
 // bass
-$: note("0 0 -1 0").scale("C2:minor").s("square").lpf(120).gain(0.42)
-  .attack(0.01).decay(0.45).release(0.35)
+$: note("0 0 -1 0").scale("C4:minor").s("bs:sb").gain(0.44)
 // lead
 $: note("4 ~ 7 0").scale("C4:minor").s("plk:dt").gain(0.22).cut(1)

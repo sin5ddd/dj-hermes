@@ -6,4 +6,4 @@ $: s("bd:9p*4, [~ hh]*4").gain(0.54)
 // bass
 $: note("0 ~ 3 ~").scale("C2:minor").s("sawtooth").lpf(300).gain(0.4)
 // lead
-$: note("0 ~ ~ ~").scale("C4:minor").s("ld:ss").gain(0.14)
+$: note("2 ~ ~ ~").scale("C4:minor").s("ld:ss").gain(0.14)

@@ -6,4 +6,4 @@ $: s("bd:tc*4, [~ hh:cl]*4").gain(0.52)
 // bass
 $: note("0 ~ ~ 2").scale("C2:minor").s("sine").lpf(260).gain(0.38)
 // lead
-$: note("0 ~ ~ ~").scale("C4:minor").s("plk:lp").gain(0.22).cut(1)
+$: note("7 ~ ~ 3").scale("C4:minor").s("plk:lp").gain(0.22).cut(1)

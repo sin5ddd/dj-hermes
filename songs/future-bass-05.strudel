@@ -5,7 +5,7 @@ setcpm(140/4)
 // drums
 $: s("bd:hf*4, [~ sd:hd]*2, hh:hs*8").gain(0.46)
 // bass
-$: note("0 ~ 0 ~").scale("C2:major").s("square").lpf(160).gain(0.4)
+$: note("0 2 ~ 4").scale("C2:major").s("square").lpf(160).gain(0.4)
   .attack(0.005).decay(0.12).sustain(0.3).release(0.08)
 // lead
 $: note("4 ~ 0 4").scale("C4:major").s("plk:s3").gain(0.2).cut(1)

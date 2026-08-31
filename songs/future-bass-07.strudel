@@ -5,6 +5,6 @@ setcpm(140/4)
 // drums
 $: s("bd:9p*4, [~ sd:9s]*2, [~ hh:hs]*4").gain(0.48)
 // bass
-$: note("0 ~ 0 ~").scale("C2:major").s("sine").lpf(160).gain(0.48)
+$: note("4 ~ 0 4").scale("C2:major").s("sine").lpf(160).gain(0.48)
 // fx
 $: s("<fx:up ~ ~ ~>").gain(0.24)

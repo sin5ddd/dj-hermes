@@ -5,7 +5,7 @@ setcpm(140/4)
 // drums
 $: s("bd:hf*4, [~ sd:hd]*2, [~ hh:hs]*4").gain(0.48)
 // bass
-$: note("0 ~ 0 ~").scale("C4:major").s("bs:su").gain(0.46)
+$: note("0 4 ~ 0").scale("C4:major").s("bs:su").gain(0.46)
 // pad
-$: note("[0,4,9] ~ [0,4,9] ~").scale("C4:major").s("sawtooth").lpf(1600).gain(0.24)
+$: note("[0,4,9] 4 [0,4,9] 2").scale("C4:major").s("sawtooth").lpf(1600).gain(0.24)
   .attack(0.02).decay(0.2).sustain(0.4).release(0.15)
