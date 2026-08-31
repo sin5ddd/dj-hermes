@@ -6,4 +6,4 @@ $: s("bd:hf*4, [~ hh]*4").gain(0.5)
 // bass
 $: note("0 ~ ~ ~").scale("C4:minor").s("bs:su").gain(0.28)
 // pad
-$: note("4 ~ ~ ~").scale("C3:minor").s("triangle").lpf(650).attack(0.14).sustain(0.65).release(0.3).gain(0.14)
+$: note("4 ~ 2 ~").scale("C3:minor").s("triangle").lpf(650).attack(0.14).sustain(0.65).release(0.3).gain(0.14)

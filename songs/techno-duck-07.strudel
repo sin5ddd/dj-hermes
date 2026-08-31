@@ -2,7 +2,7 @@
 // @genre techno-duck
 setcpm(126/4)
 // kick
-$: s("bd:9p*4").gain(0.88).duckorbit(2).duckattack(0.05).duckdepth(0.83)
+$: s("bd:tc*4").gain(0.88).duckorbit(2).duckattack(0.05).duckdepth(0.83)
 // hats
 $: s("[~ hh]*4").gain(0.38)
 // bass

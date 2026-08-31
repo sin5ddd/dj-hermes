@@ -1,11 +1,10 @@
 // @title dnb-07
 // @genre drum and bass
-// @details busy break, square + plk:lp hook @ 174
+// @details busy break, bs:su + plk:lp hook @ 174
 setcpm(174/4)
 // drums
 $: s("[bd:ng <~ sd:dn> ~ sd:dn ~ <bd:ng ~> <bd:ng sd:dn> <bd:ng ~>, hh:cl*8, [~@5 oh:op ~@2]]*2").gain(0.66).lpf(6000)
 // bass
-$: note("0 5 3 0").scale("C2:minor").s("square").lpf(120).gain(0.4)
-  .attack(0.01).decay(0.4).release(0.3)
+$: note("0 5 3 0").scale("C4:minor").s("bs:su").gain(0.46)
 // lead
 $: note("7 4 2 0").scale("C4:minor").s("plk:lp").gain(0.22).cut(1)

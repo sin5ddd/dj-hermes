@@ -1,11 +1,10 @@
 // @title dnb-08
 // @genre drum and bass
-// @details amen, square + short fx:id @ 174
+// @details jungle-rounder, bs:am + short fx:id @ 174
 setcpm(174/4)
 // drums
-$: s("[bd:dn <~ sd:dn> ~ sd:dn ~ <bd:dn ~> <bd:dn sd:dn> <bd:dn ~>, hh:dn*4]*2").gain(0.68).lpf(4000)
+$: s("[bd:jg <~ sd:jg> ~ sd:jg ~ <bd:jg ~> <bd:jg sd:jg> <bd:jg ~>, hh:dn*4]*2").gain(0.66).lpf(3600)
 // bass
-$: note("0 3 ~ -1").scale("C2:minor").s("square").lpf(120).gain(0.42)
-  .attack(0.01).decay(0.5).release(0.4)
+$: note("0 3 ~ -1").scale("C4:minor").s("bs:am").gain(0.46)
 // fx
 $: s("<fx:id ~ ~ ~>").gain(0.28)

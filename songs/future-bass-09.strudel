@@ -5,6 +5,6 @@ setcpm(140/4)
 // drums
 $: s("bd:ez*4, [~ sd:tr]*2, [~ hh:cl]*4").gain(0.46)
 // bass
-$: note("0 ~ 0 ~").scale("C4:major").s("bs:su").gain(0.46)
+$: note("0 4 7 4").scale("C4:major").s("bs:su").gain(0.46)
 // lead
 $: note("0 2 4 7").scale("C4:major").s("ld:ss").gain(0.18).cut(1)

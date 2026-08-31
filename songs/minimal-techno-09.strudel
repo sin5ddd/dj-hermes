@@ -6,4 +6,4 @@ $: s("bd:9p*4, [~ hh]*4").gain(0.54)
 // bass
 $: note("0 ~ 2 ~").scale("C2:minor").s("square").lpf(150).gain(0.34)
 // lead
-$: note("4 ~ ~ ~").scale("C4:minor").s("ld:ss").gain(0.14)
+$: note("3 ~ ~ ~").scale("C4:minor").s("ld:ss").gain(0.14)

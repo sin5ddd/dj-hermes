@@ -1,11 +1,11 @@
 // @title dnb-03
 // @genre drum and bass
-// @details neuro kick, bs:su floor + saw hook @ 174
+// @details neuro kick, bs:am floor + saw hook @ 174
 setcpm(174/4)
 // drums
 $: s("[bd:ng <~ sd:ng> ~ sd:ng ~ <bd:ng ~> <bd:ng sd:ng> <bd:ng ~>, hh:dn*8]*2").gain(0.66).lpf(3200)
 // bass
-$: note("0 3 0 <0 -1>").scale("C4:minor").s("bs:su").gain(0.46)
+$: note("0 3 0 <0 -1>").scale("C4:minor").s("bs:am").gain(0.46)
 // lead
 $: note("3 0 5 0").scale("C2:minor").s("sawtooth").lpf(1100).gain(0.3)
   .attack(0.01).decay(0.35).release(0.25)
