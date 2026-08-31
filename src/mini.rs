@@ -607,7 +607,7 @@ mod tests {
 
     #[test]
     fn techno_four_on_the_floor_kick_hat_times() {
-        // Skill docs/skills/four-on-the-floor (techno): kick in front, no snare.
+        // Skill docs/skills/strudel-genre-four-on-the-floor (techno): kick in front, no snare.
         let n = parse("bd*4, [~ hh]*4").unwrap();
         let ev = events(&n, 0);
         let starts = |name: &str| -> Vec<f64> {

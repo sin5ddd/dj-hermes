@@ -2,7 +2,9 @@
 
 Assistant-agnostic recipes for this engine: **to make music of type X, write Strudel like Y**.
 
-These are Cursor-format `SKILL.md` files (`name` + `description` frontmatter). They are **not** the Hermes exhibit copies under `docs/profile/dj-hermes/skills/` — those stay booth/MCP-specific. This tree documents how **this repo** turns notation into rhythm, harmony, genre, and DJ mix.
+These are Hermes-format `SKILL.md` files (`name`, `description` starting with “Use when”, `version`, `author`, `license`, `metadata.hermes`). Folders are named `strudel-*` (genre recipes `strudel-genre-*`). This tree documents how **this repo** turns notation into rhythm, harmony, genre, and DJ mix.
+
+Engine-accurate recipes (formerly unprefixed folders such as `four-on-the-floor`) were merged into the matching `strudel-*` skill, or renamed when there was no overlap. Song files under `songs/skill-*.strudel` keep their original names. The exhibit sample under `docs/profile/dj-hermes/skills/` is a separate booth snapshot (it still includes `strudel-live-edit`).
 
 Do not invent syntax from the public Strudel REPL. Only patterns that parse and play here belong in a skill.
 
@@ -97,7 +99,7 @@ Genre in this repo is mostly **tempo + drum grid + register + filter**, not a hi
 | `.room` / `.delay` | Space (orbit-shared FX, ids 1–4 per deck) |
 | `.duckorbit` | Kick ducks **that orbit** (put pad **and** bass on it). `duckattack` is recover time |
 
-Bundled one-shots: `samples/bd`, `sd`, `hh`, `oh`, `cp` (`samples/cp/00.wav`), plus factory FM wavs `lead-fm_pluck`, `stab-fm_fifth`, `stab-fm_major`, `reese-mid`, and issue #21 batch 1 (`bass-fm_house`, `bass-fm_sub`, `reese-dark`, `pad-fm_fifth`, `lead-supersaw`, `fx-*` — how to play each: [factory-pcm-usage](./factory-pcm-usage/SKILL.md)). Live 2-op FM is `.s("sine").fm(…)` — not those wavs. `db` is not a sample. Unknown names fail resolve (performance continues). `stack()`, `.cpm()`, and a bare `s("...")` line without `$:` are not song format.
+Bundled one-shots: `samples/bd`, `sd`, `hh`, `oh`, `cp` (`samples/cp/00.wav`), plus factory FM wavs `lead-fm_pluck`, `stab-fm_fifth`, `stab-fm_major`, `reese-mid`, and issue #21 batch 1 (`bass-fm_house`, `bass-fm_sub`, `reese-dark`, `pad-fm_fifth`, `lead-supersaw`, `fx-*` — how to play each: [strudel-sound-design](./strudel-sound-design/SKILL.md) (Factory PCM batch 1)). Live 2-op FM is `.s("sine").fm(…)` — not those wavs. `db` is not a sample. Unknown names fail resolve (performance continues). `stack()`, `.cpm()`, and a bare `s("...")` line without `$:` are not song format.
 
 ## DJ / mix
 
@@ -109,20 +111,35 @@ Bundled one-shots: `samples/bd`, `sd`, `hh`, `oh`, `cp` (`samples/cp/00.wav`), p
 
 ## Skills in this tree
 
+Cross-cutting:
+
 | Skill | When | Example song |
 | --- | --- | --- |
-| [four-on-the-floor](./four-on-the-floor/SKILL.md) | Techno kick+offbeat hats (`bd*4, [~ hh]*4`); no clap | `songs/skill-four-on-the-floor.strudel` |
-| [house-clap-backbeat](./house-clap-backbeat/SKILL.md) | House clap on 2/4 (`[~ cp]*2`, not stacked with `sd`) + C4:minor pluck | `songs/skill-house-clap-backbeat.strudel` |
-| [minor-scale-loop](./minor-scale-loop/SKILL.md) | Short minor bass + triad | `songs/skill-minor-scale-loop.strudel` |
-| [drum-and-bass](./drum-and-bass/SKILL.md) | 174 BPM break, drums above sub, square+saw Reese | `songs/skill-drum-and-bass.strudel` |
-| [dnb-reese-mid-stab](./dnb-reese-mid-stab/SKILL.md) | 174 BPM break, square C2 sub + `reese-mid` at C4 + hollow-fifth stab | `songs/skill-dnb-reese-mid-stab.strudel` |
-| [sidechain-ducking](./sidechain-ducking/SKILL.md) | Techno kick ducks pad **and** bass; short recover; no track compressor | `songs/skill-sidechain-ducking.strudel` |
-| [dnb](./dnb/SKILL.md) | Same mix idea as drum-and-bass (shorter path name) | `songs/skill-dnb.strudel` |
-| [techno-duck](./techno-duck/SKILL.md) | Same duck idea as sidechain-ducking | `songs/skill-techno-duck.strudel` |
-| [acid-303-filter-envelope](./acid-303-filter-envelope/SKILL.md) | TB-303: per-note `lpenv`, high `lpq`, not static `lpf` + amp ADSR | `songs/skill-acid-303-filter-envelope.strudel` |
-| [mood-bright-dark](./mood-bright-dark/SKILL.md) | Make a loop brighter/darker (mode, voicing, register, sample, filter) — not a genre change | `songs/skill-mood-dark.strudel` + `songs/skill-mood-bright.strudel` |
-| [fm-sound-design](./fm-sound-design/SKILL.md) | Live 2-op FM for evolving lead/bass only (124); drums are PCM. Not a genre loop | `songs/skill-fm-sound-design.strudel` |
-| [factory-pcm-usage](./factory-pcm-usage/SKILL.md) | How to play each issue #21 batch 1 factory PCM stem (`C4:…` / unpitched FX). Not a genre recipe | `songs/skill-factory-pcm-usage.strudel` + `songs/skill-factory-pcm-reese.strudel` + `songs/skill-factory-pcm-lead.strudel` |
+| [strudel-composition](./strudel-composition/SKILL.md) | Mini-notation + `$:` tracks | — |
+| [strudel-data-format](./strudel-data-format/SKILL.md) | `.strudel` save/load shape | — |
+| [strudel-sound-design](./strudel-sound-design/SKILL.md) | Synths, FX, live 2-op FM, factory PCM stems | `songs/skill-fm-sound-design.strudel`, `songs/skill-factory-pcm-usage.strudel` |
+| [strudel-minor-scale-loop](./strudel-minor-scale-loop/SKILL.md) | Short minor bass + triad | `songs/skill-minor-scale-loop.strudel` |
+| [strudel-mood-bright-dark](./strudel-mood-bright-dark/SKILL.md) | Brighter/darker (mode, voicing, register, sample, filter) — not a genre change | `songs/skill-mood-dark.strudel` + `songs/skill-mood-bright.strudel` |
+
+Genre recipes (`strudel-genre-*`):
+
+| Skill | When | Example song |
+| --- | --- | --- |
+| [strudel-genre-four-on-the-floor](./strudel-genre-four-on-the-floor/SKILL.md) | Techno kick+offbeat hats (`bd*4, [~ hh]*4`); no clap | `songs/skill-four-on-the-floor.strudel` |
+| [strudel-genre-house](./strudel-genre-house/SKILL.md) | House clap on 2/4 (`[~ cp]*2`, not stacked with `sd`) + C4:minor pluck | `songs/skill-house-clap-backbeat.strudel` |
+| [strudel-genre-techno-duck](./strudel-genre-techno-duck/SKILL.md) | Techno kick ducks pad **and** bass; short recover; no track compressor | `songs/skill-sidechain-ducking.strudel` (`songs/skill-techno-duck.strudel` is the older sibling) |
+| [strudel-genre-acid](./strudel-genre-acid/SKILL.md) | TB-303: per-note `lpenv`, high `lpq`, not static `lpf` + amp ADSR | `songs/skill-acid-303-filter-envelope.strudel` |
+| [strudel-genre-dnb](./strudel-genre-dnb/SKILL.md) | 174 BPM break, drums above sub, square+saw Reese; mini `*2` not `.fast(2)` | `songs/skill-drum-and-bass.strudel` (`songs/skill-dnb.strudel` is the shorter sibling) |
+| [strudel-genre-dnb-reese-mid-stab](./strudel-genre-dnb-reese-mid-stab/SKILL.md) | 174 BPM break, square C2 sub + `reese-mid` at C4 + hollow-fifth stab | `songs/skill-dnb-reese-mid-stab.strudel` |
+| [strudel-genre-ambient](./strudel-genre-ambient/SKILL.md) | Ambient | — |
+| [strudel-genre-chill](./strudel-genre-chill/SKILL.md) | Chill / downtempo | — |
+| [strudel-genre-chill-pop](./strudel-genre-chill-pop/SKILL.md) | Chill Pop | — |
+| [strudel-genre-dubstep](./strudel-genre-dubstep/SKILL.md) | Dubstep | — |
+| [strudel-genre-electro](./strudel-genre-electro/SKILL.md) | Electro | — |
+| [strudel-genre-future-bass](./strudel-genre-future-bass/SKILL.md) | Future Bass | — |
+| [strudel-genre-lofi-hiphop](./strudel-genre-lofi-hiphop/SKILL.md) | Lo-fi hip hop | — |
+| [strudel-genre-minimal-techno](./strudel-genre-minimal-techno/SKILL.md) | Minimal Techno | — |
+| [strudel-genre-progressive-house](./strudel-genre-progressive-house/SKILL.md) | Progressive House | — |
 
 `songs/acid16.strudel` is the static-cutoff live loop (same 130 BPM). Clock would align; both files are 303 lines, so A/B would double the acid — not a mix reason. Do not treat `acid16` as the envelope recipe.
 
@@ -187,7 +204,7 @@ Headless hosts without an audio device: `cargo test --test e2e` renders through 
 
 ## Adding a skill
 
-1. New directory `docs/skills/<name>/SKILL.md` with YAML `name` and `description` (when to use it).
+1. New directory `docs/skills/strudel-<name>/SKILL.md` (genre recipes: `strudel-genre-<name>`). Hermes YAML: `name`, `description` starting with “Use when”, `version`, `author`, `license`, `metadata.hermes` (`tags`, `related_skills`).
 2. Include: when, the exact `$:` pattern, **why it sounds that way** (cite mini/scale/mixer/duck behavior), and a play/dj command.
 3. Add a playable `songs/skill-<name>.strudel` (or point at an existing demo). Every `songs/*.strudel` is parsed by `tests/e2e.rs`.
 4. Fence only syntax this parser accepts. Lint: `python scripts/lint_strudel_skills.py`.

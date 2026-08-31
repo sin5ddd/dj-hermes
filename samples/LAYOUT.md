@@ -203,6 +203,6 @@ samples/
 
 ## 関連
 
-- 音色レシピ・役割分担: `docs/profile/dj-hermes/skills/creative/strudel-sound-design/SKILL.md`
-- ドラム統合・短いループ: `…/strudel-composition/SKILL.md`
+- 音色レシピ・役割分担: `docs/skills/strudel-sound-design/SKILL.md`
+- ドラム統合・短いループ: `docs/skills/strudel-composition/SKILL.md`
 - 同梱マッピング: `LICENSE.md`

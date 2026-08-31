@@ -18,7 +18,7 @@ metadata:
 ## Overview
 高速ブレイク + 重いサブ。**`setcpm(174/4)`（174 BPM）**。ドラム gain はサブより上。Reese は **square サブ + saw ミッド**（スクエア一本にしない）。`db` はサンプルに無い（その拍は無音）→ 必ず `bd`。
 
-正本の理由: リポジトリ `docs/skills/dnb/SKILL.md`。
+正本の理由: リポジトリ `docs/skills/strudel-genre-dnb/SKILL.md`。
 
 ## コピー用フル例
 
