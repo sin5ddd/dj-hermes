@@ -1,0 +1,12 @@
+// @title dubstep-07
+// @genre dubstep
+// @details live FM wobble + fx:id @ 140
+setcpm(140/4)
+// drums
+$: s("bd:9p ~ ~ ~, [~ ~ sd:fb ~], [~ hh:dk]*4").gain(0.5)
+// bass
+$: note("0 ~ 0 -1").scale("C2:minor").s("sine").fm(3).fmh(1.5)
+  .lpf(sine.rangex(80, 500)).lpq(6).gain(0.42)
+  .attack(0.01).decay(0.2).sustain(0.4).release(0.1)
+// fx
+$: s("<fx:id ~ ~ ~>").gain(0.26)

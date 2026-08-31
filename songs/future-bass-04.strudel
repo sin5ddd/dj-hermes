@@ -1,0 +1,11 @@
+// @title future-bass-04
+// @genre future-bass
+// @details drop kick, bs:su + major triad @ 140
+setcpm(140/4)
+// drums
+$: s("bd:dc ~ bd:dc ~, [~ sd:hd]*2, [~ hh:hs]*2").gain(0.48)
+// bass
+$: note("0 ~ 0 4").scale("C4:major").s("bs:su").gain(0.48)
+// pad
+$: note("[0,2,4] ~ [0,2,4] ~").scale("C3:major").s("sawtooth").lpf(1500).gain(0.24)
+  .attack(0.025).decay(0.22).sustain(0.38).release(0.16)

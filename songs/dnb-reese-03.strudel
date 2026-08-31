@@ -1,0 +1,10 @@
+// @title dnb-reese-03
+// @genre drum and bass
+// @details neuro kit, square + hollow-fifth stab @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:ng <~ sd:ng> ~ sd:ng ~ <bd:ng ~> <bd:ng sd:ng> <bd:ng ~>, hh:dk*4]*2").gain(0.66).lpf(2500)
+// bass
+$: note("0 3 0 5").scale("C2:minor").s("square").lpf(120).gain(0.42)
+// lead
+$: note("~ 4 ~ <7 4>").scale("C4:minor").s("plk:s5").gain(0.2).cut(1)

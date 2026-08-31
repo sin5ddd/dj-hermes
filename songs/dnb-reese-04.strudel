@@ -1,0 +1,10 @@
+// @title dnb-reese-04
+// @genre drum and bass
+// @details amen, bs:su floor + bs:rm mid (no extra sub) @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:dn sd:dn ~ sd:dn ~ ~ bd:dn sd:dn, hh:dn*4]*2").gain(0.66).lpf(4000)
+// bass
+$: note("0 3 0 <0 -1>").scale("C4:minor").s("bs:su").gain(0.46)
+// lead
+$: note("3 0 0 <0 -1>").scale("C4:minor").s("bs:rm").gain(0.34)

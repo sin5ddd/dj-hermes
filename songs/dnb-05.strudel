@@ -1,0 +1,11 @@
+// @title dnb-05
+// @genre drum and bass
+// @details drop hats, jungle kick, square + fx:up @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:jg ~ ~ sd:jg ~ ~ bd:jg sd:jg, [~ hh:dk]*2]*2").gain(0.66).lpf(2800)
+// bass
+$: note("3 0 3 <5 3>").scale("C2:minor").s("square").lpf(115).gain(0.44)
+  .attack(0.01).decay(0.55).release(0.4)
+// fx
+$: s("<fx:up ~ ~ ~>").gain(0.26)

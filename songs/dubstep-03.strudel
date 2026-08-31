@@ -1,0 +1,10 @@
+// @title dubstep-03
+// @genre dubstep
+// @details 808 boom drop, bs:su only + fx:up @ 140
+setcpm(140/4)
+// drums
+$: s("bd:8b ~ ~ ~, [~ ~ sd:fb ~]").gain(0.52)
+// bass
+$: note("0 ~ 0 ~").scale("C4:minor").s("bs:su").gain(0.48)
+// fx
+$: s("<fx:up ~ ~ ~>").gain(0.24)

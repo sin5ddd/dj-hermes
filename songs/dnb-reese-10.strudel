@@ -1,0 +1,10 @@
+// @title dnb-reese-10
+// @genre drum and bass
+// @details neuro drop, square + sparse bs:rm @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:ng ~ ~ sd:ng ~ ~ ~ sd:ng, hh:dk*4]*2").gain(0.64).lpf(2400)
+// bass
+$: note("0 3 ~ -1").scale("C2:minor").s("square").lpf(115).gain(0.42)
+// lead
+$: note("0 ~ 0 5").scale("C4:minor").s("bs:rm").gain(0.32)

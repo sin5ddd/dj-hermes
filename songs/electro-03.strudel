@@ -1,0 +1,11 @@
+// @title electro-03
+// @genre electro
+// @details tight 808 kick, square run + fx:up @ 126
+setcpm(126/4)
+// drums
+$: s("bd:8t*4, [~ sd:8s]*2, hh:tt*8").gain(0.5)
+// bass
+$: note("0 0 3 5 7 5 3 0").scale("C2:minor").s("square").lpf(520).gain(0.46)
+  .attack(0.001).decay(0.06).sustain(0.16).release(0.03)
+// fx
+$: s("<fx:up ~ ~ ~>").gain(0.24)

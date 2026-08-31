@@ -1,0 +1,11 @@
+// @title future-bass-08
+// @genre future-bass
+// @details floor kick, bs:hf + moving [0,4,9] @ 140
+setcpm(140/4)
+// drums
+$: s("bd:hf*4, [~ sd:hd]*2, [~ hh:hs]*4, [~ oh:op]*2").gain(0.46)
+// bass
+$: note("0 4 0 4").scale("C4:major").s("bs:hf").gain(0.4)
+// pad
+$: note("[0,4,9] ~ [2,4,9] ~").scale("C4:major").s("sawtooth").lpf(1800).gain(0.22)
+  .attack(0.02).decay(0.18).sustain(0.4).release(0.14)

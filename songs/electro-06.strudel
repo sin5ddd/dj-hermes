@@ -1,0 +1,11 @@
+// @title electro-06
+// @genre electro
+// @details floor kick, sparse square + fx:up @ 126
+setcpm(126/4)
+// drums
+$: s("bd:hf*4, [~ sd:hd]*2, [~ hh:dk]*4").gain(0.5)
+// bass
+$: note("0 ~ 0 3 0 ~ 2 0").scale("C2:minor").s("square").lpf(400).gain(0.44)
+  .attack(0.002).decay(0.1).sustain(0.18).release(0.05)
+// fx
+$: s("<fx:up ~ ~ ~>").gain(0.24)

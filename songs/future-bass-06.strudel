@@ -1,0 +1,10 @@
+// @title future-bass-06
+// @genre future-bass
+// @details tight 808, bs:su + plk:lp major hook @ 140
+setcpm(140/4)
+// drums
+$: s("bd:8t*4, [~ sd:8s]*2, [~ hh:tt]*4").gain(0.48)
+// bass
+$: note("0 ~ 4 ~").scale("C4:major").s("bs:su").gain(0.46)
+// lead
+$: note("4 7 9 7").scale("C4:major").s("plk:lp").gain(0.22).cut(1)

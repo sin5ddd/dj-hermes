@@ -1,0 +1,10 @@
+// @title electro-07
+// @genre electro
+// @details techno thud, bs:ac + saw chirp @ 126
+setcpm(126/4)
+// drums
+$: s("bd:tc*4, [~ sd:hd]*2, hh:dk*8").gain(0.5)
+// bass
+$: note("0 3 0 7").scale("C4:minor").s("bs:ac").gain(0.4)
+// lead
+$: note("~ 7 ~ 12").scale("C4:minor").s("sawtooth").lpf(2200).gain(0.14)

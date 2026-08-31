@@ -1,0 +1,10 @@
+// @title dnb-reese-07
+// @genre drum and bass
+// @details neuro, bs:su + stab degrees 4/7 @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:ng ~ sd:ng ~ bd:ng ~ ~ sd:ng, hh:dk*4]*2").gain(0.64).lpf(2400)
+// bass
+$: note("0 ~ 3 ~").scale("C4:minor").s("bs:su").gain(0.46)
+// lead
+$: note("~ 4 ~ 7").scale("C4:minor").s("plk:s5").gain(0.18).cut(1)

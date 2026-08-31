@@ -1,0 +1,10 @@
+// @title electro-02
+// @genre electro
+// @details house-floor kick + bs:hf + plk:lp @ 126
+setcpm(126/4)
+// drums
+$: s("bd:hf*4, [~ sd:hd]*2, hh:hs*8").gain(0.5)
+// bass
+$: note("0 0 4 0").scale("C4:minor").s("bs:hf").gain(0.42)
+// lead
+$: note("4 ~ 7 4").scale("C4:minor").s("plk:lp").gain(0.24).cut(1)

@@ -1,0 +1,10 @@
+// @title dnb-reese-05
+// @genre drum and bass
+// @details drop hats, jungle kick, square + fx:up @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:jg ~ ~ sd:jg ~ ~ ~ sd:jg, [~ hh:dk]*2]*2").gain(0.66).lpf(2800)
+// bass
+$: note("0 0 -1 0").scale("C4:minor").s("bs:am").gain(0.44)
+// fx
+$: s("<fx:up ~ ~ ~>").gain(0.26)

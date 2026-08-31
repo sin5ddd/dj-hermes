@@ -1,0 +1,10 @@
+// @title dnb-reese-02
+// @genre drum and bass
+// @details jungle amen, square + offbeat bs:rm @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:jg <~ sd:jg> ~ sd:jg ~ <bd:jg ~> <bd:jg sd:jg> <bd:jg ~>, hh:dn*8]*2").gain(0.66).lpf(3600)
+// bass
+$: note("0 ~ 0 3").scale("C2:minor").s("square").lpf(120).gain(0.42)
+// lead
+$: note("0 ~ 3 0").scale("C4:minor").s("bs:rm").gain(0.34)

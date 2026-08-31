@@ -1,0 +1,11 @@
+// @title electro-10
+// @genre electro
+// @details 909 punch, square walk + fx:up @ 126
+setcpm(126/4)
+// drums
+$: s("bd:9p*4, [~ sd:9s]*2, hh:hs*8").gain(0.5)
+// bass
+$: note("0 3 0 7 0 5 3 0").scale("C2:minor").s("square").lpf(680).gain(0.42)
+  .attack(0.001).decay(0.07).sustain(0.2).release(0.04)
+// fx
+$: s("<fx:up ~ ~ ~>").gain(0.24)

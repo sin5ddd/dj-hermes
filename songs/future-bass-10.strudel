@@ -1,0 +1,11 @@
+// @title future-bass-10
+// @genre future-bass
+// @details disco-dry drop, square + plk:s3 root hits @ 140
+setcpm(140/4)
+// drums
+$: s("bd:dc ~ bd:dc ~, [~ sd:hd]*2, [~ hh:hs]*4").gain(0.48)
+// bass
+$: note("0 ~ 4 ~").scale("C2:major").s("square").lpf(150).gain(0.4)
+  .attack(0.005).decay(0.14).sustain(0.28).release(0.08)
+// lead
+$: note("0 ~ 0 ~").scale("C4:major").s("plk:s3").gain(0.22).cut(1)

@@ -1,0 +1,10 @@
+// @title future-bass-02
+// @genre future-bass
+// @details 909 kick, sine sub + plk:s3 major stab @ 140
+setcpm(140/4)
+// drums
+$: s("bd:9p*4, [~ sd:9s]*2, [~ hh:cl]*4").gain(0.48)
+// bass
+$: note("0 ~ 4 ~").scale("C2:major").s("sine").lpf(180).gain(0.48)
+// lead
+$: note("0 ~ 4 ~").scale("C4:major").s("plk:s3").gain(0.22).cut(1)

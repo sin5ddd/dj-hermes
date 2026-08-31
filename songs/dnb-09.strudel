@@ -1,0 +1,11 @@
+// @title dnb-09
+// @genre drum and bass
+// @details jungle-rounder, sub-bass slug + saw @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:jg <~ sd:jg> ~ sd:jg ~ ~ <bd:jg sd:jg> <~ sd:jg>, hh:dn*4]*2").gain(0.66).lpf(3600)
+// bass
+$: note("0 3 0 0").scale("C4:minor").s("bs:sb").gain(0.44)
+// lead
+$: note("0 3 5 3").scale("C2:minor").s("sawtooth").lpf(1050).gain(0.3)
+  .attack(0.01).decay(0.4).release(0.3)

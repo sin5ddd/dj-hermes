@@ -1,0 +1,10 @@
+// @title dubstep-09
+// @genre dubstep
+// @details dark Reese bed bs:dk (no extra sub) + fx:up @ 140
+setcpm(140/4)
+// drums
+$: s("bd:8b ~ ~ ~, [~ ~ sd:fb ~], [~ hh:dk]*4").gain(0.5)
+// bass
+$: note("0 3 0 <0 -1>").scale("C4:minor").s("bs:dk").gain(0.34)
+// fx
+$: s("<fx:up ~ ~ ~>").gain(0.24)

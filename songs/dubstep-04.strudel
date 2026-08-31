@@ -1,0 +1,11 @@
+// @title dubstep-04
+// @genre dubstep
+// @details riddim-sparse, square + fx:sd @ 140
+setcpm(140/4)
+// drums
+$: s("bd:8t ~ ~ ~, [~ ~ ~ sd:rm]").gain(0.54)
+// bass
+$: note("0 ~ ~ ~").scale("C2:minor").s("square").lpf(100).gain(0.46)
+  .attack(0.01).decay(0.4).sustain(0.3).release(0.2)
+// fx
+$: s("<fx:sd ~ ~ ~>").gain(0.28)

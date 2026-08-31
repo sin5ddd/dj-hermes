@@ -1,0 +1,11 @@
+// @title dubstep-01
+// @genre dubstep
+// @details half-time, saw wobble + fx:up @ 140
+setcpm(140/4)
+// drums
+$: s("bd:9p ~ ~ ~, [~ ~ sd:fb ~], [~ hh:cl]*4").gain(0.54)
+// bass
+$: note("0 ~ 0 ~").scale("C2:minor").s("sawtooth").lpf(sine.rangex(80, 600)).lpq(6).gain(0.46)
+  .attack(0.01).decay(0.2).sustain(0.4).release(0.1)
+// fx
+$: s("<fx:up ~ ~ ~>").gain(0.24)
