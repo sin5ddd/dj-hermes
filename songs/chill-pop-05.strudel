@@ -1,0 +1,10 @@
+// @title chill-pop-05
+// @genre chill-pop
+// @details denser hats (hh*8) + triangle hook
+setcpm(110/4)
+// drums
+$: s("bd*4, [~ sd]*2, hh*8").gain(0.52)
+// bass
+$: note("0 0 4 2").scale("C2:major").s("sawtooth").lpf(480).gain(0.5)
+// hook
+$: note("4 2 0 <7 9>").scale("C4:major").s("triangle").lpf(2400).gain(0.2)

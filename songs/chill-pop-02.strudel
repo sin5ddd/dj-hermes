@@ -1,0 +1,10 @@
+// @title chill-pop-02
+// @genre chill-pop
+// @details brighter: open saw + spread plk:lp hook (no cut on chords)
+setcpm(110/4)
+// drums
+$: s("bd*4, [~ sd]*2, [~ hh]*4").gain(0.5)
+// bass
+$: note("0 0 4 2").scale("C3:major").s("sawtooth").lpf(1200).gain(0.42)
+// hook
+$: note("[0,4,9] ~ [0,4,9] ~").scale("C4:major").s("plk:lp").gain(0.3)

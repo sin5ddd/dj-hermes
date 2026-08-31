@@ -1,0 +1,10 @@
+// @title chill-pop-07
+// @genre chill-pop
+// @details mixolydian (darker than major) saw + square hook
+setcpm(110/4)
+// drums
+$: s("bd*4, [~ sd]*2, [~ hh]*4").gain(0.5)
+// bass
+$: note("0 0 4 2").scale("C2:mixolydian").s("sawtooth").lpf(440).gain(0.48)
+// hook
+$: note("0 2 4 <6 7>").scale("C4:mixolydian").s("square").lpf(2300).gain(0.18)

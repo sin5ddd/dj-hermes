@@ -1,0 +1,11 @@
+// @title lofi-hiphop-06
+// @genre lofi-hiphop
+// @details dorian, roomier chords
+setcpm(80/4)
+// drums
+$: s("bd:lf ~ ~ sd, [~ hh]*4").gain(0.4)
+// chords
+$: note("[0,2,4] ~ [0,4,5] ~").scale("C3:dorian").s("triangle").lpf(1300).gain(0.3)
+  .attack(0.08).release(0.4).room(0.42).orbit(1)
+// bass
+$: note("0 ~ 2 ~").scale("C2:dorian").s("sine").lpf(310).gain(0.42)

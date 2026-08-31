@@ -1,0 +1,10 @@
+// @title ambient-08
+// @genre ambient
+// @details darkest phrygian Reese (bs:dk only sub) + thin sine air
+setcpm(70/4)
+// pad
+$: note("<0 -1>/2").scale("C4:phrygian").s("bs:dk").gain(0.32)
+  .attack(0.2).release(0.55).room(0.48).orbit(1)
+// air
+$: note("<4 5>/2").scale("C4:phrygian").s("sine").lpf(1400).gain(0.1)
+  .attack(0.25).release(0.5).delay(0.32).orbit(2)

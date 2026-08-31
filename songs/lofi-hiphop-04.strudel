@@ -1,0 +1,10 @@
+// @title lofi-hiphop-04
+// @genre lofi-hiphop
+// @details brighter major: sine + spread plk:lp (no cut on chords)
+setcpm(80/4)
+// drums
+$: s("bd:lf ~ ~ sd, [~ hh]*4").gain(0.42)
+// bass
+$: note("0 ~ 2 ~").scale("C3:major").s("sine").lpf(400).gain(0.4)
+// chords
+$: note("[0,4,9] ~ [0,4,9] ~").scale("C4:major").s("plk:lp").gain(0.3)

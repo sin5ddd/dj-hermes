@@ -1,0 +1,11 @@
+// @title ambient-04
+// @genre ambient
+// @details bright major spread organ + monophonic plk:lp
+setcpm(70/4)
+// pad
+$: note("<[0,4,9] [4,7,11]>/2").scale("C3:major").s("wt_organ").lpf(1600).gain(0.36)
+  .attack(0.2).decay(0.25).sustain(0.65).release(0.5)
+  .room(0.4).orbit(1)
+// pluck
+$: note("~ 4 ~ 7").scale("C4:major").s("plk:lp").gain(0.2).cut(1)
+  .delay(0.22).orbit(2)

@@ -1,0 +1,11 @@
+// @title lofi-hiphop-10
+// @genre lofi-hiphop
+// @details ep:ky close chords (C4 native) + bd:lf + sine
+setcpm(80/4)
+// drums
+$: s("bd:lf ~ ~ sd, [~ hh]*4").gain(0.44)
+// chords
+$: note("[0,2,4] ~ [0,4,7] ~").scale("C4:minor").s("ep:ky").gain(0.28)
+  .attack(0.01).release(0.3).room(0.32).orbit(1)
+// bass
+$: note("0 ~ 2 ~").scale("C2:minor").s("sine").lpf(300).gain(0.42)

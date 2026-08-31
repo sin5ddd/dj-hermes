@@ -1,0 +1,11 @@
+// @title lofi-hiphop-08
+// @genre lofi-hiphop
+// @details denser kit (oh accent) still not packed hats
+setcpm(80/4)
+// drums
+$: s("bd:lf ~ ~ sd, [~ hh]*4, ~ oh ~ ~").gain(0.46)
+// chords
+$: note("[0,2,4] ~ [0,3,5] ~").scale("C3:minor").s("triangle").lpf(1200).gain(0.32)
+  .attack(0.05).release(0.3).room(0.28).orbit(1)
+// bass
+$: note("0 0 2 ~").scale("C2:minor").s("sine").lpf(300).gain(0.44)

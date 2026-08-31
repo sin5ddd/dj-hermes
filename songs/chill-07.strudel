@@ -1,0 +1,10 @@
+// @title chill-07
+// @genre chill
+// @details phrygian dark: square sub + close bs:rm mid (no PCM sub)
+setcpm(100/4)
+// drums
+$: s("bd ~ ~ ~").gain(0.38)
+// bass
+$: note("0 ~ 2 ~").scale("C2:phrygian").s("square").lpf(140).gain(0.36)
+// chords
+$: note("[0,2,4] ~ ~ ~").scale("C4:phrygian").s("bs:rm").gain(0.2)

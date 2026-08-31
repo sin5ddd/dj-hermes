@@ -1,0 +1,11 @@
+// @title ambient-09
+// @genre ambient
+// @details barely drums + hollow pf:ff + fx:up once per 4 bars
+setcpm(70/4)
+// pulse
+$: s("bd ~ ~ ~").gain(0.22)
+// pad
+$: note("0 ~ 0 ~").scale("C4:minor").s("pf:ff").gain(0.26)
+  .attack(0.25).release(0.55).room(0.45).orbit(1)
+// fx
+$: s("<fx:up ~ ~ ~>").gain(0.22)

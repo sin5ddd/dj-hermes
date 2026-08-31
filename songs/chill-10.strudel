@@ -1,0 +1,12 @@
+// @title chill-10
+// @genre chill
+// @details denser four-layer: kit + sine + lead + hollow pf:ff
+setcpm(100/4)
+// drums
+$: s("bd ~ ~ sd, [~ hh]*4").gain(0.45)
+// bass
+$: note("0 ~ 2 0").scale("C2:minor").s("sine").lpf(340).gain(0.46)
+// lead
+$: note("~ 4 ~ 7").scale("C3:minor").s("triangle").gain(0.16)
+// pad
+$: note("0 ~ 0 ~").scale("C4:minor").s("pf:ff").gain(0.18).room(0.35).orbit(2)

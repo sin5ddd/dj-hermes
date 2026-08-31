@@ -1,0 +1,11 @@
+// @title ambient-07
+// @genre ambient
+// @details bright lydian air: spread wt_bright + delayed sine arp
+setcpm(70/4)
+// pad
+$: note("<[0,4,9] [2,4,7]>/2").scale("C4:lydian").s("wt_bright").lpf(2200).gain(0.22)
+  .attack(0.18).decay(0.25).sustain(0.6).release(0.45)
+  .room(0.38).orbit(1)
+// arp
+$: note("0 2 4 7").scale("C4:lydian").s("sine").gain(0.12)
+  .attack(0.08).release(0.35).delay(0.3).orbit(2)

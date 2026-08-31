@@ -1,0 +1,10 @@
+// @title chill-pop-08
+// @genre chill-pop
+// @details lydian bright: open saw + monophonic plk:lp hook
+setcpm(110/4)
+// drums
+$: s("bd*4, [~ sd]*2, [~ hh]*4").gain(0.5)
+// bass
+$: note("0 0 4 2").scale("C3:lydian").s("sawtooth").lpf(1000).gain(0.4)
+// hook
+$: note("0 3 4 <7 8>").scale("C4:lydian").s("plk:lp").gain(0.28).cut(1)

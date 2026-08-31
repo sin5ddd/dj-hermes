@@ -1,0 +1,11 @@
+// @title lofi-hiphop-07
+// @genre lofi-hiphop
+// @details phrygian dusty: dark hat + close chords
+setcpm(80/4)
+// drums
+$: s("bd:lf ~ ~ ~, [~ hh:dk]*4").gain(0.38)
+// chords
+$: note("[0,2,4] ~ ~ ~").scale("C3:phrygian").s("triangle").lpf(800).gain(0.28)
+  .attack(0.07).release(0.4).room(0.4).orbit(1)
+// bass
+$: note("0 ~ -1 ~").scale("C2:phrygian").s("sine").lpf(260).gain(0.4)

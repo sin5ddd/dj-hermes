@@ -1,0 +1,10 @@
+// @title chill-09
+// @genre chill
+// @details sparse kit + sine bass + fx:up once per 4 bars
+setcpm(100/4)
+// drums
+$: s("bd ~ ~ sd, [~ hh]*4").gain(0.42)
+// bass
+$: note("0 ~ 2 ~").scale("C2:minor").s("sine").lpf(350).gain(0.48)
+// fx
+$: s("<fx:up ~ ~ ~>").gain(0.24)

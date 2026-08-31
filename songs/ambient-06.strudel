@@ -1,0 +1,10 @@
+// @title ambient-06
+// @genre ambient
+// @details sparsest drone: slow organ + floor sub only (bs:su)
+setcpm(70/4)
+// pad
+$: note("<0 2>/4").scale("C3:minor").s("wt_organ").lpf(800).gain(0.34)
+  .attack(0.4).decay(0.4).sustain(0.8).release(0.8)
+  .room(0.58).orbit(1)
+// floor
+$: note("<0 0>/2").scale("C4:minor").s("bs:su").gain(0.26)

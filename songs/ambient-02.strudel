@@ -1,0 +1,11 @@
+// @title ambient-02
+// @genre ambient
+// @details organ pad + bright shimmer, close minor (classic skill bed)
+setcpm(70/4)
+// pad
+$: note("<[0,2,4] [2,4,7]>/2").scale("C3:minor").s("wt_organ").lpf(1100).gain(0.38)
+  .attack(0.25).decay(0.3).sustain(0.7).release(0.55)
+  .room(0.45).orbit(1)
+// shimmer
+$: note("<0 2 4 6>/2").scale("C4:minor").s("wt_bright").vib("5:8").gain(0.16)
+  .attack(0.12).release(0.45).delay(0.25).orbit(2)

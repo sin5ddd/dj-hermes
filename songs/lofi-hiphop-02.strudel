@@ -1,0 +1,11 @@
+// @title lofi-hiphop-02
+// @genre lofi-hiphop
+// @details sparsest: bd:lf only + one close chord + sine
+setcpm(80/4)
+// drums
+$: s("bd:lf ~ ~ ~").gain(0.42)
+// chords
+$: note("[0,2,4] ~ ~ ~").scale("C3:minor").s("triangle").lpf(1100).gain(0.32)
+  .attack(0.06).release(0.35).room(0.35).orbit(1)
+// bass
+$: note("0 ~ ~ ~").scale("C2:minor").s("sine").lpf(280).gain(0.42)

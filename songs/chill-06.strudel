@@ -1,0 +1,10 @@
+// @title chill-06
+// @genre chill
+// @details dorian mid: sine bass + triangle hook
+setcpm(100/4)
+// drums
+$: s("bd ~ ~ ~, [~ hh]*4").gain(0.4)
+// bass
+$: note("0 ~ 2 4").scale("C2:dorian").s("sine").lpf(360).gain(0.48)
+// lead
+$: note("~ 4 ~ <5 7>").scale("C3:dorian").s("triangle").gain(0.2)

@@ -1,0 +1,13 @@
+// @title ambient-05
+// @genre ambient
+// @details denser three-layer: organ + shimmer + pulse, close minor
+setcpm(70/4)
+// pad
+$: note("<[0,2,4] [0,2,4,7]>/2").scale("C3:minor").s("wt_organ").lpf(1000).gain(0.36)
+  .attack(0.22).decay(0.3).sustain(0.7).release(0.5)
+  .room(0.42).orbit(1)
+// shimmer
+$: note("<0 2 4 7>/2").scale("C4:minor").s("wt_bright").vib("5:8").gain(0.15)
+  .attack(0.1).release(0.4).delay(0.25).orbit(2)
+// pulse
+$: note("0 ~ 4 ~").scale("C2:minor").s("sine").lpf(360).gain(0.2)

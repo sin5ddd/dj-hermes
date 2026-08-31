@@ -1,0 +1,10 @@
+// @title ambient-03
+// @genre ambient
+// @details dark Reese bed (bs:dk only sub) + delayed shimmer
+setcpm(70/4)
+// pad
+$: note("<0 3>/2").scale("C4:minor").s("bs:dk").gain(0.3)
+  .attack(0.15).release(0.5).room(0.4).orbit(1)
+// shimmer
+$: note("<0 2 4 6>/2").scale("C4:minor").s("wt_bright").vib("4:6").gain(0.12)
+  .attack(0.15).release(0.5).delay(0.28).orbit(2)

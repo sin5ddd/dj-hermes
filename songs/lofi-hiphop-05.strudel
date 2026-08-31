@@ -1,0 +1,11 @@
+// @title lofi-hiphop-05
+// @genre lofi-hiphop
+// @details boom-bap: bd:lf on 1, sd on 3
+setcpm(80/4)
+// drums
+$: s("bd:lf ~ sd ~, [~ hh]*4").gain(0.48)
+// chords
+$: note("[0,2,4] ~ [4,6,8] ~").scale("C3:minor").s("triangle").lpf(1150).gain(0.32)
+  .attack(0.05).release(0.3).room(0.3).orbit(1)
+// bass
+$: note("0 ~ 0 3").scale("C2:minor").s("sine").lpf(300).gain(0.44)

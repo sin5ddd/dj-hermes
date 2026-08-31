@@ -1,0 +1,10 @@
+// @title chill-pop-04
+// @genre chill-pop
+// @details darker minor hook over bs:dk (only sub)
+setcpm(110/4)
+// drums
+$: s("bd*4, [~ hh]*4").gain(0.48)
+// bass
+$: note("0 3 0 <0 -1>").scale("C4:minor").s("bs:dk").gain(0.32)
+// hook
+$: note("0 2 4 <3 0>").scale("C4:minor").s("square").lpf(1800).gain(0.16)

@@ -1,0 +1,8 @@
+// @title chill-02
+// @genre chill
+// @details sparsest: kick only + bs:su floor (no second sub)
+setcpm(100/4)
+// drums
+$: s("bd ~ ~ ~").gain(0.4)
+// bass
+$: note("0 ~ ~ 0").scale("C4:minor").s("bs:su").gain(0.38)
