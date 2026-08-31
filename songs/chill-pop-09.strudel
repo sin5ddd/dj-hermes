@@ -1,0 +1,10 @@
+// @title chill-pop-09
+// @genre chill-pop
+// @details 808 boom + sine sub + fx:up once per 4 bars
+setcpm(100/4)
+// drums
+$: s("bd:8b*4, [~ hh]*4").gain(0.48)
+// bass
+$: note("0 0 ~ 4").scale("C4:major").s("bs:ss").gain(0.4)
+// fx
+$: s("<fx:up ~ ~ ~>").gain(0.24)

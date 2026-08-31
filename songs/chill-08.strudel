@@ -1,0 +1,10 @@
+// @title chill-08
+// @genre chill
+// @details cinematic kick + 808 sub + fx:up once per 4 bars
+setcpm(90/4)
+// drums
+$: s("bd:cn ~ ~ sd, [~ hh]*4").gain(0.4)
+// bass
+$: note("0 ~ 2 ~").scale("C4:minor").s("bs:8s").gain(0.36)
+// fx
+$: s("<fx:up ~ ~ ~>").gain(0.22)

@@ -1,0 +1,10 @@
+// @title lofi-hiphop-05
+// @genre lofi-hiphop
+// @details rim backbeat + tight bass + descending hook
+setcpm(84/4)
+// drums
+$: s("bd:lf ~ ~ sd:rm").gain(0.44)
+// bass
+$: note("0 0 ~ 2").scale("C4:minor").s("bs:ht").gain(0.4)
+// lead
+$: note("~ 5 3 0").scale("C4:minor").s("triangle").lpf(1400).gain(0.2)

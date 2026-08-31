@@ -1,0 +1,10 @@
+// @title lofi-hiphop-10
+// @genre lofi-hiphop
+// @details oh accent + acid bass + monophonic ld:ss
+setcpm(84/4)
+// drums
+$: s("bd:lf ~ sd ~, ~ oh ~ ~").gain(0.44)
+// bass
+$: note("0 ~ -1 0").scale("C4:minor").s("bs:ac").gain(0.36)
+// lead
+$: note("5 ~ 0 3").scale("C4:minor").s("ld:ss").gain(0.22).cut(1)

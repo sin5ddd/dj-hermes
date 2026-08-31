@@ -1,0 +1,11 @@
+// @title chill-02
+// @genre chill
+// @details 808 boom + sine sub + hollow pf:ff
+setcpm(90/4)
+// drums
+$: s("bd:8b ~ ~ ~").gain(0.38)
+// bass
+$: note("0 ~ ~ 0").scale("C4:minor").s("bs:su").gain(0.36)
+// pad
+$: note("0 ~ 0 ~").scale("C4:minor").s("pf:ff").gain(0.22)
+  .attack(0.15).release(0.4).room(0.38).orbit(1)

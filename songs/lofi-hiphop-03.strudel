@@ -1,0 +1,11 @@
+// @title lofi-hiphop-03
+// @genre lofi-hiphop
+// @details boom-bap + house floor + moving close chords
+setcpm(84/4)
+// drums
+$: s("bd:lf ~ sd ~").gain(0.46)
+// bass
+$: note("0 ~ 4 0").scale("C4:minor").s("bs:hf").gain(0.4)
+// lead
+$: note("[0,2,4] ~ [4,6,8] ~").scale("C4:minor").s("triangle").lpf(1150).gain(0.3)
+  .attack(0.05).release(0.3).room(0.3).orbit(1)

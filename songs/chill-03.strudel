@@ -1,0 +1,10 @@
+// @title chill-03
+// @genre chill
+// @details dry kick + dark Reese + close triad
+setcpm(90/4)
+// drums
+$: s("bd:dc ~ ~ sd").gain(0.4)
+// bass
+$: note("0 3 0 <0 -1>").scale("C4:minor").s("bs:dk").gain(0.32)
+// lead
+$: note("[0,2,4] ~ [0,2,4] ~").scale("C4:minor").s("triangle").lpf(1000).gain(0.22)

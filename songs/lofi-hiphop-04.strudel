@@ -1,0 +1,10 @@
+// @title lofi-hiphop-04
+// @genre lofi-hiphop
+// @details dark hat + mid Reese + close plk:lp
+setcpm(84/4)
+// drums
+$: s("bd:lf ~ ~ sd, [~ hh:dk]*4").gain(0.42)
+// bass
+$: note("0 ~ 0 3").scale("C4:minor").s("bs:rm").gain(0.26)
+// lead
+$: note("[0,2,4] ~ [0,2,4] ~").scale("C4:minor").s("plk:lp").gain(0.28)

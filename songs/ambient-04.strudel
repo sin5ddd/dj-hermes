@@ -1,0 +1,11 @@
+// @title ambient-04
+// @genre ambient
+// @details dry kick + tight house bass + monophonic plk:lp
+setcpm(70/4)
+// drums
+$: s("bd:dc ~ ~ sd").gain(0.22)
+// bass
+$: note("0 0 ~ 4").scale("C4:minor").s("bs:ht").gain(0.34)
+// lead
+$: note("~ 3 ~ 7").scale("C4:minor").s("plk:lp").gain(0.2).cut(1)
+  .delay(0.22).orbit(2)

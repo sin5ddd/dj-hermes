@@ -1,0 +1,10 @@
+// @title chill-10
+// @genre chill
+// @details dnb-tight kick + amen sub + monophonic ld:ss
+setcpm(90/4)
+// drums
+$: s("bd:dn ~ ~ sd, ~ ~ ~ oh").gain(0.42)
+// bass
+$: note("0 0 ~ 2").scale("C4:minor").s("bs:am").gain(0.36)
+// lead
+$: note("7 ~ 4 0").scale("C4:minor").s("ld:ss").gain(0.22).cut(1)

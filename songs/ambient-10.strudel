@@ -1,0 +1,12 @@
+// @title ambient-10
+// @genre ambient
+// @details growl kick + sub-bass + evolving FM lead
+setcpm(70/4)
+// drums
+$: s("bd:ng ~ ~ sd").gain(0.22)
+// bass
+$: note("0 0 3 0").scale("C4:minor").s("bs:sb").gain(0.24)
+// lead
+$: note("3 0 5 3").scale("C4:minor")
+  .s("sine").fm(3).fmh(2).fmatt(0.01).fmdec(0.3).fmsus(0.25)
+  .lpf(1600).lpenv(2).gain(0.16)

@@ -1,0 +1,10 @@
+// @title chill-pop-05
+// @genre chill-pop
+// @details denser hats + supersaw bass + wide major hook
+setcpm(100/4)
+// drums
+$: s("bd:jg*4, [~ sd]*2, hh*8").gain(0.52)
+// bass
+$: note("0 2 4 0").scale("C4:major").s("bs:sw").gain(0.38)
+// lead
+$: note("2 4 7 <9 11>").scale("C4:major").s("triangle").lpf(2400).gain(0.2)

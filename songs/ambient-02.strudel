@@ -1,0 +1,11 @@
+// @title ambient-02
+// @genre ambient
+// @details cinematic bd:cn + dark Reese + slow shimmer
+setcpm(70/4)
+// drums
+$: s("bd:cn ~ ~ ~, ~ ~ hh ~").gain(0.2)
+// bass
+$: note("0 3 0 <0 -1>").scale("C4:minor").s("bs:dk").gain(0.3)
+// lead
+$: note("<0 2 4 6>/2").scale("C4:minor").s("wt_bright").vib("5:8").gain(0.14)
+  .attack(0.15).release(0.5).delay(0.28).orbit(2)

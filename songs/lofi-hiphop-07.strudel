@@ -1,0 +1,11 @@
+// @title lofi-hiphop-07
+// @genre lofi-hiphop
+// @details boom-bap hats + dark Reese + organ pad
+setcpm(84/4)
+// drums
+$: s("bd:lf ~ sd ~, [~ hh]*4").gain(0.44)
+// bass
+$: note("0 3 ~ 2").scale("C4:minor").s("bs:rd").gain(0.3)
+// pad
+$: note("<[0,2,4] [2,4,7]>").scale("C3:minor").s("wt_organ").lpf(1000).gain(0.26)
+  .attack(0.1).release(0.4).room(0.4).orbit(1)

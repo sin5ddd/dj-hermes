@@ -1,0 +1,10 @@
+// @title chill-04
+// @genre chill
+// @details punch kick + mid Reese + plk:lp close chords
+setcpm(90/4)
+// drums
+$: s("bd:9p ~ ~ ~, [~ hh]*4").gain(0.4)
+// bass
+$: note("0 ~ 4 ~").scale("C4:minor").s("bs:rm").gain(0.28)
+// lead
+$: note("[0,2,4] ~ [0,3,5] ~").scale("C4:minor").s("plk:lp").gain(0.26)

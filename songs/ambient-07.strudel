@@ -1,0 +1,11 @@
+// @title ambient-07
+// @genre ambient
+// @details house kick + sine sub + slow hollow fifth
+setcpm(70/4)
+// drums
+$: s("bd:hf ~ ~ ~").gain(0.2)
+// bass
+$: note("<0 0>/2").scale("C4:minor").s("bs:ss").gain(0.26)
+// pad
+$: note("<0 3>/2").scale("C4:minor").s("pf:ff").gain(0.24)
+  .attack(0.35).release(0.65).room(0.52).orbit(1)

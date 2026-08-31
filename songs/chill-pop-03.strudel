@@ -1,0 +1,10 @@
+// @title chill-pop-03
+// @genre chill-pop
+// @details disco kick + bright Reese + baked major stab plk:s3
+setcpm(100/4)
+// drums
+$: s("bd:dc*4, [~ cp]*2, [~ hh]*4").gain(0.5)
+// bass
+$: note("0 ~ 4 2").scale("C4:major").s("bs:rb").gain(0.38)
+// lead
+$: note("0 ~ 0 ~").scale("C4:major").s("plk:s3").gain(0.24)

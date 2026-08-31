@@ -1,0 +1,10 @@
+// @title lofi-hiphop-08
+// @genre lofi-hiphop
+// @details sparse kit + amen sub + fx:up once per 4 bars
+setcpm(84/4)
+// drums
+$: s("bd:lf ~ ~ sd").gain(0.42)
+// bass
+$: note("0 ~ 2 0").scale("C4:minor").s("bs:am").gain(0.36)
+// fx
+$: s("<fx:up ~ ~ ~>").gain(0.22)

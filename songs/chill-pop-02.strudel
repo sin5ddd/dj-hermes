@@ -1,0 +1,10 @@
+// @title chill-pop-02
+// @genre chill-pop
+// @details 909 punch + tight bass + spread plk:lp
+setcpm(100/4)
+// drums
+$: s("bd:9p*4, [~ sd]*2, [~ hh]*4").gain(0.5)
+// bass
+$: note("0 0 4 0").scale("C4:major").s("bs:ht").gain(0.42)
+// lead
+$: note("[0,4,9] ~ [0,4,9] ~").scale("C4:major").s("plk:lp").gain(0.3)

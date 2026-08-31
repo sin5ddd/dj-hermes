@@ -1,0 +1,11 @@
+// @title lofi-hiphop-06
+// @genre lofi-hiphop
+// @details light hats + 808 sub + ep:ky chords
+setcpm(84/4)
+// drums
+$: s("bd:lf ~ ~ ~, [~ hh]*4").gain(0.4)
+// bass
+$: note("0 ~ ~ 0").scale("C4:minor").s("bs:8s").gain(0.38)
+// lead
+$: note("[0,2,4] ~ [0,4,7] ~").scale("C4:minor").s("ep:ky").gain(0.26)
+  .attack(0.01).release(0.3).room(0.32).orbit(1)

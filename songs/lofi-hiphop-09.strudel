@@ -1,0 +1,10 @@
+// @title lofi-hiphop-09
+// @genre lofi-hiphop
+// @details dark hats + sine sub + stepwise hook
+setcpm(84/4)
+// drums
+$: s("bd:lf ~ ~ ~, [~ hh:dk]*4").gain(0.38)
+// bass
+$: note("0 0 2 ~").scale("C4:minor").s("bs:ss").gain(0.36)
+// lead
+$: note("3 0 2 5").scale("C4:minor").s("triangle").lpf(1300).gain(0.2)

@@ -1,0 +1,10 @@
+// @title ambient-03
+// @genre ambient
+// @details 808 boom + house floor + fx:up once per 4 bars
+setcpm(70/4)
+// drums
+$: s("bd:8b ~ ~ ~").gain(0.24)
+// bass
+$: note("0 ~ 4 0").scale("C4:minor").s("bs:hf").gain(0.32)
+// fx
+$: s("<fx:up ~ ~ ~>").gain(0.22)
