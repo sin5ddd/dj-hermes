@@ -1,12 +1,10 @@
 // @title dnb-reese-06
 // @genre drum and bass
-// @details drop: sparser hats, hollow fifth as 0 ~ 0 ~ @ 174
+// @details amen drop, square + plk:s5 as 0 ~ 0 ~ @ 174
 setcpm(174/4)
 // drums
-$: s("[bd:dn <~ sd:dn> ~ sd:dn ~ <bd:dn ~> <bd:dn sd:dn> <bd:dn ~>, [~ hh:dk]*2, [~@5 oh:dn ~@2]]*2").gain(0.68).lpf(2800)
-// sub
-$: note("0 3 0 <0 -1>").scale("C2:minor").s("square").lpf(120).gain(0.44)
-// mid
-$: note("0 3 0 <0 -1>").scale("C4:minor").s("bs:rm").gain(0.36)
-// stab
+$: s("[bd:dn ~ ~ sd:dn ~ ~ bd:dn sd:dn, [~ hh:dn]*2]*2").gain(0.66).lpf(3000)
+// bass
+$: note("0 ~ 0 ~").scale("C2:minor").s("square").lpf(120).gain(0.44)
+// lead
 $: note("0 ~ 0 ~").scale("C4:minor").s("plk:s5").gain(0.2).cut(1)

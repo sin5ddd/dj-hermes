@@ -1,9 +1,11 @@
 // @title dubstep-08
 // @genre dubstep
-// @details mid-forward wobble + open-hat hits @ 140
+// @details mid wobble, zap kick + ld:ss @ 140
 setcpm(140/4)
 // drums
-$: s("bd:9p ~ ~ bd:9p, [~ ~ sd:tr ~], [~ oh:op]*2").gain(0.54)
-// wobble
-$: note("0 0 3 0").scale("C2:minor").s("sawtooth").lpf(sine.rangex(200, 1400)).lpq(4).gain(0.46)
+$: s("bd:ez ~ ~ bd:ez, [~ ~ sd:tr ~]").gain(0.5)
+// bass
+$: note("0 0 3 0").scale("C2:minor").s("sawtooth").lpf(sine.rangex(200, 900)).lpq(4).gain(0.4)
   .attack(0.006).decay(0.14).sustain(0.42).release(0.08)
+// lead
+$: note("4 ~ 7 ~").scale("C4:minor").s("ld:ss").gain(0.16).cut(1)

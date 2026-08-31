@@ -1,9 +1,11 @@
 // @title electro-08
 // @genre electro
-// @details drop-weight: sparser hats, heavier square @ 126
+// @details tight 808, short square + climbing pluck @ 126
 setcpm(126/4)
 // drums
-$: s("bd:ez*4, [~ sd:8s]*2, [~ hh:dk]*2").gain(0.58)
+$: s("bd:8t*4, [~ sd:8s]*2, hh:tt*8").gain(0.5)
 // bass
-$: note("0 ~ 0 ~ 3 ~ 0 -1").scale("C2:minor").s("square").lpf(420).gain(0.52)
-  .attack(0.002).decay(0.12).sustain(0.22).release(0.06)
+$: note("0 0 ~ 3 0 5 ~ 0").scale("C2:minor").s("square").lpf(480).gain(0.44)
+  .attack(0.001).decay(0.05).sustain(0.12).release(0.03)
+// lead
+$: note("0 2 4 7").scale("C4:minor").s("plk:lp").gain(0.22).cut(1)

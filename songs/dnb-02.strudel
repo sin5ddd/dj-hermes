@@ -1,12 +1,12 @@
 // @title dnb-02
 // @genre drum and bass
-// @details darker amen (kit lpf 2500, mid 800) @ 174
+// @details darker jungle kit, square + saw offbeats @ 174
 setcpm(174/4)
 // drums
-$: s("[bd:dn <~ sd:dn> ~ sd:dn ~ <bd:dn ~> <bd:dn sd:dn> <bd:dn ~>, hh:dk*4, [~@5 oh:dn ~@2]]*2").gain(0.7).lpf(2500)
-// sub
-$: note("0 3 0 <0 -1>").scale("C2:minor").s("square").lpf(120).gain(0.42)
+$: s("[bd:jg ~ sd:jg ~ bd:jg ~ ~ sd:jg, hh:dk*4]*2").gain(0.66).lpf(2500)
+// bass
+$: note("0 ~ 0 3").scale("C2:minor").s("square").lpf(110).gain(0.42)
   .attack(0.01).decay(0.5).release(0.4)
-// mid
-$: note("0 3 0 <0 -1>").scale("C2:minor").s("sawtooth").lpf(800).gain(0.36)
+// lead
+$: note("0 ~ 3 ~").scale("C2:minor").s("sawtooth").lpf(800).gain(0.32)
   .attack(0.01).decay(0.4).release(0.3)

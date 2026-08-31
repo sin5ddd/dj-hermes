@@ -1,13 +1,11 @@
 // @title future-bass-08
 // @genre future-bass
-// @details two-chord parallel degrees, no cut on the stack @ 145
-setcpm(145/4)
+// @details floor kick, bs:hf + moving [0,4,9] @ 140
+setcpm(140/4)
 // drums
-$: s("bd:hf*4, [~ sd:hd]*2, [~ hh:hs]*4, [~ oh:op]*2").gain(0.44)
-// chords
-$: note("[0,2,4] ~ [3,5,7] ~").scale("C3:minor").s("sawtooth").lpf(1500).gain(0.26)
-  .attack(0.022).decay(0.2).sustain(0.4).release(0.16)
-// lead
-$: note("12 11 <9 7> 9").scale("C4:minor").s("square").lpf(3200).gain(0.14)
-// sub
-$: note("0 ~ 3 ~").scale("C4:minor").s("bs:su").gain(0.46)
+$: s("bd:hf*4, [~ sd:hd]*2, [~ hh:hs]*4, [~ oh:op]*2").gain(0.46)
+// bass
+$: note("0 4 0 4").scale("C4:major").s("bs:hf").gain(0.4)
+// pad
+$: note("[0,4,9] ~ [2,4,9] ~").scale("C4:major").s("sawtooth").lpf(1800).gain(0.22)
+  .attack(0.02).decay(0.18).sustain(0.4).release(0.14)

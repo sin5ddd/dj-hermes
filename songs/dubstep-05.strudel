@@ -1,9 +1,11 @@
 // @title dubstep-05
 // @genre dubstep
-// @details busier half-time break, hats + late snare @ 140
+// @details busier half-time, saw wobble + fx:nr @ 140
 setcpm(140/4)
 // drums
-$: s("bd:9p ~ <bd:9p ~> ~, [~ sd:dn ~ sd:rm], hh:cl*8, [~@6 oh:op ~@1]").gain(0.56)
-// wobble
-$: note("0 3 0 <0 -1>").scale("C2:minor").s("sawtooth").lpf(sine.rangex(90, 700)).lpq(6).gain(0.48)
+$: s("bd:ng ~ <bd:ng ~> ~, [~ ~ sd:dn ~], hh:cl*8").gain(0.5)
+// bass
+$: note("0 3 0 <0 -1>").scale("C2:minor").s("sawtooth").lpf(sine.rangex(90, 700)).lpq(6).gain(0.42)
   .attack(0.01).decay(0.18).sustain(0.38).release(0.1)
+// fx
+$: s("<fx:nr ~ ~ ~>").gain(0.22)

@@ -1,9 +1,11 @@
 // @title dubstep-02
 // @genre dubstep
-// @details darker wobble (rangex 60–280) @ 140
+// @details dark wobble + fx:sd @ 140
 setcpm(140/4)
 // drums
-$: s("bd:tc ~ ~ ~, [~ ~ sd:ng ~], hh:dk*4").gain(0.52)
-// wobble
-$: note("0 0 ~ -1").scale("C2:minor").s("sawtooth").lpf(sine.rangex(60, 280)).lpq(6).gain(0.42)
+$: s("bd:tc ~ ~ ~, [~ ~ sd:ng ~], hh:dk*4").gain(0.5)
+// bass
+$: note("0 0 ~ -1").scale("C2:minor").s("sawtooth").lpf(sine.rangex(60, 280)).lpq(6).gain(0.4)
   .attack(0.012).decay(0.22).sustain(0.35).release(0.12)
+// fx
+$: s("<fx:sd ~ ~ ~>").gain(0.28)

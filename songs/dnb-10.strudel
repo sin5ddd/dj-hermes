@@ -1,12 +1,11 @@
 // @title dnb-10
 // @genre drum and bass
-// @details neuro-darker amen (growl kick, mid 800) @ 174
+// @details neuro drop, square + ld:ss hook @ 174
 setcpm(174/4)
 // drums
-$: s("[bd:ng <~ sd:ng> ~ sd:ng ~ <bd:ng ~> <bd:ng sd:ng> <bd:ng ~>, hh:dk*4, [~@5 oh:dn ~@2]]*2").gain(0.68).lpf(2400)
-// sub
-$: note("0 3 0 <0 -1>").scale("C2:minor").s("square").lpf(115).gain(0.43)
+$: s("[bd:ng ~ ~ sd:ng ~ bd:ng ~ sd:ng, hh:dk*4]*2").gain(0.64).lpf(2400)
+// bass
+$: note("0 ~ -1 3").scale("C2:minor").s("square").lpf(115).gain(0.42)
   .attack(0.01).decay(0.55).release(0.4)
-// mid
-$: note("0 3 0 <0 -1>").scale("C2:minor").s("sawtooth").lpf(800).gain(0.34)
-  .attack(0.01).decay(0.45).release(0.32)
+// lead
+$: note("4 ~ 7 4").scale("C4:minor").s("ld:ss").gain(0.18).cut(1)

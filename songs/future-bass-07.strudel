@@ -1,12 +1,10 @@
 // @title future-bass-07
 // @genre future-bass
-// @details hollow fifth pad pf:ff as 0 ~ 0 ~ (not a triad) @ 142
-setcpm(142/4)
+// @details 909 kick, sine + fx:up @ 140
+setcpm(140/4)
 // drums
-$: s("bd:hf*4, [~ sd:hd]*2, [~ hh:hs]*4").gain(0.5)
-// pad
-$: note("0 ~ 0 ~").scale("C4:minor").s("pf:ff").gain(0.22)
-// lead
-$: note("7 9 7 <11 12>").scale("C4:minor").s("square").lpf(2600).gain(0.15)
-// sub
-$: note("0 ~ 0 ~").scale("C4:minor").s("bs:su").gain(0.48)
+$: s("bd:9p*4, [~ sd:9s]*2, [~ hh:hs]*4").gain(0.48)
+// bass
+$: note("0 ~ 0 ~").scale("C2:major").s("sine").lpf(160).gain(0.48)
+// fx
+$: s("<fx:up ~ ~ ~>").gain(0.24)

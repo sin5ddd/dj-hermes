@@ -1,10 +1,11 @@
 // @title dubstep-04
 // @genre dubstep
-// @details drop: sparse kick, bs:su floor only (no other sub) @ 140
+// @details riddim-sparse, square + fx:sd @ 140
 setcpm(140/4)
 // drums
-$: s("bd:8b ~ ~ ~, [~ ~ sd:fb ~]").gain(0.6)
-// sub
-$: note("0 ~ 0 ~").scale("C4:minor").s("bs:su").gain(0.5)
-// air
-$: s("[~ hh:tt]*4").gain(0.18).hpf(8000)
+$: s("bd:8t ~ ~ ~, [~ ~ ~ sd:rm]").gain(0.54)
+// bass
+$: note("0 ~ ~ ~").scale("C2:minor").s("square").lpf(100).gain(0.46)
+  .attack(0.01).decay(0.4).sustain(0.3).release(0.2)
+// fx
+$: s("<fx:sd ~ ~ ~>").gain(0.28)

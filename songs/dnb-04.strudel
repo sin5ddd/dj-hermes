@@ -1,12 +1,11 @@
 // @title dnb-04
 // @genre drum and bass
-// @details amen Reese moved to A minor @ 174
+// @details amen, square + tight plk:dt hook @ 174
 setcpm(174/4)
 // drums
-$: s("[bd:dn <~ sd:dn> ~ sd:dn ~ <bd:dn ~> <bd:dn sd:dn> <bd:dn ~>, hh:dn*4, [~@5 oh:dn ~@2]]*2").gain(0.7).lpf(4000)
-// sub
-$: note("0 3 0 <0 -1>").scale("A2:minor").s("square").lpf(120).gain(0.42)
-  .attack(0.01).decay(0.5).release(0.4)
-// mid
-$: note("0 3 0 <0 -1>").scale("A2:minor").s("sawtooth").lpf(1000).gain(0.38)
-  .attack(0.01).decay(0.4).release(0.3)
+$: s("[bd:dn sd:dn ~ sd:dn bd:dn ~ bd:dn sd:dn, hh:dn*4]*2").gain(0.68).lpf(4000)
+// bass
+$: note("0 0 -1 0").scale("C2:minor").s("square").lpf(120).gain(0.42)
+  .attack(0.01).decay(0.45).release(0.35)
+// lead
+$: note("4 ~ 7 0").scale("C4:minor").s("plk:dt").gain(0.22).cut(1)

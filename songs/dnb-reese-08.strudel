@@ -1,14 +1,10 @@
 // @title dnb-reese-08
 // @genre drum and bass
-// @details amen break + short fx:id (not every bar) @ 174
+// @details jungle roll, square + moving bs:rm @ 174
 setcpm(174/4)
 // drums
-$: s("[bd:dn <~ sd:dn> ~ sd:dn ~ <bd:dn ~> <bd:dn sd:dn> <bd:dn ~>, hh:dn*4, [~@5 oh:dn ~@2]]*2").gain(0.7).lpf(4000)
-// sub
-$: note("0 3 0 <0 -1>").scale("C2:minor").s("square").lpf(120).gain(0.42)
-// mid
-$: note("0 3 0 <0 -1>").scale("C4:minor").s("bs:rm").gain(0.36)
-// stab
-$: note("~ 4 ~ <7 4>").scale("C4:minor").s("plk:s5").gain(0.2).cut(1)
-// fx
-$: s("<fx:id ~ ~ ~>").gain(0.28)
+$: s("[bd:jg <~ sd:jg> ~ sd:jg bd:jg ~ <bd:jg sd:jg> ~, hh:dn*4]*2").gain(0.66).lpf(3600)
+// bass
+$: note("3 0 3 <0 5>").scale("C2:minor").s("square").lpf(120).gain(0.42)
+// lead
+$: note("3 0 3 <0 5>").scale("C4:minor").s("bs:rm").gain(0.34)
