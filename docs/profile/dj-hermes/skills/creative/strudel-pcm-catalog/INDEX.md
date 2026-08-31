@@ -2,7 +2,7 @@
 
 strudel-rs の呼び出しは `s("<part>:<slug>")`。 音程楽器は `note(...).scale("C4:…").s("<part>:<slug>")`。 `in_bank` が no の行はファイルが `samples/` に無い（長尺は既定オフ、または skip）。
 
-生成: `python scripts/import_fm_pcm.py`
+`samples/` にあるキーは `in_bank=yes`。長尺などでファイルが無い行は `no`。
 
 ## `bd`
 

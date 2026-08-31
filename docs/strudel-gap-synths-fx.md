@@ -3,7 +3,7 @@
 本ドキュメントは、[Strudel 公式](https://strudel.cc/learn/synths/) の **Synths / Effects**（および関連する Samples 音源まわり）のうち、**strudel-rs に無い、または一部だけあるもの**を列挙する。
 
 - **正本の実装判定:** `src/code.rs` の `apply_method`、`src/sound.rs` の `WAVEFORM_NAMES` / `resolve_sound`、`src/synth.rs` の `Wave` / `NoiseKind` / `builtin_wavetable`
-- **対応済みの使い方（Skill）:** `docs/skills/strudel-sound-design/SKILL.md`（展示見本は `docs/profile/dj-hermes/skills/creative/strudel-sound-design/`）
+- **対応済みの使い方（Skill）:** `docs/profile/dj-hermes/skills/creative/strudel-sound-design/SKILL.md`
 - **公式参照:**
   - Synths: https://strudel.cc/learn/synths/
   - Effects: https://strudel.cc/learn/effects/

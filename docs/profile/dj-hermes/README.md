@@ -13,7 +13,7 @@
 | `SOUL.md` | 展示向け人格 |
 | `profile.yaml` | プロファイル説明 |
 | `.no-bundled-skills` | バンドル skills を載せないマーカー（公式カタログは入れない） |
-| `skills/creative/strudel-*` | 作曲用ローカル skills（15 本） |
+| `skills/creative/strudel-*` | 作曲用ローカル skills（22 本。正本はこのツリー） |
 
 **含めないもの（マシン固有・秘密）**
 
@@ -31,7 +31,10 @@
 | `strudel-composition` | 正本: 短いループ + mini + ライブ差分 save |
 | `strudel-data-format` | ファイル形式・メタデータ（2–5 トラック目安） |
 | `strudel-sound-design` | 波形・エフェクト・音色（ライブで触るツマミ） |
-| `strudel-genre-*` | ジャンル別の短いレシピ（16 小節 cat は書かない） |
+| `strudel-pcm-catalog` | rust-fm-synthe `part:slug`（INDEX 付き） |
+| `strudel-live-edit` | 自然言語 → 1 トラック / 1 メソッドの差分 |
+| `strudel-genre-*` | ジャンル別レシピ（16 小節 cat は書かない） |
+| その他 | `strudel-minor-scale-loop` / `strudel-mood-bright-dark` など |
 
 エージェントは `skills_list` / `skill_view` で必要なものだけ読む（progressive disclosure）。  
 まず `strudel-composition`。`skill_manage` の書き込みは見本 config で `skills.write_approval: true`（承認待ち）。
@@ -83,7 +86,7 @@ hermes --profile dj-hermes model
 hermes --profile dj-hermes tools list --platform cli
 #   → skills が enabled、他の危険 toolset は disabled
 hermes --profile dj-hermes skills list --source local --enabled-only
-#   → strudel-composition など 15 本
+#   → strudel-composition など 22 本
 hermes --profile dj-hermes mcp list
 # dj/play 起動後（MCP は HTTP /mcp — exe spawn なし）:
 hermes --profile dj-hermes mcp test strudel
@@ -112,7 +115,7 @@ hermes --profile dj-hermes skills list --source local --enabled-only
 2. **内蔵 toolset は skills 以外 off** + `agent.disabled_toolsets` で x_search 等の自動有効化も封じる  
    （`skills` は skill_view 用に **許可**。shell / file は禁止のまま）
 3. MCP は **strudel のみ**、`strudel_hush` は exclude（緊急停止はオペレータの `/hush` / Esc）
-4. **バンドル skills は載せない**（`.no-bundled-skills`）。同梱は strudel 作曲用 15 本だけ（**strudel-rs 記法のみ**）
+4. **バンドル skills は載せない**（`.no-bundled-skills`）。同梱は strudel 作曲用 22 本だけ（**strudel-rs 記法のみ**）
 5. `skills.write_approval: true` で skill ファイルの作成・編集をオペレータ承認制に
 6. `hermes tools disable` を後から再実行すると `platform_toolsets` が書き換わることがある → 変更後は必ず `tools list` で確認
 7. **`tools.tool_search.enabled: off`** — MCP を tool_search の後ろに隠さない（ローカル小モデル向け）
@@ -128,7 +131,6 @@ skills / SOUL / MCP は次で揃えている:
 - ディスク保存は明示時のみ `strudel_save_song`（演奏は変えない）
 - 未実装メソッド（`.lfo`）や未同梱 `cp` は例に出さない。スカラー `.add` / `.sub` / `.ply` は可
 - 自然言語編集は skill `strudel-live-edit`
-- 検査: `python scripts/lint_strudel_skills.py`
 
 ## ライブ profile からの再エクスポート
 

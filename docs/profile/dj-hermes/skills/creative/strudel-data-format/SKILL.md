@@ -1,7 +1,7 @@
 ---
 name: strudel-data-format
-description: "Use when writing short .strudel live-loop files for strudel-rs save/load."
-version: 3.1.0
+description: "Use when writing short .strudel live-loop files for strudel-rs apply/save (MCP)."
+version: 4.1.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -10,7 +10,6 @@ metadata:
     related_skills:
       - strudel-composition
       - strudel-sound-design
-      - strudel-live-edit
 ---
 
 # strudel-rs 曲ファイル形式
@@ -70,15 +69,21 @@ $: note("0 2 4 [6,8] 0 2 4 [7,9]").scale("C4:minor")
 | `deck` | 任意 `A` / `B` — content 省略時のスナップショット元。ロードしない |
 | `overwrite` | 既定 true |
 
-**ライブ時**: 鳴らすのは apply。同じファイルへ残すのは来場者が残してと言ったときだけ。
+**ライブ時**: 鳴らすのは apply。同じファイルへ残すのは来場者が残してと言ったときだけ。save は演奏を変えない。保存済みを鳴らすのは `strudel_load_song(path=<basename>, deck)`（`songs/` プレフィックス無し。ユーザーライブラリ → 同梱 `songs/` の順）。
 
-## 禁止（保存すると 400 または再生失敗）
+## strudel_load_song
+
+| 引数 | 意味 |
+| --- | --- |
+| `path` | ベース名のみ（例 `visitor-house`）。`songs/` を付けない |
+| `deck` | `A` / `B` — 次小節でロード |
+
+## 禁止（apply / save すると 400 または再生失敗）
 
 - `stack(...)` / `).cpm(...)` / 裸の `s("bd")` 行（`$:` 無し）  
-- 未実装: `.lfo(...)`（メソッド名）、未同梱 `cp`、`vib("<…>")` など一部の動的引数  
-- 可: `.scale("<…>")` 進行、`.lpf("<400 1200>")` / `.lpf(sine.rangex(500,4000))`、`.add` / `.sub` / `.ply`
-
-- `sine.range(...)` などの本家 JS ヘルパ  
+- 未実装: `.lfo(...)`（メソッド名）、`vib("<…>")`、mini の `bd(3,8)`（`(` は unexpected char）
+- 可: `.scale("<…>")` 進行、`.lpf("<400 1200>")` / `.lpf(sine.rangex(500,4000))` / `.lpf(sine.range(200,2000).slow(4))`、`.add` / `.sub`（スカラーまたは mini。LFO は不可） / `.ply`（整数スカラー） / `.pan(0)`
+- `cp` は同梱（`samples/cp/00.wav`）。ハウス 2/4 用。テクノキック前には載せない  
 
 ## Pitfalls
 

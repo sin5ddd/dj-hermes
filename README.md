@@ -61,7 +61,7 @@ strudel-rs play songs/skill-sidechain-ducking.strudel --headless --seconds 8
 strudel-rs play songs/skill-acid-303-filter-envelope.strudel --seconds 12
 ```
 
-Recipes (Cursor `SKILL.md` + playable `songs/skill-*.strudel`): [docs/skills/](./docs/skills/).
+Recipes (Cursor `SKILL.md` + playable `songs/skill-*.strudel`): [docs/profile/dj-hermes/skills/creative/](./docs/profile/dj-hermes/skills/creative/).
 
 - **既定はループ再生**（終了: TUI なら `q` / Esc、`--headless` なら Ctrl+C）
 - `--seconds N`: N 秒で自動停止（スクリプト向け）
@@ -91,7 +91,7 @@ Recipes (Cursor `SKILL.md` + playable `songs/skill-*.strudel`): [docs/skills/](.
   - 互換: `play --repl` / `play --repl-text` も同じセッションを起動（A/B 2 曲可）
   - 展示向け Hermes 手順・プロンプトインジェクション対策: [docs/exhibit/README.md](./docs/exhibit/README.md)
 - サンプルは `./samples`（Sonic Pi 由来 CC0、**Git LFS**）。曲は `songs/*.strudel`
-- **記法 → リズム / 和声 / DJ の対応**と再利用スキル: [docs/skills/README.md](./docs/skills/README.md)（例: `songs/skill-four-on-the-floor.strudel`, `songs/skill-minor-scale-loop.strudel`）
+- **記法 → リズム / 和声 / DJ の対応**と再利用スキル: [docs/profile/dj-hermes/skills/creative/README.md](./docs/profile/dj-hermes/skills/creative/README.md)（例: `songs/skill-four-on-the-floor.strudel`, `songs/skill-minor-scale-loop.strudel`）
 - 出力デバイスが無い環境ではエラー終了（`cargo test` / build はデバイス不要）
 
 ## パターン記法の拡張（Task 23–24）

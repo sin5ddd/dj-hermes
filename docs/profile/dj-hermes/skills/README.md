@@ -23,9 +23,11 @@ skills/
 
 各ディレクトリに `SKILL.md` が必要（agentskills.io / Hermes 互換）。
 
+楽曲レシピの索引（記法 → リズム / 和声 / DJ）は [creative/README.md](./creative/README.md)。
+
 ## リポジトリ正本とプロファイルへのコピー
 
-**正本はこのリポジトリの `docs/profile/dj-hermes/skills/`** です。
+**正本はこのリポジトリの `docs/profile/dj-hermes/skills/creative/`** です（旧 `docs/skills/` から移した）。
 
 ```powershell
 $src = "docs\profile\dj-hermes\skills\creative"
@@ -36,12 +38,6 @@ Copy-Item -Recurse -Force $src $dst
 ```bash
 mkdir -p "$PROFILE_DIR/skills"
 cp -R docs/profile/dj-hermes/skills/creative "$PROFILE_DIR/skills/"
-```
-
-## 検査
-
-```bash
-python scripts/lint_strudel_skills.py
 ```
 
 ## Hermes 側の注意

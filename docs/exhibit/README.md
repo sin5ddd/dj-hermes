@@ -20,7 +20,7 @@
 2. その profile では **危険 toolset を無効**（terminal / file / browser / web など）。**skills のみ許可**（作曲ガイドの skill_view）
 3. `strudel_hush` は MCP から **exclude 推奨**（緊急停止はオペレータが `/hush` または Esc）
 4. strudel-rs 側でも入力長・制御文字・連打間隔・timeout を制限済み（ターン上限は profile の `agent.max_turns`）
-5. バンドル skills は載せない。同梱は `strudel-*` 作曲用 15 本 + `skills.write_approval: true`
+5. バンドル skills は載せない。同梱は `strudel-*` 作曲用 22 本 + `skills.write_approval: true`
 
 LLM は 100% 命令に従いません。最終防衛は **使えるツールが strudel MCP と skill_view だけ**であることです。
 
@@ -70,7 +70,7 @@ mcp_servers:
 - `agent.disabled_toolsets` で terminal / file / web / image_gen 等を封じる（**skills は含めない**）
 - `tools.tool_search.enabled: off`（MCP を deferred にせずフル schema を常時表示。**ローカル小モデル向け必須**）
 - `skills.write_approval: true`（skill ファイル書き込みは承認制）
-- `skills/creative/strudel-*` を profile にコピー（15 本、**strudel-rs 専用記法**）。バンドル skills は `.no-bundled-skills` で入れない
+- `skills/creative/strudel-*` を profile にコピー（22 本、**strudel-rs 専用記法**）。バンドル skills は `.no-bundled-skills` で入れない
 - 展示はネット不通を想定し **ローカル小モデル** を既定にする
 
 手作業で危険 toolset を落とす場合の例（**skills は disable しない**）:
@@ -92,7 +92,7 @@ hermes --profile dj-hermes tools enable --platform cli skills
 hermes --profile dj-hermes tools list --platform cli
 # → skills enabled、他の危険 toolset disabled、MCP strudel あり
 hermes --profile dj-hermes skills list --source local --enabled-only
-# → strudel-composition など 15
+# → strudel-composition など 22
 hermes --profile dj-hermes mcp list
 ```
 
@@ -131,7 +131,7 @@ hermes --profile dj-hermes mcp list
 | 個人の memory/スキルが混ざる | 別 profile を使っていない |
 | 作曲 save が「システムエラー」 | `profiles/dj-hermes/logs/errors.log`。`missing required name, content` → 引数名誤り。`expected '$: code'` → content が stack 形式。API 自体は `$:` なら 200 |
 | MCP が deferred / 引数を間違える | `tools.tool_search.enabled: off` が profile に入っているか。docs を live profile に再コピー |
-| skill に stack 例が残る | `python scripts/lint_strudel_skills.py` と skills 同期 |
+| skill に stack 例が残る | `docs/profile/dj-hermes/skills/creative/` のフェンスを直してライブ profile へ再コピー |
 
 ## 限界
 

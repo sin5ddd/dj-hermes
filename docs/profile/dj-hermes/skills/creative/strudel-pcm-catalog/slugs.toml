@@ -1,6 +1,5 @@
 # rust-fm-synthe preset id → strudel part + 2–3 char slug.
-# Unique per part. skip=true means do not copy WAV (use alias key instead).
-# Generated from scripts/fm_pcm_slugs.py — edit that file and re-run emit.
+# Unique per part. skip=true means no extra WAV (use alias key instead).
 
 [e]
 "bd-808-boom" = { part = "bd", slug = "8b" }
@@ -115,7 +114,7 @@
 "growl-bass" = { part = "bs", slug = "gr" }
 "sub-bass" = { part = "bs", slug = "sb" }
 "supersaw-bass" = { part = "bs", slug = "sw" }
-"reese-mid" = { part = "bs", slug = "rm", skip = true, alias = "reese-mid" }
+"reese-mid" = { part = "bs", slug = "rm", skip = true, alias = "bs:rm" }
 "ep-muted" = { part = "ep", slug = "mt" }
 "ep-rhodes-hard" = { part = "ep", slug = "rh" }
 "ep-rhodes-soft" = { part = "ep", slug = "rs" }
@@ -153,8 +152,8 @@
 "pl-trance-gate" = { part = "plk", slug = "tg" }
 "filter-pluck" = { part = "plk", slug = "fp" }
 "stab-pluck" = { part = "plk", slug = "sp" }
-"stab-fm-fifth" = { part = "plk", slug = "s5", skip = true, alias = "stab-fm_fifth" }
-"stab-fm-major" = { part = "plk", slug = "s3", skip = true, alias = "stab-fm_major" }
+"stab-fm-fifth" = { part = "plk", slug = "s5", skip = true, alias = "plk:s5" }
+"stab-fm-major" = { part = "plk", slug = "s3", skip = true, alias = "plk:s3" }
 "fx-alarm" = { part = "fx", slug = "al" }
 "fx-blip" = { part = "fx", slug = "bl" }
 "fx-boom" = { part = "fx", slug = "bm" }
@@ -258,7 +257,7 @@
 "ld-vowel" = { part = "ld", slug = "vw" }
 "ld-wobble" = { part = "ld", slug = "wb" }
 "ld-zap" = { part = "ld", slug = "zp" }
-"lead-fm-pluck" = { part = "ld", slug = "lp", skip = true, alias = "lead-fm_pluck" }
+"lead-fm-pluck" = { part = "ld", slug = "lp", skip = true, alias = "plk:lp" }
 "dr-abyss" = { part = "dr", slug = "ab" }
 "dr-ambient-dark" = { part = "dr", slug = "ad" }
 "dr-brass-distant" = { part = "dr", slug = "bd" }

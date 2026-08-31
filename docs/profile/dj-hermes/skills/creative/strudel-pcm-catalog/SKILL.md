@@ -131,7 +131,7 @@ Copy: `songs/skill-pcm-catalog.strudel`.
 | `id` | DnB インパクト |
 | `sd` | サブドロップ |
 
-長尺 `ld:` / `dr:` / `pf:` / `ps:` の残りは INDEX の `in_bank=no`。使うなら `python scripts/import_fm_pcm.py --all` のあとプロセス再起動。無いキーは無音（演奏は継続）。 `ld:ss` と `pf:ff` は同梱済み。
+長尺 `ld:` / `dr:` / `pf:` / `ps:` の残りは INDEX の `in_bank=no`（`samples/` にファイルが無い）。無いキーは無音（演奏は継続）。 `ld:ss` と `pf:ff` は同梱済み。
 
 ## Rules
 

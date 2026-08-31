@@ -61,7 +61,7 @@ FX stems use the factory `default_note` / `default_duration` (no `--note` retune
 Additional one-shots under `samples/<part>/<slug>.wav` (for example `bd/8b.wav`)
 are the same factory renders, converted to 16-bit mono 48 kHz. Dedicated to
 the public domain under **CC0 1.0 Universal**. Keys are `s("bd:8b")` etc.
-The map and descriptions live in `docs/skills/strudel-pcm-catalog/`.
+The map and descriptions live in `docs/profile/dj-hermes/skills/creative/strudel-pcm-catalog/`.
 Do not overwrite the Sonic Pi files `bd/00.wav`, `bd/01.wav`, `sd/00.wav`,
 `sd/01.wav`, `hh/00.wav`, `oh/00.wav`, `cp/00.wav`.
 

@@ -170,7 +170,7 @@ samples/
   fx-riser_short01.wav
 ```
 
-- rust-fm-synthe カタログ: `samples/<part>/<slug>.wav`（例 `bd/8b.wav` → `s("bd:8b")`）。slug 表と説明は `docs/skills/strudel-pcm-catalog/`。同梱 `00.wav` は上書きしない
+- rust-fm-synthe カタログ: `samples/<part>/<slug>.wav`（例 `bd/8b.wav` → `s("bd:8b")`）。slug 表と説明は `docs/profile/dj-hermes/skills/creative/strudel-pcm-catalog/`。同梱 `00.wav` は上書きしない
 - **同梱 CC0 キット**（`bd/` `cp/` と上記 FM ワンショット）はリポジトリに残す  
 - **追加の `samples/<name>.wav` / `samples/<name>/00.wav`** は Git LFS（`.gitattributes` の `*.wav`）。gitignore されない  
 - スクラッチ出力は `/out/` `/recordings/` のまま git 外  
@@ -204,7 +204,7 @@ samples/
 
 ## 関連
 
-- rust-fm-synthe `part:slug` カタログ: `docs/skills/strudel-pcm-catalog/SKILL.md`
-- 音色レシピ・役割分担: `docs/skills/strudel-sound-design/SKILL.md`
-- ドラム統合・短いループ: `docs/skills/strudel-composition/SKILL.md`
+- rust-fm-synthe `part:slug` カタログ: `docs/profile/dj-hermes/skills/creative/strudel-pcm-catalog/SKILL.md`
+- 音色レシピ・役割分担: `docs/profile/dj-hermes/skills/creative/strudel-sound-design/SKILL.md`
+- ドラム統合・短いループ: `docs/profile/dj-hermes/skills/creative/strudel-composition/SKILL.md`
 - 同梱マッピング: `LICENSE.md`

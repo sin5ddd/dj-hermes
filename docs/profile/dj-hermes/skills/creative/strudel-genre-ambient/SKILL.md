@@ -1,23 +1,22 @@
 ---
 name: strudel-genre-ambient
-description: "Use when writing short Ambient live loops for strudel-rs."
-version: 3.1.0
+description: "Use when writing Ambient for strudel-rs."
+version: 3.0.0
 author: Hermes Agent
 license: MIT
 metadata:
   hermes:
-    tags: [strudel-rs, music, genre, ambient, live-coding]
+    tags: [strudel-rs, music, genre, ambient]
     related_skills:
       - strudel-composition
       - strudel-sound-design
       - strudel-data-format
 ---
 
-# strudel-rs × アンビエント（短いライブループ）
+# strudel-rs × アンビエント
 
 ## Overview
-遅いテンポ・長い attack/release・room/delay。BPM 目安 60–90。2–3 トラックで十分。  
-ユーザー WAV があれば pad/tone/piano は **フルネーム**（`pad-ambient_drone01` / `piano-acoustic_soft` 等、bank なし）。無ければ `wt_organ` / `wt_bright`（→ sound-design / `samples/LAYOUT.md`）。
+ビート控えめ・パッド長め・低めの gain。BPM 目安 60–90 相当（遅め setcpm）。
 
 ## コピー用フル例
 
@@ -25,30 +24,31 @@ metadata:
 // @title visitor-ambient
 // @genre ambient
 setcpm(70/4)
-// pad — ユーザー kit があれば s("pad-ambient_drone01") 等に差し替え
-$: note("<0 2 4 7>/2").scale("C3:minor").s("wt_organ").lpf(1200).gain(0.4)
-  .attack(0.2).decay(0.3).sustain(0.7).release(0.5).room(0.45).orbit(1)
-// shimmer
-$: note("<0 2 4 6>/2").scale("C4:minor").s("wt_bright").vib("5:8").gain(0.18)
-  .attack(0.1).release(0.4).delay(0.25).orbit(2)
-// soft pulse (optional)
-$: note("0 ~ 4 ~").scale("C2:minor").s("sine").lpf(400).gain(0.2)
+// pad
+$: note("[c3,e3,g3] ~ [eb3,g3,bb3] ~").s("sawtooth").lpf(600).attack(0.2).release(0.8).gain(0.3).room(0.5)
+// soft bass
+$: note("c2 ~ ~ ~").s("sine").lpf(200).gain(0.35)
+// air
+$: s("hh*4").gain(0.08).hpf(10000)
 ```
 
-## ライブで変えると効く箇所
+## レシピ
 
-1. pad の `.lpf` / `.room`  
-2. `<>` で和音次数をゆっくり切替  
-3. shimmer gain  
+1. 長い attack/release  
+2. キックは無し or ごく薄い  
+3. room は薄〜中  
+
+鳴らすのは `strudel_apply_song(content, deck)`（次小節、無書き込み）。`strudel_save_song` は残す指示のときだけ（演奏は変えない）。
 
 ## Pitfalls
 
-1. ドラムを詰めすぎる  
+1. 連打キックでアンビエントが崩れる  
 2. `stack` / `.cpm`  
-3. 長尺 `cat`  
+3. gain 過大  
+4. `note("c3'maj")` は root 単音（デッキは和音展開しない）。和音は `[c3,e3,g3]` または次数 `[0,2,4]`
 
 ## Checklist
 
-- [ ] 短い pad + 空間系  
+- [ ] ゆったり  
 - [ ] `setcpm` + `$:`  
-- [ ] `strudel_apply_song`  
+- [ ] `strudel_apply_song(content, deck)`（save は残す指示のときだけ）  

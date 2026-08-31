@@ -1,54 +1,58 @@
 ---
 name: strudel-genre-future-bass
-description: "Use when writing short Future Bass live loops for strudel-rs."
+description: "Use when writing Future Bass for strudel-rs."
 version: 3.0.0
 author: Hermes Agent
 license: MIT
 metadata:
   hermes:
-    tags: [strudel-rs, music, genre, future-bass, live-coding]
+    tags: [strudel-rs, music, genre, future-bass]
     related_skills:
       - strudel-composition
       - strudel-sound-design
       - strudel-data-format
 ---
 
-# strudel-rs × フューチャーベース（短いライブループ）
+# strudel-rs × Future Bass
 
 ## Overview
-コード感 + 明るいリード + 4 つ打ち。BPM 目安 140–150。短い 3–4 トラック。
+明るいコード + サイドチェイン風の隙間 + 中速 BPM（目安 140–150 相当だがシンプル配置で可）。
 
 ## コピー用フル例
 
 ```
 // @title visitor-future-bass
 // @genre future-bass
-setcpm(145/4)
-// drums
-$: s("bd*4, [~ sd]*2, [~ hh]*4, [~ oh]*2").gain(0.5)
-// chords (parallel degrees)
-$: note("[0,2,4] ~ [0,3,5] ~").scale("C3:minor").s("sawtooth").lpf(1400).gain(0.3)
-  .attack(0.02).decay(0.2).sustain(0.4).release(0.15)
-// lead
-$: note("7 9 <11 12> 9").scale("C4:minor").s("square").lpf(3000).gain(0.18)
-// sub
-$: note("0 ~ 0 ~").scale("C1:minor").s("sine").lpf(150).gain(0.55)
+setcpm(140/4)
+// kick
+$: s("bd ~ bd ~").gain(0.85)
+// snare
+$: s("~ sd ~ sd").gain(0.6)
+// hat
+$: s("hh*8").gain(0.22)
+// chords
+$: note("[c3,e3,g3] ~ [e3,g3,b3] ~").s("sawtooth").lpf(1600).attack(0.02).gain(0.35).room(0.3)
+// bass
+$: note("c2 ~ g1 ~").s("sine").lpf(220).gain(0.5)
 ```
 
-## ライブで変えると効く箇所
+## レシピ
 
-1. chord の並列次数  
-2. lead `<>`  
-3. chord `.lpf`  
+1. コードを前面、キックは間引き可  
+2. 明るい lpf  
+3. room 薄め  
+
+鳴らすのは `strudel_apply_song(content, deck)`（次小節、無書き込み）。`strudel_save_song` は残す指示のときだけ（演奏は変えない）。
 
 ## Pitfalls
 
-1. レイヤー過多でクリップ  
-2. `stack` / `.cpm` / `.lfo`  
-3. 長尺 `cat`  
+1. 複雑なチョップ記法の多用（未対応が多い）  
+2. `stack` / `.cpm`  
+3. コード gain 過大でクリップ  
+4. `note("c3'maj")` は root 単音。和音は `[c3,e3,g3]` または次数 `[0,2,4]`
 
 ## Checklist
 
-- [ ] 短い chords + lead  
+- [ ] コード + リズム  
 - [ ] `setcpm` + `$:`  
-- [ ] `strudel_apply_song`  
+- [ ] `strudel_apply_song(content, deck)`（save は残す指示のときだけ）  
