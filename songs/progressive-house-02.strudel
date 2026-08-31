@@ -1,0 +1,9 @@
+// @title floor-bloom-drop
+// @genre progressive-house
+setcpm(128/4)
+// drums
+$: s("bd:hf*4, [~ cp]*2, hh*8").gain(0.58)
+// bass
+$: note("0 0 4 4").scale("C2:minor").s("sine").lpf(280).gain(0.48)
+// pad
+$: note("[0,2,4] ~ [4,6,8] ~").scale("C3:minor").s("sawtooth").lpf(900).attack(0.1).sustain(0.65).release(0.3).gain(0.3).room(0.4)

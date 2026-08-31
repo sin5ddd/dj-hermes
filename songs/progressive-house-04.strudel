@@ -1,0 +1,9 @@
+// @title dawn-spread
+// @genre progressive-house
+setcpm(128/4)
+// drums
+$: s("bd*4, [~ cp]*2, hh*8").gain(0.56)
+// bass
+$: note("0 0 4 4").scale("C3:major").s("sawtooth").lpf(900).gain(0.36)
+// pad
+$: note("[0,4,9] ~ [0,4,9] ~").scale("C3:major").s("sawtooth").lpf(1400).attack(0.1).sustain(0.6).release(0.3).gain(0.28).room(0.35)

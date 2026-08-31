@@ -1,0 +1,9 @@
+// @title arp-lift
+// @genre progressive-house
+setcpm(128/4)
+// drums
+$: s("bd:hf*4, [~ cp]*2, [~ hh:hs]*4").gain(0.56)
+// bass
+$: note("0 0 4 0").scale("C2:minor").s("sine").lpf(260).gain(0.46)
+// arp
+$: note("0 2 4 7").scale("C3:minor").s("triangle").lpf(1600).attack(0.02).release(0.12).gain(0.22)

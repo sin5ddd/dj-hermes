@@ -1,0 +1,9 @@
+// @title thud-click
+// @genre minimal-techno
+setcpm(126/4)
+// kick
+$: s("bd:tc*4").gain(0.9)
+// hat
+$: s("[~ hh:cl]*4").gain(0.18)
+// bass
+$: note("~ ~ 0 ~").scale("C2:phrygian").s("sine").lpf(280).gain(0.4)

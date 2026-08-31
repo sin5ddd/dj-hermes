@@ -1,0 +1,9 @@
+// @title dusk-close
+// @genre progressive-house
+setcpm(128/4)
+// drums
+$: s("bd:hf*4, [~ cp]*2, [~ hh]*4").lpf(4200).gain(0.55)
+// bass
+$: note("0 0 0 0").scale("C4:minor").s("bs:dk").gain(0.32)
+// pad
+$: note("[0,2,4] ~ [0,2,4] ~").scale("C3:minor").s("triangle").lpf(650).attack(0.14).sustain(0.7).release(0.4).gain(0.26)

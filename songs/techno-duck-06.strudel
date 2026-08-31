@@ -1,0 +1,15 @@
+// @title thud-pump
+// @genre techno-duck
+setcpm(126/4)
+// kick
+$: s("bd:tc*4").gain(0.9).duckorbit(2).duckattack(0.045).duckdepth(0.86)
+// hats
+$: s("hh*8").gain(0.28)
+// bass
+$: note("0 ~ 2 ~").scale("C2:phrygian")
+  .s("sine").fm(2.8).fmh(1).fmdec(0.3).fmsus(0.22).lpf(400).gain(0.5)
+  .orbit(2)
+// pad
+$: note("[0,2,4] ~ ~ ~").scale("C3:phrygian")
+  .s("triangle").lpf(700).orbit(2).gain(0.26)
+  .attack(0.08).sustain(0.7).release(0.25)

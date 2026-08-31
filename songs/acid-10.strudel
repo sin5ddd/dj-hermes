@@ -1,0 +1,21 @@
+// @title dorian-open
+// @genre acid
+setcpm(130/4)
+// drums
+$: s("bd*4, [~ hh]*4").gain(0.65)
+// acid
+$: note("0 0 5 0  7 5 2 0  4 4 5 0  -1 5 0 <2 7>")
+  .scale("C2:dorian")
+  .s("square")
+  .lpf("300 300 760 300  780 300 300 300  300 700 300 300  740 720 300 300")
+  .lpq(13)
+  .lpenv(3)
+  .lpattack(0.001)
+  .lpdecay(0.09)
+  .lpsustain(0.05)
+  .cut(1)
+  .gain(0.44)
+  .attack(0.001)
+  .decay(0.1)
+  .sustain(0.12)
+  .release(0.04)

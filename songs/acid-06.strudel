@@ -1,0 +1,21 @@
+// @title walk-down
+// @genre acid
+setcpm(130/4)
+// drums
+$: s("bd*4, [~ hh]*4").gain(0.65)
+// acid
+$: note("7 5 4 3  2 0 -1 0  3 2 0 2  4 3 0 <5 7>")
+  .scale("C2:minor")
+  .s("sawtooth")
+  .lpf("280 280 700 280  280 740 280 280  660 280 280 720  280 280 760 280")
+  .lpq(14)
+  .lpenv(3)
+  .lpattack(0.001)
+  .lpdecay(0.09)
+  .lpsustain(0.05)
+  .cut(1)
+  .gain(0.47)
+  .attack(0.001)
+  .decay(0.1)
+  .sustain(0.12)
+  .release(0.04)

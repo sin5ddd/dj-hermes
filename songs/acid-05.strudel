@@ -1,0 +1,21 @@
+// @title long-scream
+// @genre acid
+setcpm(130/4)
+// drums
+$: s("bd*4, [~ hh]*4").gain(0.64)
+// acid
+$: note("0 0 3 0  7 3 2 0  4 4 3 0  -1 3 0 <2 5>")
+  .scale("C2:minor")
+  .s("sawtooth")
+  .lpf("250 250 700 250  780 250 250 250  250 680 250 250  760 720 250 250")
+  .lpq(15)
+  .lpenv(3)
+  .lpattack(0.001)
+  .lpdecay(0.14)
+  .lpsustain(0.05)
+  .cut(1)
+  .gain(0.45)
+  .attack(0.001)
+  .decay(0.12)
+  .sustain(0.1)
+  .release(0.05)

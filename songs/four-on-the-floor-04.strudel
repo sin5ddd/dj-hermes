@@ -1,0 +1,7 @@
+// @title saw-bright
+// @genre four-on-the-floor
+setcpm(124/4)
+// drums
+$: s("bd*4, [~ hh]*4").gain(0.64)
+// bass
+$: note("0 2 4 0").scale("C3:major").s("sawtooth").lpf(1400).gain(0.34)

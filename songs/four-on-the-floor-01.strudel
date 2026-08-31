@@ -1,0 +1,5 @@
+// @title pulse-only
+// @genre four-on-the-floor
+setcpm(124/4)
+// drums
+$: s("bd*4, [~ hh]*4").gain(0.65)

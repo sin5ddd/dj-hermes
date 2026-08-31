@@ -1,0 +1,11 @@
+// @title sparse-drop
+// @genre minimal-techno
+setcpm(126/4)
+// kick
+$: s("bd:tc*4").gain(0.9)
+// hat
+$: s("hh*8").gain(0.2).hpf(8800)
+// perc
+$: s("~ cp ~ ~").gain(0.3)
+// bass
+$: note("0 ~ 2 ~").scale("C2:dorian").s("sawtooth").lpf(380).gain(0.44)

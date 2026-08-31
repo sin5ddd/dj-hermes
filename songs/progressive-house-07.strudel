@@ -1,0 +1,9 @@
+// @title supersaw-bloom
+// @genre progressive-house
+setcpm(128/4)
+// drums
+$: s("bd:hf*4, [~ cp]*2, hh*8").gain(0.58)
+// bass
+$: note("0 0 4 4").scale("C4:minor").s("bs:hf").gain(0.4)
+// lead
+$: note("0 ~ ~ ~").scale("C4:minor").s("ld:ss").gain(0.2)

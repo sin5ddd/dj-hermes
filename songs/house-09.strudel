@@ -1,0 +1,9 @@
+// @title riser-intro
+// @genre house
+setcpm(124/4)
+// drums
+$: s("bd:hf*4, [~ cp]*2, [~ hh]*4").gain(0.48)
+// fx
+$: s("<fx:up ~ ~ ~>").gain(0.28)
+// pluck
+$: note("4 ~ ~ ~  ~ ~ ~ ~").scale("C4:minor").s("plk:lp").gain(0.24).cut(1)

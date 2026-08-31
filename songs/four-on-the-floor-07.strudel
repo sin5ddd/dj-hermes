@@ -1,0 +1,9 @@
+// @title fm-floor
+// @genre four-on-the-floor
+setcpm(124/4)
+// drums
+$: s("bd:tc*4, [~ hh]*4").gain(0.64)
+// bass
+$: note("0 0 2 <4 6>").scale("C2:minor")
+  .s("sine").fm(3).fmh(2).fmdec(0.25).fmsus(0.2).lpf(480).gain(0.5)
+  .attack(0.005).decay(0.1).sustain(0.3).release(0.08)

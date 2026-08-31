@@ -1,0 +1,9 @@
+// @title organ-bed
+// @genre progressive-house
+setcpm(128/4)
+// drums
+$: s("bd:hf*4, [~ cp]*2, [~ hh]*4").gain(0.55)
+// bass
+$: note("0 0 4 4").scale("C2:minor").s("sine").lpf(260).gain(0.46)
+// pad
+$: note("0 2 4 7").scale("C3:minor").s("wt_organ").lpf(1000).attack(0.12).sustain(0.6).release(0.3).gain(0.24).room(0.4)

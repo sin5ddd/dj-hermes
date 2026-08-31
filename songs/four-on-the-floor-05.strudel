@@ -1,0 +1,7 @@
+// @title hats-sixteen
+// @genre four-on-the-floor
+setcpm(124/4)
+// drums
+$: s("bd*4, hh*8").gain(0.6)
+// bass
+$: note("0 ~ 0 2").scale("C2:minor").s("sine").lpf(320).gain(0.48)

@@ -1,0 +1,21 @@
+// @title sparse-intro
+// @genre acid
+setcpm(130/4)
+// drums
+$: s("bd*4, [~ hh]*4").gain(0.55)
+// acid
+$: note("0 ~ ~ 0  ~ 3 ~ ~  0 ~ 7 ~  ~ ~ 0 ~")
+  .scale("C2:minor")
+  .s("sawtooth")
+  .lpf("220 220 220 680  220 700 220 220  220 220 740 220  220 220 220 220")
+  .lpq(13)
+  .lpenv(3)
+  .lpattack(0.001)
+  .lpdecay(0.1)
+  .lpsustain(0.05)
+  .cut(1)
+  .gain(0.4)
+  .attack(0.001)
+  .decay(0.1)
+  .sustain(0.12)
+  .release(0.04)

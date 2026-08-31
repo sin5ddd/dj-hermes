@@ -1,0 +1,9 @@
+// @title mixolydian-terrace
+// @genre house
+setcpm(124/4)
+// drums
+$: s("bd*4, [~ cp]*2, [~ hh]*4").gain(0.62)
+// bass
+$: note("0 0 4 0").scale("C4:mixolydian").s("bs:hf").gain(0.4)
+// keys
+$: note("0 ~ 4 ~").scale("C4:mixolydian").s("ep:ky").gain(0.28)

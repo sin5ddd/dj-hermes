@@ -1,0 +1,7 @@
+// @title offbeat-grid
+// @genre minimal-techno
+setcpm(126/4)
+// drums
+$: s("bd*4, [~ hh]*4").gain(0.58)
+// bass
+$: note("0 ~ ~ ~ 0 ~ <2 3> ~").scale("C2:minor").s("sawtooth").lpf(340).gain(0.42)

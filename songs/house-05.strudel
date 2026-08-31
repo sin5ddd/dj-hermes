@@ -1,0 +1,9 @@
+// @title hats-open-drop
+// @genre house
+setcpm(124/4)
+// drums
+$: s("bd:hf*4, [~ cp]*2, hh:hs*8, [~ oh:op]*2").gain(0.58)
+// bass
+$: note("0 0 2 4 0 <2 3> 4 0").scale("C4:minor").s("bs:hf").gain(0.4)
+// pluck
+$: note("4 ~ 7 4  2 0 ~ -1").scale("C4:minor").s("plk:lp").gain(0.36).cut(1)

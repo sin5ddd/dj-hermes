@@ -1,0 +1,7 @@
+// @title dark-kit
+// @genre four-on-the-floor
+setcpm(124/4)
+// drums
+$: s("bd:tc*4, [~ hh:cl]*4").lpf(3600).gain(0.6)
+// bass
+$: note("0 0 3 0").scale("C4:phrygian").s("bs:dk").gain(0.34)

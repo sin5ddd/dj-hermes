@@ -1,0 +1,9 @@
+// @title supersaw-drop
+// @genre house
+setcpm(124/4)
+// drums
+$: s("bd:hf*4, [~ cp]*2, [~ hh]*4").gain(0.64)
+// bass
+$: note("0 0 4 0").scale("C4:minor").s("bs:hf").gain(0.4)
+// lead
+$: note("0 ~ ~ ~").scale("C4:minor").s("ld:ss").gain(0.22)

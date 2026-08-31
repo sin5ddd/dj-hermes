@@ -1,0 +1,21 @@
+// @title square-303
+// @genre acid
+setcpm(130/4)
+// drums
+$: s("bd*4, [~ hh]*4").gain(0.65)
+// acid
+$: note("0 0 3 0  7 3 2 0  4 4 3 0  -1 3 0 <2 5>")
+  .scale("C2:minor")
+  .s("square")
+  .lpf("240 240 700 240  740 240 240 240  240 660 240 240  720 700 240 240")
+  .lpq(13)
+  .lpenv(3)
+  .lpattack(0.001)
+  .lpdecay(0.09)
+  .lpsustain(0.05)
+  .cut(1)
+  .gain(0.44)
+  .attack(0.001)
+  .decay(0.1)
+  .sustain(0.12)
+  .release(0.04)

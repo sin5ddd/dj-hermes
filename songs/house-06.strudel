@@ -1,0 +1,9 @@
+// @title dorian-loft
+// @genre house
+setcpm(124/4)
+// drums
+$: s("bd:hf*4, [~ cp]*2, [~ hh:cl]*4").gain(0.62)
+// bass
+$: note("0 0 4 0").scale("C4:dorian").s("bs:hf").gain(0.4)
+// pluck
+$: note("4 ~ 7 4  2 0 ~ -1").scale("C4:dorian").s("plk:lp").gain(0.38).cut(1)

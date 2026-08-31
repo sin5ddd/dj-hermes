@@ -1,0 +1,9 @@
+// @title fifth-pad-hold
+// @genre progressive-house
+setcpm(128/4)
+// drums
+$: s("bd:hf*4, [~ cp]*2, [~ hh]*4").gain(0.55)
+// bass
+$: note("0 0 4 4").scale("C2:minor").s("sine").lpf(260).gain(0.45)
+// pad
+$: note("0 ~ 4 ~").scale("C4:minor").s("pf:ff").gain(0.26)

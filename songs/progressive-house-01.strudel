@@ -1,0 +1,7 @@
+// @title bloom-intro
+// @genre progressive-house
+setcpm(128/4)
+// drums
+$: s("bd:hf*4, [~ cp]*2, [~ hh]*4").gain(0.5)
+// pad
+$: note("[0,2,4] ~ [0,2,4] ~").scale("C3:minor").s("sawtooth").lpf(800).attack(0.12).decay(0.2).sustain(0.7).release(0.35).gain(0.28).room(0.4)
