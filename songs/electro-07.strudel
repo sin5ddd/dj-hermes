@@ -3,7 +3,7 @@
 // @details tight 808 kick, very short square @ 122
 setcpm(122/4)
 // drums
-$: s("bd:8t*4, [~ sd:8s]*2, hh:tt*8").gain(0.58)
+$: s("bd:8t*4, [~ sd:8s]*2, hh:tt*8").gain(0.5)
 // bass
 $: note("0 0 ~ 3 0 5 ~ 0").scale("C2:minor").s("square").lpf(480).gain(0.48)
   .attack(0.001).decay(0.05).sustain(0.12).release(0.03)

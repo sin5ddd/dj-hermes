@@ -3,9 +3,9 @@
 // @details saw triads + square lead + sine sub @ 145
 setcpm(145/4)
 // drums
-$: s("bd:hf*4, [~ sd:hd]*2, [~ hh:hs]*4, [~ oh:op]*2").gain(0.5)
+$: s("bd:hf*4, [~ sd:hd]*2, [~ hh:hs]*4, [~ oh:op]*2").gain(0.46)
 // chords
-$: note("[0,2,4] ~ [0,3,5] ~").scale("C3:minor").s("sawtooth").lpf(1400).gain(0.28)
+$: note("[0,2,4] ~ [0,3,5] ~").scale("C3:minor").s("sawtooth").lpf(1400).gain(0.24)
   .attack(0.02).decay(0.2).sustain(0.4).release(0.15)
 // lead
 $: note("7 9 <11 12> 9").scale("C4:minor").s("square").lpf(3000).gain(0.16)

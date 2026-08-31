@@ -3,7 +3,7 @@
 // @details zap-kick electro fill kit @ 130
 setcpm(130/4)
 // drums
-$: s("bd:ez*4, [~ sd:pi]*2, hh:ch*8").gain(0.56)
+$: s("bd:ez*4, [~ sd:pi]*2, hh:ch*8").gain(0.5)
 // bass
 $: note("0 7 0 <3 5>").scale("C2:minor").s("square").lpf(640).gain(0.46)
   .attack(0.001).decay(0.06).sustain(0.16).release(0.03)

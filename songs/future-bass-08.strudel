@@ -3,7 +3,7 @@
 // @details two-chord parallel degrees, no cut on the stack @ 145
 setcpm(145/4)
 // drums
-$: s("bd:hf*4, [~ sd:hd]*2, [~ hh:hs]*4, [~ oh:op]*2").gain(0.48)
+$: s("bd:hf*4, [~ sd:hd]*2, [~ hh:hs]*4, [~ oh:op]*2").gain(0.44)
 // chords
 $: note("[0,2,4] ~ [3,5,7] ~").scale("C3:minor").s("sawtooth").lpf(1500).gain(0.26)
   .attack(0.022).decay(0.2).sustain(0.4).release(0.16)
