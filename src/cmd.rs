@@ -39,6 +39,7 @@ status
 help
 quit / q            [operator]
 viz [on|off]        toggle body punchcard / highlight (live TUI)
+vfx [on|off]        toggle hit VFX overlay (live TUI; default on). aliases: dopa, flash
 ↑↓ / Tab / Enter    suggest overlay: select / apply / apply+run (live TUI)
 Esc                 dismiss suggest (or quit when prompt empty)
 

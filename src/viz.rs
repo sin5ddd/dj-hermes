@@ -115,6 +115,75 @@ pub fn play_cycle(global_sample: u64, sample_rate: u32, bpm: f64) -> f64 {
     bar_index(global_sample, sample_rate, bpm) as f64 + bar_pos(global_sample, sample_rate, bpm)
 }
 
+/// Hits whose playback interval contains `cycle` (inclusive start, exclusive end).
+pub fn hits_sounding_at(model: &VizModel, cycle: f64) -> Vec<VizHit> {
+    collect_hits(model, (cycle - 1.0).max(0.0), cycle + 1e-6)
+        .into_iter()
+        .filter(|h| h.start_cycle <= cycle + 1e-9 && cycle < h.end_cycle)
+        .collect()
+}
+
+/// Pane-local origin for a punchcard hit (label column + playhead, lane or pitch row).
+pub fn hit_origin(
+    model: &VizModel,
+    hit: &VizHit,
+    global_sample: u64,
+    cycle_offset: i64,
+    sample_rate: u32,
+    cols: usize,
+    rows: usize,
+) -> (f32, f32) {
+    if rows == 0 || cols == 0 {
+        return (0.0, 0.0);
+    }
+    let sr = model.sample_rate.max(sample_rate);
+    let play = play_cycle(global_sample, sr, model.bpm) + cycle_offset as f64;
+    let label_w = 6usize;
+    let grid_cols = cols.saturating_sub(label_w + 1).max(4);
+    let win = window_cycles(grid_cols);
+    let cycle_lo = play - win * 0.25;
+    let span = win.max(1e-9);
+    let ph = ((play - cycle_lo) / span * grid_cols as f64).floor() as i64;
+    let ph_col = ph.clamp(0, grid_cols as i64 - 1) as usize;
+    let x = (label_w + 1 + ph_col) as f32;
+
+    let body_budget = rows.saturating_sub(2).saturating_sub(1);
+    let drum_lanes: Vec<usize> = model
+        .tracks
+        .iter()
+        .enumerate()
+        .filter(|(_, t)| !t.muted && !t.is_note)
+        .map(|(i, _)| i)
+        .collect();
+    let has_notes = model.tracks.iter().any(|t| !t.muted && t.is_note);
+    let (drum_show, piano_rows) = allocate_rows(body_budget, drum_lanes.len(), has_notes);
+
+    if hit.midi.is_none() {
+        if let Some(pos) = drum_lanes
+            .iter()
+            .take(drum_show)
+            .position(|&i| i == hit.track_idx)
+        {
+            return (x, (2 + pos) as f32);
+        }
+        return (x, 2.0);
+    }
+
+    let sep = if drum_show > 0 && piano_rows >= 2 {
+        1
+    } else {
+        0
+    };
+    let piano_row0 = 2 + drum_show + sep;
+    let remaining = rows.saturating_sub(piano_row0).saturating_sub(1);
+    let n_pitch = remaining.min(piano_rows).max(1);
+    let midi = hit.midi.unwrap_or(60);
+    let min_m = midi.saturating_sub(12);
+    let max_m = midi.saturating_add(12).min(127);
+    let r = row_for_midi(midi, min_m, max_m, n_pitch);
+    (x, (piano_row0 + r) as f32)
+}
+
 /// Collect note + sample hits overlapping `[cycle_lo, cycle_hi)`.
 pub fn collect_hits(model: &VizModel, cycle_lo: f64, cycle_hi: f64) -> Vec<VizHit> {
     if cycle_hi <= cycle_lo {
@@ -649,5 +718,15 @@ $: s("bd*4")
             collect_hits(&model, 0.0, 1.0).len(),
             collect_hits(&model, 2.0, 3.0).len()
         );
+    }
+
+    #[test]
+    fn hits_sounding_at_playhead_includes_kick() {
+        let song = smoke_like();
+        let model = VizModel::from_song(&song, 48_000);
+        let hits = hits_sounding_at(&model, 0.0);
+        assert!(hits.iter().any(|h| h.label == "bd"), "{hits:?}");
+        let (x, y) = hit_origin(&model, &hits[0], 0, 0, 48_000, 48, 12);
+        assert!(x >= 0.0 && y >= 0.0);
     }
 }

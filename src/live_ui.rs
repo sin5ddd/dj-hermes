@@ -7,7 +7,7 @@ use std::collections::VecDeque;
 use std::io::{stdout, Write};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use crossbeam::channel::Sender;
 use crossterm::event::{
@@ -21,16 +21,19 @@ use crossterm::terminal::{
 use crossterm::{cursor, execute, queue, terminal};
 
 use crate::cmd::{self, DeckPaths, LiveInput};
+use crate::code::note_to_midi;
 use crate::complete::{self, CompleteCtx, CompleteResult};
 use crate::engine::{Command, Engine};
 use crate::hermes::{HermesEvent, HermesHandle};
-use crate::highlight::{active_spans, bar_index, bar_pos, render_ansi_ex, HighlightModel};
+use crate::highlight::{
+    active_atoms, active_spans, bar_index, bar_pos, render_ansi_ex, HighlightModel,
+};
+use crate::live_fx::{self, FxState};
 use crate::song::Song;
 use crate::viz::{self, VizModel};
 use crate::voice_input::{VoiceEvent, VoiceHandle};
 
-const HELP_LINE: &str =
-    "F10 viz  F12音声  ↑↓候補  drag xf/EQ  自然文→Hermes  /a load  /x 4  /bpm  /help";
+const HELP_LINE: &str = "F9 vfx  F10 viz  F12音声  ↑↓候補  drag xf/EQ  /a load  /x  /bpm  /help";
 /// Max candidate rows inside the suggest overlay (scroll window).
 const SUGGEST_MAX_ROWS: usize = 10;
 const HELP_LINE_REC: &str = "● REC  F12 で停止（最大7秒）";
@@ -139,6 +142,11 @@ struct LiveState {
     /// [band][deck]
     eq_hits: [[SliderHit; 2]; 3],
     drag: DragTarget,
+    /// Issue #42 overlay. Default on; independent of `/viz`.
+    vfx_on: bool,
+    fx: FxState,
+    vfx_hit: SliderHit,
+    last_frame: Option<Instant>,
 }
 
 impl LiveState {
@@ -183,6 +191,34 @@ impl LiveState {
         match self.body_mode {
             BodyMode::Highlight => "body: highlight",
             BodyMode::Viz => "body: punchcard (viz)",
+        }
+    }
+
+    fn toggle_vfx(&mut self) -> &'static str {
+        self.vfx_on = !self.vfx_on;
+        if !self.vfx_on {
+            self.fx.clear();
+        }
+        self.invalidate_frame();
+        if self.vfx_on {
+            "vfx: on"
+        } else {
+            "vfx: off"
+        }
+    }
+
+    fn set_vfx(&mut self, on: bool) -> &'static str {
+        if self.vfx_on != on {
+            self.vfx_on = on;
+            if !on {
+                self.fx.clear();
+            }
+            self.invalidate_frame();
+        }
+        if self.vfx_on {
+            "vfx: on"
+        } else {
+            "vfx: off"
         }
     }
 
@@ -251,6 +287,10 @@ pub fn run(
         xf_hit: zero_hit,
         eq_hits: [[zero_hit; 2]; 3],
         drag: DragTarget::None,
+        vfx_on: true,
+        fx: FxState::new(),
+        vfx_hit: zero_hit,
+        last_frame: None,
     };
     if let Some(model) = initial_a {
         // Viz model is filled on first engine sync / load; seed highlight only here.
@@ -339,6 +379,10 @@ pub fn run(
                             KeyCode::Esc if state.input.is_empty() => {
                                 let _ = tx.send(Command::Hush);
                                 return Ok(());
+                            }
+                            KeyCode::F(9) if state.voice_phase != VoicePhase::Recording => {
+                                let msg = state.toggle_vfx();
+                                state.push_log(msg);
                             }
                             // F10 toggles punchcard / highlight body (not a typeable char).
                             KeyCode::F(10) if state.voice_phase != VoicePhase::Recording => {
@@ -501,6 +545,12 @@ pub fn run(
 fn handle_mouse(state: &mut LiveState, tx: &Sender<Command>, m: crossterm::event::MouseEvent) {
     match m.kind {
         MouseEventKind::Down(MouseButton::Left) => {
+            if state.vfx_hit.contains(m.column, m.row) {
+                let msg = state.toggle_vfx();
+                state.push_log(msg);
+                state.drag = DragTarget::None;
+                return;
+            }
             if state.xf_hit.contains(m.column, m.row) {
                 state.drag = DragTarget::Xf;
                 apply_drag(state, tx, m.column);
@@ -690,14 +740,34 @@ fn draw_frame(
         height: body_rows,
     });
 
+    let mut left_lines = left_lines;
+    let mut right_lines = right_lines;
+    for line in &mut left_lines {
+        *line = pad_clip_ansi(line, half);
+    }
+    for line in &mut right_lines {
+        *line = pad_clip_ansi(line, right_w);
+    }
+
+    if state.vfx_on {
+        apply_vfx(
+            state,
+            gs,
+            sample_rate,
+            half,
+            right_w,
+            body_rows,
+            &mut left_lines,
+            &mut right_lines,
+        );
+    }
+
     let mut lines: Vec<String> = Vec::with_capacity(rows);
 
     for i in 0..body_rows {
         let left = left_lines.get(i).map(String::as_str).unwrap_or("");
         let right = right_lines.get(i).map(String::as_str).unwrap_or("");
-        let left_cell = pad_clip_ansi(left, half);
-        let right_cell = pad_clip_ansi(right, right_w);
-        lines.push(format!("{left_cell}│{right_cell}"));
+        lines.push(format!("{left}│{right}"));
     }
 
     // EQ rows: Hi / Mid / Lo  (A and B side by side)
@@ -749,12 +819,10 @@ fn draw_frame(
     }
 
     if rows >= 2 {
-        let help = match state.voice_phase {
-            VoicePhase::Recording => HELP_LINE_REC,
-            VoicePhase::Stt => HELP_LINE_STT,
-            VoicePhase::Idle => HELP_LINE,
-        };
-        lines.push(pad_clip_ansi(help, cols));
+        let help_row = lines.len() as u16;
+        let (help, vfx_hit) = format_help_line(state.vfx_on, state.voice_phase, cols, help_row);
+        state.vfx_hit = vfx_hit;
+        lines.push(help);
         let prompt = format!("» {}", state.input);
         lines.push(pad_clip_ansi(&prompt, cols));
     }
@@ -815,6 +883,175 @@ fn draw_frame(
     out.flush().map_err(|e| format!("draw: {e}"))?;
     state.prev_lines = lines;
     Ok(())
+}
+
+#[allow(clippy::too_many_arguments)]
+fn apply_vfx(
+    state: &mut LiveState,
+    gs: u64,
+    sample_rate: u32,
+    half: usize,
+    right_w: usize,
+    body_rows: usize,
+    left: &mut [String],
+    right: &mut [String],
+) {
+    let now = Instant::now();
+    let dt = state
+        .last_frame
+        .map(|t| now.saturating_duration_since(t).as_secs_f32())
+        .unwrap_or(0.033)
+        .clamp(0.001, 0.10);
+    state.last_frame = Some(now);
+
+    let (hits_a, spc_a) = gather_fx_hits(state, 0, gs, sample_rate, half, body_rows);
+    let (hits_b, spc_b) = gather_fx_hits(state, 1, gs, sample_rate, right_w, body_rows);
+    state.fx.observe(0, &hits_a, spc_a);
+    state.fx.observe(1, &hits_b, spc_b);
+    state.fx.advance(dt);
+    if state.fx.has_visuals() {
+        state.fx.composite_lines(0, left, half);
+        state.fx.composite_lines(1, right, right_w);
+    }
+}
+
+fn gather_fx_hits(
+    state: &LiveState,
+    deck: usize,
+    gs: u64,
+    sample_rate: u32,
+    width: usize,
+    height: usize,
+) -> (Vec<live_fx::FxHit>, f32) {
+    let (viz, model, offset) = if deck == 0 {
+        (
+            state.viz_a.as_ref(),
+            state.model_a.as_ref(),
+            state.cycle_offset_a,
+        )
+    } else {
+        (
+            state.viz_b.as_ref(),
+            state.model_b.as_ref(),
+            state.cycle_offset_b,
+        )
+    };
+    let bpm = viz
+        .map(|v| v.bpm)
+        .or_else(|| model.map(|m| m.bpm))
+        .unwrap_or(120.0);
+    let secs_per_cycle = (240.0 / bpm.max(1.0)) as f32;
+    let hits = match state.body_mode {
+        BodyMode::Highlight => gather_highlight_hits(model, gs, sample_rate, offset),
+        BodyMode::Viz => gather_punchcard_hits(viz, gs, sample_rate, offset, width, height),
+    };
+    (hits, secs_per_cycle)
+}
+
+fn gather_highlight_hits(
+    model: Option<&HighlightModel>,
+    gs: u64,
+    sample_rate: u32,
+    offset: i64,
+) -> Vec<live_fx::FxHit> {
+    let Some(model) = model else {
+        return Vec::new();
+    };
+    let sr = model.sample_rate.max(sample_rate);
+    let pattern_bar = (bar_index(gs, sr, model.bpm) as i64 + offset).max(0) as u64;
+    let pos = bar_pos(gs, sr, model.bpm);
+    let atoms = active_atoms(model, pattern_bar, pos);
+    atoms
+        .into_iter()
+        .map(|a| {
+            let midi = if a.is_note {
+                note_to_midi(&a.value).ok()
+            } else {
+                None
+            };
+            let (x, y, atom_cols) = if let Some(sp) = a.span {
+                let (x, y) = live_fx::source_byte_xy(&model.source, sp.start, 2);
+                let cols = model
+                    .source
+                    .get(sp.start..sp.end)
+                    .map(|s| s.chars().count() as u16)
+                    .unwrap_or(a.value.chars().count() as u16);
+                (x, y, cols.max(1))
+            } else {
+                (8.0, 3.0, a.value.chars().count() as u16)
+            };
+            live_fx::FxHit {
+                track_idx: a.track_idx,
+                label: a.value,
+                midi,
+                is_note: a.is_note,
+                start_cycle: a.start_cycle,
+                x,
+                y,
+                atom_cols,
+            }
+        })
+        .collect()
+}
+
+fn gather_punchcard_hits(
+    viz: Option<&VizModel>,
+    gs: u64,
+    sample_rate: u32,
+    offset: i64,
+    width: usize,
+    height: usize,
+) -> Vec<live_fx::FxHit> {
+    let Some(viz) = viz else {
+        return Vec::new();
+    };
+    let sr = viz.sample_rate.max(sample_rate);
+    let cycle = viz::play_cycle(gs, sr, viz.bpm) + offset as f64;
+    viz::hits_sounding_at(viz, cycle)
+        .into_iter()
+        .map(|h| {
+            let (x, y) = viz::hit_origin(viz, &h, gs, offset, sample_rate, width, height);
+            live_fx::FxHit {
+                track_idx: h.track_idx,
+                label: h.label,
+                midi: h.midi,
+                is_note: h.midi.is_some(),
+                start_cycle: h.start_cycle,
+                x,
+                y,
+                atom_cols: 1,
+            }
+        })
+        .collect()
+}
+
+fn format_help_line(vfx_on: bool, voice: VoicePhase, cols: usize, row: u16) -> (String, SliderHit) {
+    let left = match voice {
+        VoicePhase::Recording => HELP_LINE_REC,
+        VoicePhase::Stt => HELP_LINE_STT,
+        VoicePhase::Idle => HELP_LINE,
+    };
+    let btn = if vfx_on { "[VFX:ON]" } else { "[VFX:OFF]" };
+    let btn_len = btn.chars().count();
+    let left_len = left.chars().count();
+    let (raw, col0) = if cols > left_len + btn_len + 1 {
+        let pad = cols - left_len - btn_len;
+        (
+            format!("{left}{}{btn}", " ".repeat(pad)),
+            (cols - btn_len) as u16,
+        )
+    } else {
+        (format!("{left} {btn}"), (left_len + 1) as u16)
+    };
+    let line = pad_clip_ansi(&raw, cols);
+    (
+        line,
+        SliderHit {
+            row,
+            col0,
+            cols: btn_len as u16,
+        },
+    )
 }
 
 fn track_names(viz: &Option<VizModel>) -> Vec<String> {
@@ -1284,6 +1521,11 @@ fn exec_local(
     sample_rate: u32,
     state: &mut LiveState,
 ) -> bool {
+    // UI-only: VFX overlay (issue #42) — not sent to engine.
+    if let Some(msg) = apply_vfx_command(body, state) {
+        state.push_log(msg);
+        return true;
+    }
     // UI-only: body highlight ⇔ punchcard (not sent to engine).
     if let Some(msg) = apply_viz_command(body, state) {
         state.push_log(msg);
@@ -1297,6 +1539,24 @@ fn exec_local(
         state.push_log(m);
     }
     !result.quit
+}
+
+/// Handle `vfx` / `dopa` / `flash` (on|off|toggle). Live TUI only.
+fn apply_vfx_command(body: &str, state: &mut LiveState) -> Option<String> {
+    let mut parts = body.split_whitespace();
+    let head = parts.next()?;
+    if !matches!(head, "vfx" | "dopa" | "flash") {
+        return None;
+    }
+    let msg = match parts.next() {
+        None | Some("toggle") => state.toggle_vfx(),
+        Some("on") | Some("1") => state.set_vfx(true),
+        Some("off") | Some("0") => state.set_vfx(false),
+        Some(other) => {
+            return Some(format!("vfx: unknown arg `{other}` (on|off|toggle)"));
+        }
+    };
+    Some(msg.to_string())
 }
 
 /// Handle `viz` / `viz on` / `viz off`. Returns log message when recognized.
@@ -1463,6 +1723,14 @@ mod tests {
                 cols: 0,
             }; 2]; 3],
             drag: DragTarget::None,
+            vfx_on: true,
+            fx: FxState::new(),
+            vfx_hit: SliderHit {
+                row: 0,
+                col0: 0,
+                cols: 0,
+            },
+            last_frame: None,
         }
     }
 
@@ -1496,6 +1764,32 @@ mod tests {
         assert!(msg.contains("highlight"), "{msg}");
         assert_eq!(state.body_mode, BodyMode::Highlight);
         assert!(apply_viz_command("bpm 120", &mut state).is_none());
+    }
+
+    #[test]
+    fn vfx_command_toggles_overlay() {
+        let mut state = empty_state();
+        assert!(state.vfx_on);
+        let msg = apply_vfx_command("vfx", &mut state).unwrap();
+        assert!(msg.contains("off"), "{msg}");
+        assert!(!state.vfx_on);
+        let msg = apply_vfx_command("dopa on", &mut state).unwrap();
+        assert!(msg.contains("on"), "{msg}");
+        assert!(state.vfx_on);
+        assert!(apply_vfx_command("flash off", &mut state)
+            .unwrap()
+            .contains("off"));
+        assert!(apply_vfx_command("bpm 120", &mut state).is_none());
+    }
+
+    #[test]
+    fn help_line_has_clickable_vfx_button() {
+        let (line, hit) = format_help_line(true, VoicePhase::Idle, 80, 20);
+        assert!(line.contains("[VFX:ON]"), "{line}");
+        assert_eq!(hit.row, 20);
+        assert!(hit.cols >= 8);
+        let (line_off, _) = format_help_line(false, VoicePhase::Idle, 80, 20);
+        assert!(line_off.contains("[VFX:OFF]"), "{line_off}");
     }
 
     #[test]

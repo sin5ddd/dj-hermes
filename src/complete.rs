@@ -37,7 +37,7 @@ impl CompleteResult {
 }
 
 const TOP_LEVEL: &[&str] = &[
-    "a", "b", "x", "bpm", "hush", "status", "help", "quit", "viz",
+    "a", "b", "x", "bpm", "hush", "status", "help", "quit", "viz", "vfx", "dopa", "flash",
 ];
 const DECK_VERBS: &[&str] = &["load", "mute", "unmute", "gain", "head", "x"];
 const VIZ_ARGS: &[&str] = &["on", "off"];
@@ -216,6 +216,9 @@ fn stage_suggest(
         ["viz"] | ["punchcard"] | ["pianoroll"] => {
             list_result(filter_static(VIZ_ARGS, partial), replace_from, None)
         }
+        ["vfx"] | ["dopa"] | ["flash"] => {
+            list_result(filter_static(VIZ_ARGS, partial), replace_from, None)
+        }
         ["bpm"] => hint_only(replace_from, "<bpm>"),
         ["x"] | ["xfade"] => hint_only(replace_from, "<bars>"),
         // Completing first token (complete empty, partial is first word) already handled by [].
@@ -353,6 +356,7 @@ mod tests {
         assert!(r.candidates.iter().any(|c| c == "a"));
         assert!(r.candidates.iter().any(|c| c == "bpm"));
         assert!(r.candidates.iter().any(|c| c == "viz"));
+        assert!(r.candidates.iter().any(|c| c == "vfx"));
     }
 
     #[test]
@@ -395,6 +399,12 @@ mod tests {
     #[test]
     fn viz_on_off() {
         let r = suggest_with_songs("/viz o", &ctx(true, &[], &[]), &[]);
+        assert_eq!(r.candidates, vec!["on".to_string(), "off".to_string()]);
+    }
+
+    #[test]
+    fn vfx_on_off() {
+        let r = suggest_with_songs("/vfx o", &ctx(true, &[], &[]), &[]);
         assert_eq!(r.candidates, vec!["on".to_string(), "off".to_string()]);
     }
 

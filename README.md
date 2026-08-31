@@ -70,6 +70,7 @@ Recipes (Cursor `SKILL.md` + playable `songs/skill-*.strudel`): [docs/skills/](.
 - **`dj [SONG_A] [SONG_B]`**: **ハイライト + コマンド行**のライブ UI + `songs/` ウォッチャ（デモ / DJ 向け）
   - 画面上段: **左 = デッキ A / 右 = デッキ B** のミニ記法ハイライト（同時表示）
   - **`F10` または `/viz`**: 上段を **punchcard** に切替。上段=ドラム（`$:` ごとレーン・**一色**）、下段=ノートのピアノロール（**楽器＝note `$:` ごと色分け**）。`/viz on` / `/viz off` も可
+  - **`F9` または `/vfx`**（別名 `/dopa` `/flash`）: ヒットに合わせた VFX（ドラム固有色・波紋・メロディビーム・ライザー色相）。既定 On。ヘルプ行の `[VFX]` をクリックしても切替。ハットなどの細かいヒットは局所のみ（全画面の点滅はしない）
   - 中段: **A/B の Hi・Mid・Lo EQ**（各 3 行・短スライダー。中央 0.5＝フラット、±12 dB。Mixer チャンネル EQ に連動）
   - その下: **クロスフェーダー**（最大 10 文字幅 `XF A ──□── B`。□ は白背景。クリック／ドラッグ）
   - 下段: ログ + `»` プロンプト
@@ -84,7 +85,7 @@ Recipes (Cursor `SKILL.md` + playable `songs/skill-*.strudel`): [docs/skills/](.
     - `/a load songs/techno1.strudel` / `/b load songs/ambient1.strudel`
     - `/b head 33`（次の小節境界で B を曲の 33 小節目から。別名 `cue`。1 始まり）
     - `/x 4`（反対側デッキへ 4 小節 xfade）/ `/b x 4`
-    - `/a mute kick` / `/bpm 128` / `/status` / `/help` / `/viz`
+    - `/a mute kick` / `/bpm 128` / `/status` / `/help` / `/viz` / `/vfx`
     - オペレータ: `/hush` `/quit`
   - `--text`: ハイライトなしの rustyline テキスト REPL（**裸コマンドのまま**。Hermes は TUI のみ）
   - 互換: `play --repl` / `play --repl-text` も同じセッションを起動（A/B 2 曲可）

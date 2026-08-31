@@ -10,6 +10,7 @@ pub struct HighlightTrack {
     pub mini_base: usize,
     /// Pattern speed (`.fast` / `.slow` method chain). Matches Deck scheduling.
     pub speed: f64,
+    pub is_note: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -31,6 +32,7 @@ impl HighlightModel {
                 pattern: t.code.pattern.clone(),
                 mini_base: t.code.mini_base,
                 speed: t.code.speed.max(1e-6),
+                is_note: t.code.is_note,
             })
             .collect();
         Self {
@@ -64,10 +66,21 @@ fn samples_per_bar(sample_rate: u32, bpm: f64) -> f64 {
     sample_rate as f64 * 60.0 / bpm * 4.0
 }
 
-/// Absolute file spans of atoms active at `bar_pos` in `bar`.
-pub fn active_spans(model: &HighlightModel, bar: u64, bar_pos: f64) -> Vec<Span> {
+/// Currently sounding mini atom (label + optional source span).
+#[derive(Debug, Clone)]
+pub struct ActiveAtom {
+    pub span: Option<Span>,
+    pub value: String,
+    pub track_idx: usize,
+    pub is_note: bool,
+    /// Absolute cycle (`bar + start`) for VFX attack keys.
+    pub start_cycle: f64,
+}
+
+/// Atoms active at `bar_pos` in `bar`.
+pub fn active_atoms(model: &HighlightModel, bar: u64, bar_pos: f64) -> Vec<ActiveAtom> {
     let mut out = Vec::new();
-    for track in &model.tracks {
+    for (track_idx, track) in model.tracks.iter().enumerate() {
         if track.muted {
             continue;
         }
@@ -82,12 +95,25 @@ pub fn active_spans(model: &HighlightModel, bar: u64, bar_pos: f64) -> Vec<Span>
             let end = (ev.start + ev.dur) / speed;
             // Events past the bar (speed < 1 stretch) still show while inside range.
             if bar_pos + f64::EPSILON >= start && bar_pos < end {
-                if let Some(rel) = ev.span {
-                    out.push(rel.offset(track.mini_base));
-                }
+                out.push(ActiveAtom {
+                    span: ev.span.map(|rel| rel.offset(track.mini_base)),
+                    value: ev.value.clone(),
+                    track_idx,
+                    is_note: track.is_note,
+                    start_cycle: bar as f64 + start,
+                });
             }
         }
     }
+    out
+}
+
+/// Absolute file spans of atoms active at `bar_pos` in `bar`.
+pub fn active_spans(model: &HighlightModel, bar: u64, bar_pos: f64) -> Vec<Span> {
+    let mut out: Vec<Span> = active_atoms(model, bar, bar_pos)
+        .into_iter()
+        .filter_map(|a| a.span)
+        .collect();
     // Sort + merge overlaps for stable rendering.
     out.sort_by_key(|s| (s.start, s.end));
     out
