@@ -1,0 +1,9 @@
+// @title thud-fifth
+// @genre four-on-the-floor
+setcpm(124/4)
+// drums
+$: s("bd:tc*4, [~ hh]*4").lpf(4000).gain(0.62)
+// bass
+$: note("0 2 4 0").scale("C2:minor").s("square").lpf(140).gain(0.36)
+// pad
+$: note("0 ~ 4 ~").scale("C4:minor").s("pf:ff").gain(0.22)

@@ -1,0 +1,10 @@
+// @title one-fm
+// @genre minimal-techno
+setcpm(126/4)
+// drums
+$: s("bd:tc*4, [~ hh]*4").gain(0.52)
+// bass
+$: note("0 ~ ~ ~").scale("C2:minor")
+  .s("sine").fm(2.5).fmh(1).fmdec(0.4).fmsus(0.3).lpf(360).gain(0.4)
+// fx
+$: s("<fx:up ~ ~ ~>").gain(0.2)

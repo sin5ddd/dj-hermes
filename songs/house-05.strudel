@@ -1,0 +1,9 @@
+// @title riser-build
+// @genre house
+setcpm(124/4)
+// drums
+$: s("bd:hf*4, [~ cp]*2, [~ hh:hs]*4").gain(0.52)
+// bass
+$: note("0 0 0 4").scale("C2:minor").s("sawtooth").lpf(380).gain(0.42)
+// fx
+$: s("<fx:up ~ ~ ~>").gain(0.28)

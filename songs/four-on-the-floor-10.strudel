@@ -1,0 +1,9 @@
+// @title tight-fifth
+// @genre four-on-the-floor
+setcpm(124/4)
+// drums
+$: s("bd*4, [~ hh]*4").gain(0.62)
+// bass
+$: note("0 4 0 0").scale("C4:minor").s("bs:ht").gain(0.38)
+// pad
+$: note("4 ~ 0 ~").scale("C4:minor").s("pf:ff").gain(0.22)

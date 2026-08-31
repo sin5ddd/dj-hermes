@@ -1,0 +1,9 @@
+// @title dark-pluck
+// @genre four-on-the-floor
+setcpm(124/4)
+// drums
+$: s("bd:tc*4, hh*8").gain(0.62)
+// bass
+$: note("0 0 3 0").scale("C4:minor").s("bs:dk").gain(0.32)
+// lead
+$: note("0 ~ 3 7  4 ~ 0 ~").scale("C4:minor").s("plk:lp").gain(0.3).cut(1)

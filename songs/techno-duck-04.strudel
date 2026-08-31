@@ -1,0 +1,13 @@
+// @title floor-riser
+// @genre techno-duck
+setcpm(126/4)
+// kick
+$: s("bd:hf*4").gain(0.86).duckorbit(2).duckattack(0.045).duckdepth(0.82)
+// hats
+$: s("[~ hh]*4").gain(0.34)
+// bass
+$: note("0 0 4 0").scale("C2:minor")
+  .s("sine").lpf(400).gain(0.48)
+  .orbit(2)
+// fx
+$: s("<fx:up ~ ~ ~>").gain(0.28)

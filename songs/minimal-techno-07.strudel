@@ -1,0 +1,9 @@
+// @title fifth-gap
+// @genre minimal-techno
+setcpm(126/4)
+// drums
+$: s("bd*4, [~ hh]*4").gain(0.52)
+// bass
+$: note("0 ~ ~ 0").scale("C2:minor").s("sawtooth").lpf(280).gain(0.4)
+// pad
+$: note("4 ~ ~ ~").scale("C4:minor").s("pf:ff").gain(0.16)

@@ -1,0 +1,9 @@
+// @title fifth-floor
+// @genre house
+setcpm(124/4)
+// drums
+$: s("bd:dc*4, [~ cp]*2, [~ hh:cl]*4").gain(0.58)
+// bass
+$: note("0 ~ 0 ~").scale("C4:minor").s("bs:su").gain(0.32)
+// pad
+$: note("4 ~ 0 ~").scale("C4:minor").s("pf:ff").gain(0.22)

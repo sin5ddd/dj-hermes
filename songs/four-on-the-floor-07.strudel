@@ -1,0 +1,9 @@
+// @title punch-mid
+// @genre four-on-the-floor
+setcpm(124/4)
+// drums
+$: s("bd:hf*4, [~ hh:cl]*4").gain(0.64)
+// bass
+$: note("0 2 0 4").scale("C2:minor").s("sine").lpf(300).gain(0.46)
+// pad
+$: note("[0,2,4] ~ ~ ~").scale("C4:minor").s("bs:rm").gain(0.2)

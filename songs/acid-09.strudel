@@ -1,0 +1,23 @@
+// @title thud-climb
+// @genre acid
+setcpm(130/4)
+// drums
+$: s("bd*4, [~ hh]*4").gain(0.64)
+// bass
+$: note("0 4 7 4  3 0 2 0  5 4 0 3  2 0 -1 <0 7>")
+  .scale("C2:minor")
+  .s("square")
+  .lpf("230 230 690 230  730 230 230 230  230 650 230 230  770 710 230 230")
+  .lpq(14)
+  .lpenv(3)
+  .lpattack(0.001)
+  .lpdecay(0.09)
+  .lpsustain(0.05)
+  .cut(1)
+  .gain(0.46)
+  .attack(0.001)
+  .decay(0.1)
+  .sustain(0.12)
+  .release(0.04)
+// fx
+$: s("<fx:up ~ ~ ~>").gain(0.22)

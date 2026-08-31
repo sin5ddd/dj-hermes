@@ -1,0 +1,9 @@
+// @title organ-fall
+// @genre progressive-house
+setcpm(128/4)
+// drums
+$: s("bd:9p*4, [~ cp]*2, [~ hh]*4").gain(0.55)
+// bass
+$: note("4 4 0 0").scale("C2:minor").s("sine").lpf(250).gain(0.44)
+// pad
+$: note("4 2 0 4").scale("C3:minor").s("wt_organ").lpf(900).attack(0.12).sustain(0.6).release(0.3).gain(0.22).room(0.35)

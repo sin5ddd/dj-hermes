@@ -1,0 +1,9 @@
+// @title mid-reese-hook
+// @genre house
+setcpm(124/4)
+// drums
+$: s("bd*4, [~ cp]*2, [~ hh]*4").lpf(3800).gain(0.6)
+// bass
+$: note("0 0 3 0").scale("C2:minor").s("square").lpf(150).gain(0.36)
+// pad
+$: note("[0,2,4] ~ [0,2,4] ~").scale("C4:minor").s("bs:rm").gain(0.2)

@@ -1,0 +1,11 @@
+// @title square-fifth
+// @genre techno-duck
+setcpm(126/4)
+// kick
+$: s("bd*4").gain(0.88).duckorbit(2).duckattack(0.04).duckdepth(0.86)
+// hats
+$: s("[~ hh]*4").gain(0.36)
+// bass
+$: note("0 0 0 3").scale("C2:minor").s("square").lpf(150).orbit(2).gain(0.36)
+// pad
+$: note("0 ~ 4 ~").scale("C4:minor").s("pf:ff").orbit(2).gain(0.2)

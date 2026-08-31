@@ -1,0 +1,9 @@
+// @title floor-riser
+// @genre four-on-the-floor
+setcpm(124/4)
+// drums
+$: s("bd:hf*4, [~ hh]*4").gain(0.55)
+// bass
+$: note("0 0 0 2").scale("C2:minor").s("sawtooth").lpf(360).gain(0.44)
+// fx
+$: s("<fx:up ~ ~ ~>").gain(0.28)

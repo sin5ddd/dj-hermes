@@ -1,0 +1,23 @@
+// @title full-drop
+// @genre acid
+setcpm(130/4)
+// drums
+$: s("bd:9p*4, [~ hh]*4").gain(0.66)
+// bass
+$: note("0 5 3 0  2 7 3 0  4 0 5 2  -1 4 0 <3 6>")
+  .scale("C2:minor")
+  .s("square")
+  .lpf("280 280 740 280  780 280 280 280  280 700 280 280  760 740 280 280")
+  .lpq(14)
+  .lpenv(3)
+  .lpattack(0.001)
+  .lpdecay(0.09)
+  .lpsustain(0.05)
+  .cut(1)
+  .gain(0.46)
+  .attack(0.001)
+  .decay(0.1)
+  .sustain(0.12)
+  .release(0.04)
+// pad
+$: note("0 2 4 7").scale("C3:minor").s("triangle").lpf(800).attack(0.08).sustain(0.5).release(0.2).gain(0.12)

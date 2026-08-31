@@ -1,0 +1,9 @@
+// @title dark-fifth
+// @genre progressive-house
+setcpm(128/4)
+// drums
+$: s("bd*4, [~ cp]*2, [~ hh]*4").lpf(4200).gain(0.54)
+// bass
+$: note("0 0 0 0").scale("C4:minor").s("bs:dk").gain(0.3)
+// pad
+$: note("0 ~ 0 ~").scale("C4:minor").s("pf:ff").gain(0.22)

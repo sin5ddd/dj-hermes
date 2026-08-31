@@ -1,0 +1,9 @@
+// @title riser-build
+// @genre progressive-house
+setcpm(128/4)
+// drums
+$: s("bd:hf*4, [~ cp]*2, [~ hh]*4").gain(0.5)
+// bass
+$: note("0 2 0 0").scale("C2:minor").s("sawtooth").lpf(360).gain(0.42)
+// fx
+$: s("<fx:up ~ ~ ~>").gain(0.3)

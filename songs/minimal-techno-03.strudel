@@ -1,0 +1,9 @@
+// @title square-riser
+// @genre minimal-techno
+setcpm(126/4)
+// drums
+$: s("bd*4, hh*8").gain(0.5)
+// bass
+$: note("0 ~ 0 ~").scale("C2:minor").s("square").lpf(140).gain(0.34)
+// fx
+$: s("<fx:up ~ ~ ~>").gain(0.22)
