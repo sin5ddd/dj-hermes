@@ -1,7 +1,9 @@
-// @title saw-bright
+// @title floor-riser
 // @genre four-on-the-floor
 setcpm(124/4)
 // drums
-$: s("bd*4, [~ hh]*4").gain(0.64)
+$: s("bd:hf*4, [~ hh]*4").gain(0.55)
 // bass
-$: note("0 2 4 0").scale("C3:major").s("sawtooth").lpf(1400).gain(0.34)
+$: note("0 0 0 2").scale("C2:minor").s("sawtooth").lpf(360).gain(0.44)
+// fx
+$: s("<fx:up ~ ~ ~>").gain(0.28)

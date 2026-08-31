@@ -1,9 +1,9 @@
-// @title phrygian-cellar
+// @title disco-line
 // @genre house
 setcpm(124/4)
 // drums
-$: s("bd:hf*4, [~ cp]*2, [~ hh]*4").lpf(3800).gain(0.58)
+$: s("bd:9p*4, [~ cp]*2, hh*8").gain(0.62)
 // bass
-$: note("0 ~ 0 3").scale("C4:phrygian").s("bs:hf").gain(0.4)
-// pluck
-$: note("4 ~ 7 4  1 0 ~ -1").scale("C4:phrygian").s("plk:lp").gain(0.32).cut(1)
+$: note("0 3 0 2").scale("C2:minor").s("sine").lpf(260).gain(0.46)
+// lead
+$: note("7 4 0 2  4 0 ~ 3").scale("C4:minor").s("plk:hd").gain(0.36).cut(1)

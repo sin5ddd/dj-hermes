@@ -1,15 +1,15 @@
-// @title dark-body
+// @title walk-hold
 // @genre acid
 setcpm(130/4)
 // drums
-$: s("bd:tc*4, [~ hh]*4").gain(0.62)
-// acid
-$: note("0 0 3 0  7 3 2 0  4 4 3 0  -1 3 0 <2 5>")
+$: s("bd:9p*4, [~ hh]*4").gain(0.64)
+// bass
+$: note("7 5 4 3  2 0 -1 0  3 2 0 2  4 3 0 <5 7>")
   .scale("C2:minor")
   .s("sawtooth")
-  .lpf("200 200 640 200  680 200 200 200  200 620 200 200  700 660 200 200")
+  .lpf("280 280 700 280  280 740 280 280  660 280 280 720  280 280 760 280")
   .lpq(14)
-  .lpenv(2.5)
+  .lpenv(3)
   .lpattack(0.001)
   .lpdecay(0.09)
   .lpsustain(0.05)
@@ -19,3 +19,5 @@ $: note("0 0 3 0  7 3 2 0  4 4 3 0  -1 3 0 <2 5>")
   .decay(0.1)
   .sustain(0.12)
   .release(0.04)
+// lead
+$: note("0 ~ ~ ~").scale("C4:minor").s("ld:ss").gain(0.14)

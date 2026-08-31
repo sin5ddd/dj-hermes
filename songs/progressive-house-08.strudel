@@ -1,9 +1,9 @@
-// @title cycle-journey
+// @title dark-fifth
 // @genre progressive-house
 setcpm(128/4)
 // drums
-$: s("bd:hf*4, [~ cp]*2, [~ hh]*4").gain(0.56)
+$: s("bd*4, [~ cp]*2, [~ hh]*4").lpf(4200).gain(0.54)
 // bass
-$: note("0 0 4 0").scale("<A2:minor D:dorian G:mixolydian C:major>").s("sine").lpf(280).gain(0.46)
+$: note("0 0 0 0").scale("C4:minor").s("bs:dk").gain(0.3)
 // pad
-$: note("[0,2,4] ~ [0,2,4] ~").scale("<A3:minor D:dorian G:mixolydian C:major>").s("sawtooth").lpf(1000).attack(0.1).sustain(0.65).release(0.3).gain(0.26).room(0.35)
+$: note("0 ~ 0 ~").scale("C4:minor").s("pf:ff").gain(0.22)

@@ -1,9 +1,9 @@
-// @title dorian-loft
+// @title fifth-floor
 // @genre house
 setcpm(124/4)
 // drums
-$: s("bd:hf*4, [~ cp]*2, [~ hh:cl]*4").gain(0.62)
+$: s("bd:dc*4, [~ cp]*2, [~ hh:cl]*4").gain(0.58)
 // bass
-$: note("0 0 4 0").scale("C4:dorian").s("bs:hf").gain(0.4)
-// pluck
-$: note("4 ~ 7 4  2 0 ~ -1").scale("C4:dorian").s("plk:lp").gain(0.38).cut(1)
+$: note("0 ~ 0 ~").scale("C4:minor").s("bs:su").gain(0.32)
+// pad
+$: note("4 ~ 0 ~").scale("C4:minor").s("pf:ff").gain(0.22)

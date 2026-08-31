@@ -1,7 +1,11 @@
-// @title thud-dark
+// @title fm-hold
 // @genre four-on-the-floor
 setcpm(124/4)
 // drums
-$: s("bd:tc*4, [~ hh]*4").lpf(4000).gain(0.62)
+$: s("bd:9p*4, [~ hh]*4").gain(0.64)
 // bass
-$: note("0 2 4 0").scale("C2:minor").s("square").lpf(140).gain(0.38)
+$: note("0 0 2 <4 6>").scale("C2:minor")
+  .s("sine").fm(3).fmh(2).fmdec(0.25).fmsus(0.2).lpf(460).gain(0.5)
+  .attack(0.005).decay(0.1).sustain(0.3).release(0.08)
+// lead
+$: note("0 ~ ~ ~").scale("C4:minor").s("ld:ss").gain(0.18)

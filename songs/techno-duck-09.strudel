@@ -2,12 +2,12 @@
 // @genre techno-duck
 setcpm(126/4)
 // kick
-$: s("bd*4").gain(0.82).duckorbit(2).duckattack(0.04).duckdepth(0.8)
+$: s("bd*4").gain(0.8).duckorbit(2).duckattack(0.04).duckdepth(0.8)
 // hats
-$: s("[~ hh]*4").gain(0.28)
+$: s("[~ hh]*4").gain(0.26)
 // bass
-$: note("0 ~ ~ ~").scale("C4:minor").s("bs:dk").orbit(2).gain(0.32)
-// pad
-$: note("0 ~ 4 ~").scale("C3:minor")
-  .s("sawtooth").lpf(700).orbit(2).gain(0.22)
-  .attack(0.1).sustain(0.7).release(0.3)
+$: note("0 ~ ~ 0").scale("C2:minor")
+  .s("sine").lpf(320).gain(0.4)
+  .orbit(2)
+// fx
+$: s("<fx:up ~ ~ ~>").gain(0.24)

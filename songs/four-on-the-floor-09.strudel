@@ -1,7 +1,9 @@
-// @title kick-intro
+// @title square-saw
 // @genre four-on-the-floor
 setcpm(124/4)
 // drums
-$: s("bd*4, [~ hh]*4").gain(0.5)
+$: s("bd:hf*4, hh*8").gain(0.6)
 // bass
-$: note("0 ~ ~ ~").scale("C2:minor").s("sine").lpf(240).gain(0.36)
+$: note("0 0 0 0").scale("C2:minor").s("square").lpf(150).gain(0.36)
+// lead
+$: note("4 ~ ~ ~").scale("C4:minor").s("ld:ss").gain(0.18)

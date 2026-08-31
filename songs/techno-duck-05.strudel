@@ -1,16 +1,13 @@
-// @title deep-snap
+// @title hf-pump
 // @genre techno-duck
 setcpm(126/4)
 // kick
-$: s("bd:tc*4").gain(0.92).duckorbit(2).duckattack(0.03).duckdepth(0.95)
+$: s("bd:tc*4").gain(0.9).duckorbit(2).duckattack(0.03).duckdepth(0.9)
 // hats
-$: s("[~ hh]*4").gain(0.36)
+$: s("hh*8").gain(0.28)
 // bass
-$: note("0 0 0 2").scale("C2:minor")
-  .s("sine").fm(3).fmh(1).lpf(380).gain(0.52)
-  .attack(0.004).decay(0.09).sustain(0.28).release(0.07)
-  .orbit(2)
+$: note("0 0 2 0").scale("C4:minor").s("bs:hf").orbit(2).gain(0.38)
 // pad
-$: note("0 2 4 7").scale("C3:minor")
-  .s("sawtooth").lpf(750).orbit(2).gain(0.3)
-  .attack(0.04).sustain(0.62).release(0.18)
+$: note("4 2 0 2").scale("C3:minor")
+  .s("sawtooth").lpf(780).orbit(2).gain(0.26)
+  .attack(0.05).sustain(0.6).release(0.2)

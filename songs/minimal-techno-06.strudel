@@ -1,7 +1,9 @@
-// @title offbeat-grid
+// @title sub-dot
 // @genre minimal-techno
 setcpm(126/4)
 // drums
-$: s("bd*4, [~ hh]*4").gain(0.58)
+$: s("bd:hf*4, [~ hh]*4").gain(0.5)
 // bass
-$: note("0 ~ ~ ~ 0 ~ <2 3> ~").scale("C2:minor").s("sawtooth").lpf(340).gain(0.42)
+$: note("0 ~ ~ ~").scale("C4:minor").s("bs:su").gain(0.28)
+// pad
+$: note("4 ~ ~ ~").scale("C3:minor").s("triangle").lpf(650).attack(0.14).sustain(0.65).release(0.3).gain(0.14)

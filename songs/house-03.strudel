@@ -1,9 +1,9 @@
-// @title basement-dark
+// @title dry-punch
 // @genre house
 setcpm(124/4)
 // drums
-$: s("bd:hf*4, [~ cp]*2, [~ hh]*4").lpf(4000).gain(0.6)
+$: s("bd:9p*4, [~ cp]*2, [~ hh]*4").lpf(4000).gain(0.6)
 // bass
-$: note("0 2 4 0").scale("C2:minor").s("square").lpf(140).gain(0.4)
-// chords
-$: note("[0,2,4] ~ [0,2,4] ~").scale("C3:minor").s("sawtooth").lpf(700).gain(0.22)
+$: note("0 2 4 0").scale("C2:minor").s("square").lpf(140).gain(0.38)
+// pad
+$: note("0 ~ 4 ~").scale("C4:minor").s("pf:ff").gain(0.24)

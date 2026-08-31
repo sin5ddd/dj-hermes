@@ -1,7 +1,9 @@
-// @title tight-dn
+// @title thud-riser
 // @genre four-on-the-floor
 setcpm(124/4)
 // drums
-$: s("bd:dn*4, [~ hh]*4").gain(0.64)
+$: s("bd:tc*4, [~ hh]*4").gain(0.56)
 // bass
-$: note("0 2 0 4").scale("C2:minor").s("triangle").lpf(400).gain(0.42)
+$: note("0 0 4 2").scale("C2:minor").s("sawtooth").lpf(400).gain(0.44)
+// fx
+$: s("<fx:up ~ ~ ~>").gain(0.26)

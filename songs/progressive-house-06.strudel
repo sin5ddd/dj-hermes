@@ -1,9 +1,9 @@
-// @title fifth-pad-hold
+// @title supersaw-bloom
 // @genre progressive-house
 setcpm(128/4)
 // drums
-$: s("bd:hf*4, [~ cp]*2, [~ hh]*4").gain(0.55)
+$: s("bd:dc*4, [~ cp]*2, hh*8").gain(0.56)
 // bass
-$: note("0 0 4 4").scale("C2:minor").s("sine").lpf(260).gain(0.45)
-// pad
-$: note("0 ~ 4 ~").scale("C4:minor").s("pf:ff").gain(0.26)
+$: note("0 0 2 2").scale("C2:minor").s("sine").lpf(280).gain(0.44)
+// lead
+$: note("0 ~ ~ ~").scale("C4:minor").s("ld:ss").gain(0.2)

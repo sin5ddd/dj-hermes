@@ -1,21 +1,23 @@
-// @title sparse-intro
+// @title punch-scream
 // @genre acid
 setcpm(130/4)
 // drums
-$: s("bd*4, [~ hh]*4").gain(0.55)
-// acid
-$: note("0 ~ ~ 0  ~ 3 ~ ~  0 ~ 7 ~  ~ ~ 0 ~")
+$: s("bd*4, [~ hh]*4").gain(0.65)
+// bass
+$: note("0 7 0 3  2 0 4 0  7 3 0 2  -1 0 3 <4 6>")
   .scale("C2:minor")
   .s("sawtooth")
-  .lpf("220 220 220 680  220 700 220 220  220 220 740 220  220 220 220 220")
-  .lpq(13)
+  .lpf("270 780 270 270  270 270 720 270  760 270 270 270  270 700 270 740")
+  .lpq(14)
   .lpenv(3)
   .lpattack(0.001)
-  .lpdecay(0.1)
+  .lpdecay(0.09)
   .lpsustain(0.05)
   .cut(1)
-  .gain(0.4)
+  .gain(0.46)
   .attack(0.001)
   .decay(0.1)
   .sustain(0.12)
   .release(0.04)
+// lead
+$: note("4 ~ ~ ~").scale("C4:minor").s("ld:ss").gain(0.14)

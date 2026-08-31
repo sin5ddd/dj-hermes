@@ -1,21 +1,23 @@
-// @title dorian-open
+// @title floor-square
 // @genre acid
 setcpm(130/4)
 // drums
-$: s("bd*4, [~ hh]*4").gain(0.65)
-// acid
-$: note("0 0 5 0  7 5 2 0  4 4 5 0  -1 5 0 <2 7>")
-  .scale("C2:dorian")
+$: s("bd:tc*4, [~ hh]*4").gain(0.64)
+// bass
+$: note("3 0 3 7  0 2 0 5  4 0 3 0  2 5 0 <3 7>")
+  .scale("C2:minor")
   .s("square")
   .lpf("300 300 760 300  780 300 300 300  300 700 300 300  740 720 300 300")
-  .lpq(13)
+  .lpq(14)
   .lpenv(3)
   .lpattack(0.001)
   .lpdecay(0.09)
   .lpsustain(0.05)
   .cut(1)
-  .gain(0.44)
+  .gain(0.46)
   .attack(0.001)
   .decay(0.1)
   .sustain(0.12)
   .release(0.04)
+// pad
+$: note("0 ~ 4 ~").scale("C4:minor").s("pf:ff").gain(0.14)

@@ -1,9 +1,9 @@
-// @title low-room
+// @title square-riser
 // @genre minimal-techno
 setcpm(126/4)
-// kick
-$: s("bd:tc*4").gain(0.88)
-// hat
-$: s("[~ hh]*4").gain(0.18).hpf(8000)
+// drums
+$: s("bd*4, hh*8").gain(0.5)
 // bass
-$: note("0 ~ 0 ~").scale("C2:minor").s("sawtooth").lpf(260).gain(0.42)
+$: note("0 ~ 0 ~").scale("C2:minor").s("square").lpf(140).gain(0.34)
+// fx
+$: s("<fx:up ~ ~ ~>").gain(0.22)
