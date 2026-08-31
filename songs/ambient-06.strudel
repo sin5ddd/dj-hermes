@@ -1,10 +1,10 @@
 // @title ambient-06
 // @genre ambient
-// @details sparsest drone: slow organ + floor sub only (bs:su)
+// @details round kick + 808 sub + monophonic ld:ss
 setcpm(70/4)
-// pad
-$: note("<0 2>/4").scale("C3:minor").s("wt_organ").lpf(800).gain(0.34)
-  .attack(0.4).decay(0.4).sustain(0.8).release(0.8)
-  .room(0.58).orbit(1)
-// floor
-$: note("<0 0>/2").scale("C4:minor").s("bs:su").gain(0.26)
+// drums
+$: s("bd:jg ~ ~ ~").gain(0.22)
+// bass
+$: note("0 ~ ~ 3").scale("C4:minor").s("bs:8s").gain(0.3)
+// lead
+$: note("0 ~ 5 0").scale("C4:minor").s("ld:ss").gain(0.2).cut(1)

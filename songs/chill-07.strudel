@@ -1,10 +1,11 @@
 // @title chill-07
 // @genre chill
-// @details phrygian dark: square sub + close bs:rm mid (no PCM sub)
-setcpm(100/4)
+// @details thud kick + dark Reese + organ pad
+setcpm(90/4)
 // drums
-$: s("bd ~ ~ ~").gain(0.38)
+$: s("bd:tc ~ ~ ~, [~ sd]*2").gain(0.4)
 // bass
-$: note("0 ~ 2 ~").scale("C2:phrygian").s("square").lpf(140).gain(0.36)
-// chords
-$: note("[0,2,4] ~ ~ ~").scale("C4:phrygian").s("bs:rm").gain(0.2)
+$: note("0 3 ~ 0").scale("C4:minor").s("bs:rd").gain(0.3)
+// pad
+$: note("<[0,2,4] [0,4,7]>/2").scale("C3:minor").s("wt_organ").lpf(1100).gain(0.28)
+  .attack(0.12).release(0.4).room(0.36).orbit(1)

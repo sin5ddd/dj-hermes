@@ -1,10 +1,10 @@
 // @title chill-05
 // @genre chill
-// @details denser hats + oh, still not four-on-the-floor
-setcpm(100/4)
+// @details round kick + tight house bass + descending hook
+setcpm(90/4)
 // drums
-$: s("bd ~ ~ sd, [~ hh]*4, ~ ~ ~ oh").gain(0.48)
+$: s("bd:jg ~ ~ sd, [~ hh]*4").gain(0.44)
 // bass
-$: note("0 0 2 4").scale("C2:minor").s("sine").lpf(380).gain(0.5)
+$: note("0 0 2 4").scale("C4:minor").s("bs:ht").gain(0.4)
 // lead
-$: note("~ 7 4 ~").scale("C4:minor").s("triangle").lpf(2000).gain(0.18)
+$: note("~ 7 4 0").scale("C4:minor").s("triangle").lpf(2000).gain(0.18)

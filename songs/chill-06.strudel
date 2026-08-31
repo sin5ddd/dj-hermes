@@ -1,10 +1,10 @@
 // @title chill-06
 // @genre chill
-// @details dorian mid: sine bass + triangle hook
-setcpm(100/4)
+// @details tight 808 + acid bass + sparse hook
+setcpm(90/4)
 // drums
-$: s("bd ~ ~ ~, [~ hh]*4").gain(0.4)
+$: s("bd:8t ~ ~ ~, [~ hh]*4").gain(0.4)
 // bass
-$: note("0 ~ 2 4").scale("C2:dorian").s("sine").lpf(360).gain(0.48)
+$: note("0 ~ 2 4").scale("C4:minor").s("bs:ac").gain(0.38)
 // lead
-$: note("~ 4 ~ <5 7>").scale("C3:dorian").s("triangle").gain(0.2)
+$: note("0 2 ~ 5").scale("C4:minor").s("triangle").gain(0.18)

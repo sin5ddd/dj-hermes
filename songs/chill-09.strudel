@@ -1,10 +1,10 @@
 // @title chill-09
 // @genre chill
-// @details sparse kit + sine bass + fx:up once per 4 bars
-setcpm(100/4)
+// @details dusty kick + sine sub + pent-ish hook
+setcpm(90/4)
 // drums
-$: s("bd ~ ~ sd, [~ hh]*4").gain(0.42)
+$: s("bd:lf ~ ~ ~, [~ hh]*4").gain(0.38)
 // bass
-$: note("0 ~ 2 ~").scale("C2:minor").s("sine").lpf(350).gain(0.48)
-// fx
-$: s("<fx:up ~ ~ ~>").gain(0.24)
+$: note("0 ~ 3 0").scale("C4:minor").s("bs:ss").gain(0.34)
+// lead
+$: note("5 3 0 2").scale("C4:minor").s("triangle").lpf(1600).gain(0.18)

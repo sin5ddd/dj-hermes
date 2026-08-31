@@ -1,11 +1,11 @@
 // @title lofi-hiphop-01
 // @genre lofi-hiphop
-// @details dusty bd:lf + close triangle chords + sine bass
-setcpm(80/4)
+// @details dusty bd:lf + sine sub + close triangle
+setcpm(84/4)
 // drums
-$: s("bd:lf ~ ~ sd, [~ hh]*4").gain(0.45)
-// chords
-$: note("[0,2,4] ~ [0,3,5] ~").scale("C3:minor").s("triangle").lpf(1200).gain(0.35)
-  .attack(0.05).decay(0.3).sustain(0.5).release(0.3).room(0.3).orbit(1)
+$: s("bd:lf ~ ~ sd, [~ hh]*4").gain(0.44)
 // bass
-$: note("0 ~ 2 ~").scale("C2:minor").s("sine").lpf(300).gain(0.45)
+$: note("0 ~ 2 ~").scale("C4:minor").s("bs:su").gain(0.4)
+// lead
+$: note("[0,2,4] ~ [0,3,5] ~").scale("C4:minor").s("triangle").lpf(1200).gain(0.32)
+  .attack(0.05).decay(0.3).sustain(0.5).release(0.3).room(0.3).orbit(1)

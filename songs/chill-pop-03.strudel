@@ -1,10 +1,10 @@
 // @title chill-pop-03
 // @genre chill-pop
-// @details sparser drums, still a major hook
-setcpm(110/4)
+// @details disco kick + bright Reese + baked major stab plk:s3
+setcpm(100/4)
 // drums
-$: s("bd ~ ~ ~, [~ sd]*2, [~ hh]*4").gain(0.45)
+$: s("bd:dc*4, [~ cp]*2, [~ hh]*4").gain(0.5)
 // bass
-$: note("0 ~ 4 2").scale("C2:major").s("sawtooth").lpf(420).gain(0.48)
-// hook
-$: note("0 2 ~ <4 7>").scale("C4:major").s("square").lpf(2200).gain(0.18)
+$: note("0 ~ 4 2").scale("C4:major").s("bs:rb").gain(0.38)
+// lead
+$: note("0 ~ 0 ~").scale("C4:major").s("plk:s3").gain(0.24)

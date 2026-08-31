@@ -1,10 +1,11 @@
 // @title ambient-01
 // @genre ambient
-// @details sparse hollow fifth + sine pulse (dark, no third in pf:ff)
+// @details sparse bd:lf + bs:su floor + hollow pf:ff
 setcpm(70/4)
+// drums
+$: s("bd:lf ~ ~ ~").gain(0.22)
+// bass
+$: note("0 ~ ~ 0").scale("C4:minor").s("bs:su").gain(0.28)
 // pad
-$: note("0 ~ 0 ~").scale("C4:minor").s("pf:ff").gain(0.28)
-  .attack(0.3).decay(0.4).sustain(0.7).release(0.6)
-  .room(0.5).orbit(1)
-// pulse
-$: note("0 ~ 4 ~").scale("C2:minor").s("sine").lpf(300).gain(0.18)
+$: note("0 ~ 0 ~").scale("C4:minor").s("pf:ff").gain(0.26)
+  .attack(0.3).decay(0.4).sustain(0.7).release(0.6).room(0.5).orbit(1)

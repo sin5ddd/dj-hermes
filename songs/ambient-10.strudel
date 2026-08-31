@@ -1,12 +1,12 @@
 // @title ambient-10
 // @genre ambient
-// @details evolving FM bass + close organ pad (no PCM sub)
+// @details growl kick + sub-bass + evolving FM lead
 setcpm(70/4)
+// drums
+$: s("bd:ng ~ ~ sd").gain(0.22)
 // bass
-$: note("0 ~ 3 ~").scale("C2:minor")
-  .s("sine").fm(2).fmh(1).fmatt(0.02).fmdec(0.6).fmsus(0.35)
-  .lpf(380).gain(0.26)
-// pad
-$: note("<[0,2,4] [0,4,7]>/2").scale("C3:minor").s("wt_organ").lpf(1050).gain(0.32)
-  .attack(0.28).decay(0.3).sustain(0.7).release(0.55)
-  .room(0.44).orbit(1)
+$: note("0 0 3 0").scale("C4:minor").s("bs:sb").gain(0.24)
+// lead
+$: note("3 0 5 3").scale("C4:minor")
+  .s("sine").fm(3).fmh(2).fmatt(0.01).fmdec(0.3).fmsus(0.25)
+  .lpf(1600).lpenv(2).gain(0.16)

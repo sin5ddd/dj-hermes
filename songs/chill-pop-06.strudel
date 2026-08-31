@@ -1,10 +1,10 @@
 // @title chill-pop-06
 // @genre chill-pop
-// @details clap backbeat + simple major hook
-setcpm(110/4)
+// @details bundled bd+cp + distorted square bass + octave hook
+setcpm(100/4)
 // drums
 $: s("bd*4, [~ cp]*2, [~ hh]*4").gain(0.52)
 // bass
-$: note("0 0 4 0").scale("C2:major").s("sawtooth").lpf(450).gain(0.5)
-// hook
-$: note("0 4 7 <9 11>").scale("C4:major").s("square").lpf(2600).gain(0.16)
+$: note("0 0 2 4").scale("C4:major").s("bs:dq").gain(0.36)
+// lead
+$: note("0 4 7 11").scale("C4:major").s("square").lpf(2600).gain(0.16)

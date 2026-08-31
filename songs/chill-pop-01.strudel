@@ -1,10 +1,10 @@
 // @title chill-pop-01
 // @genre chill-pop
-// @details major hook bed: four-on-floor + saw bass + square hook
-setcpm(110/4)
+// @details house floor + saw-ish hook in C major
+setcpm(100/4)
 // drums
-$: s("bd*4, [~ sd]*2, [~ hh]*4").gain(0.5)
+$: s("bd:hf*4, [~ sd]*2, [~ hh]*4").gain(0.5)
 // bass
-$: note("0 0 4 2").scale("C2:major").s("sawtooth").lpf(450).gain(0.5)
-// hook
+$: note("0 0 4 2").scale("C4:major").s("bs:hf").gain(0.44)
+// lead
 $: note("0 2 4 <7 9>").scale("C4:major").s("square").lpf(2500).gain(0.18)

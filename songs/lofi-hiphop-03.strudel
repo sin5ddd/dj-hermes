@@ -1,11 +1,11 @@
 // @title lofi-hiphop-03
 // @genre lofi-hiphop
-// @details dark Reese (bs:dk only sub) + close triangle, no extra bass
-setcpm(80/4)
+// @details boom-bap + house floor + moving close chords
+setcpm(84/4)
 // drums
-$: s("bd:lf ~ ~ sd").gain(0.4)
+$: s("bd:lf ~ sd ~").gain(0.46)
 // bass
-$: note("0 3 0 <0 -1>").scale("C4:minor").s("bs:dk").gain(0.3)
-// chords
-$: note("[0,2,4] ~ [0,2,4] ~").scale("C3:minor").s("triangle").lpf(900).gain(0.22)
-  .room(0.28).orbit(1)
+$: note("0 ~ 4 0").scale("C4:minor").s("bs:hf").gain(0.4)
+// lead
+$: note("[0,2,4] ~ [4,6,8] ~").scale("C4:minor").s("triangle").lpf(1150).gain(0.3)
+  .attack(0.05).release(0.3).room(0.3).orbit(1)

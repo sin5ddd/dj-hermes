@@ -1,12 +1,12 @@
 // @title chill-pop-10
 // @genre chill-pop
-// @details evolving FM lead + saw bass (signed-off live FM)
-setcpm(110/4)
+// @details tight dnb kick + metal bass + evolving FM lead
+setcpm(100/4)
 // drums
-$: s("bd*4, [~ sd]*2, [~ hh]*4").gain(0.48)
+$: s("bd:dn*4, [~ sd]*2, [~ hh]*4").gain(0.48)
 // bass
-$: note("0 0 4 2").scale("C2:major").s("sawtooth").lpf(450).gain(0.48)
-// hook
-$: note("4 2 0 2").scale("C4:major")
+$: note("0 2 0 4").scale("C4:major").s("bs:mt").gain(0.36)
+// lead
+$: note("9 7 4 0").scale("C4:major")
   .s("sine").fm(3).fmh(2).fmatt(0.01).fmdec(0.3).fmsus(0.25)
   .lpf(1800).lpenv(2).gain(0.26)

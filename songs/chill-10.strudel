@@ -1,12 +1,10 @@
 // @title chill-10
 // @genre chill
-// @details denser four-layer: kit + sine + lead + hollow pf:ff
-setcpm(100/4)
+// @details dnb-tight kick + amen sub + monophonic ld:ss
+setcpm(90/4)
 // drums
-$: s("bd ~ ~ sd, [~ hh]*4").gain(0.45)
+$: s("bd:dn ~ ~ sd, ~ ~ ~ oh").gain(0.42)
 // bass
-$: note("0 ~ 2 0").scale("C2:minor").s("sine").lpf(340).gain(0.46)
+$: note("0 0 ~ 2").scale("C4:minor").s("bs:am").gain(0.36)
 // lead
-$: note("~ 4 ~ 7").scale("C3:minor").s("triangle").gain(0.16)
-// pad
-$: note("0 ~ 0 ~").scale("C4:minor").s("pf:ff").gain(0.18).room(0.35).orbit(2)
+$: note("7 ~ 4 0").scale("C4:minor").s("ld:ss").gain(0.22).cut(1)
