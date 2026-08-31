@@ -98,5 +98,5 @@ Live TUI: `/a load skill-four-on-the-floor` (or the `songs/` path). HTTP: `POST 
 - Call `bd*4, [~ cp]*2` techno — that is a house backbeat (see [strudel-genre-house](../strudel-genre-house/SKILL.md)).
 - Pair this file with a song at another `setcpm` (shared clock; the other tempo is discarded).
 - `stack("bd*4", …)` or `.cpm(124)` — not song format.
-- `bd:00` or `kit:bd` — colon is not a sample selector here.
+- `kit:bd` — bank does not go on the left. Catalog one-shots use `bd:hf` (see strudel-pcm-catalog). Default kit remains `s("bd")`.
 - Put `[~ cp]*2` on this kick-front grid.

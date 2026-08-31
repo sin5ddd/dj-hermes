@@ -11,10 +11,16 @@ use crate::synth::Voice;
 /// Default root pitch for `note().s("sample")` speed scaling (C3).
 pub const SAMPLE_ROOT_HZ: f32 = 261.6256;
 
+struct SampleVars {
+    by_index: Vec<Arc<Vec<f32>>>,
+    /// lowercase file stem (no `.wav`) → index into `by_index`
+    by_stem: HashMap<String, usize>,
+}
+
 /// Loaded PCM held as `Arc` so voices only refcount-clone.
 pub struct SampleBank {
     /// sound name → variation list (sorted by path name)
-    samples: HashMap<String, Vec<Arc<Vec<f32>>>>,
+    samples: HashMap<String, SampleVars>,
 }
 
 impl SampleBank {
@@ -82,12 +88,7 @@ impl SampleBank {
                     v.sort_by(|a, b| a.0.cmp(&b.0));
                 }
                 let key = k.to_ascii_lowercase();
-                (
-                    key,
-                    v.into_iter()
-                        .map(|(_, a)| a)
-                        .collect::<Vec<Arc<Vec<f32>>>>(),
-                )
+                (key, named_vars_to_sample_vars(v))
             })
             .collect();
 
@@ -107,18 +108,47 @@ impl SampleBank {
     /// Pick variation by `n % len` (negative n uses rem_euclid).
     pub fn get(&self, name: &str, n: Option<i32>) -> Option<Arc<Vec<f32>>> {
         let vars = self.samples.get(&name.to_ascii_lowercase())?;
-        if vars.is_empty() {
+        if vars.by_index.is_empty() {
             return None;
         }
         let idx = match n {
             None => 0,
             Some(i) => {
-                let len = vars.len() as i32;
+                let len = vars.by_index.len() as i32;
                 i.rem_euclid(len) as usize
             }
         };
-        vars.get(idx).cloned()
+        vars.by_index.get(idx).cloned()
     }
+
+    /// Pick variation by file stem (`samples/bd/8b.wav` → slug `8b`).
+    pub fn get_stem(&self, name: &str, slug: &str) -> Option<Arc<Vec<f32>>> {
+        let vars = self.samples.get(&name.to_ascii_lowercase())?;
+        let stem = slug.trim().to_ascii_lowercase();
+        let stem = stem.strip_suffix(".wav").unwrap_or(&stem);
+        let idx = *vars.by_stem.get(stem)?;
+        vars.by_index.get(idx).cloned()
+    }
+}
+
+fn named_vars_to_sample_vars(v: Vec<(String, Arc<Vec<f32>>)>) -> SampleVars {
+    let mut by_stem = HashMap::new();
+    let mut by_index = Vec::with_capacity(v.len());
+    for (filename, data) in v {
+        let idx = by_index.len();
+        if !filename.is_empty() {
+            let stem = Path::new(&filename)
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .unwrap_or(filename.as_str())
+                .to_ascii_lowercase();
+            if !stem.is_empty() {
+                by_stem.entry(stem).or_insert(idx);
+            }
+        }
+        by_index.push(data);
+    }
+    SampleVars { by_index, by_stem }
 }
 
 fn is_wav(p: &Path) -> bool {
@@ -596,6 +626,23 @@ mod tests {
         assert_ne!(a.len(), b.len());
         let c = bank.get("bd", Some(2)).unwrap(); // wraps
         assert_eq!(a.len(), c.len());
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn stem_picks_named_variation() {
+        let dir = std::env::temp_dir().join("strudel_test_samples_stem");
+        let _ = std::fs::remove_dir_all(&dir);
+        let bd = dir.join("bd");
+        std::fs::create_dir_all(&bd).unwrap();
+        write_test_wav_secs(&bd.join("00.wav"), 48_000, 0.1);
+        write_test_wav_secs(&bd.join("8b.wav"), 48_000, 0.25);
+        let bank = SampleBank::load_dir(&dir, 48_000);
+        let def = bank.get("bd", None).unwrap();
+        let named = bank.get_stem("bd", "8b").unwrap();
+        assert_ne!(def.len(), named.len());
+        assert_eq!(named.len(), bank.get_stem("BD", "8B.WAV").unwrap().len());
+        assert!(bank.get_stem("bd", "nope").is_none());
         let _ = std::fs::remove_dir_all(&dir);
     }
 

@@ -1114,6 +1114,16 @@ bass: note("c2 eb2 g2 bb2").s("sawtooth").lpf(400).gain(0.7)
     }
 
     #[test]
+    fn parses_skill_pcm_catalog_file() {
+        let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("songs/skill-pcm-catalog.strudel");
+        let text = std::fs::read_to_string(&path).expect("skill-pcm-catalog.strudel");
+        let s = parse_song(&text, "songs/skill-pcm-catalog.strudel").unwrap();
+        assert_eq!(s.title, "skill-pcm-catalog");
+        assert_eq!(s.tracks.len(), 3);
+        assert_eq!(s.tracks[0].code.sound, "bd:hf");
+    }
+
+    #[test]
     fn parses_strudel_style() {
         let text = r#"
 // @title smoke

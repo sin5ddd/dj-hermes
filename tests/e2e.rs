@@ -714,8 +714,8 @@ fn skill_house_clap_backbeat_sounds() {
         "do not stack or substitute sd on the clap grid: {text}"
     );
     assert!(
-        text.contains("lead-fm_pluck") && !text.contains("lead-fm-pluck"),
-        "pluck key is lead-fm_pluck (underscore): {text}"
+        text.contains("plk:lp") && !text.contains("lead-fm-pluck"),
+        "pluck key is plk:lp (underscore): {text}"
     );
     assert!(
         text.contains("C4:minor") && !text.contains("C3:minor"),
@@ -734,7 +734,7 @@ fn skill_house_clap_backbeat_sounds() {
         "no duck / track compressor in this recipe: {text}"
     );
     assert!(
-        !text.contains("stab-fm_fifth") && !text.contains("reese-mid"),
+        !text.contains("plk:s5") && !text.contains("bs:rm"),
         "fifth/reese samples are not this skill: {text}"
     );
 
@@ -770,7 +770,7 @@ fn skill_house_clap_backbeat_sounds() {
     );
 
     let pluck = track(&song, "pluck");
-    assert_eq!(pluck.code.sound, "lead-fm_pluck");
+    assert_eq!(pluck.code.sound, "plk:lp");
     assert_eq!(pluck.code.cut, Some(1));
     assert!((pluck.code.gain - 0.4).abs() < 1e-5);
     assert!(pluck.code.compressor.is_none());
@@ -826,20 +826,20 @@ fn skill_dnb_reese_mid_stab_sounds() {
         "square sub stays C2:minor: {text}"
     );
     assert!(
-        text.contains(r#"note("0 3 0 <0 -1>").scale("C4:minor").s("reese-mid")"#),
-        "reese-mid must stay C4:minor (hyphen stem): {text}"
+        text.contains(r#"note("0 3 0 <0 -1>").scale("C4:minor").s("bs:rm")"#),
+        "bs:rm must stay C4:minor (hyphen stem): {text}"
     );
     assert!(
-        !text.contains("reese_mid") && !text.contains("reese-mid.wav"),
-        "sound key is reese-mid, not reese_mid: {text}"
+        !text.contains("reese_mid") && !text.contains("bs/rm.wav"),
+        "sound key is bs:rm, not reese_mid: {text}"
     );
     assert!(
-        text.contains(r#"note("~ 4 ~ <7 4>").scale("C4:minor").s("stab-fm_fifth")"#),
+        text.contains(r#"note("~ 4 ~ <7 4>").scale("C4:minor").s("plk:s5")"#),
         "signed-off stab degrees / underscore stem: {text}"
     );
     assert!(
         !text.contains("stab-fm-fifth"),
-        "stab key is stab-fm_fifth (underscore): {text}"
+        "stab key is plk:s5 (underscore): {text}"
     );
     assert!(
         text.contains("cut(1)"),
@@ -887,7 +887,7 @@ fn skill_dnb_reese_mid_stab_sounds() {
     assert_eq!(sub_scale.root_midi, 36, "C2");
     assert_eq!(sub_scale.intervals, vec![0, 2, 3, 5, 7, 8, 10]);
 
-    assert_eq!(mid.code.sound, "reese-mid");
+    assert_eq!(mid.code.sound, "bs:rm");
     assert!((mid.code.gain - 0.38).abs() < 1e-5);
     let mid_scale = mid
         .code
@@ -898,7 +898,7 @@ fn skill_dnb_reese_mid_stab_sounds() {
     assert_eq!(mid_scale.root_midi, 60, "C4 — C2 dumps the 800–1200 band");
     assert_eq!(mid_scale.intervals, vec![0, 2, 3, 5, 7, 8, 10]);
 
-    assert_eq!(stab.code.sound, "stab-fm_fifth");
+    assert_eq!(stab.code.sound, "plk:s5");
     assert_eq!(stab.code.cut, Some(1));
     assert!((stab.code.gain - 0.22).abs() < 1e-5);
     let stab_scale = stab
@@ -950,12 +950,12 @@ fn skill_dnb_reese_mid_stab_sounds() {
     assert_finite_bounded(&buf, "skill-dnb-reese-mid-stab");
     assert!(
         has_energy(&buf, 0.001),
-        "dnb reese-mid skill should sound, peak={}",
+        "dnb bs:rm skill should sound, peak={}",
         peak(&buf)
     );
     assert!(
         clip_rail_ratio(&buf) < 0.05,
-        "dnb reese-mid skill clip rail: {}",
+        "dnb bs:rm skill clip rail: {}",
         clip_rail_ratio(&buf)
     );
 }
@@ -970,7 +970,7 @@ fn assert_mood_house_drums(text: &str, song: &strudel_rs::song::Song) {
         "do not stack or substitute sd on the clap grid: {text}"
     );
     assert!(
-        !text.contains("stab-fm_fifth") && !text.contains("'maj") && !text.contains("'min"),
+        !text.contains("plk:s5") && !text.contains("'maj") && !text.contains("'min"),
         "no hollow-fifth stab / chord-suffix fake quality: {text}"
     );
     assert!(
@@ -997,17 +997,17 @@ fn skill_mood_dark_sounds() {
         "dark bass stays C2:minor square: {text}"
     );
     assert!(
-        text.contains(r#"note("[0,2,4] ~ [0,2,4] ~").scale("C4:minor").s("reese-mid")"#),
-        "dark close triad must stay C4:minor reese-mid: {text}"
+        text.contains(r#"note("[0,2,4] ~ [0,2,4] ~").scale("C4:minor").s("bs:rm")"#),
+        "dark close triad must stay C4:minor bs:rm: {text}"
     );
     assert!(
         !text.contains("reese_mid"),
-        "sound key is reese-mid, not reese_mid: {text}"
+        "sound key is bs:rm, not reese_mid: {text}"
     );
     assert!(
-        !text.contains(".scale(\"C2:minor\").s(\"reese-mid\")")
-            && !text.contains(".scale(\"C3:minor\").s(\"reese-mid\")"),
-        "reese-mid C2/C3 dumps the 800–1200 band: {text}"
+        !text.contains(".scale(\"C2:minor\").s(\"bs:rm\")")
+            && !text.contains(".scale(\"C3:minor\").s(\"bs:rm\")"),
+        "bs:rm C2/C3 dumps the 800–1200 band: {text}"
     );
 
     let song = load_song_file("skill-mood-dark.strudel");
@@ -1028,7 +1028,7 @@ fn skill_mood_dark_sounds() {
     assert_eq!(bass_scale.intervals, vec![0, 2, 3, 5, 7, 8, 10]);
 
     let chords = track(&song, "chords");
-    assert_eq!(chords.code.sound, "reese-mid");
+    assert_eq!(chords.code.sound, "bs:rm");
     let chord_scale = chords
         .code
         .scale
@@ -1073,20 +1073,20 @@ fn skill_mood_bright_sounds() {
         "bright bass is C3:major saw: {text}"
     );
     assert!(
-        text.contains(r#"note("[0,4,9] ~ [0,4,9] ~").scale("C4:major").s("lead-fm_pluck")"#),
+        text.contains(r#"note("[0,4,9] ~ [0,4,9] ~").scale("C4:major").s("plk:lp")"#),
         "bright spread voicing must stay C4:major pluck: {text}"
     );
     assert!(
-        text.contains("lead-fm_pluck") && !text.contains("lead-fm-pluck"),
-        "pluck key is lead-fm_pluck (underscore): {text}"
+        text.contains("plk:lp") && !text.contains("lead-fm-pluck"),
+        "pluck key is plk:lp (underscore): {text}"
     );
     assert!(
         !text.contains("cut(1)") && !text.contains(".cut("),
         "cut on a parallel chord kills voices one at a time: {text}"
     );
     assert!(
-        !text.contains(".scale(\"C3:major\").s(\"lead-fm_pluck\")")
-            && !text.contains(".scale(\"C2:major\").s(\"lead-fm_pluck\")"),
+        !text.contains(".scale(\"C3:major\").s(\"plk:lp\")")
+            && !text.contains(".scale(\"C2:major\").s(\"plk:lp\")"),
         "pluck C2/C3 dumps to bass: {text}"
     );
 
@@ -1108,7 +1108,7 @@ fn skill_mood_bright_sounds() {
     assert_eq!(bass_scale.intervals, vec![0, 2, 4, 5, 7, 9, 11]);
 
     let chords = track(&song, "chords");
-    assert_eq!(chords.code.sound, "lead-fm_pluck");
+    assert_eq!(chords.code.sound, "plk:lp");
     assert_eq!(chords.code.cut, None, "no cut on [0,4,9] parallel chord");
     let chord_scale = chords
         .code
@@ -1217,15 +1217,15 @@ fn skill_fm_sound_design_sounds() {
         "do not copy techno1 fmh(1.5) into this demo: {text}"
     );
     assert!(
-        !text.contains("reese-mid") && !text.contains(r#".s("square")"#),
-        "do not stack square sub or reese-mid under the growl: {text}"
+        !text.contains("bs:rm") && !text.contains(r#".s("square")"#),
+        "do not stack square sub or bs:rm under the growl: {text}"
     );
     assert!(
-        !text.contains("lead-fm_pluck") && !text.contains("keys-fm_ep"),
-        "do not stack PCM pluck or keys-fm_ep on this mix: {text}"
+        !text.contains("plk:lp") && !text.contains("ep:ky"),
+        "do not stack PCM pluck or ep:ky on this mix: {text}"
     );
     assert!(
-        !text.contains("stab-fm_major") && !text.contains("stab-fm_fifth"),
+        !text.contains("plk:s3") && !text.contains("plk:s5"),
         "no stab on this minor demo (prefer none): {text}"
     );
     assert!(
@@ -1369,35 +1369,37 @@ fn factory_pcm_flat_stems_resolve_exactly() {
         eprintln!("skip factory_pcm stems: factory wavs not loaded (LFS?)");
         return;
     }
-    assert!(bank.has("bass-fm_house"));
-    assert!(bank.has("bass-fm_sub"));
-    assert!(bank.has("reese-dark"));
-    assert!(bank.has("pad-fm_fifth"));
-    assert!(bank.has("lead-supersaw"));
-    assert!(bank.has("fx-uplifter"));
-    assert!(bank.has("fx-riser_noise"));
-    assert!(bank.has("fx-impact_dnb"));
-    assert!(bank.has("fx-sub_drop"));
-    assert!(!bank.has("bass-fm-house"), "underscore is not a hyphen");
-    assert!(!bank.has("reese_dark"), "hyphen is not an underscore");
+    assert!(bank.get_stem("bs", "hf").is_some());
+    assert!(bank.get_stem("bs", "su").is_some());
+    assert!(bank.get_stem("bs", "dk").is_some());
+    assert!(bank.get_stem("pf", "ff").is_some());
+    assert!(bank.get_stem("ld", "ss").is_some());
+    assert!(bank.get_stem("fx", "up").is_some());
+    assert!(bank.get_stem("fx", "nr").is_some());
+    assert!(bank.get_stem("fx", "id").is_some());
+    assert!(bank.get_stem("fx", "sd").is_some());
+    assert!(bank.has("bs"), "folder key is the part, not part:slug");
+    assert!(!bank.has("bass-fm_house"), "old flat stem is gone");
+    assert!(
+        !bank.has("bass-fm-house"),
+        "old hyphen variant never resolved"
+    );
+    assert!(!bank.has("reese-dark"));
+    assert!(!bank.has("reese_dark"));
     assert!(!bank.has("pad-fm-fifth"));
     assert!(!bank.has("fx-riser-noise"));
     assert!(!bank.has("lead_supersaw"));
 }
 
 fn factory_pcm_bank_ready(bank: &SampleBank) -> bool {
-    [
-        "bass-fm_house",
-        "pad-fm_fifth",
-        "reese-dark",
-        "fx-uplifter",
-        "lead-supersaw",
-        "bd",
-        "cp",
-        "hh",
-    ]
-    .iter()
-    .all(|k| bank.has(k))
+    bank.has("bd")
+        && bank.has("cp")
+        && bank.has("hh")
+        && bank.get_stem("bs", "hf").is_some()
+        && bank.get_stem("pf", "ff").is_some()
+        && bank.get_stem("bs", "dk").is_some()
+        && bank.get_stem("fx", "up").is_some()
+        && bank.get_stem("ld", "ss").is_some()
 }
 
 #[test]
@@ -1413,20 +1415,20 @@ fn skill_factory_pcm_usage_sounds() {
         "signed-off house grid must not be rewritten: {text}"
     );
     assert!(
-        text.contains(r#"note("0 0 4 0").scale("C4:minor").s("bass-fm_house").gain(0.45)"#),
-        "house floor stays C4:minor bass-fm_house: {text}"
+        text.contains(r#"note("0 0 4 0").scale("C4:minor").s("bs:hf").gain(0.45)"#),
+        "house floor stays C4:minor bs:hf: {text}"
     );
     assert!(
-        text.contains(r#"note("0 ~ 0 ~").scale("C4:minor").s("pad-fm_fifth").gain(0.25)"#),
+        text.contains(r#"note("0 ~ 0 ~").scale("C4:minor").s("pf:ff").gain(0.25)"#),
         "fifth pad stays sparse C4:minor: {text}"
     );
     assert!(
-        text.contains(r#"s("<fx-uplifter ~ ~ ~>").gain(0.3)"#),
+        text.contains(r#"s("<fx:up ~ ~ ~>").gain(0.3)"#),
         "uplifter is once per 4 bars via <> (not every bar): {text}"
     );
     assert!(
-        !text.contains(r#".s("reese-dark")"#) && !text.contains(r#"s("reese-dark")"#),
-        "reese-dark is a different bed (has sub, like bass-fm_house): {text}"
+        !text.contains(r#".s("bs:dk")"#) && !text.contains(r#"s("bs:dk")"#),
+        "bs:dk is a different bed (has sub, like bs:hf): {text}"
     );
     assert!(
         !text.contains("C3:") && !text.contains("C2:"),
@@ -1438,19 +1440,19 @@ fn skill_factory_pcm_usage_sounds() {
     );
     assert!(
         !text.contains("[0,2,4]"),
-        "do not play pad-fm_fifth as a triad: {text}"
+        "do not play pf:ff as a triad: {text}"
     );
     assert!(
-        !text.contains("bass-fm_sub") && !text.contains(r#".s("square")"#),
+        !text.contains("bs:su") && !text.contains(r#".s("square")"#),
         "floor is house bass only — no extra sub: {text}"
     );
     assert!(
-        !text.contains("lead-supersaw") && !text.contains("reese-mid"),
-        "supersaw / reese-mid are not this floor: {text}"
+        !text.contains("ld:ss") && !text.contains("bs:rm"),
+        "supersaw / bs:rm are not this floor: {text}"
     );
     assert!(
-        !text.contains(r#".s("fx-uplifter")"#) && !text.contains(r#"s("fx-uplifter")"#),
-        "fx-uplifter must be a bare s() head with <> , not every-bar s(): {text}"
+        !text.contains(r#".s("fx:up")"#) && !text.contains(r#"s("fx:up")"#),
+        "fx:up must be a bare s() head with <> , not every-bar s(): {text}"
     );
     assert!(
         !text.contains("duckorbit") && !text.contains("compressor("),
@@ -1475,7 +1477,7 @@ fn skill_factory_pcm_usage_sounds() {
     assert!(!drums.code.is_note);
 
     let bass = track(&song, "bass");
-    assert_eq!(bass.code.sound, "bass-fm_house");
+    assert_eq!(bass.code.sound, "bs:hf");
     assert!(bass.code.is_note);
     assert!((bass.code.gain - 0.45).abs() < 1e-5);
     let bass_scale = bass
@@ -1488,7 +1490,7 @@ fn skill_factory_pcm_usage_sounds() {
     assert_eq!(bass_scale.intervals, vec![0, 2, 3, 5, 7, 8, 10]);
 
     let pad = track(&song, "pad");
-    assert_eq!(pad.code.sound, "pad-fm_fifth");
+    assert_eq!(pad.code.sound, "pf:ff");
     assert!(pad.code.is_note);
     assert!((pad.code.gain - 0.25).abs() < 1e-5);
     assert!(
@@ -1505,18 +1507,18 @@ fn skill_factory_pcm_usage_sounds() {
     assert_eq!(pad_scale.root_midi, 60, "C4");
 
     let fx = track(&song, "fx");
-    assert_eq!(fx.code.sound, "fx-uplifter");
+    assert_eq!(fx.code.sound, "fx:up");
     assert!(!fx.code.is_note, "FX must stay unpitched (ratio 1.0)");
     assert!(fx.code.scale.is_none());
     assert!((fx.code.gain - 0.3).abs() < 1e-5);
     assert!(
-        fx.code.mini_src.contains("<fx-uplifter ~ ~ ~>"),
+        fx.code.mini_src.contains("<fx:up ~ ~ ~>"),
         "{}",
         fx.code.mini_src
     );
     let fx0 = strudel_rs::mini::events(&fx.code.pattern, 0);
     assert!(
-        fx0.iter().any(|e| e.value == "fx-uplifter"),
+        fx0.iter().any(|e| e.value == "fx:up"),
         "cycle 0 should fire the uplifter, got {fx0:?}"
     );
     let fx1 = strudel_rs::mini::events(&fx.code.pattern, 1);
@@ -1572,7 +1574,7 @@ fn skill_factory_pcm_lead_sounds() {
         "lead song shares the 124 clock: {text}"
     );
     assert!(
-        text.contains(r#"note("4 ~ 7 4").scale("C4:minor").s("lead-supersaw")"#),
+        text.contains(r#"note("4 ~ 7 4").scale("C4:minor").s("ld:ss")"#),
         "supersaw melody stays C4:minor: {text}"
     );
     assert!(
@@ -1580,7 +1582,7 @@ fn skill_factory_pcm_lead_sounds() {
         "long supersaw one-shot needs cut(1): {text}"
     );
     assert!(
-        !text.contains("pad-fm_fifth") && !text.contains("reese-dark"),
+        !text.contains("pf:ff") && !text.contains("bs:dk"),
         "do not stack supersaw on the pad+reese mid bed: {text}"
     );
     assert!(
@@ -1602,7 +1604,7 @@ fn skill_factory_pcm_lead_sounds() {
     );
 
     let bass = track(&song, "bass");
-    assert_eq!(bass.code.sound, "bass-fm_house");
+    assert_eq!(bass.code.sound, "bs:hf");
     let bass_scale = bass
         .code
         .scale
@@ -1612,7 +1614,7 @@ fn skill_factory_pcm_lead_sounds() {
     assert_eq!(bass_scale.root_midi, 60, "C4");
 
     let lead = track(&song, "lead");
-    assert_eq!(lead.code.sound, "lead-supersaw");
+    assert_eq!(lead.code.sound, "ld:ss");
     assert!(lead.code.is_note);
     assert_eq!(lead.code.cut, Some(1));
     assert!((lead.code.gain - 0.28).abs() < 1e-5);
@@ -1622,7 +1624,7 @@ fn skill_factory_pcm_lead_sounds() {
         .as_ref()
         .expect("lead needs .scale")
         .at_cycle(0);
-    assert_eq!(lead_scale.root_midi, 60, "C4 — same rule as lead-fm_pluck");
+    assert_eq!(lead_scale.root_midi, 60, "C4 — same rule as plk:lp");
 
     if !samples_available() {
         eprintln!("skip skill_factory_pcm_lead render: samples/ not found");
@@ -1663,15 +1665,15 @@ fn skill_factory_pcm_reese_sounds() {
         "reese bed shares the 124 clock: {text}"
     );
     assert!(
-        text.contains(r#"note("0 3 0 <0 -1>").scale("C4:minor").s("reese-dark").gain(0.35)"#),
-        "reese-dark stays C4:minor (hyphen): {text}"
+        text.contains(r#"note("0 3 0 <0 -1>").scale("C4:minor").s("bs:dk").gain(0.35)"#),
+        "bs:dk stays C4:minor (hyphen): {text}"
     );
     assert!(
-        !text.contains("bass-fm_house") && !text.contains(r#".s("square")"#),
-        "reese-dark already has sub — no house floor or square: {text}"
+        !text.contains("bs:hf") && !text.contains(r#".s("square")"#),
+        "bs:dk already has sub — no house floor or square: {text}"
     );
     assert!(
-        !text.contains("bass-fm_sub") && !text.contains("pad-fm_fifth"),
+        !text.contains("bs:su") && !text.contains("pf:ff"),
         "different bed from the house floor: {text}"
     );
     assert!(
@@ -1693,7 +1695,7 @@ fn skill_factory_pcm_reese_sounds() {
     );
 
     let reese = track(&song, "reese");
-    assert_eq!(reese.code.sound, "reese-dark");
+    assert_eq!(reese.code.sound, "bs:dk");
     assert!(reese.code.is_note);
     assert!((reese.code.gain - 0.35).abs() < 1e-5);
     let reese_scale = reese

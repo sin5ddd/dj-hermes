@@ -42,6 +42,8 @@ agent-tools/
 *.tmp
 tmp/
 temp/
+__pycache__/
+*.pyc
 
 # Audio debug dumps / scratch bounce (not sample kits)
 *.wav.raw

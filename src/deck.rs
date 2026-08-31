@@ -6,7 +6,7 @@ use crate::mini;
 use crate::sample::{SampleBank, SampleVoice, VoiceKind, SAMPLE_ROOT_HZ};
 use crate::scale::resolve_pitch_with_add;
 use crate::song::Song;
-use crate::sound::{resolve_sound_with_bank, ResolvedSound};
+use crate::sound::{resolve_sound_with_bank, split_sound_selector, ResolvedSound, SampleSelector};
 use crate::synth::{OscSource, Voice};
 use crate::transport::Transport;
 
@@ -365,11 +365,17 @@ impl Deck {
         }
 
         let bank_ref = hit.bank.as_deref();
-        let Ok(resolved) = resolve_sound_with_bank(&hit.sound, bank_ref, samples) else {
+        let Some((base, sel)) = split_sound_selector(&hit.sound) else {
+            return;
+        };
+        let Ok(resolved) = resolve_sound_with_bank(&base, bank_ref, samples) else {
             return;
         };
         match resolved {
             ResolvedSound::Wave(w) => {
+                if !matches!(sel, SampleSelector::Default) {
+                    return;
+                }
                 let v = Voice::new(
                     OscSource::Wave(w),
                     hit.freq.max(1.0),
@@ -386,6 +392,9 @@ impl Deck {
                 self.alloc_voice(VoiceKind::Synth(Box::new(v)));
             }
             ResolvedSound::Noise(n) => {
+                if !matches!(sel, SampleSelector::Default) {
+                    return;
+                }
                 let v = Voice::new(
                     OscSource::Noise(n),
                     hit.freq.max(1.0),
@@ -402,6 +411,9 @@ impl Deck {
                 self.alloc_voice(VoiceKind::Synth(Box::new(v)));
             }
             ResolvedSound::Wavetable(table) => {
+                if !matches!(sel, SampleSelector::Default) {
+                    return;
+                }
                 let v = Voice::new(
                     OscSource::Wavetable(table),
                     hit.freq.max(1.0),
@@ -418,7 +430,12 @@ impl Deck {
                 self.alloc_voice(VoiceKind::Synth(Box::new(v)));
             }
             ResolvedSound::Sample(name) => {
-                let Some(data) = samples.get(&name, hit.sample_n) else {
+                let data = match &sel {
+                    SampleSelector::Default => samples.get(&name, hit.sample_n),
+                    SampleSelector::Index(i) => samples.get(&name, Some(*i)),
+                    SampleSelector::Stem(slug) => samples.get_stem(&name, slug),
+                };
+                let Some(data) = data else {
                     return;
                 };
                 let pitch_ratio = if hit.is_note && hit.freq > 0.0 {
@@ -506,7 +523,7 @@ impl Deck {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::sample::write_test_wav;
+    use crate::sample::{write_test_wav, write_test_wav_secs};
     use crate::song::parse_song;
     use std::path::Path;
 
@@ -701,6 +718,47 @@ kick: s("bd*4").gain(0.9)
     }
 
     #[test]
+    fn deck_renders_part_slug_sample() {
+        let dir = std::env::temp_dir().join("strudel_deck_slug");
+        let _ = std::fs::remove_dir_all(&dir);
+        let bd = dir.join("bd");
+        std::fs::create_dir_all(&bd).unwrap();
+        write_test_wav_secs(&bd.join("00.wav"), 48_000, 0.05);
+        write_test_wav_secs(&bd.join("8b.wav"), 48_000, 0.4);
+        let bank = SampleBank::load_dir(&dir, 48_000);
+
+        let song = parse_song(
+            r#"---
+kick: s("bd:8b").gain(0.9)
+"#,
+            "t",
+        )
+        .unwrap();
+        let mut d = Deck::new("A");
+        d.load(song);
+        let t = Transport::new(48_000, 120.0);
+        let buf = process_mid(&mut d, 48_000, &t, &bank);
+        assert!(
+            buf.iter().any(|s| s.abs() > 0.01),
+            "bd:8b should play the named stem"
+        );
+
+        let miss = parse_song(
+            r#"---
+kick: s("bd:nope").gain(0.9)
+"#,
+            "t",
+        )
+        .unwrap();
+        let mut d2 = Deck::new("A");
+        d2.load(miss);
+        let silent = process_mid(&mut d2, 48_000, &t, &bank);
+        let peak = silent.iter().fold(0.0f32, |a, x| a.max(x.abs()));
+        assert!(peak < 0.001, "unknown slug should be silent, peak={peak}");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
     fn load_repo_samples_if_present() {
         let path = Path::new("samples");
         if !path.exists() {
@@ -710,6 +768,39 @@ kick: s("bd*4").gain(0.9)
         assert!(bank.has("bd"), "expected samples/bd");
         assert!(bank.has("sd"));
         assert!(bank.has("hh"));
+        if bank.get_stem("bd", "hf").is_some() {
+            assert!(
+                bank.get_stem("hh", "cl").is_some(),
+                "catalog hh:cl should ship with bd:hf"
+            );
+        }
+    }
+
+    #[test]
+    fn deck_plays_catalog_part_slug_if_present() {
+        let path = Path::new("samples");
+        if !path.exists() {
+            return;
+        }
+        let bank = SampleBank::load_dir(path, 48_000);
+        if bank.get_stem("bd", "hf").is_none() {
+            return;
+        }
+        let song = parse_song(
+            r#"---
+kick: s("bd:hf*4").gain(0.9)
+"#,
+            "t",
+        )
+        .unwrap();
+        let mut d = Deck::new("A");
+        d.load(song);
+        let t = Transport::new(48_000, 120.0);
+        let buf = process_mid(&mut d, 48_000, &t, &bank);
+        assert!(
+            buf.iter().any(|s| s.abs() > 0.01),
+            "bd:hf catalog kick should produce energy"
+        );
     }
 
     #[test]

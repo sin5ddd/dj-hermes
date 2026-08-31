@@ -25,8 +25,9 @@ ffmpeg -y -i source.wav -ac 1 -ar 48000 -sample_fmt s16 samples/path/to/out.wav
 | `samples/<name>/00.wav`, `01.wav`, … | `<name>` | ファイル名ソート順 = `.n(0)`, `.n(1)`, … |
 | `samples/<name>.wav`（直下の単体） | `<name>` | 変種 1 本のみ |
 
-- mini の sound atom に使える文字: 英数字と `.` `#` `-` `_` `'`  
-  **コロン `:` は不可**（`bd:00` は書けない → `s("bd")` / `.n(0)`）
+- mini の sound atom に使える文字: 英数字と `.` `#` `-` `_` `'` `:`  
+  **`part:slug`** はフォルダ内のファイル stem（`s("bd:8b")` → `samples/bd/8b.wav`）。  
+  **`part:2`** は整数 index（`.n(2)` と同じ）。`kit:bd` のように bank を左に書く形は今も不可（キットは `.bank`）
 - 波形名（`sine` `saw` `white` `wt_*` 等）と衝突する名前は使わない（波形側が優先）
 
 ---
@@ -88,7 +89,6 @@ samples/
   piano-acoustic_soft.wav      # 単音 one-shot（録音ピッチ ≈ C3 推奨）
   piano-acoustic_hard.wav
   piano-electric_rhodes.wav    # EP / ローズ系など character で区別
-  reese-dark.wav
   atmo-noise.wav
   fx-riser_short01.wav
 ```
@@ -134,22 +134,22 @@ samples/
   hh/00.wav
   oh/00.wav
   cp/00.wav          # house 2/4 dry clap (FM)
-  lead-fm_pluck.wav  # C3 short FM pluck
-  lead-fm_bell.wav   # C3 inharmonic bell / glass (ratio 3.5)
-  keys-fm_ep.wav     # C3 EP: harmonic 2×/3× tines + .fm(2).fmh(1) attack
-  perc-fm_metal.wav  # unpitched metallic hit (not a stab or kick)
-  stab-fm_fifth.wav  # hollow C+G fifth (no third)
-  stab-fm_major.wav  # C3 major triad C–E–G (bright counterpart)
-  reese-mid.wav      # C3 mid Reese glue, 800–1200 Hz
-  pad-fm_fifth.wav   # C3 fifth pad (sustained C+G, ~8.2 s)
-  bass-fm_sub.wav    # C2 clean sine sub (native C2 / C4:… like house)
-  bass-fm_house.wav  # C2 tight house floor bass (with the kick; not Eb)
-  reese-dark.wav     # C3 dark full-range Reese (sub + mid)
-  lead-supersaw.wav  # C3 classic supersaw lead (~8.2 s / 4 bars @ 120)
-  fx-riser_noise.wav # unpitched noise riser (~3.2 s)
-  fx-uplifter.wav    # unpitched uplifter (~2.8 s)
-  fx-impact_dnb.wav  # unpitched DnB impact (~0.5 s)
-  fx-sub_drop.wav    # unpitched sub drop (~1.1 s)
+  plk/lp.wav  # C3 short FM pluck
+  plk/bl.wav   # C3 inharmonic bell / glass (ratio 3.5)
+  ep/ky.wav     # C3 EP: harmonic 2×/3× tines + .fm(2).fmh(1) attack
+  perc/fm.wav  # unpitched metallic hit (not a stab or kick)
+  plk/s5.wav  # hollow C+G fifth (no third)
+  plk/s3.wav  # C3 major triad C–E–G (bright counterpart)
+  bs/rm.wav      # C3 mid Reese glue, 800–1200 Hz
+  pf/ff.wav   # C3 fifth pad (sustained C+G, ~8.2 s)
+  bs/su.wav    # C2 clean sine sub (native C2 / C4:… like house)
+  bs/hf.wav  # C2 tight house floor bass (with the kick; not Eb)
+  bs/dk.wav     # C3 dark full-range Reese (sub + mid)
+  ld/ss.wav  # C3 classic supersaw lead (~8.2 s / 4 bars @ 120)
+  fx/nr.wav # unpitched noise riser (~3.2 s)
+  fx/up.wav    # unpitched uplifter (~2.8 s)
+  fx/id.wav  # unpitched DnB impact (~0.5 s)
+  fx/sd.wav    # unpitched sub drop (~1.1 s)
   LICENSE.md
   README.md
   LAYOUT.md          # 本ファイル
@@ -167,10 +167,10 @@ samples/
   piano-acoustic_soft.wav
   piano-acoustic_hard.wav
   piano-electric_rhodes.wav
-  reese-dark.wav
   fx-riser_short01.wav
 ```
 
+- rust-fm-synthe カタログ: `samples/<part>/<slug>.wav`（例 `bd/8b.wav` → `s("bd:8b")`）。slug 表と説明は `docs/skills/strudel-pcm-catalog/`。同梱 `00.wav` は上書きしない
 - **同梱 CC0 キット**（`bd/` `cp/` と上記 FM ワンショット）はリポジトリに残す  
 - **追加の `samples/<name>.wav` / `samples/<name>/00.wav`** は Git LFS（`.gitattributes` の `*.wav`）。gitignore されない  
 - スクラッチ出力は `/out/` `/recordings/` のまま git 外  
@@ -188,6 +188,7 @@ samples/
 | ambient pad | `note("…").scale("…").s("pad-ambient_drone01")` |
 | piano / EP | `note("…").scale("…").s("piano-acoustic_soft")` |
 | FX one-shot | `s("fx-riser_short01")` |
+| 同梱 FM catalog | `s("bd:8b")` / `note("0").scale("C4:minor").s("bs:hf")` |
 
 ---
 
@@ -195,7 +196,7 @@ samples/
 
 1. `samples/pad/ambient/drone.wav` のような **深い階層**（エンジンは読まない）  
 2. 1 フォルダに `bd-*.wav` と `sd-*.wav` を混在（全部 **同じ sound の変種**になる）  
-3. mini 内で `bd:00` や `TR808:bd`（コロン不可）  
+3. mini 内で `TR808:bd`（bank が左）。カタログは `bd:8b`（part が左、slug は 2〜3 字）  
 4. `.bank("tr808-hard")` なのにファイルが `tr808-hard-bd.wav`（ハイフン連結）— 正は **`tr808-hard_bd`**  
 5. 波形名の流用（`sine.wav` 等）
 
@@ -203,6 +204,7 @@ samples/
 
 ## 関連
 
+- rust-fm-synthe `part:slug` カタログ: `docs/skills/strudel-pcm-catalog/SKILL.md`
 - 音色レシピ・役割分担: `docs/skills/strudel-sound-design/SKILL.md`
 - ドラム統合・短いループ: `docs/skills/strudel-composition/SKILL.md`
 - 同梱マッピング: `LICENSE.md`

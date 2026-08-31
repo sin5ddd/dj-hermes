@@ -12,6 +12,7 @@ metadata:
     related_skills:
       - strudel-data-format
       - strudel-composition
+      - strudel-pcm-catalog
       - strudel-mood-bright-dark
       - strudel-genre-acid
       - strudel-genre-house
@@ -152,7 +153,8 @@ $: note("c4 e4 g4").s("wt_bright").vib("5:8").gain(0.2).delay(0.25).orbit(2)
 | `oh` | 0 | `samples/oh/00.wav` |
 | `cp` | 0 | `samples/cp/00.wav`（ハウス 2/4。テクノグリッドには載せない） |
 
-- `s("bd")` = その sound の **n=0**（先頭 WAV）。**`bd:00` は書けない**（mini に `:` 不可）
+- `s("bd")` = その sound の **n=0**（先頭 WAV）
+- rust-fm カタログ: `s("bd:8b")` → `samples/bd/8b.wav`（→ **strudel-pcm-catalog**）。整数 `bd:1` は `.n(1)` と同じ
 - `s("cp")` は同梱 clap。`[~ cp]*2` がハウスバックビート。`sd` と重ねない
 - `note().s("sample")` の再生比は `target_hz / SAMPLE_ROOT_HZ`。`SAMPLE_ROOT_HZ` は **261.63 Hz (C4)**（コメントが C3 でも定数は C4）。C3 録音は **`.scale("C4:…")` で native**
 
@@ -189,7 +191,7 @@ $: s("fx-riser_short01")
 ```
 
 命名目安: `{family}-{character}_{detail}`  
-例: `pad-ambient_bright01`, `piano-acoustic_soft`, `piano-electric_rhodes`, `reese-dark`, `atmo-noise`。
+例: `pad-ambient_bright01`, `piano-acoustic_soft`, `piano-electric_rhodes`, `atmo-noise`。同梱 FM は `part:slug`（`bs:dk` など）。
 
 #### 役割レシピ（シンセでも可・サンプルがあれば優先）
 
@@ -467,7 +469,7 @@ $: note("c3 e3 g3 c4").s("sawtooth").orbit(2).gain(0.35).lpf(900)
 | モジュレーション | `tremolo` `phaser` `detune`（メソッド）。`pan` は実装済み |
 | 外部サンプル DSL | `samples('github:...')` `loopBegin`/`loopEnd` |
 | 引数のミニ記法 | `.vib("<1 4>")` など **未対応メソッド**のパターン引数。`.lpf("<400 1200>")` / `.add("<0 2>")` / `.pan("<0 1>")` と `sine.rangex` は可。`.add` の LFO と `.ply("<…>")` は不可 |
-| その他 | `beat` `seg` `crackle` `density` `stretch`。`supersaw` 波形名は無い。`lead-supersaw` は PCM |
+| その他 | `beat` `seg` `crackle` `density` `stretch`。`supersaw` 波形名は無い。`ld:ss` は PCM |
 
 ---
 
@@ -509,7 +511,7 @@ $: note("0 2 4 7").scale("C3:minor").s("sawtooth").lpf(900).orbit(2).gain(0.35)
 4. **`c3'maj` で和音が鳴ると思わない** → root のみ。和音は `note("0 2 4")` / `[6,8]` 等で書く。
 5. **ZZFX / supersaw / 外部 wt** は使えない。波形・wt_sine/bright/organ・サンプルに寄せる（ユーザー `lead-supersaw_*` WAV があればフル名で可）。
 6. 音色のために 16 小節 `cat` を書かない → 短いループのままスカラーを触る。
-7. **`bd:00` / `kit:bd`** → mini に `:` 不可。`s("bd")` / `.n(0)` / `.bank("kit")`。
+7. **`kit:bd`**（bank が左）は不可。カタログは `bd:8b`。同梱は `s("bd")` / `.n(0)` / `.bank("kit")`。
 8. **ドラムをフルネームで埋める**（`s("tr808-hard_bd …")`）→ リズムが読めない。短い part + `.bank`。
 9. **bank のファイル名を `{bank}-{part}` にする** → 正は **`{bank}_{part}`**（アンダースコア）。
 10. **深いパス** `pad/ambient/x.wav` → 読まれない。フラット or 1 段フォルダ（LAYOUT.md）。
@@ -528,7 +530,7 @@ $: note("0 2 4 7").scale("C3:minor").s("sawtooth").lpf(900).orbit(2).gain(0.35)
 
 ## Live 2-op FM
 
-Live `.fm` / `.fmh` is **only** for **time-varying lead and bass synths**. Drums and one-shots are **PCM** (`s("bd")`, `s("cp")`, `s("lead-fm_pluck")`, `s("stab-fm_fifth")`, …). Do not build pluck / bell / metal-hit as live 2-op one-shots.
+Live `.fm` / `.fmh` is **only** for **time-varying lead and bass synths**. Drums and one-shots are **PCM** (`s("bd")`, `s("cp")`, `s("plk:lp")`, `s("plk:s5")`, …). Do not build pluck / bell / metal-hit as live 2-op one-shots.
 
 Playable copy: `songs/skill-fm-sound-design.strudel` (`setcpm(124/4)`). How to trigger issue #21 batch 1 factory stems (`C4:…` / unpitched FX): [Factory PCM batch 1](#factory-pcm-batch-1).
 
@@ -538,14 +540,14 @@ Playable copy: `songs/skill-fm-sound-design.strudel` (`setcpm(124/4)`). How to t
 - You need to know **how the 2-op path runs** (`synth.rs`) so the signed-off numbers make sense.
 - You are **not** writing a house / techno / DnB grid recipe (those skills own the drums).
 - You are **not** recreating a `rust-fm-synthe` TOML patch with `.fm(4)`. Factory files are **samples**.
-- You are **not** replacing the lead with the retired live EP recipe, or with PCM `keys-fm_ep` (tine harmonics landed in #37; that wav is a one-shot, not this lead).
+- You are **not** replacing the lead with the retired live EP recipe, or with PCM `ep:ky` (tine harmonics landed in #37; that wav is a one-shot, not this lead).
 
 ## Two FM worlds (keep them distinct)
 
 | World | What it is | How you trigger it here |
 | --- | --- | --- |
 | **Live 2-op** | One **carrier** + one **sine modulator**. Index, ratio, ADS envelope on the index. | `.s("sine")` or `.s("sawtooth")` + `.fm` / `.fmh` / `.fmdec` / `.fmsus` — **lead and bass only** |
-| **Offline 4-op factory** | [sin5ddd/rust-fm-synthe](https://github.com/sin5ddd/rust-fm-synthe) renders WAV one-shots | `s("lead-fm_pluck")`, `s("stab-fm_fifth")`, `s("stab-fm_major")`, `s("cp")`, … The engine **samples** the wav |
+| **Offline 4-op factory** | [sin5ddd/rust-fm-synthe](https://github.com/sin5ddd/rust-fm-synthe) renders WAV one-shots | `s("plk:lp")`, `s("plk:s5")`, `s("plk:s3")`, `s("cp")`, … The engine **samples** the wav |
 
 `.fm(4)` does **not** reproduce a 4-op TOML patch. There is no algorithm graph, no `fmh2`…`fmh8`, no second modulator.
 
@@ -576,11 +578,11 @@ Amp ADSR is a **different** envelope (defaults 0.01 / 0.1 / 0.7 / 0.1). It scale
 | --- | --- |
 | Scalar `.fm` / `.fmh` / `.fmattack` / `.fmdecay` / `.fmsustain` (`fmatt` / `fmdec` / `fmsus`) | **Yes** |
 | `.fm("3 5")` / patterned `fmh` / `fmh2` / `fmenv` | **No** |
-| Live FM on a sample (`s("lead-fm_pluck").fm(4)`) | Plays the **wav**; SampleVoice does not run this 2-op path |
+| Live FM on a sample (`s("plk:lp").fm(4)`) | Plays the **wav**; SampleVoice does not run this 2-op path |
 
 ## Signed-off live recipes (synthesist + Beatmaker)
 
-Carrier is **sine** unless noted. Put these numbers **as-is**. Mix: the growl already fills the mids — **do not** stack a square sub, `reese-mid`, pluck, or stab under it.
+Carrier is **sine** unless noted. Put these numbers **as-is**. Mix: the growl already fills the mids — **do not** stack a square sub, `bs:rm`, pluck, or stab under it.
 
 ### Lead — C4 and above, evolving (not a one-shot)
 
@@ -592,7 +594,7 @@ $: note("4 2 0 2").scale("C4:minor")
 
 Degrees `4 2 0 2` in C minor = **5–♭3–1–♭3** (G–Eb–C–Eb). Integer `fmh(2)` = harmonics. `.fm(3)` + `.fmatt(0.01)` + `.fmdec(0.3)` + `.fmsus(0.25)` keeps the index moving through the note (lead, not a hit). `.lpf(1800).lpenv(2)` is the per-note filter sweep on that parked base.
 
-The live EP recipe (`.fm(2).fmh(1).fmdec(0.6).fmsus(0.15)` on `0 ~ 4 2`) is **retired**. PCM `keys-fm_ep` is a tine one-shot (#37), not this lead.
+The live EP recipe (`.fm(2).fmh(1).fmdec(0.6).fmsus(0.15)` on `0 ~ 4 2`) is **retired**. PCM `ep:ky` is a tine one-shot (#37), not this lead.
 
 ### Pad — C4 and above; leave `fmsus`, add `.room`
 
@@ -605,7 +607,7 @@ $: note("[0,4]").scale("C4:minor")
 
 `.room` is per-orbit, last-write (`deck.rs`). Pad on **orbit 2** so the bass / lead stay dry. Do not drop `.fmsus(0.4)` — sustain is what makes it a pad.
 
-### Growl bass — do not stack on square / `reese-mid`
+### Growl bass — do not stack on square / `bs:rm`
 
 ```
 $: note("0 0 3 0").scale("C2:minor")
@@ -614,7 +616,7 @@ $: note("0 0 3 0").scale("C2:minor")
   .gain(0.38)
 ```
 
-`.fm(4).fmh(1)` + `lpf(400)` already fills the mids. `.lpenv(3)` is the per-note filter sweep on that parked base (same env law as the 303 skill: `cutoff = base * 2^(lpenv * level)`). **Do not** put `.fm(8)` on bass (it breaks up). **Do not** add a square sub or `reese-mid` on another `$:` — that is a different mix ([strudel-genre-dnb-reese-mid-stab](../strudel-genre-dnb-reese-mid-stab/SKILL.md)).
+`.fm(4).fmh(1)` + `lpf(400)` already fills the mids. `.lpenv(3)` is the per-note filter sweep on that parked base (same env law as the 303 skill: `cutoff = base * 2^(lpenv * level)`). **Do not** put `.fm(8)` on bass (it breaks up). **Do not** add a square sub or `bs:rm` on another `$:` — that is a different mix ([strudel-genre-dnb-reese-mid-stab](../strudel-genre-dnb-reese-mid-stab/SKILL.md)).
 
 `songs/techno1.strudel` has another live FM bass (`.s("sine").fm(3).fmh(1.5).lpf(500)` at 126). That is this 2-op world, **not** a signed-off recipe here. Do not fold `.fmh(1.5)` into the integer-ratio rule above.
 
@@ -627,11 +629,11 @@ This demo does **not** stack those one-shots on the growl (mids fill up). Keep t
 | Use | Sound key | How to write | Do not |
 | --- | --- | --- | --- |
 | Drums / clap | `bd` `sd` `hh` `oh` `cp` | `s("bd*4")` etc. | Live `.fm` on a kick |
-| プラック | `lead-fm_pluck` | `note("…").scale("C4:minor").s("lead-fm_pluck")`. `.cut(1)` **only if monophonic** | `lead-fm-pluck`; `C3:minor`; live `.fm` pluck; stacking it on this demo |
-| ベル / メタルヒット | `stab-fm_fifth` / factory bell-metal wavs | Factory/PCM, **low gain**, not chords | Live `.fmh(3.5)` / `.fmh(11)` hits |
-| Hollow fifth | `stab-fm_fifth` | Transposes C–G (no third). Sparse degrees, low gain. Dark-side stab if you must — **prefer none** on this mix | Inventing a third; `stab-fm-fifth` |
-| Major stab | `stab-fm_major` | Already a **C–E–G** triad wav: `note("0 ~ 0 ~").s("stab-fm_major")` | On this **minor** demo (E vs Eb); `note("[0,2,4]")` **triples** it |
-| EP one-shot | `keys-fm_ep` | PCM tine (#37). Not the live lead | Using it as the evolving lead; live EP recipe |
+| プラック | `plk:lp` | `note("…").scale("C4:minor").s("plk:lp")`. `.cut(1)` **only if monophonic** | `lead-fm-pluck`; `C3:minor`; live `.fm` pluck; stacking it on this demo |
+| ベル / メタルヒット | `plk:s5` / factory bell-metal wavs | Factory/PCM, **low gain**, not chords | Live `.fmh(3.5)` / `.fmh(11)` hits |
+| Hollow fifth | `plk:s5` | Transposes C–G (no third). Sparse degrees, low gain. Dark-side stab if you must — **prefer none** on this mix | Inventing a third; `stab-fm-fifth` |
+| Major stab | `plk:s3` | Already a **C–E–G** triad wav: `note("0 ~ 0 ~").s("plk:s3")` | On this **minor** demo (E vs Eb); `note("[0,2,4]")` **triples** it |
+| EP one-shot | `ep:ky` | PCM tine (#37). Not the live lead | Using it as the evolving lead; live EP recipe |
 
 `expand_chord("c3'maj")` is not called by the deck. `note("c3'maj")` is the **root only**.
 
@@ -639,7 +641,7 @@ Inharmonic `fmh` (3.5, 11) is why those factory wavs sound like bell / metal. Th
 
 ## Playable song
 
-Minor growl bass + evolving lead + pad only. Drums are PCM. **No** pluck, **no** `stab-fm_major`. One clock: **124 BPM**.
+Minor growl bass + evolving lead + pad only. Drums are PCM. **No** pluck, **no** `plk:s3`. One clock: **124 BPM**.
 
 ```
 // @title skill-fm-sound-design
@@ -667,7 +669,7 @@ $: note("[0,4]").scale("C4:minor")
 
 This file is **124** — same clock as house / mood / minor-scale. A leftover **120** file is isolated; **do not DJ-pair 120 with 124** (shared Transport discards the other tempo). Do not pair with 126 techno or 174 DnB.
 
-No `.compressor` (mixer master, last-write). No `.duckorbit`. No square sub. No `reese-mid`. No pluck. No stab.
+No `.compressor` (mixer master, last-write). No `.duckorbit`. No square sub. No `bs:rm`. No pluck. No stab.
 
 ## Try it in this app
 
@@ -687,7 +689,7 @@ Live TUI: `/a load skill-fm-sound-design`.
 | Lead only | mute or drop the pad `$:` |
 | Darker pad | keep `.fmsus(0.4)` and `.room`; do not zero sustain |
 | House bed | do **not** invent a grid — [strudel-genre-house](../strudel-genre-house/SKILL.md) is the **124** house grid. This pulse stays `bd*4` |
-| Dark stab | prefer **none**. If you must, `stab-fm_fifth` (hollow fifth, no third) — never `stab-fm_major` on this minor demo |
+| Dark stab | prefer **none**. If you must, `plk:s5` (hollow fifth, no third) — never `plk:s3` on this minor demo |
 
 Do not “vary” by turning the lead into a live FM pluck (`fmsus(0)` + short decay) or a live bell (`.fmh(3.5)`). Those are PCM. Do not bring back the retired live EP.
 
@@ -695,21 +697,21 @@ Do not “vary” by turning the lead into a live FM pluck (`fmsus(0)` + short d
 
 1. Live `.fm` / `.fmh` = **evolving lead and bass only**. Hits are PCM.
 2. Signed-off numbers stay as written. Integer `fmh` on those recipes (`1` growl/pad, `2` lead). Index 2–4 everyday; **no `.fm(8)` on bass**. Do not copy `techno1`'s `.fmh(1.5)` into that rule.
-3. Growl fills the mids — **no** square sub, **no** `reese-mid`, **no** pluck, **no** stab on this demo.
-4. Factory wavs: `C4` on C3 recordings. `stab-fm_major` is `note("0 ~ 0 ~")` only — and **not** on this minor file. `.cut(1)` on pluck only if monophonic.
+3. Growl fills the mids — **no** square sub, **no** `bs:rm`, **no** pluck, **no** stab on this demo.
+4. Factory wavs: `C4` on C3 recordings. `plk:s3` is `note("0 ~ 0 ~")` only — and **not** on this minor file. `.cut(1)` on pluck only if monophonic.
 5. This file is **124**. Leftover **120** files stay isolated. Do not DJ-pair 120 with 124.
 
 ## Do not
 
 - Teach pluck / bell / metal-hit as live 2-op one-shots.
 - Invent 4-operator algorithms, `fmh2`, or “this `.fm(4)` is the factory pluck”.
-- Stack square, `reese-mid`, pluck, or stab under the growl.
+- Stack square, `bs:rm`, pluck, or stab under the growl.
 - Put `.fm(8)` on bass.
-- Put `stab-fm_major` on this C-minor demo (baked E vs the lead's Eb).
-- Play `stab-fm_major` as `note("[0,2,4]")` (triples the baked triad).
-- Revive the live EP recipe, or substitute PCM `keys-fm_ep` for the evolving lead.
+- Put `plk:s3` on this C-minor demo (baked E vs the lead's Eb).
+- Play `plk:s3` as `note("[0,2,4]")` (triples the baked triad).
+- Revive the live EP recipe, or substitute PCM `ep:ky` for the evolving lead.
 - Copy `techno1`'s `.fmh(1.5)` into these integer-ratio recipes.
-- Write `C3:minor` on `lead-fm_pluck` / `stab-fm_*` (`SAMPLE_ROOT_HZ` is C4).
+- Write `C3:minor` on `plk:lp` / `plk:s5` / `plk:s3` (`SAMPLE_ROOT_HZ` is C4).
 - Write `lead-fm-pluck` or `stab-fm-fifth` (wrong stem).
 - Put `.compressor` or `.duckorbit` on these recipes.
 - Borrow a house/techno/DnB drum string and change it. Pulse here is `bd*4` only.
@@ -729,8 +731,8 @@ Existing stems stay on their own skills. Do not rewrite those recipes:
 
 | Stem | Skill |
 | --- | --- |
-| `reese-mid` | [strudel-genre-dnb-reese-mid-stab](../strudel-genre-dnb-reese-mid-stab/SKILL.md) |
-| `lead-fm_pluck` | [strudel-genre-house](../strudel-genre-house/SKILL.md) |
+| `bs:rm` | [strudel-genre-dnb-reese-mid-stab](../strudel-genre-dnb-reese-mid-stab/SKILL.md) |
+| `plk:lp` | [strudel-genre-house](../strudel-genre-house/SKILL.md) |
 | Live 2-op `.fm` | [Live 2-op FM](#live-2-op-fm) (PCM hits are not that path) |
 
 This batch adds **no** `bd/` bank and **no** third-party drum kit (issue #21
@@ -740,7 +742,7 @@ license). Drums stay the bundled folder keys `bd` / `cp` / `hh` / `sd` / `oh`.
 
 - You need the signed-off `.s(...)` / `.scale(...)` for a **batch 1** factory wav.
 - You need to know **why C4 plays native pitch**, **why FX have no `note()`**,
-  **why `pad-fm_fifth` cannot brighten**, **why `reese-dark` ≠ `reese-mid`**.
+  **why `pf:ff` cannot brighten**, **why `bs:dk` ≠ `bs:rm`**.
 - You are **not** inventing a genre grid. Do not “improve” the beatmaker song.
 
 ## Engine: `SAMPLE_ROOT_HZ` is C4
@@ -768,73 +770,73 @@ Bare `s("name")` (no `note()`) sets `is_note = false` (`code.rs`). Then
 
 ## Pitched stems (always `C4:…` for native pitch)
 
-`load_dir` keys a loose WAV as `file_stem()` lowercased (`sample.rs`). Write the
-stem exactly. Hyphen and underscore are different characters.
+These batch-1 files sit at `samples/<part>/<slug>.wav`. Call them as
+`s("part:slug")`. Old flat stems (`bass-fm_house`, `reese-dark`, …) are gone.
 
-### `bass-fm_house` — recorded C2, house floor under the kick
+### `bs:hf` — recorded C2, house floor under the kick
 
 ```
 setcpm(124/4)
-$: note("0 0 4 0").scale("C4:minor").s("bass-fm_house").gain(0.45)
+$: note("0 0 4 0").scale("C4:minor").s("bs:hf").gain(0.45)
 ```
 
 Native **C2** (~65 Hz). Tight house floor. `C4:minor` yields that C2. Do **not**
 put it at `C3:…` — musically that would be a mid-bass **on top of the kick**,
 and the engine would dump an extra octave anyway (you hear C1, not C3).
-Key is `bass-fm_house` (underscore before `house`). Not `bass-fm-house`.
+Key is `bs:hf` (`samples/bs/hf.wav`). Not `bass-fm_house` or `bass-fm-house`.
 
-### `bass-fm_sub` — recorded C2 (~65 Hz), floor only
+### `bs:su` — recorded C2 (~65 Hz), floor only
 
 ```
 setcpm(124/4)
-$: note("0 0 4 0").scale("C4:minor").s("bass-fm_sub").gain(0.5)
+$: note("0 0 4 0").scale("C4:minor").s("bs:su").gain(0.5)
 ```
 
 Clean sine sub. `C4:…` yields native C2. **Floor only.** Do **not** stack with
-`reese-dark` or a square sub (double basement). Not in the house-floor song.
+`bs:dk` or a square sub (double basement). Not in the house-floor song.
 
-### `reese-dark` — dark Reese **with** ~65 Hz sub
-
-```
-setcpm(124/4)
-$: note("0 3 0 <0 -1>").scale("C4:minor").s("reese-dark").gain(0.35)
-```
-
-Full-range dark Reese (sub + mid). **Not** a band-swap for `reese-mid`.
-`reese-mid` is 800–1200 Hz glue with **no** sub and still needs a square C2
-([strudel-genre-dnb-reese-mid-stab](../strudel-genre-dnb-reese-mid-stab/SKILL.md)). `reese-dark` already
-owns ~65 Hz. Do **not** stack with square sub, `bass-fm_sub`, or
-`bass-fm_house` (all have sub). This is a **different bed** from the house
-floor — own file, not the pad + `bass-fm_house` song.
-Key is `reese-dark` (hyphen). Not `reese_dark`.
-
-### `pad-fm_fifth` — hollow C3+G3, **no third**
+### `bs:dk` — dark Reese **with** ~65 Hz sub
 
 ```
 setcpm(124/4)
-$: note("0 ~ 0 ~").scale("C4:minor").s("pad-fm_fifth").gain(0.25)
+$: note("0 3 0 <0 -1>").scale("C4:minor").s("bs:dk").gain(0.35)
+```
+
+Full-range dark Reese (sub + mid). **Not** a band-swap for `bs:rm`.
+`bs:rm` is 800–1200 Hz glue with **no** sub and still needs a square C2
+([strudel-genre-dnb-reese-mid-stab](../strudel-genre-dnb-reese-mid-stab/SKILL.md)). `bs:dk` already
+owns ~65 Hz. Do **not** stack with square sub, `bs:su`, or
+`bs:hf` (all have sub). This is a **different bed** from the house
+floor — own file, not the pad + `bs:hf` song.
+Key is `bs:dk` (`samples/bs/dk.wav`). Not `reese-dark` or `reese_dark`. Catalog `bs:rd` is a different take.
+
+### `pf:ff` — hollow C3+G3, **no third**
+
+```
+setcpm(124/4)
+$: note("0 ~ 0 ~").scale("C4:minor").s("pf:ff").gain(0.25)
 ```
 
 Sustained fifth pad (C and G only). `note()` only **transposes** that recording.
 It cannot invent a major (or minor) third. Do **not** use this to brighten.
 Do **not** play it as `note("[0,2,4]")` — that stacks three hollow fifths
 (root / third / fifth), still no E or Eb inside the wav.
-Key is `pad-fm_fifth` (underscore before `fifth`). Not `pad-fm-fifth`.
-Not a swap for `stab-fm_fifth` (that one is a short stab).
+Key is `pf:ff` (`samples/pf/ff.wav`). Not `pad-fm_fifth` or `pad-fm-fifth`.
+Not a swap for `plk:s5` (that one is a short stab).
 
-### `lead-supersaw` — recorded C3, melody at `C4:minor`
+### `ld:ss` — recorded C3, melody at `C4:minor`
 
-Same register rule as `lead-fm_pluck`. Do **not** stack this on the floor pad
+Same register rule as `plk:lp`. Do **not** stack this on the floor pad
 or the dark-Reese bed (it fills the mids). Separate song at the same 124 clock.
 
 ```
 setcpm(124/4)
-$: note("4 ~ 7 4").scale("C4:minor").s("lead-supersaw").gain(0.28).cut(1)
+$: note("4 ~ 7 4").scale("C4:minor").s("ld:ss").gain(0.28).cut(1)
 ```
 
 The wav is a long hold (~8 s). `.cut(1)` steals the previous shot so the
-melody stays monophonic. Key is `lead-supersaw` (hyphen, no underscore).
-Not `lead_supersaw`. Do not rewrite the [strudel-genre-house](../strudel-genre-house/SKILL.md)
+melody stays monophonic. Key is `ld:ss` (`samples/ld/ss.wav`).
+Not `lead-supersaw` or `lead_supersaw`. Do not rewrite the [strudel-genre-house](../strudel-genre-house/SKILL.md)
 pluck line to this stem.
 
 ## Unpitched FX — `s("name")` only, **never `note()`**
@@ -843,31 +845,31 @@ These four are gestures, not pitched instruments. Bare `s("…")`. No `.scale`.
 
 | Disk | Sound key | Role |
 | --- | --- | --- |
-| `samples/fx-uplifter.wav` | `fx-uplifter` | Uplifter (pitch + filter open, ~2.8 s) |
-| `samples/fx-riser_noise.wav` | `fx-riser_noise` | Noise riser (~3.2 s). Underscore before `noise` |
-| `samples/fx-impact_dnb.wav` | `fx-impact_dnb` | DnB impact (~0.5 s). Underscore before `dnb` |
-| `samples/fx-sub_drop.wav` | `fx-sub_drop` | Sub drop (~50 Hz, ~1.1 s). Underscore before `drop` |
+| `samples/fx/up.wav` | `fx:up` | Uplifter (pitch + filter open, ~2.8 s) |
+| `samples/fx/nr.wav` | `fx:nr` | Noise riser (~3.2 s) |
+| `samples/fx/id.wav` | `fx:id` | DnB impact (~0.5 s) |
+| `samples/fx/sd.wav` | `fx:sd` | Sub drop (~50 Hz, ~1.1 s) |
 
-Long one-shots must **not** fire every bar. `fx-uplifter` is ~2.8 s; a bar at
-124 BPM is ~1.94 s. `s("fx-uplifter")` overlaps itself. Mini `<>` picks one
+Long one-shots must **not** fire every bar. `fx:up` is ~2.8 s; a bar at
+124 BPM is ~1.94 s. `s("fx:up")` overlaps itself. Mini `<>` picks one
 child **per cycle** (`mini.rs` `Node::Stack`):
 
 ```
 setcpm(124/4)
-$: s("<fx-uplifter ~ ~ ~>").gain(0.3)
+$: s("<fx:up ~ ~ ~>").gain(0.3)
 ```
 
-That is once per **4 bars**. Same idea for the other long FX (`fx-riser_noise`
-~3.2 s). Short hits (`fx-impact_dnb` ~0.5 s) can sit on a denser grid.
+That is once per **4 bars**. Same idea for the other long FX (`fx:nr`
+~3.2 s). Short hits (`fx:id` ~0.5 s) can sit on a denser grid.
 
 ```
 setcpm(124/4)
-$: s("<fx-riser_noise ~ ~ ~>").gain(0.28)
-$: s("fx-impact_dnb").gain(0.35)
-$: s("<fx-sub_drop ~ ~ ~>").gain(0.35)
+$: s("<fx:nr ~ ~ ~>").gain(0.28)
+$: s("fx:id").gain(0.35)
+$: s("<fx:sd ~ ~ ~>").gain(0.35)
 ```
 
-`fx-sub_drop` is already ~50 Hz. It still gets **no** `note()`. Kick-lead-in,
+`fx:sd` is already ~50 Hz. It still gets **no** `note()`. Kick-lead-in,
 not a bass note. Wrong keys (`fx-riser-noise`, `fx_uplifter`) fail resolve;
 the current performance continues.
 
@@ -881,24 +883,24 @@ Writing `C3:minor` (or `C2:minor`) is “I want the written octave” — the
 ratio drops to 0.5 or 0.25 and the floor disappears an octave (or two).
 
 A C3 pad / Reese / supersaw works the same way: `C4:…` = native C3.
-`C3:…` dumps them into the bass register. That is why `lead-fm_pluck` and
-`reese-mid` already use `C4:minor` — same constant, same rule.
+`C3:…` dumps them into the bass register. That is why `plk:lp` and
+`bs:rm` already use `C4:minor` — same constant, same rule.
 
 ## Why FX have no `note()`
 
-`s("fx-uplifter")` is not a note head (`code.rs` `is_note = false`).
+`s("fx:up")` is not a note head (`code.rs` `is_note = false`).
 `deck.rs` then uses `pitch_ratio = 1.0`. The riser / impact / drop already
 has its pitch motion **baked into the wav**.
 
-`note("0").scale("C4:minor").s("fx-sub_drop")` would retune a ~50 Hz drop
+`note("0").scale("C4:minor").s("fx:sd")` would retune a ~50 Hz drop
 by `target / C4`. That stretches the gesture and moves the basement. Leave
 FX unpitched even when the recording is low.
 
-## Why `pad-fm_fifth` cannot brighten
+## Why `pf:ff` cannot brighten
 
 The wav is **C3+G3** (ratios 1 and 3/2). No third in the file.
 
-`note().s("pad-fm_fifth")` only changes playback rate. Deck scheduling still
+`note().s("pf:ff")` only changes playback rate. Deck scheduling still
 plays **one pitch per mini event**; `expand_chord` is not called.
 `note("c3'maj")` is the **root only**.
 
@@ -908,71 +910,71 @@ a major triad and **not** a brighter pad. Brightening in this engine is a
 mode / voicing / sample swap ([strudel-mood-bright-dark](../strudel-mood-bright-dark/SKILL.md)),
 not this stem.
 
-## Why `reese-dark` ≠ `reese-mid`
+## Why `bs:dk` ≠ `bs:rm`
 
-| | `reese-mid` | `reese-dark` |
+| | `bs:rm` | `bs:dk` |
 | --- | --- | --- |
 | Band | 800–1200 Hz, **no sub** | Full-range, **with ~65 Hz sub** |
 | Scale | `C4:minor` (native C3 mid) | `C4:minor` (native C3 + baked sub) |
 | Needs a synth sub? | Yes — square at `C2:minor` | **No** |
 | Swap? | Not a dark version of the other | Not a mid-band replacement |
 
-Do not put `reese-dark` on the DnB mid track and drop the square. Do not put
-`reese-mid` under the house floor. Do not put `reese-dark` on the same `$:`
-list as `bass-fm_house` (both have sub). Do not stack it with `bass-fm_sub`
+Do not put `bs:dk` on the DnB mid track and drop the square. Do not put
+`bs:rm` under the house floor. Do not put `bs:dk` on the same `$:`
+list as `bs:hf` (both have sub). Do not stack it with `bs:su`
 or `s("square")` + `lpf(120)`.
 
-## Sample keys (flat stems)
+## Sample keys (`part:slug`)
 
-One-level load only. Flat file `samples/<stem>.wav` → key `<stem>` lowercased.
-`{family}-{character}_{detail}`: hyphen between family and character, underscore
-before the detail. Family-character-only names are hyphen only.
+One-level load only. Folder `samples/<part>/<slug>.wav` → `s("part:slug")`.
+Old flat stems at `samples/<stem>.wav` are gone.
 
 | Disk | Sound key | Silent (wrong) |
 | --- | --- | --- |
-| `samples/bass-fm_house.wav` | `bass-fm_house` | `bass-fm-house` |
-| `samples/bass-fm_sub.wav` | `bass-fm_sub` | `bass-fm-sub` |
-| `samples/reese-dark.wav` | `reese-dark` | `reese_dark` |
-| `samples/pad-fm_fifth.wav` | `pad-fm_fifth` | `pad-fm-fifth` |
-| `samples/lead-supersaw.wav` | `lead-supersaw` | `lead_supersaw` |
-| `samples/fx-riser_noise.wav` | `fx-riser_noise` | `fx-riser-noise` |
-| `samples/fx-impact_dnb.wav` | `fx-impact_dnb` | `fx-impact-dnb` |
-| `samples/fx-sub_drop.wav` | `fx-sub_drop` | `fx-sub-drop` |
-| `samples/fx-uplifter.wav` | `fx-uplifter` | `fx_uplifter` |
+| `samples/bs/hf.wav` | `bs:hf` | `bass-fm_house` / `bass-fm-house` |
+| `samples/bs/su.wav` | `bs:su` | `bass-fm_sub` / `bass-fm-sub` |
+| `samples/bs/dk.wav` | `bs:dk` | `reese-dark` / `reese_dark` |
+| `samples/pf/ff.wav` | `pf:ff` | `pad-fm_fifth` / `pad-fm-fifth` |
+| `samples/ld/ss.wav` | `ld:ss` | `lead-supersaw` / `lead_supersaw` |
+| `samples/fx/nr.wav` | `fx:nr` | `fx-riser_noise` / `fx-riser-noise` |
+| `samples/fx/id.wav` | `fx:id` | `fx-impact_dnb` / `fx-impact-dnb` |
+| `samples/fx/sd.wav` | `fx:sd` | `fx-sub_drop` / `fx-sub-drop` |
+| `samples/fx/up.wav` | `fx:up` | `fx-uplifter` / `fx_uplifter` |
 
-No `.bank(...)` on these names. This batch did not add a `bd/` kit.
+No `.bank(...)` on these names. This batch did not add a `bd/` kit. User extras
+may still use a full stem (`pad-ambient_drone01`).
 
 ## Playable songs (do not “improve”)
 
-**Floor** = drums + `bass-fm_house` + `pad-fm_fifth` only. House bass is
-`0 0 4 0` (i and 5). Pad stays `0 ~ 0 ~`. FX is `<fx-uplifter ~ ~ ~>` —
-once per 4 bars, not every bar. **No** `reese-dark` here (both that stem and
+**Floor** = drums + `bs:hf` + `pf:ff` only. House bass is
+`0 0 4 0` (i and 5). Pad stays `0 ~ 0 ~`. FX is `<fx:up ~ ~ ~>` —
+once per 4 bars, not every bar. **No** `bs:dk` here (both that stem and
 the house bass have sub).
 
 ```
 // @title skill-factory-pcm-usage
 setcpm(124/4)
 $: s("bd*4, [~ cp]*2, [~ hh]*4").gain(0.65)
-$: note("0 0 4 0").scale("C4:minor").s("bass-fm_house").gain(0.45)
-$: note("0 ~ 0 ~").scale("C4:minor").s("pad-fm_fifth").gain(0.25)
-$: s("<fx-uplifter ~ ~ ~>").gain(0.3)
+$: note("0 0 4 0").scale("C4:minor").s("bs:hf").gain(0.45)
+$: note("0 ~ 0 ~").scale("C4:minor").s("pf:ff").gain(0.25)
+$: s("<fx:up ~ ~ ~>").gain(0.3)
 ```
 
 Copy: `songs/skill-factory-pcm-usage.strudel`.
 
 ### Dark Reese (different bed, same 124 clock)
 
-No `bass-fm_house`, no square sub.
+No `bs:hf`, no square sub.
 
 ```
 // @title skill-factory-pcm-reese
 setcpm(124/4)
 $: s("bd*4, [~ cp]*2, [~ hh]*4").gain(0.65)
-$: note("0 3 0 <0 -1>").scale("C4:minor").s("reese-dark").gain(0.35)
+$: note("0 3 0 <0 -1>").scale("C4:minor").s("bs:dk").gain(0.35)
 ```
 
 Copy: `songs/skill-factory-pcm-reese.strudel`. Play **solo**. Do not `dj` this
-with the floor or the lead (those files already have `bass-fm_house`).
+with the floor or the lead (those files already have `bs:hf`).
 
 ### Lead only (same clock, not stacked on the floor pad)
 
@@ -983,12 +985,12 @@ is required. Do not change this grid.
 // @title skill-factory-pcm-lead
 setcpm(124/4)
 $: s("bd*4, [~ cp]*2, [~ hh]*4").gain(0.65)
-$: note("0 0 4 0").scale("C4:minor").s("bass-fm_house").gain(0.45)
-$: note("4 ~ 7 4").scale("C4:minor").s("lead-supersaw").gain(0.28).cut(1)
+$: note("0 0 4 0").scale("C4:minor").s("bs:hf").gain(0.45)
+$: note("4 ~ 7 4").scale("C4:minor").s("ld:ss").gain(0.28).cut(1)
 ```
 
 Copy: `songs/skill-factory-pcm-lead.strudel`. Shared `setcpm(124/4)` so the
-floor + lead pair can `dj`. Do not add pad or `reese-dark` on this file.
+floor + lead pair can `dj`. Do not add pad or `bs:dk` on this file.
 
 ## Try it in this app
 
@@ -1002,7 +1004,7 @@ strudel-rs play songs/skill-factory-pcm-reese.strudel --headless --seconds 8
 strudel-rs play songs/skill-factory-pcm-lead.strudel --seconds 12
 strudel-rs play songs/skill-factory-pcm-lead.strudel --headless --seconds 8
 
-# Dual deck — floor + lead, both setcpm(124/4). Do not pair reese-dark onto either.
+# Dual deck — floor + lead, both setcpm(124/4). Do not pair bs:dk onto either.
 strudel-rs dj songs/skill-factory-pcm-usage.strudel songs/skill-factory-pcm-lead.strudel
 ```
 
@@ -1013,19 +1015,19 @@ Live TUI: `/a load skill-factory-pcm-usage`.
 ## Do not
 
 - Write `C3:…` or `C2:…` on these pitched stems — that dumps octaves.
-- Put `bass-fm_house` at C3 (on top of the kick) or hear it as a mid-bass.
-- Put `reese-dark` on the same song as `bass-fm_house` (both have sub).
-- Stack `reese-dark` with `bass-fm_sub` or square sub.
-- Treat `reese-dark` as a darker `reese-mid` (or the reverse).
-- Use `pad-fm_fifth` to brighten, or play it as `[0,2,4]`.
-- Fire `fx-uplifter` every bar (`s("fx-uplifter")` overlaps; use `<>`).
-- Put `note()` / `.scale` on `fx-uplifter`, `fx-riser_noise`, `fx-impact_dnb`,
-  or `fx-sub_drop` (including the ~50 Hz drop).
-- Stack `lead-supersaw` on the floor pad or the Reese bed.
+- Put `bs:hf` at C3 (on top of the kick) or hear it as a mid-bass.
+- Put `bs:dk` on the same song as `bs:hf` (both have sub).
+- Stack `bs:dk` with `bs:su` or square sub.
+- Treat `bs:dk` as a darker `bs:rm` (or the reverse).
+- Use `pf:ff` to brighten, or play it as `[0,2,4]`.
+- Fire `fx:up` every bar (`s("fx:up")` overlaps; use `<>`).
+- Put `note()` / `.scale` on `fx:up`, `fx:nr`, `fx:id`,
+  or `fx:sd` (including the ~50 Hz drop).
+- Stack `ld:ss` on the floor pad or the Reese bed.
 - Rewrite the lead degrees `4 ~ 7 4` or drop `.cut(1)`.
-- Rewrite `reese-mid` / `lead-fm_pluck` / live 2-op recipes to these stems.
+- Rewrite `bs:rm` / `plk:lp` / live 2-op recipes to these stems.
 - Add a `bd/` bank or a third-party drum kit from this batch.
-- Write `bass-fm-house`, `pad-fm-fifth`, `reese_dark`, `fx-riser-noise`.
+- Write old flats (`bass-fm_house`, `pad-fm_fifth`, `reese-dark`, `fx-uplifter`) or hyphen swaps (`bass-fm-house`, `pad-fm-fifth`, `reese_dark`, `fx-riser-noise`).
 - Put `.compressor` on a `$:` (mixer master, last-write).
 - Pair these 124 files with 174 DnB or 126 techno (shared clock).
 - `stack()` / `.cpm(124)`.

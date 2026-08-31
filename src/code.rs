@@ -1307,12 +1307,12 @@ mod tests {
 
     #[test]
     fn unpitched_fx_never_sets_is_note() {
-        let fx = parse_code(r#"s("fx-uplifter").gain(0.3)"#).unwrap();
+        let fx = parse_code(r#"s("fx:up").gain(0.3)"#).unwrap();
         assert!(!fx.is_note, "bare s() must stay unpitched (ratio 1.0)");
-        assert_eq!(fx.sound, "fx-uplifter");
-        let pitched = parse_code(r#"note("0").scale("C4:minor").s("bass-fm_house")"#).unwrap();
+        assert_eq!(fx.sound, "fx:up");
+        let pitched = parse_code(r#"note("0").scale("C4:minor").s("bs:hf")"#).unwrap();
         assert!(pitched.is_note);
-        assert_eq!(pitched.sound, "bass-fm_house");
+        assert_eq!(pitched.sound, "bs:hf");
     }
 
     #[test]

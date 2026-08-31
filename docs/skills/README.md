@@ -93,13 +93,13 @@ Genre in this repo is mostly **tempo + drum grid + register + filter**, not a hi
 | --- | --- |
 | `setcpm` | House ~120–128, techno ~126–130, DnB ~170+, ambient can sit on a shared DJ BPM |
 | Drum string | Four-on-the-floor vs 2-step vs break |
-| `.s(...)` | `bd`/`sd`/`hh`/`oh`/`cp` samples; factory FM wavs (`lead-fm_pluck`, `stab-fm_*`, `bass-fm_house`, `reese-dark`, `pad-fm_fifth`, `lead-supersaw`, `fx-*`); `sawtooth`/`square`/`sine`/`triangle` + live `.fm`; `wt_organ` / `wt_bright` |
+| `.s(...)` | `bd`/`sd`/`hh`/`oh`/`cp` samples; factory FM wavs (`plk:lp`, `plk:s5`/`plk:s3`, `bs:hf`, `bs:dk`, `pf:ff`, `ld:ss`, `fx:up`/`fx:nr`/`fx:id`/`fx:sd`); `sawtooth`/`square`/`sine`/`triangle` + live `.fm`; `wt_organ` / `wt_bright` |
 | `.lpf` / `.lpq` | Dark bass vs acid (high Q) vs open hats |
 | ADSR | Pluck vs pad |
 | `.room` / `.delay` | Space (orbit-shared FX, ids 1–4 per deck) |
 | `.duckorbit` | Kick ducks **that orbit** (put pad **and** bass on it). `duckattack` is recover time |
 
-Bundled one-shots: `samples/bd`, `sd`, `hh`, `oh`, `cp` (`samples/cp/00.wav`), plus factory FM wavs `lead-fm_pluck`, `stab-fm_fifth`, `stab-fm_major`, `reese-mid`, and issue #21 batch 1 (`bass-fm_house`, `bass-fm_sub`, `reese-dark`, `pad-fm_fifth`, `lead-supersaw`, `fx-*` — how to play each: [strudel-sound-design](./strudel-sound-design/SKILL.md) (Factory PCM batch 1)). Live 2-op FM is `.s("sine").fm(…)` — not those wavs. `db` is not a sample. Unknown names fail resolve (performance continues). `stack()`, `.cpm()`, and a bare `s("...")` line without `$:` are not song format.
+Bundled one-shots: `samples/bd`, `sd`, `hh`, `oh`, `cp` (`samples/cp/00.wav`), plus factory FM wavs as `part:slug` (`plk:lp`, `plk:s5`, `plk:s3`, `bs:rm`, `bs:hf`, `bs:su`, `bs:dk`, `pf:ff`, `ld:ss`, `fx:up` / `fx:nr` / `fx:id` / `fx:sd` — how to play each: [strudel-sound-design](./strudel-sound-design/SKILL.md) (Factory PCM batch 1) and [strudel-pcm-catalog](./strudel-pcm-catalog/SKILL.md)). Live 2-op FM is `.s("sine").fm(…)` — not those wavs. `db` is not a sample. Unknown names fail resolve (performance continues). `stack()`, `.cpm()`, and a bare `s("...")` line without `$:` are not song format.
 
 ## DJ / mix
 
@@ -118,6 +118,7 @@ Cross-cutting:
 | [strudel-composition](./strudel-composition/SKILL.md) | Mini-notation + `$:` tracks | — |
 | [strudel-data-format](./strudel-data-format/SKILL.md) | `.strudel` save/load shape | — |
 | [strudel-sound-design](./strudel-sound-design/SKILL.md) | Synths, FX, live 2-op FM, factory PCM stems | `songs/skill-fm-sound-design.strudel`, `songs/skill-factory-pcm-usage.strudel` |
+| [strudel-pcm-catalog](./strudel-pcm-catalog/SKILL.md) | rust-fm-synthe `part:slug`（`bd:8b`, `hh:cl`）。意味は INDEX | `songs/skill-pcm-catalog.strudel` |
 | [strudel-minor-scale-loop](./strudel-minor-scale-loop/SKILL.md) | Short minor bass + triad | `songs/skill-minor-scale-loop.strudel` |
 | [strudel-mood-bright-dark](./strudel-mood-bright-dark/SKILL.md) | Brighter/darker (mode, voicing, register, sample, filter) — not a genre change | `songs/skill-mood-dark.strudel` + `songs/skill-mood-bright.strudel` |
 
@@ -130,7 +131,7 @@ Genre recipes (`strudel-genre-*`):
 | [strudel-genre-techno-duck](./strudel-genre-techno-duck/SKILL.md) | Techno kick ducks pad **and** bass; short recover; no track compressor | `songs/skill-sidechain-ducking.strudel` (`songs/skill-techno-duck.strudel` is the older sibling) |
 | [strudel-genre-acid](./strudel-genre-acid/SKILL.md) | TB-303: per-note `lpenv`, high `lpq`, not static `lpf` + amp ADSR | `songs/skill-acid-303-filter-envelope.strudel` |
 | [strudel-genre-dnb](./strudel-genre-dnb/SKILL.md) | 174 BPM break, drums above sub, square+saw Reese; mini `*2` not `.fast(2)` | `songs/skill-drum-and-bass.strudel` (`songs/skill-dnb.strudel` is the shorter sibling) |
-| [strudel-genre-dnb-reese-mid-stab](./strudel-genre-dnb-reese-mid-stab/SKILL.md) | 174 BPM break, square C2 sub + `reese-mid` at C4 + hollow-fifth stab | `songs/skill-dnb-reese-mid-stab.strudel` |
+| [strudel-genre-dnb-reese-mid-stab](./strudel-genre-dnb-reese-mid-stab/SKILL.md) | 174 BPM break, square C2 sub + `bs:rm` at C4 + hollow-fifth stab | `songs/skill-dnb-reese-mid-stab.strudel` |
 | [strudel-genre-ambient](./strudel-genre-ambient/SKILL.md) | Ambient | — |
 | [strudel-genre-chill](./strudel-genre-chill/SKILL.md) | Chill / downtempo | — |
 | [strudel-genre-chill-pop](./strudel-genre-chill-pop/SKILL.md) | Chill Pop | — |
@@ -189,6 +190,10 @@ strudel-rs dj songs/skill-mood-dark.strudel songs/skill-mood-bright.strudel
 # Do not DJ-pair a leftover 120 file with this 124 file.
 strudel-rs play songs/skill-fm-sound-design.strudel --seconds 12
 strudel-rs play songs/skill-fm-sound-design.strudel --headless --seconds 8
+
+# rust-fm-synthe catalog — house floor kick + tight bass + uplifter (`bd:hf`)
+strudel-rs play songs/skill-pcm-catalog.strudel --seconds 12
+strudel-rs play songs/skill-pcm-catalog.strudel --headless --seconds 8
 
 # Factory PCM batch 1 — floor (drums+bass+pad), separate Reese bed, supersaw lead.
 strudel-rs play songs/skill-factory-pcm-usage.strudel --seconds 12

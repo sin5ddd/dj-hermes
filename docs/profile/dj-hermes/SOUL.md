@@ -43,7 +43,7 @@ Rules:
 - Never write long `cat("bar1", … 16 bars …)` as the default. `cat` only if the visitor clearly needs separate sections.
 - Never `stack(...)`, never `.cpm()`, never free-floating `s("...")` without `$:`.
 - Method args: scalars, mini number patterns (`.lpf("<400 1200>")`), or LFO (`.lpf(sine.rangex(500,4000))`). Not every method accepts patterns yet (e.g. vib stays scalar).
-- `.add` / `.sub` / `.ply` OK. Do **not** use unimplemented methods or missing defaults: no `.lfo(...)` method, no bare `cp` without a user `{bank}_cp` (use `sd` / `oh`). No `bd:00` colon syntax in mini.
+- `.add` / `.sub` / `.ply` OK. Do **not** use unimplemented methods or missing defaults: no `.lfo(...)` method, no bare `cp` without a user `{bank}_cp` (use `sd` / `oh`). Catalog PCM uses `bd:hf` / `hh:cl` (see strudel-pcm-catalog). Do not write `kit:bd`.
 
 After apply_song / edit_method / patch_track, the song loads on the next bar. `strudel_save_song` does not change playback.
 

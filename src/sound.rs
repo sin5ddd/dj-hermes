@@ -33,6 +33,46 @@ pub enum ResolvedSound {
     Sample(String),
 }
 
+/// How `part:slug` / `part:2` picks a SampleBank variation.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum SampleSelector {
+    /// No colon: use chain `.n()` / default 0.
+    Default,
+    /// `bd:2` — integer index (same as `.n(2)`).
+    Index(i32),
+    /// `bd:8b` — file stem inside `samples/bd/`.
+    Stem(String),
+}
+
+/// Split `bd:8b` → (`bd`, Stem("8b")). Invalid colon shapes yield `None`.
+pub fn split_sound_selector(raw: &str) -> Option<(String, SampleSelector)> {
+    let raw = raw.trim();
+    if raw.is_empty() {
+        return None;
+    }
+    let colon_count = raw.bytes().filter(|b| *b == b':').count();
+    if colon_count > 1 {
+        return None;
+    }
+    match raw.split_once(':') {
+        None => Some((raw.to_ascii_lowercase(), SampleSelector::Default)),
+        Some((part, sel)) => {
+            let part = part.trim();
+            let sel = sel.trim();
+            if part.is_empty() || sel.is_empty() {
+                return None;
+            }
+            let part = part.to_ascii_lowercase();
+            if sel.bytes().all(|b| b.is_ascii_digit()) {
+                let n = sel.parse::<i32>().ok()?;
+                Some((part, SampleSelector::Index(n)))
+            } else {
+                Some((part, SampleSelector::Stem(sel.to_ascii_lowercase())))
+            }
+        }
+    }
+}
+
 /// Resolve bank-prefixed sample name: `{bank}_{sound}` (lowercase).
 pub fn banked_name(bank: Option<&str>, sound: &str) -> String {
     let sound = sound.trim().to_ascii_lowercase();
@@ -139,6 +179,29 @@ mod tests {
             ResolvedSound::Sample(s) if s == "bd"
         ));
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn split_sound_selector_part_slug() {
+        assert_eq!(
+            split_sound_selector("bd:8b"),
+            Some(("bd".into(), SampleSelector::Stem("8b".into())))
+        );
+        assert_eq!(
+            split_sound_selector("BD:2"),
+            Some(("bd".into(), SampleSelector::Index(2)))
+        );
+        assert_eq!(
+            split_sound_selector("hh:cl"),
+            Some(("hh".into(), SampleSelector::Stem("cl".into())))
+        );
+        assert_eq!(
+            split_sound_selector("bd"),
+            Some(("bd".into(), SampleSelector::Default))
+        );
+        assert!(split_sound_selector("bd:").is_none());
+        assert!(split_sound_selector(":8b").is_none());
+        assert!(split_sound_selector("bd:8b:x").is_none());
     }
 
     #[test]

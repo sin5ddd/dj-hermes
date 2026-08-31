@@ -23,7 +23,7 @@ metadata:
 - The request is **DnB / jungle / breakbeat at ~170–180 BPM**.
 - You need a **half-time break** (not four-on-the-floor) plus a **Reese**.
 - You are **not** writing house (`bd*4` + snare on 2/4) or a single-oscillator “Reese”.
-- Sampled mid Reese (`reese-mid`) + hollow-fifth stab: [strudel-genre-dnb-reese-mid-stab](../strudel-genre-dnb-reese-mid-stab/SKILL.md) (still 174; do not pair with 124 house).
+- Sampled mid Reese (`bs:rm`) + hollow-fifth stab: [strudel-genre-dnb-reese-mid-stab](../strudel-genre-dnb-reese-mid-stab/SKILL.md) (still 174; do not pair with 124 house).
 
 ## Pattern
 

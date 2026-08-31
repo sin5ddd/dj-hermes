@@ -24,9 +24,9 @@ metadata:
 ## When to use
 
 - The request is **house**: four-on-the-floor kick, **clap on 2 and 4**, offbeat hats, ~124 BPM.
-- You need the bundled house clap (`s("cp")` → `samples/cp/00.wav`) and/or the C3 FM pluck (`s("lead-fm_pluck")`).
+- You need the bundled house clap (`s("cp")` → `samples/cp/00.wav`) and/or the C3 FM pluck (`s("plk:lp")`).
 - You are **not** writing kick-front techno (`bd*4, [~ hh]*4` with no clap) — that is [strudel-genre-four-on-the-floor](../strudel-genre-four-on-the-floor/SKILL.md).
-- You are **not** stacking `sd` on the same 2/4 hits. You are **not** using `stab-fm_fifth` or `reese-mid` (next DnB skill).
+- You are **not** stacking `sd` on the same 2/4 hits. You are **not** using `plk:s5` or `bs:rm` (next DnB skill).
 
 ## Pattern
 
@@ -37,10 +37,10 @@ setcpm(124/4)
 // drums
 $: s("bd*4, [~ cp]*2, [~ hh]*4").gain(0.65)
 // pluck
-$: note("4 ~ 7 4  2 0 ~ -1").scale("C4:minor").s("lead-fm_pluck").gain(0.4).cut(1)
+$: note("4 ~ 7 4  2 0 ~ -1").scale("C4:minor").s("plk:lp").gain(0.4).cut(1)
 ```
 
-Playable copy: `songs/skill-house-clap-backbeat.strudel`. Do not “improve” the degrees. Supersaw lead is a different stem (`lead-supersaw` at `C4:minor`) — [strudel-sound-design](../strudel-sound-design/SKILL.md).
+Playable copy: `songs/skill-house-clap-backbeat.strudel`. Do not “improve” the degrees. Supersaw lead is a different stem (`ld:ss` at `C4:minor`) — [strudel-sound-design](../strudel-sound-design/SKILL.md).
 
 | Piece | Role |
 | --- | --- |
@@ -50,7 +50,7 @@ Playable copy: `songs/skill-house-clap-backbeat.strudel`. Do not “improve” t
 | `[~ hh]*4` | Closed hat on each **and** |
 | `note("4 ~ 7 4  2 0 ~ -1")` | Eighths: G–rest–**C**–G–Eb–C–**rest**–Bb |
 | `.scale("C4:minor")` | Degrees against C4. The wav is C3; `C3:minor` dumps the line into the bass register |
-| `.s("lead-fm_pluck")` | Flat file `samples/lead-fm_pluck.wav` (underscore before `pluck`) |
+| `.s("plk:lp")` | `samples/plk/lp.wav` (`part:slug`) |
 | `.cut(1)` | Steal the previous pluck (~0.4 s one-shot must not overlap itself) |
 | no `.compressor` / no `.duckorbit` | Compressor is mixer last-write. No duck in this recipe |
 
@@ -68,7 +68,7 @@ Do **not** put this clap layer on a techno drum string. Kick-front techno is `bd
 | --- | --- | --- |
 | `samples/cp/00.wav` | `cp` | `load_dir` reads `dir/<name>/*.wav` (`sample.rs`). Default variation is sort order → `00.wav` |
 | `samples/cp.wav` | `cp` | Would also work as a single flat file. **Not in this repo.** If both existed, folder vars win |
-| `samples/lead-fm_pluck.wav` | `lead-fm_pluck` | Flat stem. Write the underscore; `lead-fm-pluck` does not resolve |
+| `samples/plk/lp.wav` | `plk:lp` | `part:slug`. Old flat `lead-fm_pluck` / `lead-fm-pluck` do not resolve |
 
 `cp` is not a waveform (`sound.rs`), so it falls through to the bank. Unknown names fail resolve and the current performance continues.
 
@@ -76,7 +76,7 @@ Do **not** put this clap layer on a techno drum string. Kick-front techno is `bd
 
 `note().s("sample")` sets playback rate to `target_hz / SAMPLE_ROOT_HZ` (`deck.rs`). `SAMPLE_ROOT_HZ` is **261.63 Hz (C4)** even though the constant comment says C3.
 
-`lead-fm_pluck.wav` is a **C3** one-shot (~131 Hz / MIDI 48). Ratio 1.0 already sounds as C3.
+`plk/lp.wav` is a **C3** one-shot (~131 Hz / MIDI 48). Ratio 1.0 already sounds as C3.
 
 | Scale | Degree 0 target | Ratio | What you hear |
 | --- | --- | --- | --- |
@@ -141,8 +141,8 @@ Do not add `[~ sd]*2`. Do not drop the clap onto the techno skill song.
 - Write `[~ sd]*2` or stack `sd` with `cp` on 2/4 — they mask each other.
 - Put `[~ cp]*2` on kick-front techno (`bd*4, [~ hh]*4`).
 - Use `.scale("C3:minor")` with this wav — it plays in the bass register.
-- Write `lead-fm-pluck` (hyphen) — the key is `lead-fm_pluck`.
-- Use `stab-fm_fifth` / `reese-mid` here.
+- Write `lead-fm-pluck` or `lead-fm_pluck` — the key is `plk:lp`.
+- Use `plk:s5` / `bs:rm` here.
 - `note("c3'maj")` when you want a chord — suffix is root only.
 - Put `.compressor` on a track. Do not add `.duckorbit`.
 - Pair this file with another `setcpm` (shared clock; the other tempo is discarded).

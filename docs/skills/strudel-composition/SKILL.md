@@ -10,6 +10,7 @@ metadata:
     related_skills:
       - strudel-data-format
       - strudel-sound-design
+      - strudel-pcm-catalog
       - strudel-mood-bright-dark
 ---
 
@@ -119,7 +120,7 @@ $: s("bd*4, [~ sd]*2, [~ hh]*4, <~ [~@3 bd ~@4]>").gain(0.55)
 5. **例外で分離** — `.duckorbit` 付きキックだけ別 `$:`  
 6. 本家 `stack(...)` は使わない  
 7. **パート名は短く**（`bd` `sd` `hh` `oh` `cp`）。キット差は **`.bank("tr808-hard")` 等**（ディスクは `{bank}_{part}`）。フルネームでリズムを埋めない  
-8. **`bd:00` は不可** → `s("bd")` または `.n(0)`  
+8. **FM カタログは `bd:hf` のような `part:slug`**（2〜3 字。→ strudel-pcm-catalog）。`kit:bd` は不可。同梱は `s("bd")` / `.n(0)`  
 
 ユーザーキットがあるとき:
 
@@ -224,7 +225,7 @@ $: note("0 2 4 0").scale("C3:minor").s("piano-acoustic_soft").gain(0.35)
 - 未実装: `.lfo`  
 - テクノキック前グリッドにハウス `cp` を載せる（`[~ cp]*2` はハウス専用）  
 - 既定での 16 小節 `cat` 長尺  
-- mini 内の `bd:00` / `kit:bd`（コロン不可）  
+- mini 内の `kit:bd`（bank を左に書く形）。カタログは `bd:hf`（part:slug）  
 
 ## Pitfalls
 

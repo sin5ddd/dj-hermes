@@ -102,12 +102,12 @@ pub fn tokenize(input: &str) -> Result<Vec<Token>, String> {
                 out.push(Token::At(Span::new(i, i + 1)));
                 i += 1;
             }
-            c if c.is_ascii_alphanumeric() || matches!(c, '.' | '#' | '-' | '_' | '\'') => {
+            c if is_atom_char(c) => {
                 let start = i;
                 i += 1;
                 while i < bytes.len() {
                     let c = bytes[i] as char;
-                    if c.is_ascii_alphanumeric() || matches!(c, '.' | '#' | '-' | '_' | '\'') {
+                    if is_atom_char(c) {
                         i += 1;
                     } else {
                         break;
@@ -125,6 +125,11 @@ pub fn tokenize(input: &str) -> Result<Vec<Token>, String> {
         }
     }
     Ok(out)
+}
+
+/// Mini sound/note atom characters. `:` is `part:slug` (sample variant), not a token break.
+fn is_atom_char(c: char) -> bool {
+    c.is_ascii_alphanumeric() || matches!(c, '.' | '#' | '-' | '_' | '\'' | ':')
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -417,6 +422,18 @@ mod tests {
         assert!(matches!(&t[1], Token::OpenBracket(_)));
         assert!(matches!(&t[2], Token::Word(w, _) if w == "e3"));
         assert!(matches!(&t[12], Token::Word(w, _) if w == "bd_cp"));
+    }
+
+    #[test]
+    fn tokenizes_part_slug() {
+        let t = tokenize("bd:8b*4, [~ sd:8s]*2").unwrap();
+        assert!(matches!(&t[0], Token::Word(w, _) if w == "bd:8b"));
+        assert!(matches!(&t[1], Token::Star(_)));
+        let n = parse("bd:hf hh:cl").unwrap();
+        let ev = events(&n, 0);
+        assert_eq!(ev.len(), 2);
+        assert_eq!(ev[0].value, "bd:hf");
+        assert_eq!(ev[1].value, "hh:cl");
     }
 
     #[test]

@@ -540,7 +540,8 @@ pub fn classify(label: &str, is_note: bool) -> HitClass {
 }
 
 fn is_long_fx(l: &str) -> bool {
-    l.starts_with("fx-riser")
+    matches!(l, "fx:up" | "fx:nr")
+        || l.starts_with("fx-riser")
         || l.starts_with("fx-uplifter")
         || (l.starts_with("fx-") && (l.contains("riser") || l.contains("uplift")))
 }
@@ -548,7 +549,7 @@ fn is_long_fx(l: &str) -> bool {
 fn is_accent(l: &str) -> bool {
     matches!(
         l,
-        "bd" | "kick" | "bassdrum" | "sd" | "sn" | "snare" | "cp" | "clap"
+        "bd" | "kick" | "bassdrum" | "sd" | "sn" | "snare" | "cp" | "clap" | "fx:id"
     ) || l.starts_with("fx-impact")
 }
 
@@ -835,13 +836,13 @@ mod tests {
         assert_eq!(classify("bd", false), HitClass::Accent);
         assert_eq!(classify("sd", false), HitClass::Accent);
         assert_eq!(classify("cp", false), HitClass::Accent);
-        assert_eq!(classify("fx-impact_dnb", false), HitClass::Accent);
+        assert_eq!(classify("fx:id", false), HitClass::Accent);
         assert_eq!(classify("hh", false), HitClass::Local);
         assert_eq!(classify("ch", false), HitClass::Local);
         assert_eq!(classify("oh", false), HitClass::Local);
         assert_eq!(classify("c3", true), HitClass::Note);
-        assert_eq!(classify("fx-uplifter", false), HitClass::LongFx);
-        assert_eq!(classify("fx-riser_noise", false), HitClass::LongFx);
+        assert_eq!(classify("fx:up", false), HitClass::LongFx);
+        assert_eq!(classify("fx:nr", false), HitClass::LongFx);
     }
 
     #[test]
@@ -945,7 +946,7 @@ mod tests {
     #[test]
     fn long_fx_spawns_hue() {
         let mut fx = FxState::new();
-        fx.observe(0, &[hit("fx-uplifter", false, 0.0)], 2.0);
+        fx.observe(0, &[hit("fx:up", false, 0.0)], 2.0);
         assert_eq!(fx.hue_count(), 1);
         assert_eq!(fx.flash_spawn_count(), 0);
         let a = hue_dim_color(0.0);

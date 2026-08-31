@@ -13,7 +13,7 @@ samples/
   <name>.wav      # also accepted as a single variation
 ```
 
-Bundled extras (same format): `cp/00.wav` (house 2/4 clap), `lead-fm_pluck.wav`, `lead-fm_bell.wav` (C3 inharmonic bell), `keys-fm_ep.wav` (C3 EP, 2×/3× tines), `perc-fm_metal.wav` (unpitched metal), `stab-fm_fifth.wav` (hollow C+G), `stab-fm_major.wav` (C–E–G), `reese-mid.wav`, `pad-fm_fifth.wav` (C3 fifth pad), `bass-fm_sub.wav` / `bass-fm_house.wav` (C2, `C4:…`), `reese-dark.wav` (full-range Reese with sub), `lead-supersaw.wav` (C3, ~8 s), `fx-riser_noise.wav`, `fx-uplifter.wav`, `fx-impact_dnb.wav`, `fx-sub_drop.wav` (unpitched FX).
+Bundled extras (same format, `s("part:slug")`): `cp/00.wav` (house 2/4 clap), `plk/lp.wav` (`plk:lp`), `plk/bl.wav` (`plk:bl`), `ep/ky.wav` (`ep:ky`), `perc/fm.wav` (`perc:fm`), `plk/s5.wav` (`plk:s5`), `plk/s3.wav` (`plk:s3`), `bs/rm.wav` (`bs:rm`), `pf/ff.wav` (`pf:ff`), `bs/su.wav` / `bs/hf.wav` (`bs:su` / `bs:hf`, C2, write `C4:…`), `bs/dk.wav` (`bs:dk`), `ld/ss.wav` (`ld:ss`), `fx/nr.wav` / `fx/up.wav` / `fx/id.wav` / `fx/sd.wav` (unpitched FX).
 
 WAV files are stored with **Git LFS**. After clone, or if a `.wav` is a 3-line pointer file:
 
