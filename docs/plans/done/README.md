@@ -17,6 +17,7 @@
 | 24 | orbit delay/room + Mixer EQ 連動 | [task-24](./2026-07-27-task-24-orbit-delay-room.md) |
 | 25 | Punchcard / Pianoroll（dj body トグル） | [task-25](./2026-07-27-task-25-viz.md) |
 | 26 | ミニ記法ライブハイライト | [task-26](./2026-07-27-task-26-live-highlight.md) |
+| #24 | DJ ミックスマクロ（`strudel_mix`） | [issue-24](./2026-08-31-issue-24-dj-mix.md) |
 
 ## まだ正本に残っているタスク
 

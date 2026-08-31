@@ -12,6 +12,8 @@ metadata:
       - strudel-sound-design
       - strudel-pcm-catalog
       - strudel-mood-bright-dark
+      - strudel-dj-mix
+      - strudel-live-edit
 ---
 
 # strudel-rs 作曲（Composition）— ライブ短いループ

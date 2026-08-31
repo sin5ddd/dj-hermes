@@ -4,7 +4,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 
 use crate::deck::Deck;
-use crate::mixer::Mixer;
+use crate::mixer::{MixAction, MixCommand, Mixer};
 use crate::sample::SampleBank;
 use crate::song::Song;
 use crate::transport::Transport;
@@ -51,6 +51,10 @@ pub enum Command {
         band: u8,
         value: f32,
     },
+    /// DJ mix macro (long / cut / fill). Hold is [`Command::HoldXFade`].
+    Mix(MixCommand),
+    /// Freeze current xfade gains immediately (no bar wait).
+    HoldXFade,
 }
 
 enum Pending {
@@ -72,6 +76,7 @@ enum Pending {
         deck: usize,
         bar: u64,
     },
+    Mix(MixCommand),
 }
 
 struct Queued {
@@ -136,6 +141,20 @@ impl Engine {
         self.transport.bar_index().saturating_add(1)
     }
 
+    /// Next bar that is a multiple of `phrase` (1 = next bar, 4 = next 4-bar boundary).
+    fn phrase_target_bar(&self, phrase: u32) -> u64 {
+        let n = match phrase {
+            8 => 8u64,
+            4 => 4,
+            _ => 1,
+        };
+        let next = self.next_bar();
+        if n <= 1 {
+            return next;
+        }
+        next.div_ceil(n) * n
+    }
+
     /// Load a song on a deck immediately (no bar wait). For CLI play / startup UX.
     /// Live hot-swap should keep using `push_command(LoadSong { .. })`.
     ///
@@ -160,6 +179,7 @@ impl Engine {
                 self.decks[0].unload();
                 self.decks[1].unload();
                 self.mixer.clear_xfade();
+                self.mixer.clear_job();
                 self.mixer.gain_a = 0.0;
                 self.mixer.gain_b = 0.0;
                 self.pending.clear();
@@ -227,6 +247,31 @@ impl Engine {
                     self.mixer.set_deck_eq(deck, band as usize, value);
                 }
             }
+            Command::HoldXFade => {
+                self.mixer.hold_xfade();
+            }
+            Command::Mix(spec) => {
+                self.mixer.clear_job();
+                self.pending.retain(|q| !matches!(q.kind, Pending::Mix(_)));
+                let target_bar = self.phrase_target_bar(spec.phrase);
+                if let Some(track) = spec.mute_track.clone() {
+                    if !track.is_empty() && spec.to_deck < 2 {
+                        let from = 1 - spec.to_deck;
+                        self.pending.push(Queued {
+                            target_bar,
+                            kind: Pending::TrackMute {
+                                deck: from,
+                                track,
+                                muted: true,
+                            },
+                        });
+                    }
+                }
+                self.pending.push(Queued {
+                    target_bar,
+                    kind: Pending::Mix(spec),
+                });
+            }
         }
     }
 
@@ -280,6 +325,53 @@ impl Engine {
                     // Apply at this global bar head so pattern_bar(apply) == bar-1.
                     self.decks[deck].head_to_bar(bar, bar_now);
                 }
+                Pending::Mix(spec) => self.apply_mix(spec),
+            }
+        }
+    }
+
+    fn apply_mix(&mut self, spec: MixCommand) {
+        let to = spec.to_deck;
+        if to > 1 {
+            return;
+        }
+        let start = self.transport.global_sample;
+        let spb = self.transport.samples_per_bar();
+        let sr = self.transport.sample_rate as f32;
+        match spec.action {
+            MixAction::Long => {
+                let bars = spec.bars.clamp(1, 32);
+                if spec.eq {
+                    self.mixer.apply_long_eq_preset(to);
+                }
+                let len = (bars as f64 * spb) as u64;
+                self.mixer.start_xfade(to, start, len.max(1));
+                self.mixer.note_long_mix(to, bars);
+            }
+            MixAction::Cut => {
+                if spec.reset_eq {
+                    self.mixer.reset_eq_flat();
+                }
+                self.mixer.set_crossfader(if to == 1 { 1.0 } else { 0.0 });
+                // set_crossfader clears jobs; cut is a snap at bar head (no MixJob).
+            }
+            MixAction::Fill => {
+                let Some(kind) = spec.fill else {
+                    return;
+                };
+                let bars = spec.bars.clamp(1, 32);
+                self.mixer.start_fill(
+                    kind,
+                    to,
+                    bars,
+                    spec.reset_eq,
+                    spec.grid,
+                    start,
+                    spb,
+                    self.transport.bpm,
+                    sr,
+                );
+                let _ = self.mixer.tick_job(start, sr);
             }
         }
     }
@@ -292,6 +384,8 @@ impl Engine {
         // XFade only moves gains; both decks keep their songs so the DJ can
         // fade back (or cue the quiet deck) without reloading.
         let _ = self.mixer.tick_xfade(self.transport.global_sample);
+        let sr = self.transport.sample_rate as f32;
+        let _ = self.mixer.tick_job(self.transport.global_sample, sr);
 
         let frames = out.len() / 2;
         if frames == 0 {
@@ -327,6 +421,12 @@ impl Engine {
         );
 
         let sr = self.transport.sample_rate as f32;
+        if self.mixer.riser_needs_pcm() {
+            let pcm = samples
+                .get_stem("fx", "up")
+                .or_else(|| samples.get_stem("fx", "nr"));
+            self.mixer.set_riser_pcm(pcm);
+        }
         // Last-write-wins compressor params from either deck's pattern hits.
         if let Some(c) = self.decks[0]
             .pending_compressor
@@ -359,6 +459,7 @@ impl Engine {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::mixer::{FillKind, MixAction, MixCommand};
     use crate::song::parse_song;
 
     fn test_song(n: &str) -> Song {
@@ -822,5 +923,124 @@ b: note("{n}").s("sawtooth").gain(0.8)
             e.transport.bpm
         );
         assert!(e.bpm_seeded);
+    }
+
+    fn mix_fill(kind: FillKind, to: usize) -> MixCommand {
+        MixCommand {
+            action: MixAction::Fill,
+            to_deck: to,
+            bars: 1,
+            eq: true,
+            reset_eq: true,
+            fill: Some(kind),
+            grid: crate::mixer::MixGrid::Eighth,
+            mute_track: None,
+            phrase: 1,
+        }
+    }
+
+    #[test]
+    fn mix_long_eq_waits_for_bar() {
+        let mut e = Engine::new(48_000, 120.0);
+        let bank = SampleBank::empty();
+        e.load_song_immediate(0, test_song("c3"));
+        e.load_song_immediate(1, test_song("g3"));
+        e.mixer.set_crossfader(0.0);
+        e.push_command(Command::Mix(MixCommand {
+            action: MixAction::Long,
+            to_deck: 1,
+            bars: 2,
+            eq: true,
+            reset_eq: true,
+            fill: None,
+            grid: crate::mixer::MixGrid::Eighth,
+            mute_track: None,
+            phrase: 1,
+        }));
+        let mut buf = stereo_buf(4_800);
+        e.process(&mut buf, &bank);
+        assert!(!e.mixer.lo_kill(0), "eq must not apply mid-bar");
+        assert!(e.mixer.xfade().is_none());
+        process_until_next_bar_applied(&mut e, &bank);
+        assert!(e.mixer.lo_kill(0));
+        assert!(!e.mixer.lo_kill(1));
+        assert!(e.mixer.deck_eq(1)[1] < 0.1);
+        assert!(e.mixer.xfade().is_some() || e.mixer.gain_b > 0.0);
+    }
+
+    #[test]
+    fn mix_cut_snaps_at_bar() {
+        let mut e = Engine::new(48_000, 120.0);
+        let bank = SampleBank::empty();
+        e.load_song_immediate(0, test_song("c3"));
+        e.load_song_immediate(1, test_song("g3"));
+        e.mixer.set_crossfader(0.0);
+        e.mixer.set_lo_kill(0, true);
+        e.push_command(Command::Mix(MixCommand {
+            action: MixAction::Cut,
+            to_deck: 1,
+            bars: 1,
+            eq: true,
+            reset_eq: true,
+            fill: None,
+            grid: crate::mixer::MixGrid::Eighth,
+            mute_track: None,
+            phrase: 1,
+        }));
+        let mut buf = stereo_buf(4_800);
+        e.process(&mut buf, &bank);
+        assert!(e.mixer.gain_a > 0.9);
+        process_until_next_bar_applied(&mut e, &bank);
+        assert!(e.mixer.gain_a.abs() < 1e-3);
+        assert!((e.mixer.gain_b - 1.0).abs() < 1e-3);
+        assert!(!e.mixer.lo_kill(0));
+        assert!((e.mixer.deck_eq(0)[1] - 0.5).abs() < 1e-5);
+    }
+
+    #[test]
+    fn mix_hold_is_immediate() {
+        let mut e = Engine::new(48_000, 120.0);
+        e.mixer.start_xfade(1, 0, 100_000);
+        let _ = e.mixer.tick_xfade(50_000);
+        assert!(e.mixer.xfade().is_some());
+        e.push_command(Command::HoldXFade);
+        assert!(e.mixer.xfade().is_none());
+        assert!(e.mixer.gain_a > 0.1 && e.mixer.gain_b > 0.1);
+    }
+
+    #[test]
+    fn mix_switch_then_lands_on_to() {
+        let mut e = Engine::new(48_000, 120.0);
+        let bank = SampleBank::empty();
+        e.load_song_immediate(0, test_song("c3"));
+        e.load_song_immediate(1, test_song("g3"));
+        e.mixer.set_crossfader(1.0);
+        e.push_command(Command::Mix(mix_fill(FillKind::Switch, 0)));
+        process_until_next_bar_applied(&mut e, &bank);
+        assert!(e.mixer.has_mix_job());
+        // First cell is opposite of A → B full.
+        assert!(e.mixer.gain_b > e.mixer.gain_a);
+        // Job length is 1 bar; apply_pending already ate 1000 frames of it.
+        let mut buf = stereo_buf(96_000);
+        e.process(&mut buf, &bank);
+        if e.mixer.has_mix_job() {
+            let mut buf = stereo_buf(96_000);
+            e.process(&mut buf, &bank);
+        }
+        assert!(!e.mixer.has_mix_job());
+        assert!(e.mixer.gain_a > 0.9);
+        assert!(e.mixer.gain_b.abs() < 0.1);
+    }
+
+    #[test]
+    fn hush_clears_mix_job() {
+        let mut e = Engine::new(48_000, 120.0);
+        let bank = SampleBank::empty();
+        e.push_command(Command::Mix(mix_fill(FillKind::Delay, 1)));
+        process_until_next_bar_applied(&mut e, &bank);
+        assert!(e.mixer.has_mix_job());
+        e.push_command(Command::Hush);
+        assert!(!e.mixer.has_mix_job());
+        assert!(e.mixer.xfade().is_none());
     }
 }

@@ -140,6 +140,7 @@ $: note("c3'maj").s("sawtooth").lpf(800).orbit(2).gain(0.4).room(0.35).roomsize(
 | POST | `/song/load` | `.strudel` をロード（bare 名は `~/.config/strudel-rs/songs/` → `songs/`） |
 | POST | `/song/save` | ユーザー曲ライブラリに保存（**のみ** `~/.config/strudel-rs/songs/`。basename 限定。任意で deck ロード） |
 | POST | `/xfade` | N バー クロスフェード |
+| POST | `/mix` | DJ マクロ（long / cut / fill / hold） |
 | POST | `/bpm` | マスター BPM |
 | POST | `/mixer/eq` | A/B チャンネル EQ（hi/mid/lo、即時） |
 | POST | `/mixer/filter` | マスター LPF/HPF（即時、`null` でバイパス） |
@@ -172,7 +173,7 @@ curl -s -X POST -H "Content-Type: application/json" \
 
 | グループ | ツール |
 | --- | --- |
-| Mixer | `strudel_mixer_eq` / `strudel_mixer_filter` / `strudel_mixer_crossfader` / `strudel_xfade` / `strudel_set_bpm` |
+| Mixer | `strudel_mixer_eq` / `strudel_mixer_filter` / `strudel_mixer_crossfader` / `strudel_xfade` / `strudel_mix` / `strudel_set_bpm` |
 | Deck | `strudel_load_song` / `strudel_apply_song` / `strudel_list_songs` / `strudel_save_song` / `strudel_mute` / `strudel_head` |
 | Transport | `strudel_hush` / `strudel_status` |
 
@@ -239,7 +240,7 @@ hermes --profile dj-hermes mcp test strudel
 # → Transport: HTTP … Connected, 12 tools
 ```
 
-`tools/list`（または `mcp test`）で `strudel_mixer_eq` / `strudel_load_song` / `strudel_apply_song` / `strudel_save_song` / `strudel_status` など **16 ツール**が出れば生きています（`strudel_set_code` は含みません）。
+`tools/list`（または `mcp test`）で `strudel_mixer_eq` / `strudel_mix` / `strudel_load_song` / `strudel_apply_song` / `strudel_save_song` / `strudel_status` など **17 ツール**が出れば生きています（`strudel_set_code` は含みません）。
 
 デバッグ用に **非推奨** の `strudel-rs mcp`（stdio → REST ブリッジ）も残していますが、Hermes からは使いません。
 
