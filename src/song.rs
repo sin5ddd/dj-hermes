@@ -1480,8 +1480,9 @@ $: s("hh*8").gain(0.3)
 
     #[test]
     fn resolve_bundled_house_01_by_bare_name() {
-        // Run from crate root in `cargo test`.
-        let p = resolve_song_path("house-01").expect("songs/house-01.strudel");
+        let bundled = Path::new(env!("CARGO_MANIFEST_DIR")).join("songs/house-01.strudel");
+        assert!(bundled.is_file(), "{}", bundled.display());
+        let p = resolve_song_path(bundled.to_str().unwrap()).expect("house-01.strudel");
         assert!(p.ends_with("house-01.strudel"), "{}", p.display());
         assert!(p.is_file());
     }

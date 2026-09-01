@@ -48,8 +48,10 @@ fn samples_available() -> bool {
 }
 
 fn bar_len(bpm: f64) -> usize {
-    // 1 bar = 4 beats; samples = sr * 60 / bpm * 4
-    (SR as f64 * 60.0 / bpm * 4.0).round() as usize
+    // 1 bar = 4 beats; samples = sr * 60 / bpm * 4.
+    // Ceil so a process() call always crosses the bar head (124 BPM is
+    // 92903.23 samples/bar; rounding down leaves LoadSong pending).
+    (SR as f64 * 60.0 / bpm * 4.0).ceil() as usize
 }
 
 fn process_n(engine: &mut Engine, bank: &SampleBank, frames: usize) -> Vec<f32> {
@@ -360,6 +362,11 @@ fn dj_xfade_house_to_four_on_the_floor() {
     let buf = process_n(&mut e, &bank, bl);
     assert_finite_bounded(&buf, "after load A");
     all.extend(&buf);
+    if e.decks[0].song_title().is_none() {
+        let buf = process_n(&mut e, &bank, bl);
+        assert_finite_bounded(&buf, "extra bar for load A");
+        all.extend(&buf);
+    }
     assert_eq!(e.decks[0].song_title(), Some("warehouse-intro"));
     assert!((e.mixer.gain_a - 1.0).abs() < 1e-5);
 
@@ -548,7 +555,12 @@ fn house_01_clap_backbeat() {
         eprintln!("skip house_01 render: samples/ not found");
         return;
     }
-    let buf = render_song("house-01.strudel", 124.0, &load_bank(), "house-01");
+    let bank = load_bank();
+    if bank.get_stem("bd", "hf").is_none() || bank.get_stem("plk", "lp").is_none() {
+        eprintln!("skip house_01 render: factory stems not loaded (LFS?)");
+        return;
+    }
+    let buf = render_song("house-01.strudel", 124.0, &bank, "house-01");
     assert!(
         has_energy(&buf, 0.001),
         "house-01 should sound, peak={}",
