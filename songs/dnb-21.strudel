@@ -1,0 +1,10 @@
+// @title dnb-21
+// @genre drum and bass
+// @details zap kick, wobble one-shot + laser @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:ez <~ sd:pi> ~ sd:pi bd:ez ~ <bd:ez sd:pi> ~, hh:ch*8]*2").gain(0.64).lpf(3400)
+// bass
+$: note("5 2 0 3").scale("C4:minor").s("bs:wb").gain(0.38)
+// fx
+$: s("<fx:lz ~ ~ ~>").gain(0.24)

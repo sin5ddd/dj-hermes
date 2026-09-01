@@ -1,0 +1,10 @@
+// @title dubstep-28
+// @genre dubstep
+// @details neuro kick, amen-sub + stab pluck @ 140
+setcpm(140/4)
+// drums
+$: s("bd:ng ~ ~ ~, [~ ~ sd:ng ~]").gain(0.5)
+// bass
+$: note("3 5 7 ~").scale("C4:minor").s("bs:am").gain(0.44)
+// lead
+$: note("0 2 6 3").scale("C4:minor").s("plk:sp").gain(0.2).cut(1)

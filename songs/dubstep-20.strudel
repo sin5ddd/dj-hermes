@@ -1,0 +1,10 @@
+// @title dubstep-20
+// @genre dubstep
+// @details dist 808, growl + mute guitar @ 140
+setcpm(140/4)
+// drums
+$: s("bd:8d ~ ~ ~, [~ ~ sd:cs ~], [~ hh:tt]*4").gain(0.5)
+// bass
+$: note("5 2 ~ 0").scale("C4:minor").s("bs:gr").gain(0.38)
+// lead
+$: note("0 6 2 ~").scale("C4:minor").s("plk:gm").gain(0.2).cut(1)

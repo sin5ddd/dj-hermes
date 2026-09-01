@@ -1,0 +1,10 @@
+// @title dnb-reese-22
+// @genre drum and bass
+// @details thud, catalog dark-reese + whoosh @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:tc ~ sd:gt ~ ~ bd:tc ~ sd:gt, [~ hh:pd]*2]*2").gain(0.64).lpf(2400)
+// bass
+$: note("2 ~ 0 7").scale("C4:minor").s("bs:rd").gain(0.34)
+// fx
+$: s("<fx:wh ~ ~ ~>").gain(0.24)

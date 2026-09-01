@@ -1,0 +1,10 @@
+// @title electro-12
+// @genre electro
+// @details 808 boom, 808-sub + click pluck @ 126
+setcpm(126/4)
+// drums
+$: s("bd:8b*4, [~ sd:8s]*2, hh:tt*8").gain(0.5)
+// bass
+$: note("0 ~ 5 0 3 ~ 7 0").scale("C4:minor").s("bs:8s").gain(0.46)
+// lead
+$: note("3 7 ~ 0").scale("C4:minor").s("plk:pk").gain(0.18).cut(1)

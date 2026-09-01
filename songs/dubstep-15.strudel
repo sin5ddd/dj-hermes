@@ -1,0 +1,10 @@
+// @title dubstep-15
+// @genre dubstep
+// @details fm-noise, neuro-reese + fall @ 140
+setcpm(140/4)
+// drums
+$: s("bd:fn ~ <bd:fn ~> ~, [~ ~ sd:ng ~], hh:ns*8").gain(0.5)
+// bass
+$: note("0 7 ~ 5").scale("C4:minor").s("bs:rn").gain(0.36)
+// fx
+$: s("<fx:fl ~ ~ ~>").gain(0.24)

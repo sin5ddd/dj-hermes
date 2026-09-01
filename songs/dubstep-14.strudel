@@ -1,0 +1,10 @@
+// @title dubstep-14
+// @genre dubstep
+// @details metal ping, metal-fm + fifth stab @ 140
+setcpm(140/4)
+// drums
+$: s("bd:mt ~ ~ ~, [~ ~ sd:mt ~], [~ hh:pd]*4").gain(0.52)
+// bass
+$: note("3 ~ 5 0").scale("C4:minor").s("bs:mt").gain(0.38)
+// lead
+$: note("2 ~ 5 8").scale("C4:minor").s("plk:sf").gain(0.18).cut(1)

@@ -1,0 +1,10 @@
+// @title dnb-reese-13
+// @genre drum and bass
+// @details metal ping, dark-reese bed + hollow 4/0/7 @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:mt <~ sd:mt> ~ sd:mt bd:mt ~ <bd:mt sd:mt> ~, hh:pd*4]*2").gain(0.64).lpf(3000)
+// bass
+$: note("0 7 2 5").scale("C4:minor").s("bs:dk").gain(0.34)
+// lead
+$: note("4 ~ 0 7").scale("C4:minor").s("plk:s5").gain(0.2).cut(1)

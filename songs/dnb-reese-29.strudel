@@ -1,0 +1,10 @@
+// @title dnb-reese-29
+// @genre drum and bass
+// @details metal rim, dark-reese + hollow 0/7/4 @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:mt <~ sd:rm> ~ sd:rm bd:mt ~ <bd:mt sd:rm> ~, hh:pd*4]*2").gain(0.66).lpf(3600)
+// bass
+$: note("2 5 7 0").scale("C4:minor").s("bs:dk").gain(0.34)
+// lead
+$: note("0 ~ 7 4").scale("C4:minor").s("plk:s5").gain(0.2).cut(1)

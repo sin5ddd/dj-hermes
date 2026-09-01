@@ -1,0 +1,10 @@
+// @title future-bass-15
+// @genre future-bass
+// @details gabber four, dist-square + major stab offbeat @ 140
+setcpm(140/4)
+// drums
+$: s("bd:gb*4, [~ sd:tr]*2, hh:ns*8").gain(0.46)
+// bass
+$: note("0 5 ~ 2").scale("C4:major").s("bs:dq").gain(0.4)
+// lead
+$: note("~ 0 4 7").scale("C4:major").s("plk:s3").gain(0.2).cut(1)

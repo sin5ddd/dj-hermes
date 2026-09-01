@@ -1,0 +1,10 @@
+// @title dubstep-23
+// @genre dubstep
+// @details 909 punch, supersaw + down-to-kick @ 140
+setcpm(140/4)
+// drums
+$: s("bd:9p ~ <bd:9p ~> ~, [~ ~ sd:9s ~], hh:cl*8").gain(0.5)
+// bass
+$: note("0 7 3 ~").scale("C4:minor").s("bs:sw").gain(0.38)
+// fx
+$: s("<fx:dk ~ ~ ~>").gain(0.26)

@@ -1,0 +1,10 @@
+// @title electro-14
+// @genre electro
+// @details metal ping four, metal-fm + marimba @ 126
+setcpm(126/4)
+// drums
+$: s("bd:mt*4, [~ sd:mt]*2, hh:pd*8").gain(0.5)
+// bass
+$: note("0 2 0 5 7 0 3 2").scale("C4:minor").s("bs:mt").gain(0.38)
+// lead
+$: note("2 ~ 5 0").scale("C4:minor").s("plk:mm").gain(0.2).cut(1)

@@ -1,0 +1,10 @@
+// @title dnb-22
+// @genre drum and bass
+// @details techno thud, growl + stab pluck @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:tc ~ sd:gt ~ ~ bd:tc ~ sd:gt, hh:pd*4]*2").gain(0.64).lpf(2400)
+// bass
+$: note("0 ~ 7 5").scale("C4:minor").s("bs:gr").gain(0.4)
+// lead
+$: note("5 7 2 ~").scale("C4:minor").s("plk:sp").gain(0.2).cut(1)

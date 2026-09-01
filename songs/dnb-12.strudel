@@ -1,0 +1,10 @@
+// @title dnb-12
+// @genre drum and bass
+// @details gabber stomp, 808-sub + mute guitar @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:gb ~ ~ sd:gb ~ ~ ~ sd:gb, hh:ns*4]*2").gain(0.64).lpf(2800)
+// bass
+$: note("0 7 ~ 2").scale("C4:minor").s("bs:8s").gain(0.46)
+// lead
+$: note("7 5 3 ~").scale("C4:minor").s("plk:gm").gain(0.2).cut(1)

@@ -1,0 +1,10 @@
+// @title dnb-reese-14
+// @genre drum and bass
+// @details fm-noise, catalog dark-reese + mid glue @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:fn ~ sd:ng ~ ~ bd:fn ~ sd:ng, hh:ns*4]*2").gain(0.64).lpf(2600)
+// bass
+$: note("7 0 ~ 3").scale("C4:minor").s("bs:rd").gain(0.34)
+// lead
+$: note("2 ~ 7 0").scale("C4:minor").s("bs:rm").gain(0.32)

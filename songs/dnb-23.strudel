@@ -1,0 +1,10 @@
+// @title dnb-23
+// @genre drum and bass
+// @details tight 808, frenchcore mid + click pluck @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:8t ~ ~ sd:8s bd:8t ~ ~ sd:8s, hh:tt*8]*2").gain(0.66).lpf(4000)
+// bass
+$: note("3 5 2 0").scale("C4:minor").s("bs:fc").gain(0.4)
+// lead
+$: note("8 3 0 5").scale("C4:minor").s("plk:pk").gain(0.18).cut(1)

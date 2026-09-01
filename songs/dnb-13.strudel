@@ -1,0 +1,10 @@
+// @title dnb-13
+// @genre drum and bass
+// @details metal ping break, metal-fm bass + impact @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:mt <~ sd:mt> ~ sd:mt bd:mt ~ <bd:mt sd:mt> ~, hh:pd*4, [~@5 oh:op ~@2]]*2").gain(0.66).lpf(4000)
+// bass
+$: note("2 5 0 ~").scale("C4:minor").s("bs:mt").gain(0.4)
+// fx
+$: s("<fx:im ~ ~ ~>").gain(0.26)

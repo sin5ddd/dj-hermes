@@ -1,0 +1,10 @@
+// @title electro-28
+// @genre electro
+// @details tight 808, frenchcore mid + zap @ 126
+setcpm(126/4)
+// drums
+$: s("bd:8t*4, [~ sd:rm]*2, hh:tt*8").gain(0.5)
+// bass
+$: note("5 7 0 2 3 ~ 0 5").scale("C4:minor").s("bs:fc").gain(0.4)
+// fx
+$: s("<fx:zp ~ ~ ~>").gain(0.24)

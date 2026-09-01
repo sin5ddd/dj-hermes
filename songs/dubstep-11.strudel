@@ -1,0 +1,10 @@
+// @title dubstep-11
+// @genre dubstep
+// @details frenchcore thud, dist-square + impact @ 140
+setcpm(140/4)
+// drums
+$: s("bd:fc ~ ~ ~, [~ ~ sd:fc ~], [~ hh:fc]*4").gain(0.52)
+// bass
+$: note("0 5 ~ 2").scale("C4:minor").s("bs:dq").gain(0.4)
+// fx
+$: s("<fx:im ~ ~ ~>").gain(0.26)

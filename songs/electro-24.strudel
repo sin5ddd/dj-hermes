@@ -1,0 +1,10 @@
+// @title electro-24
+// @genre electro
+// @details floor, tight-house + bright house pluck @ 126
+setcpm(126/4)
+// drums
+$: s("bd:hf*4, [~ sd:pp]*2, hh:hs*8, [~ oh:op]*2").gain(0.5)
+// bass
+$: note("2 5 0 7 ~ 0 3 5").scale("C4:minor").s("bs:ht").gain(0.42)
+// lead
+$: note("8 ~ 5 2").scale("C4:minor").s("plk:hb").gain(0.22).cut(1)

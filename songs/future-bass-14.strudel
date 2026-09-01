@@ -1,0 +1,10 @@
+// @title future-bass-14
+// @genre future-bass
+// @details metal ping drop, tight-house + add9 @ 140
+setcpm(140/4)
+// drums
+$: s("bd:mt ~ bd:mt ~, [~ sd:pp]*2, [~ hh:hs]*4").gain(0.48)
+// bass
+$: note("2 ~ 0 7").scale("C4:major").s("bs:ht").gain(0.42)
+// lead
+$: note("[0,4,9] 2 ~ 9").scale("C4:major").s("plk:hb").gain(0.22).cut(1)

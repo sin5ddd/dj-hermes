@@ -1,0 +1,10 @@
+// @title future-bass-19
+// @genre future-bass
+// @details cinematic, supersaw + crystal triad @ 140
+setcpm(140/4)
+// drums
+$: s("bd:cn*4, [~ sd:fb]*2, [~ hh:hs]*4").gain(0.46)
+// bass
+$: note("0 7 2 ~").scale("C4:major").s("bs:sw").gain(0.38)
+// lead
+$: note("~ [0,2,4] ~ 9").scale("C4:major").s("plk:fc").gain(0.2).cut(1)

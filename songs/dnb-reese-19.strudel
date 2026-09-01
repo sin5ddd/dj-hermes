@@ -1,0 +1,10 @@
+// @title dnb-reese-19
+// @genre drum and bass
+// @details 909 punch, sine-sub + hollow 0/7/4 @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:9p sd:9s ~ sd:9s bd:9p ~ bd:9p sd:9s, hh:cl*4]*2").gain(0.66).lpf(4000)
+// bass
+$: note("7 2 5 0").scale("C4:minor").s("bs:ss").gain(0.46)
+// lead
+$: note("0 7 ~ 4").scale("C4:minor").s("plk:s5").gain(0.2).cut(1)

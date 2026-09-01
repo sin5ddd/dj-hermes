@@ -1,0 +1,10 @@
+// @title dubstep-27
+// @genre dubstep
+// @details 808 boom, gabber bass + filter riser @ 140
+setcpm(140/4)
+// drums
+$: s("bd:8b ~ ~ ~, [~ ~ sd:tn ~], hh:dk*4").gain(0.5)
+// bass
+$: note("0 6 ~ 2").scale("C4:minor").s("bs:gb").gain(0.4)
+// fx
+$: s("<fx:rf ~ ~ ~>").gain(0.22)

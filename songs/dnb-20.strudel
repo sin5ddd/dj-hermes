@@ -1,0 +1,10 @@
+// @title dnb-20
+// @genre drum and bass
+// @details disco-dry, acid + clav @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:dc ~ ~ sd:hd ~ ~ ~ sd:hd, hh:hs*4]*2").gain(0.64).lpf(3800)
+// bass
+$: note("7 3 ~ 0").scale("C4:minor").s("bs:ac").gain(0.4)
+// lead
+$: note("0 2 ~ 6").scale("C4:minor").s("plk:cv").gain(0.22).cut(1)

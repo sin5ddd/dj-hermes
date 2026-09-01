@@ -1,0 +1,10 @@
+// @title dnb-reese-18
+// @genre drum and bass
+// @details cinematic, 808-sub + moving mid-reese @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:cn ~ ~ sd:fb ~ ~ bd:cn sd:fb, hh:dn*4, [~@5 oh:op ~@2]]*2").gain(0.62).lpf(2600)
+// bass
+$: note("3 5 0 7").scale("C4:minor").s("bs:8s").gain(0.46)
+// lead
+$: note("7 3 0 2").scale("C4:minor").s("bs:rm").gain(0.32)

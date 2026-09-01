@@ -1,0 +1,10 @@
+// @title dnb-reese-16
+// @genre drum and bass
+// @details dist 808, neuro-reese + mid impact @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:8d <~ sd:tr> ~ sd:tr ~ <bd:8d ~> <bd:8d sd:tr> <bd:8d ~>, hh:dk*8]*2").gain(0.64).lpf(2400)
+// bass
+$: note("5 ~ 2 0").scale("C4:minor").s("bs:rn").gain(0.36)
+// fx
+$: s("<fx:im ~ ~ ~>").gain(0.26)

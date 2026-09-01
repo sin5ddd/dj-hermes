@@ -1,0 +1,10 @@
+// @title dubstep-25
+// @genre dubstep
+// @details tight 808 riddim, frenchcore mid + tape-stop @ 140
+setcpm(140/4)
+// drums
+$: s("bd:8t ~ ~ ~, [~ ~ ~ sd:8s]").gain(0.52)
+// bass
+$: note("0 2 ~ 5").scale("C4:minor").s("bs:fc").gain(0.4)
+// fx
+$: s("<fx:ts ~ ~ ~>").gain(0.24)

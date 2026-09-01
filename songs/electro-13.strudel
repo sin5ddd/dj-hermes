@@ -1,0 +1,10 @@
+// @title electro-13
+// @genre electro
+// @details fm-noise four, growl-2 + laser @ 126
+setcpm(126/4)
+// drums
+$: s("bd:fn*4, [~ sd:fm]*2, hh:ch*8").gain(0.5)
+// bass
+$: note("5 0 2 7 0 3 5 0").scale("C4:minor").s("bs:g2").gain(0.38)
+// fx
+$: s("<fx:lz ~ ~ ~>").gain(0.24)

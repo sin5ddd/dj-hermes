@@ -1,0 +1,10 @@
+// @title dnb-15
+// @genre drum and bass
+// @details hardstyle kick, hoover + chime @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:hs ~ ~ sd:fc bd:hs ~ ~ sd:fc, hh:fc*4]*2").gain(0.64).lpf(3600)
+// bass
+$: note("0 ~ 5 2").scale("C4:minor").s("bs:hv").gain(0.38)
+// lead
+$: note("~ 7 ~ 2").scale("C4:minor").s("plk:ch").gain(0.2).cut(1)
