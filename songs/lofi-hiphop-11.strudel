@@ -1,0 +1,10 @@
+// @title lofi-hiphop-11
+// @genre lofi-hiphop
+// @details dist 808 + mid growl + dusty pluck
+setcpm(84/4)
+// drums
+$: s("bd:8d ~ ~ sd:rm, [~ hh:dk]*4").gain(0.42)
+// bass
+$: note("0 5 3 ~").scale("C4:minor").s("bs:bp").gain(0.36)
+// lead
+$: note("[0,3,5] ~ [2,5,8] ~").scale("C4:minor").s("plk:lf").gain(0.28)

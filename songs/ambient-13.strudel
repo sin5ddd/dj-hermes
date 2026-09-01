@@ -1,0 +1,10 @@
+// @title ambient-13
+// @genre ambient
+// @details click kick + wobble + fx:nr once per 4 bars
+setcpm(70/4)
+// drums
+$: s("bd:ck ~ ~ ~").gain(0.22)
+// bass
+$: note("2 ~ 5 2").scale("C4:minor").s("bs:wb").gain(0.3)
+// fx
+$: s("<fx:nr ~ ~ ~>").gain(0.2)

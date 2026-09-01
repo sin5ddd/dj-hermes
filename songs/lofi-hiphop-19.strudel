@@ -1,0 +1,10 @@
+// @title lofi-hiphop-19
+// @genre lofi-hiphop
+// @details frenchcore kick + bright reese + wurli
+setcpm(84/4)
+// drums
+$: s("bd:fc ~ ~ sd:hd, ~ oh:op ~ ~").gain(0.42)
+// bass
+$: note("~ 3 7 1").scale("C4:minor").s("bs:rb").gain(0.36)
+// lead
+$: note("[2,5,9] ~ [0,3,7] ~").scale("C4:minor").s("ep:wr").gain(0.24).attack(0.02).release(0.3).room(0.3).orbit(1)

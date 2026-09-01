@@ -1,0 +1,10 @@
+// @title chill-13
+// @genre chill
+// @details zap kick + wobble + mute guitar
+setcpm(90/4)
+// drums
+$: s("bd:ez ~ ~ ~, [~ hh:hs]*4").gain(0.4)
+// bass
+$: note("7 2 ~ 5").scale("C4:minor").s("bs:wb").gain(0.36)
+// lead
+$: note("4 8 1 ~").scale("C4:minor").s("plk:gm").gain(0.22)

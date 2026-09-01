@@ -1,0 +1,10 @@
+// @title chill-pop-14
+// @genre chill-pop
+// @details noise kick + acid + major stab
+setcpm(100/4)
+// drums
+$: s("bd:fn ~ ~ ~, [~ sd:hd]*2, [~ hh:cl]*4").gain(0.5)
+// bass
+$: note("~ 2 6 0").scale("C4:major").s("bs:ac").gain(0.38)
+// lead
+$: note("6 9 4 11").scale("C4:major").s("plk:sm").gain(0.24)

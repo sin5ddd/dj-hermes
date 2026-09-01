@@ -1,0 +1,10 @@
+// @title chill-pop-11
+// @genre chill-pop
+// @details dist 808 + mid growl + baked major stab [0,4,9]
+setcpm(100/4)
+// drums
+$: s("bd:8d*4, [~ sd:hd]*2, [~ hh:hs]*4").gain(0.5)
+// bass
+$: note("0 5 2 ~").scale("C4:major").s("bs:bp").gain(0.38)
+// lead
+$: note("[0,4,9] ~ [2,6,11] ~").scale("C4:major").s("plk:s3").gain(0.26)

@@ -1,0 +1,10 @@
+// @title chill-22
+// @genre chill
+// @details 808 boom + gabber mid + muted EP
+setcpm(90/4)
+// drums
+$: s("bd:8b ~ ~ ~, [~ hh:cl]*4").gain(0.4)
+// bass
+$: note("8 3 ~ 0").scale("C4:minor").s("bs:gb").gain(0.36)
+// lead
+$: note("[2,5] ~ [0,3,7] ~").scale("C4:minor").s("ep:mt").gain(0.24).attack(0.05).release(0.35).room(0.34).orbit(1)

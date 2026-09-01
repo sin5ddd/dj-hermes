@@ -1,0 +1,10 @@
+// @title chill-pop-16
+// @genre chill-pop
+// @details hardstyle kick + gabber mid + music box
+setcpm(100/4)
+// drums
+$: s("bd:hs*4, [~ sd:hd]*2, [~ hh:tt]*4").gain(0.5)
+// bass
+$: note("9 ~ 0 5").scale("C4:major").s("bs:gb").gain(0.38)
+// lead
+$: note("7 11 4 9").scale("C4:major").s("plk:mx").gain(0.22)

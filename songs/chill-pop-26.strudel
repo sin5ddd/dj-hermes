@@ -1,0 +1,10 @@
+// @title chill-pop-26
+// @genre chill-pop
+// @details jungle round + bright reese + major stab [0,4,9]
+setcpm(100/4)
+// drums
+$: s("bd:jg*4, [~ sd:jg]*2, hh:hs*8").gain(0.5)
+// bass
+$: note("9 5 ~ 3").scale("C4:major").s("bs:rb").gain(0.38)
+// lead
+$: note("[0,4,9] ~ [4,7,12] ~").scale("C4:major").s("plk:s3").gain(0.26)

@@ -1,0 +1,10 @@
+// @title chill-pop-17
+// @genre chill-pop
+// @details dusty kick + neuro reese + harp [0,4,9]
+setcpm(100/4)
+// drums
+$: s("bd:lf*4, [~ sd:pi]*2, [~ hh:pd]*4").gain(0.5)
+// bass
+$: note("0 6 9 2").scale("C4:major").s("bs:rn").gain(0.38)
+// lead
+$: note("[0,4,9] ~ [5,9,12] ~").scale("C4:major").s("plk:hp").gain(0.24)

@@ -1,0 +1,10 @@
+// @title lofi-hiphop-12
+// @genre lofi-hiphop
+// @details tight 808 + dark growl + muted EP
+setcpm(84/4)
+// drums
+$: s("bd:8t ~ sd:rm ~").gain(0.42)
+// bass
+$: note("3 7 ~ 1").scale("C4:minor").s("bs:gr").gain(0.36)
+// lead
+$: note("2 6 4 8").scale("C4:minor").s("ep:mt").gain(0.26).attack(0.04).release(0.32).room(0.34).orbit(1)

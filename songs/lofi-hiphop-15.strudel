@@ -1,0 +1,10 @@
+// @title lofi-hiphop-15
+// @genre lofi-hiphop
+// @details cinematic + hoover + soft Rhodes
+setcpm(84/4)
+// drums
+$: s("bd:cn ~ sd:cs ~, [~ hh:dk]*4").gain(0.42)
+// bass
+$: note("1 ~ 6 3").scale("C4:minor").s("bs:hv").gain(0.36)
+// lead
+$: note("4 8 ~ 2").scale("C4:minor").s("ep:rs").gain(0.26).attack(0.05).release(0.34).room(0.32).orbit(1)

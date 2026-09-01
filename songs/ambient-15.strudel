@@ -1,0 +1,10 @@
+// @title ambient-15
+// @genre ambient
+// @details zap kick + hoover + lounge EP
+setcpm(70/4)
+// drums
+$: s("bd:ez ~ ~ ~, [~ hh:pd]*2").gain(0.22)
+// bass
+$: note("3 5 ~ 7").scale("C4:minor").s("bs:hv").gain(0.3)
+// lead
+$: note("<[0,3] [4,7]>/2").scale("C4:minor").s("ep:mt").gain(0.22).attack(0.1).release(0.5).room(0.4).orbit(1)

@@ -1,0 +1,10 @@
+// @title chill-28
+// @genre chill
+// @details cinematic + amen sub + glass bell
+setcpm(90/4)
+// drums
+$: s("bd:cn ~ ~ sd:cs, [~ hh:pd]*4").gain(0.4)
+// bass
+$: note("4 7 1 5").scale("C4:minor").s("bs:am").gain(0.36)
+// lead
+$: note("8 ~ 2 6").scale("C4:minor").s("plk:bl").gain(0.2)

@@ -1,0 +1,10 @@
+// @title lofi-hiphop-13
+// @genre lofi-hiphop
+// @details 909 punch + wobble + mute guitar
+setcpm(84/4)
+// drums
+$: s("bd:9p ~ ~ sd:br, [~ hh:pd]*4").gain(0.42)
+// bass
+$: note("~ 4 1 6").scale("C4:minor").s("bs:wb").gain(0.36)
+// lead
+$: note("7 1 5 ~").scale("C4:minor").s("plk:gm").gain(0.26)

@@ -1,0 +1,10 @@
+// @title chill-24
+// @genre chill
+// @details 909 punch + sine sub + fx:ry once per 4 bars
+setcpm(90/4)
+// drums
+$: s("bd:9p ~ ~ ~, [~ hh:hs]*4").gain(0.4)
+// bass
+$: note("7 ~ 4 1").scale("C4:minor").s("bs:ss").gain(0.36)
+// fx
+$: s("<fx:ry ~ ~ ~>").gain(0.22)

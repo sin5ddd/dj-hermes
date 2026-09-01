@@ -1,0 +1,10 @@
+// @title chill-25
+// @genre chill
+// @details jungle round + sine sub + minor arp
+setcpm(90/4)
+// drums
+$: s("bd:jg ~ ~ sd:jg, [~ hh:cl]*4").gain(0.4)
+// bass
+$: note("3 8 1 ~").scale("C4:minor").s("bs:su").gain(0.36)
+// lead
+$: note("6 2 9 4").scale("C4:minor").s("plk:an").gain(0.2)

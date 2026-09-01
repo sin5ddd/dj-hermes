@@ -1,0 +1,10 @@
+// @title ambient-24
+// @genre ambient
+// @details disco dry + sine sub + fx:rl once per 4 bars
+setcpm(70/4)
+// drums
+$: s("bd:dc ~ ~ ~").gain(0.22)
+// bass
+$: note("3 ~ 0 6").scale("C4:minor").s("bs:ss").gain(0.3)
+// fx
+$: s("<fx:rl ~ ~ ~>").gain(0.2)

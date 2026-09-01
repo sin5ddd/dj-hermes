@@ -1,0 +1,10 @@
+// @title chill-pop-30
+// @genre chill-pop
+// @details dnb-tight + supersaw bass + major stab
+setcpm(100/4)
+// drums
+$: s("bd:dn*4, [~ sd:dn]*2, [~ hh:hs]*4").gain(0.5)
+// bass
+$: note("8 2 6 4").scale("C4:major").s("bs:sw").gain(0.38)
+// lead
+$: note("7 4 11 0").scale("C4:major").s("plk:sm").gain(0.24)

@@ -1,0 +1,10 @@
+// @title chill-26
+// @genre chill
+// @details tight 808 + house tight + open harp
+setcpm(90/4)
+// drums
+$: s("bd:8t ~ ~ ~, [~ hh:dk]*4").gain(0.4)
+// bass
+$: note("5 1 7 ~").scale("C4:minor").s("bs:ht").gain(0.36)
+// lead
+$: note("~ 8 3 6").scale("C4:minor").s("plk:hp").gain(0.2)

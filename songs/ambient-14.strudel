@@ -1,0 +1,10 @@
+// @title ambient-14
+// @genre ambient
+// @details dnb-tight + neuro reese + kalimba
+setcpm(70/4)
+// drums
+$: s("bd:dn ~ ~ sd:rm").gain(0.22)
+// bass
+$: note("~ 0 7 3").scale("C4:minor").s("bs:rn").gain(0.3)
+// lead
+$: note("4 ~ 8 1").scale("C4:minor").s("plk:kl").gain(0.2)

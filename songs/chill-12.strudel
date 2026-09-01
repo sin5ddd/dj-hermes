@@ -1,0 +1,10 @@
+// @title chill-12
+// @genre chill
+// @details click kick + dark growl + soft Rhodes
+setcpm(90/4)
+// drums
+$: s("bd:ck ~ ~ sd:rm, [~ hh:dk]*4").gain(0.4)
+// bass
+$: note("3 ~ 6 1").scale("C4:minor").s("bs:gr").gain(0.36)
+// lead
+$: note("[0,3,7] ~ [2,5,8] ~").scale("C4:minor").s("ep:rs").gain(0.24).attack(0.04).release(0.35).room(0.32).orbit(1)
