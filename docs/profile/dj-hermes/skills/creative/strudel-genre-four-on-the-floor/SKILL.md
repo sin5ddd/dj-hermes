@@ -69,21 +69,21 @@ Kicks on every quarter are the dance pulse. Offbeat hats fill the eighths. There
 
 **House** (`bd*4, [~ cp]*2, [~ hh]*4`) adds claps at 0.25 and 0.75. That is a backbeat, not techno four-on-the-floor. See [strudel-genre-house](../strudel-genre-house/SKILL.md). Do not stack `sd` on those hits.
 
-Both decks share one `Transport`. A DJ pair must use the **same** `setcpm`. This example is 124 BPM; `songs/skill-minor-scale-loop.strudel` uses `setcpm(124/4)` for that reason.
+Both decks share one `Transport`. A DJ pair must use the **same** `setcpm`. This example is 124 BPM; `songs/house-01.strudel` uses `setcpm(124/4)` for that reason.
 
 ## Try it in this app
 
 ```bash
 # From the repo root (needs samples/bd, hh)
-strudel-rs play songs/skill-four-on-the-floor.strudel --seconds 12
+strudel-rs play songs/four-on-the-floor-01.strudel --seconds 12
 
 # Dual deck — both files are setcpm(124/4); do not pair a different BPM
-strudel-rs dj songs/skill-four-on-the-floor.strudel songs/skill-minor-scale-loop.strudel
+strudel-rs dj songs/house-01.strudel songs/four-on-the-floor-01.strudel
 ```
 
-No audio device: `cargo test --test e2e skill_four_on_the_floor -- --nocapture` renders through `Engine::process`.
+No audio device: `cargo test --test e2e four_on_the_floor -- --nocapture` renders through `Engine::process`.
 
-Live TUI: `/a load skill-four-on-the-floor` (or the `songs/` path). HTTP: `POST /song/load` with that file, or send the same `setcpm` + `$:` text as apply-song content.
+Live TUI: `/a load four-on-the-floor-01` (or the `songs/` path). HTTP: `POST /song/load` with that file, or send the same `setcpm` + `$:` text as apply-song content.
 
 ## Variations (still this syntax)
 

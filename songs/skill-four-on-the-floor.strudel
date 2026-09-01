@@ -1,6 +1,0 @@
-// @title skill-four-on-the-floor
-// @genre techno
-// @details skill example: kick every beat, offbeat hats (kick in front)
-setcpm(124/4)
-// drums
-$: s("bd*4, [~ hh]*4").gain(0.65)

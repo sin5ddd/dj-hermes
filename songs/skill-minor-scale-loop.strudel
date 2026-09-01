@@ -1,7 +1,0 @@
-// @title skill-minor-scale-loop
-// @details skill example: C minor degrees — bass arpeggio + triad (124 BPM for DJ pair)
-setcpm(124/4)
-// bass
-$: note("0 2 4 0").scale("C2:minor").s("sawtooth").lpf(400).gain(0.55)
-// chords
-$: note("[0,2,4] ~ [0,2,4] ~").scale("C3:minor").s("triangle").lpf(1400).gain(0.28)

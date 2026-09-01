@@ -78,15 +78,13 @@ Saw + low LPF keeps the bass out of the triad’s midrange. Triangle + higher LP
 ## Try it in this app
 
 ```bash
-strudel-rs play songs/skill-minor-scale-loop.strudel --seconds 12
-
-# Dual deck — both songs are setcpm(124/4). A 100 BPM file would be ignored once mixed.
-strudel-rs dj songs/skill-four-on-the-floor.strudel songs/skill-minor-scale-loop.strudel
+# Apply the inline recipe with strudel_apply_song, or pair existing 124 files:
+strudel-rs dj songs/house-01.strudel songs/four-on-the-floor-01.strudel
 ```
 
-No audio device: `cargo test --test e2e skill_minor_scale_loop -- --nocapture`.
+No audio device: `cargo test --test e2e four_on_the_floor -- --nocapture`.
 
-Live TUI: `/b load skill-minor-scale-loop`. Then `/x 4` to crossfade toward B (equal-power, bar-quantized).
+Live TUI: `/b load four-on-the-floor-01`. Then `/x 4` to crossfade toward B (equal-power, bar-quantized).
 
 ## Variations (still this syntax)
 

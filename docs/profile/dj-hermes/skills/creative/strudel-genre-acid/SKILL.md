@@ -27,7 +27,7 @@ metadata:
 - Drums are **techno** four-on-the-floor (`bd*4` + offbeat hats). You are **not** adding a house snare unless you label the song **house** (or an explicit hybrid).
 - You are **not** writing sidechain duck or putting `.compressor` on the bass.
 
-`songs/acid16.strudel` is the static-cutoff starting point. This skill is the missing 303 piece.
+`songs/acid-01.strudel` is the playable 303 filter-envelope loop. A parked `.lpf` plus amp ADSR is only a starting point — this skill is the missing envelope piece.
 
 ## Pattern
 
@@ -55,7 +55,7 @@ $: note("0 0 3 0  7 3 2 0  4 4 3 0  -1 3 0 <2 5>")
   .release(0.04)
 ```
 
-Playable copy: `songs/skill-acid-303-filter-envelope.strudel`.
+Playable copy: `songs/acid-01.strudel`.
 
 | Piece | Role |
 | --- | --- |
@@ -73,7 +73,7 @@ Playable copy: `songs/skill-acid-303-filter-envelope.strudel`.
 
 ## Why it sounds that way
 
-A TB-303 accent is a **cutoff sweep**, not a volume envelope. Hardware: a lowpass with high resonance; each gate (and extra on accent) opens the cutoff, then the filter decay closes it while the note is still sounding. Parked `.lpf(800).lpq(16)` plus a short amp ADSR (the `acid16` line) only shapes loudness. The spectrum stays the same.
+A TB-303 accent is a **cutoff sweep**, not a volume envelope. Hardware: a lowpass with high resonance; each gate (and extra on accent) opens the cutoff, then the filter decay closes it while the note is still sounding. Parked `.lpf(800).lpq(16)` plus a short amp ADSR only shapes loudness. The spectrum stays the same.
 
 This engine **does** a true per-note filter env (`synth.rs` `Voice::advance_lp_env` + `effective_lpf_hz`):
 
@@ -101,18 +101,18 @@ At 130 BPM a 16th is ~0.115 s. `.lpdecay(0.09)` with `.lpsustain(0.05)` closes m
 
 Closest working accent: raise **base** `.lpf` on the accented 16ths **into 600–800 Hz**; keep one scalar `.lpenv(3)`. Do not fake accent with `.gain` or amp decay. Do not teach `900` + `lpenv(3.5)`.
 
-Both decks share one `Transport`. This file is 130 BPM. `songs/acid16.strudel` uses the same `setcpm(130/4)`, so the **clock** would align — but both files are 303 lines, so loading them as A/B **doubles the acid**, it is not a mix. Do **not** pair this file with a different `setcpm` (the other tempo is discarded).
+Both decks share one `Transport`. This file is 130 BPM. Play it **solo** — stacking another 303 on the other deck doubles the acid, it is not a mix. Do **not** pair this file with a different `setcpm` (the other tempo is discarded).
 
 ## Try it in this app
 
 ```bash
-strudel-rs play songs/skill-acid-303-filter-envelope.strudel --seconds 12
-strudel-rs play songs/skill-acid-303-filter-envelope.strudel --headless --seconds 8
+strudel-rs play songs/acid-01.strudel --seconds 12
+strudel-rs play songs/acid-01.strudel --headless --seconds 8
 ```
 
-No device: `cargo test --test e2e skill_acid_303 -- --nocapture`.
+No device: `cargo test --test e2e acid_01 -- --nocapture`.
 
-Live TUI: `/a load skill-acid-303-filter-envelope`.
+Live TUI: `/a load acid-01`.
 
 ## Variations (still this syntax)
 
@@ -131,13 +131,13 @@ Live TUI: `/a load skill-acid-303-filter-envelope`.
 2. Accent = patterned **base** `.lpf` in **600–800 Hz**, not `900` + `lpenv(3.5)`, not patterned `lpenv`, and not `.gain`.
 3. Techno drums are `bd*4` + `[~ hh]*4`. `[~ sd]*2` only if you label **house** (or say hybrid).
 4. Do not put `.compressor` on the acid line. Do not use duck for this recipe.
-5. Shared clock is **130**. `acid16` matches BPM but is another 303 — not a mix pair.
+5. Shared clock is **130**. Play solo — another 303 on B is not a mix pair.
 
 ## Do not
 
-- Ship `acid16`’s `.lpf(800).lpq(16)` + amp ADSR and call it a filter envelope.
+- Ship a parked `.lpf(800).lpq(16)` + amp ADSR and call it a filter envelope.
 - Use accent base `900` with `.lpenv(3.5)` — peak sits near 10 kHz; the digital saw goes thin.
-- Present `acid16` as a DJ mix pair. BPM matches; two 303s stacked is not a mix.
+- Present two 303 files as a DJ mix pair. BPM may match; two 303s stacked is not a mix.
 - Combine `.lpf(sine.rangex(…))` with `.lpenv` — the LFO replaces the env.
 - Write `.lpenv("4 1 4 1")` — parse error / not a pattern.
 - Rely on `.lprelease` — it does not run.

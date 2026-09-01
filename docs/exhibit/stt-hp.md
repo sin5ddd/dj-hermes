@@ -52,7 +52,7 @@ export STRUDEL_STT_BASE_URL=http://192.168.x.x:8090
 # export STRUDEL_VOICE_MODE=push    # または vad
 # export STRUDEL_VOICE_SILENCE_THRESHOLD=500
 # export STRUDEL_VOICE_SILENCE_SECS=1.2
-strudel-rs dj songs/techno1.strudel songs/ambient1.strudel
+strudel-rs dj songs/house-01.strudel songs/four-on-the-floor-01.strudel
 ```
 
 `STRUDEL_STT_BASE_URL` が無いと音声はオフです（キーボードの自然文は従来どおり）。

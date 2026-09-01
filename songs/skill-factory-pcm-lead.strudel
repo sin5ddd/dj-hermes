@@ -1,9 +1,0 @@
-// @title skill-factory-pcm-lead
-// @details factory PCM batch 1: ld:ss at C4:minor (124; not stacked on pad+reese)
-setcpm(124/4)
-// drums
-$: s("bd*4, [~ cp]*2, [~ hh]*4").gain(0.65)
-// bass
-$: note("0 0 4 0").scale("C4:minor").s("bs:hf").gain(0.45)
-// lead
-$: note("4 ~ 7 4").scale("C4:minor").s("ld:ss").gain(0.28).cut(1)
