@@ -1,0 +1,10 @@
+// @title dubstep-24
+// @genre dubstep
+// @details thud, hoover + wurli @ 140
+setcpm(140/4)
+// drums
+$: s("bd:tc ~ ~ ~, [~ ~ sd:gt ~]").gain(0.5)
+// bass
+$: note("5 0 2 7").scale("C4:minor").s("bs:hv").gain(0.36)
+// lead
+$: note("2 7 5 0").scale("C4:minor").s("ep:wr").gain(0.2).cut(1)

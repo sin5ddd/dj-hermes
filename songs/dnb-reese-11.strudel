@@ -1,0 +1,10 @@
+// @title dnb-reese-11
+// @genre drum and bass
+// @details frenchcore, 808-sub + hollow 0/4 @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:fc sd:fc ~ sd:fc bd:fc ~ bd:fc sd:fc, hh:fc*4]*2").gain(0.64).lpf(3200)
+// bass
+$: note("5 0 7 2").scale("C4:minor").s("bs:8s").gain(0.46)
+// lead
+$: note("0 ~ 4 ~").scale("C4:minor").s("plk:s5").gain(0.2).cut(1)

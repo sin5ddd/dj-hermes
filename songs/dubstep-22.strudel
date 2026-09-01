@@ -1,0 +1,10 @@
+// @title dubstep-22
+// @genre dubstep
+// @details dnb-tight half-time, bp-growl + tight pluck @ 140
+setcpm(140/4)
+// drums
+$: s("bd:dn ~ ~ ~, [~ ~ sd:dn ~], [~ hh:dn]*4").gain(0.52)
+// bass
+$: note("2 5 0 ~").scale("C4:minor").s("bs:bp").gain(0.38)
+// lead
+$: note("5 ~ 8 2").scale("C4:minor").s("plk:dt").gain(0.2).cut(1)

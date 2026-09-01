@@ -1,0 +1,10 @@
+// @title dnb-reese-23
+// @genre drum and bass
+// @details tight 808, amen-sub + hollow 7/0/4 @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:8t ~ ~ sd:8s bd:8t ~ ~ sd:8s, hh:tt*8]*2").gain(0.66).lpf(3800)
+// bass
+$: note("0 7 5 2").scale("C4:minor").s("bs:sb").gain(0.44)
+// lead
+$: note("~ 7 0 4").scale("C4:minor").s("plk:s5").gain(0.18).cut(1)

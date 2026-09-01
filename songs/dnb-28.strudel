@@ -1,0 +1,10 @@
+// @title dnb-28
+// @genre drum and bass
+// @details hardstyle drop, amen-sub + marimba @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:hs ~ ~ sd:cs ~ ~ ~ sd:cs, [~ hh:tt]*2]*2").gain(0.64).lpf(3200)
+// bass
+$: note("2 7 0 5").scale("C4:minor").s("bs:sb").gain(0.44)
+// lead
+$: note("2 5 7 3").scale("C4:minor").s("plk:mm").gain(0.2).cut(1)

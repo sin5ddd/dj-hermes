@@ -1,0 +1,10 @@
+// @title dnb-14
+// @genre drum and bass
+// @details fm-noise kick, sine-sub + minor arp @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:fn ~ sd:fm ~ ~ bd:fn ~ sd:fm, hh:ns*8]*2").gain(0.64).lpf(3000)
+// bass
+$: note("7 0 3 5").scale("C4:minor").s("bs:ss").gain(0.46)
+// lead
+$: note("2 0 5 7").scale("C4:minor").s("plk:an").gain(0.22).cut(1)

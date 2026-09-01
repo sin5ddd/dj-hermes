@@ -1,0 +1,10 @@
+// @title future-bass-11
+// @genre future-bass
+// @details dist 808, supersaw + add9 hops @ 140
+setcpm(140/4)
+// drums
+$: s("bd:8d*4, [~ sd:tr]*2, [~ hh:hs]*4").gain(0.48)
+// bass
+$: note("0 7 ~ 2").scale("C4:major").s("bs:sw").gain(0.38)
+// lead
+$: note("[0,4,9] ~ 7 2").scale("C4:major").s("plk:sm").gain(0.22).cut(1)

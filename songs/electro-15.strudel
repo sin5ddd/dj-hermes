@@ -1,0 +1,10 @@
+// @title electro-15
+// @genre electro
+// @details gabber four, gabber bass + mute guitar @ 126
+setcpm(126/4)
+// drums
+$: s("bd:gb*4, [~ sd:gb]*2, hh:ns*8").gain(0.5)
+// bass
+$: note("0 7 5 2 0 3 ~ 0").scale("C4:minor").s("bs:gb").gain(0.4)
+// lead
+$: note("7 2 5 ~").scale("C4:minor").s("plk:gm").gain(0.2).cut(1)

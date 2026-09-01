@@ -1,0 +1,10 @@
+// @title dnb-reese-25
+// @genre drum and bass
+// @details 808 boom, neuro-reese + hollow 7/4/0 @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:8b ~ sd:tn ~ bd:8b ~ ~ sd:tn, hh:dn*4]*2").gain(0.64).lpf(2800)
+// bass
+$: note("3 ~ 7 0").scale("C4:minor").s("bs:rn").gain(0.36)
+// lead
+$: note("7 4 ~ 0").scale("C4:minor").s("plk:s5").gain(0.18).cut(1)

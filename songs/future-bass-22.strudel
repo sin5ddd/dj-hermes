@@ -1,0 +1,10 @@
+// @title future-bass-22
+// @genre future-bass
+// @details dnb-tight drop, sine-sub + add9 musicbox @ 140
+setcpm(140/4)
+// drums
+$: s("bd:dn ~ bd:dn ~, [~ sd:hd]*2, [~ hh:cl]*4").gain(0.48)
+// bass
+$: note("0 2 7 ~").scale("C4:major").s("bs:su").gain(0.46)
+// lead
+$: note("9 ~ [0,4,9] 4").scale("C4:major").s("plk:mx").gain(0.2).cut(1)

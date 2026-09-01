@@ -1,0 +1,10 @@
+// @title future-bass-13
+// @genre future-bass
+// @details fm-noise, bright-reese + major arp triad @ 140
+setcpm(140/4)
+// drums
+$: s("bd:fn*4, [~ sd:cs]*2, [~ hh:ch]*4").gain(0.46)
+// bass
+$: note("0 ~ 7 2").scale("C4:major").s("bs:rb").gain(0.36)
+// lead
+$: note("[0,2,4] 7 ~ 4").scale("C4:major").s("plk:aj").gain(0.22).cut(1)

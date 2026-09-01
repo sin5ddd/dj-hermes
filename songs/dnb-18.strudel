@@ -1,0 +1,10 @@
+// @title dnb-18
+// @genre drum and bass
+// @details cinematic boom, dark reese + rev cym @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:cn ~ ~ sd:fb ~ ~ bd:cn sd:fb, hh:dn*4]*2").gain(0.62).lpf(2600)
+// bass
+$: note("2 0 7 3").scale("C4:minor").s("bs:rd").gain(0.34)
+// fx
+$: s("<fx:ry ~ ~ ~>").gain(0.24)

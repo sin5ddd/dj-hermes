@@ -1,0 +1,10 @@
+// @title dnb-26
+// @genre drum and bass
+// @details frenchcore roll, bp-growl + fifth stab @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:fc ~ ~ sd:gb ~ ~ bd:fc sd:gb, hh:fc*4, [~@5 oh:fc ~@2]]*2").gain(0.64).lpf(3000)
+// bass
+$: note("0 6 3 7").scale("C4:minor").s("bs:bp").gain(0.38)
+// lead
+$: note("7 0 5 2").scale("C4:minor").s("plk:sf").gain(0.2).cut(1)

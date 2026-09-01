@@ -1,0 +1,10 @@
+// @title dnb-reese-26
+// @genre drum and bass
+// @details frenchcore hats, growl + mid-reese @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:fc ~ ~ sd:cs ~ ~ bd:fc sd:cs, hh:fc*8]*2").gain(0.64).lpf(3000)
+// bass
+$: note("5 7 2 0").scale("C4:minor").s("bs:gr").gain(0.38)
+// lead
+$: note("2 5 ~ 7").scale("C4:minor").s("bs:rm").gain(0.32)

@@ -1,0 +1,10 @@
+// @title dnb-16
+// @genre drum and bass
+// @details dist 808, growl-2 + koto @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:8d <~ sd:tr> ~ sd:tr ~ <bd:8d ~> <bd:8d sd:tr> <bd:8d ~>, hh:dk*8]*2").gain(0.66).lpf(2400)
+// bass
+$: note("3 7 0 ~").scale("C4:minor").s("bs:g2").gain(0.4)
+// lead
+$: note("5 2 0 7").scale("C4:minor").s("plk:kt").gain(0.2).cut(1)

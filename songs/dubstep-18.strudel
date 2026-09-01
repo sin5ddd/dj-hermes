@@ -1,0 +1,10 @@
+// @title dubstep-18
+// @genre dubstep
+// @details disco-dry, acid + short acid pluck @ 140
+setcpm(140/4)
+// drums
+$: s("bd:dc ~ ~ bd:dc, [~ ~ sd:hd ~]").gain(0.52)
+// bass
+$: note("7 ~ 0 2").scale("C4:minor").s("bs:ac").gain(0.4)
+// lead
+$: note("3 7 0 ~").scale("C4:minor").s("plk:ac").gain(0.2).cut(1)

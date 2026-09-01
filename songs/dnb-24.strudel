@@ -1,0 +1,10 @@
+// @title dnb-24
+// @genre drum and bass
+// @details floor kick, bright reese + wurli @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:hf <~ sd:pp> ~ sd:pp ~ <bd:hf ~> <bd:hf sd:pp> <bd:hf ~>, hh:hs*4]*2").gain(0.64).lpf(3600)
+// bass
+$: note("2 ~ 5 0").scale("C4:minor").s("bs:rb").gain(0.36)
+// lead
+$: note("~ 2 5 0").scale("C4:minor").s("ep:wr").gain(0.22).cut(1)

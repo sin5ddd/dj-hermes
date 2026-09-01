@@ -1,0 +1,10 @@
+// @title dnb-reese-24
+// @genre drum and bass
+// @details floor kick, bright + mid reese stack-safe @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:hf <~ sd:pp> ~ sd:pp ~ <bd:hf ~> <bd:hf sd:pp> <bd:hf ~>, hh:hs*4]*2").gain(0.64).lpf(3600)
+// bass
+$: note("6 2 0 5").scale("C4:minor").s("bs:rb").gain(0.36)
+// lead
+$: note("5 ~ 7 2").scale("C4:minor").s("bs:rm").gain(0.32)

@@ -1,0 +1,10 @@
+// @title dnb-30
+// @genre drum and bass
+// @details dust kit, supersaw + harp @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:lf ~ sd:br ~ ~ bd:lf ~ sd:br, hh:dk*4, [~ oh:op ~@2]]*2").gain(0.62).lpf(2200)
+// bass
+$: note("6 0 2 5").scale("C4:minor").s("bs:sw").gain(0.38)
+// lead
+$: note("0 6 ~ 2").scale("C4:minor").s("plk:hp").gain(0.2).cut(1)

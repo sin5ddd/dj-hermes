@@ -1,0 +1,10 @@
+// @title dnb-19
+// @genre drum and bass
+// @details 909 punch, house-tight + filter pluck @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:9p sd:9s ~ sd:9s bd:9p ~ bd:9p sd:9s, hh:cl*8, [~ oh:op ~@2]]*2").gain(0.66).lpf(4200)
+// bass
+$: note("0 2 5 7").scale("C4:minor").s("bs:ht").gain(0.42)
+// lead
+$: note("6 ~ 3 7").scale("C4:minor").s("plk:fp").gain(0.22).cut(1)
