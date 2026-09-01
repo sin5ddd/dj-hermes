@@ -506,7 +506,7 @@ async fn list_songs() -> Json<ListSongsRes> {
     Json(ListSongsRes {
         user_library: list_user_library_songs(),
         bundled: list_bundled_songs(),
-        load_hint: "Use bare basename with strudel_load_song path= (e.g. visitor-dnb or house16). Prefer user_library names for MCP-saved songs; do not prefix songs/."
+        load_hint: "Use bare basename with strudel_load_song path= (e.g. visitor-dnb or house-01). Prefer user_library names for MCP-saved songs; do not prefix songs/."
             .into(),
     })
 }
@@ -1748,7 +1748,7 @@ b: note("c3").s("sawtooth").gain(0.8)
 
     #[test]
     fn sanitize_path_ok() {
-        assert!(sanitize_song_path("songs/smoke.strudel").is_ok());
+        assert!(sanitize_song_path("songs/house-01.strudel").is_ok());
         assert!(sanitize_song_path("../secret.strudel").is_err());
         assert!(sanitize_song_path("..\\secret.strudel").is_err());
         assert!(sanitize_song_path("songs/../../etc/passwd").is_err());

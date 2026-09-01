@@ -350,7 +350,7 @@ mod tests {
 
     #[test]
     fn hermes_natural_language_no_suggest() {
-        let s = songs(&["techno1"]);
+        let s = songs(&["house-01"]);
         let r = suggest_with_songs("暗くして", &ctx(true, &[], &[]), &s);
         assert!(!r.has_display());
         assert!(r.candidates.is_empty());
@@ -379,20 +379,25 @@ mod tests {
 
     #[test]
     fn load_path_filters_songs() {
-        let s = songs(&["techno1", "techno16", "ambient1", "smoke"]);
+        let s = songs(&[
+            "techno-duck-01",
+            "techno-duck-02",
+            "house-01",
+            "four-on-the-floor-01",
+        ]);
         let r = suggest_with_songs("/a load te", &ctx(true, &[], &[]), &s);
         assert_eq!(
             r.candidates,
-            vec!["techno1".to_string(), "techno16".to_string()]
+            vec!["techno-duck-01".to_string(), "techno-duck-02".to_string()]
         );
     }
 
     #[test]
     fn load_after_space_lists_all() {
-        let s = songs(&["smoke", "house16"]);
+        let s = songs(&["house-01", "four-on-the-floor-01"]);
         let r = suggest_with_songs("/a load ", &ctx(true, &[], &[]), &s);
         assert_eq!(r.candidates.len(), 2);
-        assert!(r.candidates.contains(&"smoke".to_string()));
+        assert!(r.candidates.contains(&"house-01".to_string()));
     }
 
     #[test]
@@ -423,14 +428,14 @@ mod tests {
 
     #[test]
     fn apply_preserves_slash_prefix() {
-        let s = songs(&["techno1", "techno16", "smoke"]);
+        let s = songs(&["techno-duck-01", "techno-duck-02", "house-01"]);
         let r = suggest_with_songs("/a load te", &ctx(true, &[], &[]), &s);
         let applied = apply_candidate("/a load te", &r, 0).unwrap();
-        assert_eq!(applied, "/a load techno1 ");
-        let unique = suggest_with_songs("/a load smoke", &ctx(true, &[], &[]), &s);
+        assert_eq!(applied, "/a load techno-duck-01 ");
+        let unique = suggest_with_songs("/a load house-01", &ctx(true, &[], &[]), &s);
         assert_eq!(
-            apply_candidate("/a load smoke", &unique, 0).unwrap(),
-            "/a load smoke "
+            apply_candidate("/a load house-01", &unique, 0).unwrap(),
+            "/a load house-01 "
         );
     }
 

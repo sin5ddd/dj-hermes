@@ -40,7 +40,7 @@ $: s("bd*4, [~ cp]*2, [~ hh]*4").gain(0.65)
 $: note("4 ~ 7 4  2 0 ~ -1").scale("C4:minor").s("plk:lp").gain(0.4).cut(1)
 ```
 
-Playable copy: `songs/skill-house-clap-backbeat.strudel`. Do not “improve” the degrees. Supersaw lead is a different stem (`ld:ss` at `C4:minor`) — [strudel-sound-design](../strudel-sound-design/SKILL.md).
+Playable copy: `songs/house-01.strudel`. Do not “improve” the degrees. Supersaw lead is a different stem (`ld:ss` at `C4:minor`) — [strudel-sound-design](../strudel-sound-design/SKILL.md).
 
 | Piece | Role |
 | --- | --- |
@@ -108,23 +108,23 @@ Eight atoms = eighths. At 124 BPM an eighth is ~0.242 s. The pluck one-shot is ~
 
 House in this tree is ~120–128. This file is **124**. Techno kick-front examples may also sit at 124 for a shared clock, but they must **not** grow a clap. A 130 acid / 126 duck / 174 DnB file is a different tempo — do not pair them.
 
-Both decks share one `Transport`. A DJ pair must use the **same** `setcpm`. Pair this file with `songs/skill-minor-scale-loop.strudel` or `songs/skill-four-on-the-floor.strudel` (both `setcpm(124/4)`). Do not pair `songs/house16.strudel` (122) or a techno file that is not 124.
+Both decks share one `Transport`. A DJ pair must use the **same** `setcpm`. Pair this file with `songs/four-on-the-floor-01.strudel` (also `setcpm(124/4)`). Do not pair a techno file that is not 124.
 
 No `.compressor` on a `$:` — that writes the **mixer master** (last-write) and will squash the kick. No duck work in this skill.
 
 ## Try it in this app
 
 ```bash
-strudel-rs play songs/skill-house-clap-backbeat.strudel --seconds 12
-strudel-rs play songs/skill-house-clap-backbeat.strudel --headless --seconds 8
+strudel-rs play songs/house-01.strudel --seconds 12
+strudel-rs play songs/house-01.strudel --headless --seconds 8
 
 # Dual deck — both files are setcpm(124/4). Do not pair a different BPM.
-strudel-rs dj songs/skill-house-clap-backbeat.strudel songs/skill-minor-scale-loop.strudel
+strudel-rs dj songs/house-01.strudel songs/four-on-the-floor-01.strudel
 ```
 
-No device: `cargo test --test e2e skill_house_clap -- --nocapture`.
+No device: `cargo test --test e2e house_01 -- --nocapture`.
 
-Live TUI: `/a load skill-house-clap-backbeat`.
+Live TUI: `/a load house-01`.
 
 ## Variations (still this syntax)
 

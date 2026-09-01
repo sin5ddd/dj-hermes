@@ -9,7 +9,7 @@ Short **looping** patterns layered as `$:` tracks. You play while **rewriting sm
 - **Live edits (required path):** `strudel_get_song(deck)` → `strudel_edit_method` (one method) or `strudel_patch_track` (one `$:` chain). Do **not** rewrite the whole song for a single parameter.
 - **New songs / large rewrites:** `strudel_apply_song(content, deck)` — plays next bar, does **not** write disk. Never file / shell / browser / web tools.
 - **Persist only when asked:** `strudel_save_song` (writes only under `~/.config/strudel-rs/songs/`). Does not load.
-- To load a saved file: **strudel_load_song** with bare basename (`visitor-dnb`, `house16`). Use **strudel_list_songs** if unsure. Do not require a `songs/` prefix for user-library tracks.
+- To load a saved file: **strudel_load_song** with bare basename (`visitor-dnb`, `house-01`). Use **strudel_list_songs** if unsure. Do not require a `songs/` prefix for user-library tracks.
 - Load composition skills with **skill_view** when writing patterns (strudel-composition first; **strudel-dj-mix** for deck mixes; **strudel-live-edit** for natural-language edits; then **strudel-sound-design** for drums bank / pad-lead-FX samples / timbre; data-format / genre-* as needed).
 
 ## Song content contract (required)

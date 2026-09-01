@@ -43,7 +43,7 @@ $: note("0 3 0 <0 -1>").scale("C4:minor").s("bs:rm").gain(0.38)
 $: note("~ 4 ~ <7 4>").scale("C4:minor").s("plk:s5").gain(0.22).cut(1)
 ```
 
-Playable copy: `songs/skill-dnb-reese-mid-stab.strudel`. Do not “improve” the degrees or the drum grid. Full-range Reese with sub is `bs:dk`, not a swap for this mid glue — [strudel-sound-design](../strudel-sound-design/SKILL.md).
+Playable copy: `songs/dnb-reese-01.strudel`. Do not “improve” the degrees or the drum grid. Full-range Reese with sub is `bs:dk`, not a swap for this mid glue — [strudel-sound-design](../strudel-sound-design/SKILL.md).
 
 | Piece | Role |
 | --- | --- |
@@ -111,7 +111,7 @@ The method `.fast(2)` only multiplies `PatternCode.speed`. `deck.rs` then divide
 
 Both decks share one `Transport`. A DJ pair must use the **same** `setcpm` or the second file’s tempo is discarded.
 
-This file is **174**. House clap / four-on-the-floor / minor-scale-loop are **124**. Sidechain-ducking / ambient1 are **126**. Pairing 174 with 124 (or 126) drops the other side’s BPM. Play this file **solo**. Do not DJ-pair it with [strudel-genre-house](../strudel-genre-house/SKILL.md).
+This file is **174**. House clap / four-on-the-floor are **124**. Techno-duck / electro are **126**. Pairing 174 with 124 (or 126) drops the other side’s BPM. Play this file **solo**. Do not DJ-pair it with [strudel-genre-house](../strudel-genre-house/SKILL.md).
 
 ## Sample keys (`part:slug`)
 
@@ -133,15 +133,15 @@ No `.compressor` on a `$:` — that writes the **mixer master** (last-write) and
 ## Try it in this app
 
 ```bash
-strudel-rs play songs/skill-dnb-reese-mid-stab.strudel --seconds 12
-strudel-rs play songs/skill-dnb-reese-mid-stab.strudel --headless --seconds 8
+strudel-rs play songs/dnb-reese-01.strudel --seconds 12
+strudel-rs play songs/dnb-reese-01.strudel --headless --seconds 8
 ```
 
 Play **solo**. Do not `dj` this file with a 124 house or 126 techno song.
 
-No device: `cargo test --test e2e skill_dnb_reese -- --nocapture`.
+No device: `cargo test --test e2e dnb_reese_01 -- --nocapture`.
 
-Live TUI: `/a load skill-dnb-reese-mid-stab`.
+Live TUI: `/a load dnb-reese-01`.
 
 ## Variations (still this syntax)
 
