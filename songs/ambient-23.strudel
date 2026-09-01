@@ -1,0 +1,10 @@
+// @title ambient-23
+// @genre ambient
+// @details 808 boom + mid Reese glue + lofi pluck
+setcpm(70/4)
+// drums
+$: s("bd:8b ~ ~ sd:cs").gain(0.22)
+// bass
+$: note("~ 4 7 2").scale("C4:minor").s("bs:rm").gain(0.3)
+// lead
+$: note("5 8 2 ~").scale("C4:minor").s("plk:lf").gain(0.2)

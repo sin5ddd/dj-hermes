@@ -1,0 +1,10 @@
+// @title lofi-hiphop-14
+// @genre lofi-hiphop
+// @details click kick + neuro reese + marimba
+setcpm(84/4)
+// drums
+$: s("bd:ck ~ ~ sd:br").gain(0.42)
+// bass
+$: note("6 2 ~ 5").scale("C4:minor").s("bs:rn").gain(0.36)
+// lead
+$: note("[0,4,7] ~ [3,7,10] ~").scale("C4:minor").s("plk:mm").gain(0.26)

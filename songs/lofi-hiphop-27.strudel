@@ -1,0 +1,10 @@
+// @title lofi-hiphop-27
+// @genre lofi-hiphop
+// @details sub-layer kick + acid + tine-bell EP
+setcpm(84/4)
+// drums
+$: s("bd:sb ~ sd:pp ~, [~ hh:ch]*4").gain(0.42)
+// bass
+$: note("2 9 ~ 5").scale("C4:minor").s("bs:ac").gain(0.36)
+// lead
+$: note("[3,5,8] ~ [1,4,7] ~").scale("C4:minor").s("ep:tb").gain(0.24).attack(0.01).release(0.28).room(0.3).orbit(1)

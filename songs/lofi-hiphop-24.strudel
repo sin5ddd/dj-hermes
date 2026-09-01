@@ -1,0 +1,10 @@
+// @title lofi-hiphop-24
+// @genre lofi-hiphop
+// @details jungle round + mid Reese + glass bell
+setcpm(84/4)
+// drums
+$: s("bd:jg ~ ~ sd:pi, [~ hh:pd]*4").gain(0.42)
+// bass
+$: note("3 6 9 ~").scale("C4:minor").s("bs:rm").gain(0.36)
+// lead
+$: note("8 4 1 5").scale("C4:minor").s("plk:bl").gain(0.24)

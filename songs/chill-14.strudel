@@ -1,0 +1,10 @@
+// @title chill-14
+// @genre chill
+// @details frenchcore kick + neuro reese + koto
+setcpm(90/4)
+// drums
+$: s("bd:fc ~ ~ sd:br, [~ hh:pd]*4").gain(0.4)
+// bass
+$: note("~ 4 0 7").scale("C4:minor").s("bs:rn").gain(0.36)
+// lead
+$: note("8 3 6 1").scale("C4:minor").s("plk:kt").gain(0.2)

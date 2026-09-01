@@ -1,0 +1,10 @@
+// @title chill-pop-24
+// @genre chill-pop
+// @details disco dry + tight house + soft pop [0,4,9]
+setcpm(100/4)
+// drums
+$: s("bd:dc*4, [~ cp:dr]*2, [~ hh:cl]*4").gain(0.5)
+// bass
+$: note("5 9 2 7").scale("C4:major").s("bs:ht").gain(0.38)
+// lead
+$: note("[4,9,12] ~ [0,4,9] ~").scale("C4:major").s("plk:ps").gain(0.26)

@@ -1,0 +1,10 @@
+// @title chill-21
+// @genre chill
+// @details house floor + frenchcore mid + soft pop pluck
+setcpm(90/4)
+// drums
+$: s("bd:hf ~ ~ ~, [~ sd:hd]*2, [~ hh:hs]*4").gain(0.4)
+// bass
+$: note("1 ~ 5 2").scale("C4:minor").s("bs:fc").gain(0.36)
+// lead
+$: note("~ 3 7 9").scale("C4:minor").s("plk:ps").gain(0.22)

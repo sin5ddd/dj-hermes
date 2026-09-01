@@ -1,0 +1,10 @@
+// @title chill-pop-27
+// @genre chill-pop
+// @details click kick + sine sub + major arp
+setcpm(100/4)
+// drums
+$: s("bd:ck*4, [~ sd:hd]*2, [~ hh:hs]*4").gain(0.5)
+// bass
+$: note("0 8 3 ~").scale("C4:major").s("bs:su").gain(0.38)
+// lead
+$: note("2 7 11 4").scale("C4:major").s("plk:aj").gain(0.24).cut(1)

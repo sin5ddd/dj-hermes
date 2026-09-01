@@ -1,0 +1,10 @@
+// @title ambient-26
+// @genre ambient
+// @details jungle round + tight house + hollow fifth pad
+setcpm(70/4)
+// drums
+$: s("bd:jg ~ ~ ~").gain(0.22)
+// bass
+$: note("0 7 ~ 3").scale("C4:minor").s("bs:ht").gain(0.3)
+// pad
+$: note("<[0,4] [3,7]>/2").scale("C4:minor").s("pf:ff").gain(0.24).attack(0.32).release(0.6).room(0.5).orbit(1)

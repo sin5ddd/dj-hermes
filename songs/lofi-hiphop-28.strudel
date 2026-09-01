@@ -1,0 +1,10 @@
+// @title lofi-hiphop-28
+// @genre lofi-hiphop
+// @details techno thud + amen sub + nylon pop
+setcpm(84/4)
+// drums
+$: s("bd:tc ~ ~ sd:fb, ~ oh:dn ~ ~").gain(0.42)
+// bass
+$: note("8 3 1 ~").scale("C4:minor").s("bs:am").gain(0.36)
+// lead
+$: note("4 7 2 9").scale("C4:minor").s("plk:ny").gain(0.24)

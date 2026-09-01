@@ -1,0 +1,10 @@
+// @title chill-23
+// @genre chill
+// @details disco dry + sub-bass + lofi pluck
+setcpm(90/4)
+// drums
+$: s("bd:dc ~ ~ sd:fb").gain(0.4)
+// bass
+$: note("2 5 8 ~").scale("C4:minor").s("bs:sb").gain(0.36)
+// lead
+$: note("9 4 ~ 1").scale("C4:minor").s("plk:lf").gain(0.22)

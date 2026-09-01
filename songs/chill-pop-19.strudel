@@ -1,0 +1,10 @@
+// @title chill-pop-19
+// @genre chill-pop
+// @details neuro kick + dark Reese + future glass [0,4,9]
+setcpm(100/4)
+// drums
+$: s("bd:ng*4, [~ sd:ng]*2, [~ hh:hs]*4").gain(0.5)
+// bass
+$: note("7 2 5 ~").scale("C4:major").s("bs:rd").gain(0.38)
+// lead
+$: note("[2,6,9] ~ [0,4,9] ~").scale("C4:major").s("plk:fg").gain(0.24)

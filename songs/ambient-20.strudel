@@ -1,0 +1,10 @@
+// @title ambient-20
+// @genre ambient
+// @details sub-layer kick + metal bass + monophonic ld:ss
+setcpm(70/4)
+// drums
+$: s("bd:sb ~ ~ ~").gain(0.22)
+// bass
+$: note("0 ~ 7 4").scale("C4:minor").s("bs:mt").gain(0.3)
+// lead
+$: note("<5 1 3 8>/2").scale("C4:minor").s("ld:ss").gain(0.18).cut(1)

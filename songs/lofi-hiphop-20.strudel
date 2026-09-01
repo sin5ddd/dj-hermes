@@ -1,0 +1,10 @@
+// @title lofi-hiphop-20
+// @genre lofi-hiphop
+// @details noise kick + metal bass + minor arp
+setcpm(84/4)
+// drums
+$: s("bd:fn ~ sd:ng ~, [~ hh:ns]*4").gain(0.42)
+// bass
+$: note("4 8 2 ~").scale("C4:minor").s("bs:mt").gain(0.36)
+// lead
+$: note("6 1 4 9").scale("C4:minor").s("plk:an").gain(0.24)

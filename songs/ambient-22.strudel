@@ -1,0 +1,10 @@
+// @title ambient-22
+// @genre ambient
+// @details cinematic + gabber mid + wurli
+setcpm(70/4)
+// drums
+$: s("bd:cn ~ ~ ~").gain(0.22)
+// bass
+$: note("2 7 ~ 4").scale("C4:minor").s("bs:gb").gain(0.3)
+// lead
+$: note("<[1,4] [3,6]>/2").scale("C4:minor").s("ep:wr").gain(0.2).attack(0.06).release(0.4).room(0.38).orbit(1)

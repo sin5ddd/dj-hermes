@@ -1,0 +1,10 @@
+// @title chill-pop-20
+// @genre chill-pop
+// @details sub-layer kick + mid Reese + hard Rhodes
+setcpm(100/4)
+// drums
+$: s("bd:sb*4, [~ sd:hd]*2, [~ hh:hs]*4").gain(0.5)
+// bass
+$: note("1 5 ~ 8").scale("C4:major").s("bs:rm").gain(0.38)
+// lead
+$: note("4 9 ~ 7").scale("C4:major").s("ep:rh").gain(0.24).attack(0.01).release(0.28).room(0.22).orbit(1)

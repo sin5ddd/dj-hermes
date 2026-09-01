@@ -1,0 +1,10 @@
+// @title lofi-hiphop-30
+// @genre lofi-hiphop
+// @details dist 808 again + dark Reese + high chime (different kit)
+setcpm(84/4)
+// drums
+$: s("bd:8d ~ sd:gt ~, [~ hh:ns]*4").gain(0.42)
+// bass
+$: note("1 7 4 ~").scale("C4:minor").s("bs:rd").gain(0.36)
+// lead
+$: note("2 5 8 0").scale("C4:minor").s("plk:ch").gain(0.22)

@@ -1,0 +1,10 @@
+// @title ambient-30
+// @genre ambient
+// @details growl kick + acid + keys EP
+setcpm(70/4)
+// drums
+$: s("bd:ng ~ ~ sd:ng").gain(0.22)
+// bass
+$: note("2 4 6 ~").scale("C4:minor").s("bs:ac").gain(0.3)
+// lead
+$: note("<[2,5,8] [0,4,7]>/2").scale("C4:minor").s("ep:ky").gain(0.22).attack(0.02).release(0.4).room(0.4).orbit(1)

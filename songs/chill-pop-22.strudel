@@ -1,0 +1,10 @@
+// @title chill-pop-22
+// @genre chill-pop
+// @details house floor + tight house bass + trance-gate
+setcpm(100/4)
+// drums
+$: s("bd:hf*4, [~ sd:hd]*2, [~ hh:hs]*4").gain(0.5)
+// bass
+$: note("2 9 ~ 6").scale("C4:major").s("bs:ht").gain(0.38)
+// lead
+$: note("11 7 4 9").scale("C4:major").s("plk:tg").gain(0.22).cut(1)

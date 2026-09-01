@@ -1,0 +1,10 @@
+// @title chill-pop-23
+// @genre chill-pop
+// @details 909 punch + sub-bass + nylon pop
+setcpm(100/4)
+// drums
+$: s("bd:9p*4, [~ sd:9s]*2, [~ hh:hs]*4").gain(0.5)
+// bass
+$: note("6 4 ~ 1").scale("C4:major").s("bs:sb").gain(0.38)
+// lead
+$: note("0 7 4 9").scale("C4:major").s("plk:ny").gain(0.26)

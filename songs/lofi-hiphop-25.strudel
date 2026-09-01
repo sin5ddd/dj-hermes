@@ -1,0 +1,10 @@
+// @title lofi-hiphop-25
+// @genre lofi-hiphop
+// @details metal ping + tight house + soft pop
+setcpm(84/4)
+// drums
+$: s("bd:mt ~ sd:tn ~").gain(0.42)
+// bass
+$: note("0 8 ~ 3").scale("C4:minor").s("bs:ht").gain(0.36)
+// lead
+$: note("6 3 9 1").scale("C4:minor").s("plk:ps").gain(0.24)

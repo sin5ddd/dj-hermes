@@ -1,0 +1,10 @@
+// @title chill-pop-18
+// @genre chill-pop
+// @details metal ping + amen sub + kalimba
+setcpm(100/4)
+// drums
+$: s("bd:mt*4, [~ cp:rm]*2, [~ hh:cl]*4").gain(0.5)
+// bass
+$: note("3 ~ 8 5").scale("C4:major").s("bs:am").gain(0.38)
+// lead
+$: note("9 4 11 6").scale("C4:major").s("plk:kl").gain(0.24)

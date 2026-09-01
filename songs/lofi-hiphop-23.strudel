@@ -1,0 +1,10 @@
+// @title lofi-hiphop-23
+// @genre lofi-hiphop
+// @details hardstyle kick + sub-bass + open harp
+setcpm(84/4)
+// drums
+$: s("bd:hs ~ sd:jg ~").gain(0.42)
+// bass
+$: note("7 4 ~ 8").scale("C4:minor").s("bs:sb").gain(0.36)
+// lead
+$: note("2 8 5 1").scale("C4:minor").s("plk:hp").gain(0.24)
