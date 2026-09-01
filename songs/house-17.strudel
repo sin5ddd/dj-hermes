@@ -1,0 +1,9 @@
+// @title amen-rhodes
+// @genre house
+setcpm(124/4)
+// drums
+$: s("bd:dn*4, [~ cp:gt]*2, [~ hh:hs]*4").gain(0.58)
+// bass
+$: note("0 5 2 0").scale("C4:minor").s("bs:sw").gain(0.38)
+// lead
+$: note("2 ~ 5 7  3 0 ~ 2").scale("C4:minor").s("ep:rs").gain(0.30)

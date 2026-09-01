@@ -1,0 +1,9 @@
+// @title stock-soft
+// @genre progressive-house
+setcpm(128/4)
+// drums
+$: s("bd:00*4, [~ cp]*2, hh:pd*8").gain(0.54)
+// bass
+$: note("5 0 0 3").scale("C4:minor").s("bs:bp").gain(0.42)
+// fx
+$: s("<fx:ry ~ ~ ~>").gain(0.26)

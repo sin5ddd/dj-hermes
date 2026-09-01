@@ -1,0 +1,9 @@
+// @title crunch-dot
+// @genre minimal-techno
+setcpm(126/4)
+// drums
+$: s("bd:8d*4, hh:cl*8").gain(0.48)
+// bass
+$: note("0 ~ 7 3").scale("C4:minor").s("bs:rb").gain(0.28)
+// lead
+$: note("2 ~ 3 ~").scale("C4:minor").s("plk:an").gain(0.22).cut(1)

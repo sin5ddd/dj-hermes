@@ -1,0 +1,23 @@
+// @title walk-drop
+// @genre acid
+setcpm(130/4)
+// drums
+$: s("bd:jg*4, [~ hh:cl]*4").gain(0.62)
+// bass
+$: note("0 5 7 5  3 0 2 7  4 2 0 3  5 -1 0 <7 2>")
+  .scale("C2:minor")
+  .s("sawtooth")
+  .lpf("260 260 740 260  260 260 700 260  260 760 260 260  720 260 260 260")
+  .lpq(14)
+  .lpenv(3)
+  .lpattack(0.001)
+  .lpdecay(0.09)
+  .lpsustain(0.05)
+  .cut(1)
+  .gain(0.46)
+  .attack(0.001)
+  .decay(0.1)
+  .sustain(0.12)
+  .release(0.04)
+// lead
+$: note("2 ~ ~ ~").scale("C4:minor").s("ld:ss").gain(0.14)

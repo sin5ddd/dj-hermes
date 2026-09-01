@@ -1,0 +1,9 @@
+// @title nine-metal
+// @genre four-on-the-floor
+setcpm(124/4)
+// drums
+$: s("bd:9p*4, hh:cl*8").gain(0.64)
+// bass
+$: note("0 3 7 5").scale("C4:minor").s("bs:mt").gain(0.36)
+// fx
+$: s("<fx:ry ~ ~ ~>").gain(0.26)

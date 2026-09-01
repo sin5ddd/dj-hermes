@@ -1,0 +1,9 @@
+// @title boom-pulse
+// @genre four-on-the-floor
+setcpm(124/4)
+// drums
+$: s("bd:8b*4, hh*8").gain(0.62)
+// bass
+$: note("0 ~ 5 0").scale("C4:minor").s("bs:8s").gain(0.36)
+// pad
+$: note("7 ~ 3 ~").scale("C4:minor").s("pf:ff").gain(0.20)

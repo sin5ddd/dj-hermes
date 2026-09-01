@@ -1,0 +1,9 @@
+// @title dust-wide
+// @genre progressive-house
+setcpm(128/4)
+// drums
+$: s("bd:lf*4, [~ cp:dr]*2, [~ hh:dk]*4").gain(0.57)
+// bass
+$: note("0 5 5 2").scale("C4:minor").s("bs:am").gain(0.40)
+// pad
+$: note("3 ~ 5 ~").scale("C4:minor").s("pf:ff").gain(0.20)

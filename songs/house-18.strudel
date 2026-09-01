@@ -1,0 +1,9 @@
+// @title noise-hollow
+// @genre house
+setcpm(124/4)
+// drums
+$: s("bd:fn*4, [~ cp:rm]*2, hh:pd*8").gain(0.60)
+// bass
+$: note("5 0 3 0").scale("C4:minor").s("bs:dq").gain(0.40)
+// pad
+$: note("2 ~ 7 ~").scale("C4:minor").s("pf:ff").gain(0.20)

@@ -1,0 +1,23 @@
+// @title break-303
+// @genre acid
+setcpm(130/4)
+// drums
+$: s("bd:dn*4, [~ hh:hs]*4").gain(0.60)
+// bass
+$: note("0 3 7 2  5 0 3 7  2 0 4 5  0 -1 3 <7 4>")
+  .scale("C2:minor")
+  .s("sawtooth")
+  .lpf("280 280 700 280  280 770 280 280  280 280 730 280  750 280 280 280")
+  .lpq(14)
+  .lpenv(3)
+  .lpattack(0.001)
+  .lpdecay(0.09)
+  .lpsustain(0.05)
+  .cut(1)
+  .gain(0.46)
+  .attack(0.001)
+  .decay(0.1)
+  .sustain(0.12)
+  .release(0.04)
+// pad
+$: note("3 ~ ~ 5").scale("C4:minor").s("pf:ff").gain(0.14)

@@ -1,0 +1,9 @@
+// @title nylon-gate
+// @genre house
+setcpm(124/4)
+// drums
+$: s("bd:8t*4, [~ cp]*2, [~ hh:hs]*4").gain(0.57)
+// bass
+$: note("0 5 0 3").scale("C4:minor").s("bs:ac").gain(0.42)
+// lead
+$: note("5 ~ 3 0  2 ~ 7 ~").scale("C4:minor").s("plk:ny").gain(0.30).cut(1)

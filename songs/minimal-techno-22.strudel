@@ -1,0 +1,9 @@
+// @title style-gap
+// @genre minimal-techno
+setcpm(126/4)
+// drums
+$: s("bd:hs*4, [~ hh:tt]*4").gain(0.50)
+// bass
+$: note("0 ~ 2 7").scale("C4:minor").s("bs:g2").gain(0.32)
+// fx
+$: s("<fx:rp ~ ~ ~>").gain(0.22)

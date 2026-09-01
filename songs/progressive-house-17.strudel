@@ -1,0 +1,9 @@
+// @title amen-swell
+// @genre progressive-house
+setcpm(128/4)
+// drums
+$: s("bd:dn*4, [~ cp:gt]*2, [~ hh:hs]*4").gain(0.54)
+// bass
+$: note("5 5 0 0").scale("C4:minor").s("bs:sw").gain(0.38)
+// pad
+$: note("2 ~ ~ 5").scale("C4:minor").s("pf:ff").gain(0.20)

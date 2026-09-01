@@ -1,0 +1,9 @@
+// @title jungle-organ
+// @genre progressive-house
+setcpm(128/4)
+// drums
+$: s("bd:jg*4, [~ cp:gt]*2, [~ hh:cl]*4").gain(0.56)
+// bass
+$: note("2 2 0 5").scale("C4:minor").s("bs:ht").gain(0.38)
+// lead
+$: note("5 ~ 0 3  ~ 7 ~ 2").scale("C4:minor").s("ep:mt").gain(0.30)

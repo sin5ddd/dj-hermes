@@ -1,0 +1,9 @@
+// @title dust-bright
+// @genre house
+setcpm(124/4)
+// drums
+$: s("bd:lf*4, [~ cp:rm]*2, [~ hh:dk]*4").gain(0.61)
+// bass
+$: note("0 2 ~ 3").scale("C4:minor").s("bs:am").gain(0.40)
+// lead
+$: note("3 5 ~ 2  7 ~ 0 5").scale("C4:minor").s("plk:hb").gain(0.30).cut(1)

@@ -1,0 +1,23 @@
+// @title ping-slide
+// @genre acid
+setcpm(130/4)
+// drums
+$: s("bd:mt*4, hh:ch*8").gain(0.59)
+// bass
+$: note("7 0 2 5  0 3 7 2  4 0 5 3  -1 2 0 <5 3>")
+  .scale("C2:minor")
+  .s("square")
+  .lpf("220 220 720 220  220 220 760 220  660 220 220 740  220 780 220 220")
+  .lpq(14)
+  .lpenv(3)
+  .lpattack(0.001)
+  .lpdecay(0.09)
+  .lpsustain(0.05)
+  .cut(1)
+  .gain(0.46)
+  .attack(0.001)
+  .decay(0.1)
+  .sustain(0.12)
+  .release(0.04)
+// lead
+$: note("5 ~ 0 ~").scale("C4:minor").s("plk:ac").gain(0.14).cut(1)

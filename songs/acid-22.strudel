@@ -1,0 +1,23 @@
+// @title style-walk
+// @genre acid
+setcpm(130/4)
+// drums
+$: s("bd:hs*4, [~ hh:tt]*4").gain(0.60)
+// bass
+$: note("3 5 7 0  2 0 5 3  7 4 0 2  0 5 -1 <3 7>")
+  .scale("C2:minor")
+  .s("square")
+  .lpf("245 245 710 245  245 760 245 245  245 245 780 245  690 245 245 245")
+  .lpq(14)
+  .lpenv(3)
+  .lpattack(0.001)
+  .lpdecay(0.09)
+  .lpsustain(0.05)
+  .cut(1)
+  .gain(0.46)
+  .attack(0.001)
+  .decay(0.1)
+  .sustain(0.12)
+  .release(0.04)
+// lead
+$: note("3 ~ 2 ~").scale("C4:minor").s("plk:lp").gain(0.14).cut(1)

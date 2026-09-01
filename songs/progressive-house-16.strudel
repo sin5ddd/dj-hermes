@@ -1,0 +1,9 @@
+// @title metal-cloud
+// @genre progressive-house
+setcpm(128/4)
+// drums
+$: s("bd:mt*4, [~ cp:rm]*2, [~ hh:ch]*4").gain(0.53)
+// bass
+$: note("0 2 5 5").scale("C4:minor").s("bs:wb").gain(0.36)
+// lead
+$: note("7 3 ~ 5  0 ~ 2 8").scale("C4:minor").s("plk:hp").gain(0.30).cut(1)

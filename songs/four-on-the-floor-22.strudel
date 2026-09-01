@@ -1,0 +1,9 @@
+// @title style-growl2
+// @genre four-on-the-floor
+setcpm(124/4)
+// drums
+$: s("bd:hs*4, [~ hh:tt]*4").gain(0.62)
+// bass
+$: note("3 0 5 0").scale("C4:minor").s("bs:g2").gain(0.40)
+// fx
+$: s("<fx:rp ~ ~ ~>").gain(0.26)

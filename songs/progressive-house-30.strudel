@@ -1,0 +1,9 @@
+// @title disco-tine
+// @genre progressive-house
+setcpm(128/4)
+// drums
+$: s("bd:dc*4, [~ cp:dr]*2, hh:tt*8").gain(0.52)
+// bass
+$: note("7 2 0 5").scale("C4:minor").s("bs:rm").gain(0.40)
+// lead
+$: note("5 0 3 ~  ~ 2 7 3").scale("C4:minor").s("ep:tb").gain(0.30)

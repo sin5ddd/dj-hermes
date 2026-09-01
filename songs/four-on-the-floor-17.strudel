@@ -1,0 +1,9 @@
+// @title dnb-supersaw
+// @genre four-on-the-floor
+setcpm(124/4)
+// drums
+$: s("bd:dn*4, [~ hh:hs]*4").gain(0.62)
+// bass
+$: note("0 5 0 7").scale("C4:minor").s("bs:sw").gain(0.38)
+// lead
+$: note("7 ~ 2 ~").scale("C4:minor").s("ld:ss").gain(0.30).cut(1)

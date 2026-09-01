@@ -1,0 +1,11 @@
+// @title tight-pump
+// @genre techno-duck
+setcpm(126/4)
+// kick
+$: s("bd:8t*4").gain(0.85).duckorbit(2).duckattack(0.034).duckdepth(0.90)
+// hats
+$: s("[~ hh:hs]*4").gain(0.28)
+// bass
+$: note("0 5 0 7").scale("C4:minor").s("bs:ac").orbit(2).gain(0.36)
+// lead
+$: note("3 ~ 5 0  7 2 ~ 3").scale("C4:minor").s("plk:lp").orbit(2).gain(0.30).cut(1)

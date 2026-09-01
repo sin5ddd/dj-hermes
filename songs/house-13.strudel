@@ -1,0 +1,9 @@
+// @title jungle-riser
+// @genre house
+setcpm(124/4)
+// drums
+$: s("bd:jg*4, [~ cp:gt]*2, [~ hh:cl]*4").gain(0.60)
+// bass
+$: note("2 0 5 0").scale("C4:minor").s("bs:ht").gain(0.38)
+// fx
+$: s("<fx:nr ~ ~ ~>").gain(0.26)

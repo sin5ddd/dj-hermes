@@ -1,0 +1,9 @@
+// @title cine-sine
+// @genre four-on-the-floor
+setcpm(124/4)
+// drums
+$: s("bd:cn*4, [~ hh:ns]*4").gain(0.65)
+// bass
+$: note("0 ~ 3 5").scale("C4:minor").s("bs:ss").gain(0.42)
+// fx
+$: s("<fx:rf ~ ~ ~>").gain(0.26)

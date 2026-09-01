@@ -1,0 +1,9 @@
+// @title core-pulse
+// @genre four-on-the-floor
+setcpm(124/4)
+// drums
+$: s("bd:fc*4, [~ hh:fc]*4").gain(0.64)
+// bass
+$: note("0 7 2 5").scale("C4:minor").s("bs:fc").gain(0.42)
+// lead
+$: note("2 ~ 7 3  5 0 ~ 2").scale("C4:minor").s("plk:dt").gain(0.30).cut(1)

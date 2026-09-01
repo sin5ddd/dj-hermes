@@ -1,0 +1,9 @@
+// @title sand-rise
+// @genre progressive-house
+setcpm(128/4)
+// drums
+$: s("bd:fn*4, [~ cp:dr]*2, hh:pd*8").gain(0.56)
+// bass
+$: note("0 7 2 0").scale("C4:minor").s("bs:dq").gain(0.40)
+// fx
+$: s("<fx:rf ~ ~ ~>").gain(0.26)

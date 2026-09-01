@@ -1,0 +1,9 @@
+// @title disco-mid
+// @genre four-on-the-floor
+setcpm(124/4)
+// drums
+$: s("bd:dc*4, [~ hh:tt]*4").gain(0.60)
+// bass
+$: note("5 0 7 2").scale("C4:minor").s("bs:rm").gain(0.40)
+// lead
+$: note("3 0 ~ 5  7 ~ 2 0").scale("C4:minor").s("plk:ps").gain(0.30).cut(1)

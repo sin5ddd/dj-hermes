@@ -1,0 +1,9 @@
+// @title nine-glass
+// @genre progressive-house
+setcpm(128/4)
+// drums
+$: s("bd:9p*4, [~ cp:rm]*2, [~ hh:cl]*4").gain(0.56)
+// bass
+$: note("2 7 0 2").scale("C4:minor").s("bs:mt").gain(0.36)
+// lead
+$: note("8 5 3 ~  2 0 ~ 7").scale("C4:minor").s("plk:fg").gain(0.30).cut(1)

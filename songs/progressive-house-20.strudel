@@ -1,0 +1,9 @@
+// @title dist-harp
+// @genre progressive-house
+setcpm(128/4)
+// drums
+$: s("bd:8d*4, [~ cp:rm]*2, [~ hh:cl]*4").gain(0.52)
+// bass
+$: note("0 3 7 3").scale("C4:minor").s("bs:rb").gain(0.36)
+// pad
+$: note("0 ~ 5 ~").scale("C4:minor").s("pf:ff").gain(0.20)

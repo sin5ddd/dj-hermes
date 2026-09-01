@@ -1,0 +1,9 @@
+// @title floor-sub
+// @genre four-on-the-floor
+setcpm(124/4)
+// drums
+$: s("bd:hf*4, [~ hh:hs]*4").gain(0.65)
+// bass
+$: note("3 ~ 5 0").scale("C4:minor").s("bs:sb").gain(0.38)
+// lead
+$: note("7 2 0 3  ~ 5 2 ~").scale("C4:minor").s("plk:gm").gain(0.30).cut(1)

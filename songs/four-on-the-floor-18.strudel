@@ -1,0 +1,9 @@
+// @title grit-square
+// @genre four-on-the-floor
+setcpm(124/4)
+// drums
+$: s("bd:fn*4, [~ hh:pd]*4").gain(0.64)
+// bass
+$: note("5 0 2 0").scale("C4:minor").s("bs:dq").gain(0.40)
+// pad
+$: note("5 ~ 0 ~").scale("C4:minor").s("pf:ff").gain(0.20)

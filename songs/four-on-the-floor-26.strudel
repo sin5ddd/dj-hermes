@@ -1,0 +1,9 @@
+// @title thud-neuro
+// @genre four-on-the-floor
+setcpm(124/4)
+// drums
+$: s("bd:tc*4, [~ hh:hs]*4").gain(0.61)
+// bass
+$: note("2 0 7 3").scale("C4:minor").s("bs:rn").gain(0.40)
+// lead
+$: note("5 ~ 0 7  2 3 ~ 0").scale("C4:minor").s("plk:nn").gain(0.30).cut(1)

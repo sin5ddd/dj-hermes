@@ -1,0 +1,9 @@
+// @title boom-room
+// @genre house
+setcpm(124/4)
+// drums
+$: s("bd:8b*4, [~ cp:dr]*2, hh*8").gain(0.58)
+// bass
+$: note("0 ~ 2 5").scale("C4:minor").s("bs:8s").gain(0.36)
+// pad
+$: note("7 ~ ~ ~").scale("C4:minor").s("pf:ff").gain(0.20)

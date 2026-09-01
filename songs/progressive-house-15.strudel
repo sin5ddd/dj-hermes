@@ -1,0 +1,9 @@
+// @title zap-lift
+// @genre progressive-house
+setcpm(128/4)
+// drums
+$: s("bd:ez*4, [~ cp]*2, hh:tt*8").gain(0.52)
+// bass
+$: note("3 0 0 7").scale("C4:minor").s("bs:hv").gain(0.42)
+// fx
+$: s("<fx:rw ~ ~ ~>").gain(0.26)

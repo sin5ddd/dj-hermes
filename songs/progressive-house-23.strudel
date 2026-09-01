@@ -1,0 +1,9 @@
+// @title french-pad
+// @genre progressive-house
+setcpm(128/4)
+// drums
+$: s("bd:fc*4, [~ cp]*2, [~ hh:fc]*4").gain(0.56)
+// bass
+$: note("2 5 2 0").scale("C4:minor").s("bs:fc").gain(0.42)
+// pad
+$: note("7 ~ 5 ~").scale("C4:minor").s("pf:ff").gain(0.20)

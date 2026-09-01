@@ -1,0 +1,11 @@
+// @title stomp-duck
+// @genre techno-duck
+setcpm(126/4)
+// kick
+$: s("bd:gb*4").gain(0.89).duckorbit(2).duckattack(0.046).duckdepth(0.80)
+// hats
+$: s("hh:dk*8").gain(0.34)
+// bass
+$: note("7 0 2 5").scale("C4:minor").s("bs:gb").orbit(2).gain(0.30)
+// pad
+$: note("0 ~ 7 ~").scale("C4:minor").s("pf:ff").orbit(2).gain(0.20)

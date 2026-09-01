@@ -1,0 +1,23 @@
+// @title crunch-hop
+// @genre acid
+setcpm(130/4)
+// drums
+$: s("bd:8d*4, hh:cl*8").gain(0.58)
+// bass
+$: note("5 0 7 3  2 5 0 4  7 3 0 2  -1 0 5 <2 4>")
+  .scale("C2:minor")
+  .s("square")
+  .lpf("255 255 255 730  255 780 255 255  670 255 255 750  255 255 710 255")
+  .lpq(14)
+  .lpenv(3)
+  .lpattack(0.001)
+  .lpdecay(0.09)
+  .lpsustain(0.05)
+  .cut(1)
+  .gain(0.46)
+  .attack(0.001)
+  .decay(0.1)
+  .sustain(0.12)
+  .release(0.04)
+// pad
+$: note("2 ~ 3 ~").scale("C4:minor").s("pf:ff").gain(0.14)

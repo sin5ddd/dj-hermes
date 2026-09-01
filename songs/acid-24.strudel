@@ -1,0 +1,23 @@
+// @title stomp-16
+// @genre acid
+setcpm(130/4)
+// drums
+$: s("bd:gb*4, hh:dk*8").gain(0.63)
+// bass
+$: note("0 2 7 3  5 0 2 7  3 4 0 5  -1 3 2 <0 5>")
+  .scale("C2:minor")
+  .s("square")
+  .lpf("235 235 740 235  235 235 700 235  780 235 235 720  235 680 235 235")
+  .lpq(14)
+  .lpenv(3)
+  .lpattack(0.001)
+  .lpdecay(0.09)
+  .lpsustain(0.05)
+  .cut(1)
+  .gain(0.46)
+  .attack(0.001)
+  .decay(0.1)
+  .sustain(0.12)
+  .release(0.04)
+// fx
+$: s("<fx:fr ~ ~ ~>").gain(0.22)

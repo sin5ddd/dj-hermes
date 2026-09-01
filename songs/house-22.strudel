@@ -1,0 +1,9 @@
+// @title hard-pitch
+// @genre house
+setcpm(124/4)
+// drums
+$: s("bd:hs*4, [~ cp:rm]*2, [~ hh:tt]*4").gain(0.58)
+// bass
+$: note("3 ~ 0 5").scale("C4:minor").s("bs:g2").gain(0.40)
+// fx
+$: s("<fx:rp ~ ~ ~>").gain(0.26)

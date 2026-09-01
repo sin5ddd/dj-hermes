@@ -1,0 +1,9 @@
+// @title thud-chime
+// @genre progressive-house
+setcpm(128/4)
+// drums
+$: s("bd:tc*4, [~ cp:dr]*2, [~ hh:hs]*4").gain(0.53)
+// bass
+$: note("0 2 ~ 7").scale("C4:minor").s("bs:rn").gain(0.40)
+// pad
+$: note("5 ~ 7 ~").scale("C4:minor").s("pf:ff").gain(0.20)

@@ -1,0 +1,11 @@
+// @title grit-pump
+// @genre techno-duck
+setcpm(126/4)
+// kick
+$: s("bd:fn*4").gain(0.88).duckorbit(2).duckattack(0.042).duckdepth(0.80)
+// hats
+$: s("[~ hh:pd]*4").gain(0.32)
+// bass
+$: note("5 2 0 3").scale("C4:minor").s("bs:dq").orbit(2).gain(0.34)
+// pad
+$: note("5 ~ 7 ~").scale("C4:minor").s("pf:ff").orbit(2).gain(0.20)
