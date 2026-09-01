@@ -1,0 +1,10 @@
+// @title dnb-reese-27
+// @genre drum and bass
+// @details gabber drop, 808-sub + hp-air @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:gb sd:gb ~ sd:gb bd:gb ~ bd:gb sd:gb, [~ hh:ns]*2]*2").gain(0.64).lpf(2600)
+// bass
+$: note("0 2 5 ~").scale("C4:minor").s("bs:8s").gain(0.46)
+// fx
+$: s("<fx:ha ~ ~ ~>").gain(0.22)

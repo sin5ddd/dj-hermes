@@ -1,0 +1,10 @@
+// @title lofi-hiphop-26
+// @genre lofi-hiphop
+// @details neuro kick + 808 sub + koto
+setcpm(84/4)
+// drums
+$: s("bd:ng ~ ~ sd:8s, [~ hh:dk]*4").gain(0.42)
+// bass
+$: note("5 2 6 9").scale("C4:minor").s("bs:8s").gain(0.36)
+// lead
+$: note("~ 4 8 6").scale("C4:minor").s("plk:kt").gain(0.24)

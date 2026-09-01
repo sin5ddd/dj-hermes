@@ -1,0 +1,10 @@
+// @title chill-pop-21
+// @genre chill-pop
+// @details techno thud + frenchcore mid + short supersaw [0,4,9]
+setcpm(100/4)
+// drums
+$: s("bd:tc*4, [~ cp:dr]*2, [~ hh:cl]*4").gain(0.5)
+// bass
+$: note("8 0 4 ~").scale("C4:major").s("bs:fc").gain(0.38)
+// lead
+$: note("[0,4,9] 4 [2,6,9] 11").scale("C4:major").s("plk:ss").gain(0.24)

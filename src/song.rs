@@ -271,7 +271,7 @@ pub fn song_path_candidates(input: &str) -> Result<Vec<PathBuf>, String> {
             if has_dir_component(p) {
                 push(&mut out, p.to_path_buf());
             } else {
-                // bare `smoke.strudel` → user lib → songs/ → cwd
+                // bare `house-01.strudel` → user lib → songs/ → cwd
                 if let Some(ref ud) = user_dir {
                     push(&mut out, ud.join(p));
                 }
@@ -1114,11 +1114,11 @@ bass: note("c2 eb2 g2 bb2").s("sawtooth").lpf(400).gain(0.7)
     }
 
     #[test]
-    fn parses_skill_pcm_catalog_file() {
-        let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("songs/skill-pcm-catalog.strudel");
-        let text = std::fs::read_to_string(&path).expect("skill-pcm-catalog.strudel");
-        let s = parse_song(&text, "songs/skill-pcm-catalog.strudel").unwrap();
-        assert_eq!(s.title, "skill-pcm-catalog");
+    fn parses_house_01_file() {
+        let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("songs/house-01.strudel");
+        let text = std::fs::read_to_string(&path).expect("house-01.strudel");
+        let s = parse_song(&text, "songs/house-01.strudel").unwrap();
+        assert_eq!(s.title, "warehouse-intro");
         assert_eq!(s.tracks.len(), 3);
         assert_eq!(s.tracks[0].code.sound, "bd:hf");
     }
@@ -1135,7 +1135,7 @@ $: s("hh*8").gain(0.3)
 // bass
 $: note("c2 eb2 g2 bb2").s("sawtooth").lpf(400).gain(0.55)
 "#;
-        let s = parse_song(text, "songs/smoke.strudel").unwrap();
+        let s = parse_song(text, "songs/house-01.strudel").unwrap();
         assert_eq!(s.title, "smoke");
         // setcpm(30) → 1 cycle/bar of 4 beats → BPM 120
         assert_eq!(s.bpm, Some(120.0));
@@ -1383,20 +1383,20 @@ $: s("hh*8").gain(0.3)
 
     #[test]
     fn song_path_candidates_bare_name_prefers_user_then_songs_strudel() {
-        let c = song_path_candidates("smoke").unwrap();
-        let songs_strudel = PathBuf::from("songs").join("smoke.strudel");
+        let c = song_path_candidates("house-01").unwrap();
+        let songs_strudel = PathBuf::from("songs").join("house-01.strudel");
         assert!(
             c.iter().any(|p| p == &songs_strudel),
-            "expected songs/smoke.strudel in {c:?}"
+            "expected songs/house-01.strudel in {c:?}"
         );
         if let Ok(ud) = user_songs_dir() {
-            assert_eq!(c[0], ud.join("smoke.strudel"), "{c:?}");
-            assert_eq!(c[1], ud.join("smoke.txt"), "{c:?}");
+            assert_eq!(c[0], ud.join("house-01.strudel"), "{c:?}");
+            assert_eq!(c[1], ud.join("house-01.txt"), "{c:?}");
             assert_eq!(c[2], songs_strudel, "{c:?}");
         } else {
             assert_eq!(c[0], songs_strudel, "{c:?}");
         }
-        assert!(c.iter().any(|p| p == &PathBuf::from("smoke.strudel")));
+        assert!(c.iter().any(|p| p == &PathBuf::from("house-01.strudel")));
     }
 
     #[test]
@@ -1432,15 +1432,15 @@ $: s("hh*8").gain(0.3)
 
     #[test]
     fn song_path_candidates_bare_with_ext_tries_user_then_songs() {
-        let c = song_path_candidates("smoke.strudel").unwrap();
-        let songs = PathBuf::from("songs").join("smoke.strudel");
+        let c = song_path_candidates("house-01.strudel").unwrap();
+        let songs = PathBuf::from("songs").join("house-01.strudel");
         if let Ok(ud) = user_songs_dir() {
-            assert_eq!(c[0], ud.join("smoke.strudel"));
+            assert_eq!(c[0], ud.join("house-01.strudel"));
             assert_eq!(c[1], songs);
         } else {
             assert_eq!(c[0], songs);
         }
-        assert!(c.iter().any(|p| p == &PathBuf::from("smoke.strudel")));
+        assert!(c.iter().any(|p| p == &PathBuf::from("house-01.strudel")));
     }
 
     #[test]
@@ -1479,10 +1479,11 @@ $: s("hh*8").gain(0.3)
     }
 
     #[test]
-    fn resolve_bundled_smoke_by_bare_name() {
-        // Run from crate root in `cargo test`.
-        let p = resolve_song_path("smoke").expect("songs/smoke.strudel");
-        assert!(p.ends_with("smoke.strudel"), "{}", p.display());
+    fn resolve_bundled_house_01_by_bare_name() {
+        let bundled = Path::new(env!("CARGO_MANIFEST_DIR")).join("songs/house-01.strudel");
+        assert!(bundled.is_file(), "{}", bundled.display());
+        let p = resolve_song_path(bundled.to_str().unwrap()).expect("house-01.strudel");
+        assert!(p.ends_with("house-01.strudel"), "{}", p.display());
         assert!(p.is_file());
     }
 

@@ -1,0 +1,10 @@
+// @title chill-pop-15
+// @genre chill-pop
+// @details gabber kick + 808 sub + chime over [0,4,9]
+setcpm(100/4)
+// drums
+$: s("bd:gb*4, [~ cp:gt]*2, [~ hh:hs]*4").gain(0.5)
+// bass
+$: note("4 7 ~ 2").scale("C4:major").s("bs:8s").gain(0.38)
+// lead
+$: note("[4,7,11] ~ [0,4,9] ~").scale("C4:major").s("plk:ch").gain(0.22)

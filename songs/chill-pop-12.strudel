@@ -1,0 +1,10 @@
+// @title chill-pop-12
+// @genre chill-pop
+// @details cinematic + dark growl + major arp
+setcpm(100/4)
+// drums
+$: s("bd:cn*4, [~ cp:dr]*2, [~ hh:cl]*4").gain(0.5)
+// bass
+$: note("2 ~ 7 4").scale("C4:major").s("bs:gr").gain(0.38)
+// lead
+$: note("4 9 11 7").scale("C4:major").s("plk:aj").gain(0.24).cut(1)

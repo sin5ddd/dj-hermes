@@ -1,0 +1,10 @@
+// @title dubstep-19
+// @genre dubstep
+// @details floor kick, tight house + trans fill @ 140
+setcpm(140/4)
+// drums
+$: s("bd:hf ~ ~ ~, [~ ~ sd:pp ~], hh:hs*4").gain(0.52)
+// bass
+$: note("0 3 7 5").scale("C4:minor").s("bs:ht").gain(0.42)
+// fx
+$: s("<fx:tf ~ ~ ~>").gain(0.24)

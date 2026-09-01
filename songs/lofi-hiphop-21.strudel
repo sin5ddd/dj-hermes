@@ -1,0 +1,10 @@
+// @title lofi-hiphop-21
+// @genre lofi-hiphop
+// @details gabber kick + frenchcore mid + reverse swell
+setcpm(84/4)
+// drums
+$: s("bd:gb ~ ~ sd:pp").gain(0.42)
+// bass
+$: note("9 ~ 2 6").scale("C4:minor").s("bs:fc").gain(0.36)
+// lead
+$: note("~ 7 1 4").scale("C4:minor").s("plk:rv").gain(0.24)

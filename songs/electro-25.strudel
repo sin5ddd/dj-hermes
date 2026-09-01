@@ -1,0 +1,10 @@
+// @title electro-25
+// @genre electro
+// @details 909, bright-reese + formant-oh @ 126
+setcpm(126/4)
+// drums
+$: s("bd:9p*4, [~ sd:cs]*2, hh:cl*8").gain(0.5)
+// bass
+$: note("0 7 2 3 0 5 2 ~").scale("C4:minor").s("bs:rb").gain(0.36)
+// fx
+$: s("<fx:fo ~ ~ ~>").gain(0.22)

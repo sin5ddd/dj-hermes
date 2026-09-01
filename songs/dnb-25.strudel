@@ -1,0 +1,10 @@
+// @title dnb-25
+// @genre drum and bass
+// @details 808 boom, gabber bass + mid impact @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:8b ~ sd:tn ~ bd:8b ~ ~ sd:tn, [~ hh:dn]*2]*2").gain(0.64).lpf(2800)
+// bass
+$: note("7 5 0 2").scale("C4:minor").s("bs:gb").gain(0.4)
+// fx
+$: s("<fx:md ~ ~ ~>").gain(0.26)

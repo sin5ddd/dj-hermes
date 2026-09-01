@@ -1,0 +1,10 @@
+// @title dnb-11
+// @genre drum and bass
+// @details frenchcore kit, dist-square + neuro pluck @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:fc sd:fc ~ sd:fc bd:fc ~ bd:fc sd:fc, hh:fc*8]*2").gain(0.64).lpf(3200)
+// bass
+$: note("5 0 2 7").scale("C4:minor").s("bs:dq").gain(0.42)
+// lead
+$: note("5 ~ 2 0").scale("C4:minor").s("plk:nn").gain(0.22).cut(1)

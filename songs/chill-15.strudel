@@ -1,0 +1,10 @@
+// @title chill-15
+// @genre chill
+// @details noise kick + hoover + wurli
+setcpm(90/4)
+// drums
+$: s("bd:fn ~ ~ ~, [~ sd:cs]*2").gain(0.4)
+// bass
+$: note("2 6 0 ~").scale("C4:minor").s("bs:hv").gain(0.36)
+// lead
+$: note("~ 5 8 3").scale("C4:minor").s("ep:wr").gain(0.22).attack(0.03).release(0.3).room(0.3).orbit(1)

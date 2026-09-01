@@ -1,0 +1,10 @@
+// @title ambient-25
+// @genre ambient
+// @details techno thud + sine sub + minor arp
+setcpm(70/4)
+// drums
+$: s("bd:tc ~ ~ ~, [~ hh:dk]*2").gain(0.22)
+// bass
+$: note("5 2 7 ~").scale("C4:minor").s("bs:su").gain(0.3)
+// lead
+$: note("[0,3,7] ~ 4 ~").scale("C4:minor").s("plk:an").gain(0.2)

@@ -1,9 +1,0 @@
-// @title skill-pcm-catalog
-// @details rust-fm-synthe part:slug working set (house floor + tight bass)
-setcpm(124/4)
-// drums
-$: s("bd:hf*4, [~ sd:8s]*2, [~ hh:cl]*4").gain(0.6)
-// bass
-$: note("0 0 4 0").scale("C4:minor").s("bs:ht").gain(0.45)
-// fx once per 4 bars
-$: s("<fx:up ~ ~ ~>").gain(0.3)

@@ -1,0 +1,10 @@
+// @title chill-pop-13
+// @genre chill-pop
+// @details frenchcore kick + wobble + house-bright [0,4,9]
+setcpm(100/4)
+// drums
+$: s("bd:fc*4, [~ sd:9s]*2, hh:hs*8").gain(0.5)
+// bass
+$: note("5 0 ~ 9").scale("C4:major").s("bs:wb").gain(0.38)
+// lead
+$: note("[0,4,9] 7 [2,7,11] 4").scale("C4:major").s("plk:hb").gain(0.26)

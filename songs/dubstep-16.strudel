@@ -1,0 +1,10 @@
+// @title dubstep-16
+// @genre dubstep
+// @details dust riddim, dark-reese + lofi pluck @ 140
+setcpm(140/4)
+// drums
+$: s("bd:lf ~ ~ ~, [~ ~ ~ sd:br]").gain(0.48)
+// bass
+$: note("2 0 ~ 7").scale("C4:minor").s("bs:rd").gain(0.34)
+// lead
+$: note("7 3 ~ 5").scale("C4:minor").s("plk:lf").gain(0.2).cut(1)

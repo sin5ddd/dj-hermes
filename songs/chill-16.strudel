@@ -1,0 +1,10 @@
+// @title chill-16
+// @genre chill
+// @details gabber kick + supersaw bass + nylon pop
+setcpm(90/4)
+// drums
+$: s("bd:gb ~ ~ sd:gt, [~ hh:cl]*4").gain(0.4)
+// bass
+$: note("5 ~ 1 4").scale("C4:minor").s("bs:sw").gain(0.36)
+// lead
+$: note("6 9 2 ~").scale("C4:minor").s("plk:ny").gain(0.22)

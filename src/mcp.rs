@@ -276,13 +276,13 @@ fn tools_list() -> Value {
             },
             {
                 "name": "strudel_load_song",
-                "description": "Deck: load a song onto a deck (next bar). Prefer a BARE basename only (e.g. path=\"visitor-dnb\" or \"house16\") — searches ~/.config/strudel-rs/songs/ first, then repo songs/. Optional .strudel. After strudel_save_song, load with the same basename (no songs/ prefix). Example: path=\"visitor-dnb\", deck=\"A\".",
+                "description": "Deck: load a song onto a deck (next bar). Prefer a BARE basename only (e.g. path=\"visitor-dnb\" or \"house-01\") — searches ~/.config/strudel-rs/songs/ first, then repo songs/. Optional .strudel. After strudel_save_song, load with the same basename (no songs/ prefix). Example: path=\"visitor-dnb\", deck=\"A\".",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
                         "path": {
                             "type": "string",
-                            "description": "Bare name preferred: visitor-dnb, house16 (not songs/visitor-dnb.strudel)"
+                            "description": "Bare name preferred: visitor-dnb, house-01 (not songs/visitor-dnb.strudel)"
                         },
                         "deck": { "type": "string", "description": "A or B" }
                     },
@@ -878,7 +878,7 @@ fn local_list_songs() -> Result<String, String> {
     let body = json!({
         "user_library": list_user_library_songs(),
         "bundled": list_bundled_songs(),
-        "load_hint": "Use bare basename with strudel_load_song path= (e.g. visitor-dnb or house16). Prefer user_library names for MCP-saved songs; do not prefix songs/."
+        "load_hint": "Use bare basename with strudel_load_song path= (e.g. visitor-dnb or house-01). Prefer user_library names for MCP-saved songs; do not prefix songs/."
     });
     serde_json::to_string(&body).map_err(|e| e.to_string())
 }
@@ -1158,7 +1158,7 @@ fn format_tool_local_error(err: &str, tool: &str) -> String {
     let mut out = format!("error: {err}");
     if lower.contains("song not found") {
         out.push_str(
-            "\nHint: use a bare basename for path (e.g. visitor-dnb or house16), not songs/.... \
+            "\nHint: use a bare basename for path (e.g. visitor-dnb or house-01), not songs/.... \
 User-library saves live under ~/.config/strudel-rs/songs/. Call strudel_list_songs to see names, \
 then strudel_load_song(path=<basename>, deck=A|B).",
         );
@@ -1202,7 +1202,7 @@ fn format_tool_http_error(base: &str, err: &str, tool: &str) -> String {
     let mut out = format!("error: {err}");
     if lower.contains("song not found") {
         out.push_str(
-            "\nHint: use a bare basename for path (e.g. visitor-dnb or house16), not songs/.... \
+            "\nHint: use a bare basename for path (e.g. visitor-dnb or house-01), not songs/.... \
 User-library saves live under ~/.config/strudel-rs/songs/. Call strudel_list_songs to see names, \
 then strudel_load_song(path=<basename>, deck=A|B).",
         );

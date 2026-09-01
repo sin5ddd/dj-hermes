@@ -1,0 +1,10 @@
+// @title dnb-reese-21
+// @genre drum and bass
+// @details zap kick, growl-2 + hollow 4/7/0 @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:ez <~ sd:pi> ~ sd:pi bd:ez ~ <bd:ez sd:pi> ~, hh:ch*4]*2").gain(0.64).lpf(3400)
+// bass
+$: note("5 3 0 ~").scale("C4:minor").s("bs:g2").gain(0.38)
+// lead
+$: note("4 ~ 7 0").scale("C4:minor").s("plk:s5").gain(0.18).cut(1)

@@ -56,7 +56,7 @@ Keep drums on **one** `$:` (comma layers). Do not use `stack()`.
 | saw + `lpf(1000)` | Mid Reese (keep **800–1200**) |
 | `bd` / `sd` / `hh` / `oh` | Bundled samples only (`samples/`) |
 
-Playable copy: `songs/skill-drum-and-bass.strudel`. Same mix idea as `songs/dnb16.strudel`, without the silent `db` atom and without a starved drum gain.
+Playable copy: `songs/dnb-01.strudel`. Same mix idea: drums above the sub, no silent `db` atom.
 
 ## Why it sounds that way
 
@@ -64,7 +64,7 @@ DnB reads as **fast grid + slow bass**. `setcpm(174/4)` is 174 quarter-notes per
 
 **Do not write `.fast(2)` and expect the same thing.** The method (`.fast` in `code.rs`) only multiplies `PatternCode.speed`. `deck.rs` then divides each event’s start by that speed and **does not re-query the next cycle**. A full-bar break with `.fast(2)` is squeezed into the first half of the bar; the second half is empty. Mini `*2` is the operator that actually tiles.
 
-**Kick and snare must be louder than the sub.** Unknown sounds are dropped (`deck.rs` `resolve_sound` miss → no voice), so they cannot “cut through” a loud square. If the break is quieter than the sub (the old `dnb16` trap was drums `.gain(0.25)` under sub `0.7`), the kit disappears.
+**Kick and snare must be louder than the sub.** Unknown sounds are dropped (`deck.rs` `resolve_sound` miss → no voice), so they cannot “cut through” a loud square. If the break is quieter than the sub (the old trap was drums `.gain(0.25)` under sub `0.7`), the kit disappears.
 
 **Never write `db`.** Bundled keys are `bd`, `sd`, `hh`, `oh` (`samples/`). `db` is not a sample and not a waveform. An atom that fails resolve is silence. Use `<bd ~>` (or `~`) instead of `<db ~>`.
 
@@ -76,13 +76,13 @@ Both decks share one `Transport`. This file is 174 BPM. Do **not** pair it with 
 
 ```bash
 # From the repo root (needs samples/bd, sd, hh, oh)
-strudel-rs play songs/skill-drum-and-bass.strudel --seconds 12
-strudel-rs play songs/skill-drum-and-bass.strudel --headless --seconds 8
+strudel-rs play songs/dnb-01.strudel --seconds 12
+strudel-rs play songs/dnb-01.strudel --headless --seconds 8
 ```
 
-No audio device: `cargo test --test e2e skill_drum_and_bass -- --nocapture` renders through `Engine::process`.
+No audio device: `cargo test --test e2e dnb_01 -- --nocapture` renders through `Engine::process`.
 
-Live TUI: `/a load skill-drum-and-bass` (or the `songs/` path). HTTP: `POST /song/load` with that file, or send the same `setcpm` + `$:` text as apply-song content.
+Live TUI: `/a load dnb-01` (or the `songs/` path). HTTP: `POST /song/load` with that file, or send the same `setcpm` + `$:` text as apply-song content.
 
 ## Variations (still this syntax)
 

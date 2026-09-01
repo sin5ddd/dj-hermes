@@ -180,7 +180,7 @@ Release プロファイル目安（プラン）: `opt-level = 3`, `lto = true`, 
 ### CLI / REPL 例
 
 ```
-./strudel-rs dj songs/techno1.strudel songs/ambient1.strudel   # live UI + API(:17878)
+./strudel-rs dj songs/house-01.strudel songs/four-on-the-floor-01.strudel   # live UI + API(:17878)
 # または空起動: ./strudel-rs dj
 # プロンプト: a load … / b load … / x 4
 ```

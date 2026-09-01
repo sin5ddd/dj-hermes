@@ -1,0 +1,10 @@
+// @title lofi-hiphop-29
+// @genre lofi-hiphop
+// @details 808 boom + sine sub + fx:rk once per 4 bars
+setcpm(84/4)
+// drums
+$: s("bd:8b ~ ~ sd:fb, [~ hh:dk]*4").gain(0.42)
+// bass
+$: note("6 ~ 4 8").scale("C4:minor").s("bs:ss").gain(0.36)
+// fx
+$: s("<fx:rk ~ ~ ~>").gain(0.22)

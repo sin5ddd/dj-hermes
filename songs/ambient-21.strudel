@@ -1,0 +1,10 @@
+// @title ambient-21
+// @genre ambient
+// @details dusty kick + frenchcore mid + glass bell
+setcpm(70/4)
+// drums
+$: s("bd:lf ~ ~ ~, ~ ~ hh:ns ~").gain(0.22)
+// bass
+$: note("6 ~ 2 6").scale("C4:minor").s("bs:fc").gain(0.3)
+// lead
+$: note("3 8 ~ 1").scale("C4:minor").s("plk:bl").gain(0.18)

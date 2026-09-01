@@ -1,0 +1,10 @@
+// @title chill-17
+// @genre chill
+// @details hardstyle kick + dist square + fx:rw once per 4 bars
+setcpm(90/4)
+// drums
+$: s("bd:hs ~ ~ ~, [~ hh:ns]*4").gain(0.4)
+// bass
+$: note("0 7 3 ~").scale("C4:minor").s("bs:dq").gain(0.36)
+// fx
+$: s("<fx:rw ~ ~ ~>").gain(0.22)

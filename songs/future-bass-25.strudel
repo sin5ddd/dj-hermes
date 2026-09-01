@@ -1,0 +1,10 @@
+// @title future-bass-25
+// @genre future-bass
+// @details 909, dist-square + major stab 7/2/4 @ 140
+setcpm(140/4)
+// drums
+$: s("bd:9p*4, [~ sd:tr]*2, hh:cl*8").gain(0.48)
+// bass
+$: note("4 7 ~ 0").scale("C4:major").s("bs:dq").gain(0.4)
+// lead
+$: note("7 ~ 2 4").scale("C4:major").s("plk:s3").gain(0.22).cut(1)

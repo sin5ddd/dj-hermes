@@ -1,0 +1,10 @@
+// @title future-bass-23
+// @genre future-bass
+// @details zap four, wobble + major arp @ 140
+setcpm(140/4)
+// drums
+$: s("bd:ez*4, [~ sd:cs]*2, hh:ch*8").gain(0.46)
+// bass
+$: note("5 ~ 0 2").scale("C4:major").s("bs:wb").gain(0.38)
+// lead
+$: note("[0,2,4] ~ 9 0").scale("C4:major").s("plk:aj").gain(0.22).cut(1)

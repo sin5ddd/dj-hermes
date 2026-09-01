@@ -32,7 +32,7 @@ cargo install --path . --locked
 # 動作確認
 strudel-rs help
 cd /path/to/strudel-rust   # songs/ と samples/ がある場所
-strudel-rs play songs/smoke.strudel --headless
+strudel-rs play songs/house-01.strudel --headless
 ```
 
 Linux では ALSA 開発ヘッダが必要なことがあります（例: `libasound2-dev`）。
@@ -42,26 +42,26 @@ Linux では ALSA 開発ヘッダが必要なことがあります（例: `libas
 リポジトリルートで（未 install なら `cargo run --` を先頭に付ける）:
 
 ```bash
-strudel-rs play songs/smoke.strudel
-strudel-rs play songs/smoke.strudel --seconds 15
+strudel-rs play songs/house-01.strudel
+strudel-rs play songs/house-01.strudel --seconds 15
 # TUI なし（メタログのみ・スクリプト向け）
-strudel-rs play songs/smoke.strudel --headless
-# デュアルデッキ live UI（曲は省略可）
-strudel-rs dj songs/techno1.strudel songs/ambient1.strudel
+strudel-rs play songs/house-01.strudel --headless
+# デュアルデッキ live UI（曲は省略可）。両曲は 124 BPM で同じ Transport。
+strudel-rs dj songs/house-01.strudel songs/four-on-the-floor-01.strudel
 strudel-rs dj
 # 開発時
-cargo run -- dj songs/techno1.strudel songs/ambient1.strudel
-# musicality skill examples (same Transport BPM per pair)
-strudel-rs play songs/skill-four-on-the-floor.strudel --seconds 12
-strudel-rs play songs/skill-minor-scale-loop.strudel --headless --seconds 8
-strudel-rs dj songs/skill-four-on-the-floor.strudel songs/skill-minor-scale-loop.strudel
-strudel-rs play songs/skill-drum-and-bass.strudel --seconds 12
-strudel-rs play songs/skill-sidechain-ducking.strudel --headless --seconds 8
-# 130 BPM acid / 303 filter env (do not DJ-pair with acid16 — two 303s, not a mix)
-strudel-rs play songs/skill-acid-303-filter-envelope.strudel --seconds 12
+cargo run -- dj songs/house-01.strudel songs/four-on-the-floor-01.strudel
+# genre examples (same Transport BPM per pair)
+strudel-rs play songs/four-on-the-floor-01.strudel --seconds 12
+strudel-rs play songs/house-01.strudel --headless --seconds 8
+strudel-rs dj songs/house-01.strudel songs/four-on-the-floor-01.strudel
+strudel-rs play songs/dnb-01.strudel --seconds 12
+strudel-rs play songs/techno-duck-01.strudel --headless --seconds 8
+# 130 BPM acid / 303 filter env (play solo)
+strudel-rs play songs/acid-01.strudel --seconds 12
 ```
 
-Recipes (Cursor `SKILL.md` + playable `songs/skill-*.strudel`): [docs/profile/dj-hermes/skills/creative/](./docs/profile/dj-hermes/skills/creative/).
+Recipes (Cursor `SKILL.md` + playable `songs/<genre>-01.strudel`): [docs/profile/dj-hermes/skills/creative/](./docs/profile/dj-hermes/skills/creative/).
 
 - **既定はループ再生**（終了: TUI なら `q` / Esc、`--headless` なら Ctrl+C）
 - `--seconds N`: N 秒で自動停止（スクリプト向け）
@@ -78,11 +78,11 @@ Recipes (Cursor `SKILL.md` + playable `songs/skill-*.strudel`): [docs/profile/dj
   - **入力モデル（live TUI）**
     - **自然文**（例: `暗くして`）→ Hermes（既定プロファイル `dj-hermes`、MCP 経由で操作）
     - **F12** → マイク録音トグル → **Hermes STT**（内蔵 Whisper。任意で `STRUDEL_STT_BASE_URL`）→ 同じ Hermes 経路（画面に Hermes は出ない）
-    - **`/` 付き**（例: `/x 4` `/bpm 128` `/a load techno1`）→ ローカル即時コマンド
+    - **`/` 付き**（例: `/x 4` `/bpm 128` `/a load house-01`）→ ローカル即時コマンド
     - `--no-hermes` または Hermes 未検出時: 裸入力もローカル（従来どおり）
     - `--no-voice` で F12 音声を明示オフ
   - ローカルコマンド例:
-    - `/a load songs/techno1.strudel` / `/b load songs/ambient1.strudel`
+    - `/a load songs/house-01.strudel` / `/b load songs/four-on-the-floor-01.strudel`
     - `/b head 33`（次の小節境界で B を曲の 33 小節目から。別名 `cue`。1 始まり）
     - `/x 4`（反対側デッキへ 4 小節 xfade）/ `/b x 4`
     - `/a mute kick` / `/bpm 128` / `/status` / `/help` / `/viz` / `/vfx`
@@ -91,7 +91,7 @@ Recipes (Cursor `SKILL.md` + playable `songs/skill-*.strudel`): [docs/profile/dj
   - 互換: `play --repl` / `play --repl-text` も同じセッションを起動（A/B 2 曲可）
   - 展示向け Hermes 手順・プロンプトインジェクション対策: [docs/exhibit/README.md](./docs/exhibit/README.md)
 - サンプルは `./samples`（Sonic Pi 由来 CC0、**Git LFS**）。曲は `songs/*.strudel`
-- **記法 → リズム / 和声 / DJ の対応**と再利用スキル: [docs/profile/dj-hermes/skills/creative/README.md](./docs/profile/dj-hermes/skills/creative/README.md)（例: `songs/skill-four-on-the-floor.strudel`, `songs/skill-minor-scale-loop.strudel`）
+- **記法 → リズム / 和声 / DJ の対応**と再利用スキル: [docs/profile/dj-hermes/skills/creative/README.md](./docs/profile/dj-hermes/skills/creative/README.md)（例: `songs/four-on-the-floor-01.strudel`, `songs/house-01.strudel`）
 - 出力デバイスが無い環境ではエラー終了（`cargo test` / build はデバイス不要）
 
 ## パターン記法の拡張（Task 23–24）
@@ -152,7 +152,7 @@ $: note("c3'maj").s("sawtooth").lpf(800).orbit(2).gain(0.4).room(0.35).roomsize(
 
 ```bash
 # 本体（別ターミナル）— songs/ samples/ のあるディレクトリで
-strudel-rs play --headless songs/smoke.strudel
+strudel-rs play --headless songs/house-01.strudel
 
 # 操作例
 curl -s http://127.0.0.1:17878/status
@@ -188,9 +188,9 @@ curl -s -X POST -H "Content-Type: application/json" \
 ```bash
 # ターミナル 1 — 演奏（API + /mcp も同時に立つ）
 cd /path/to/strudel-rust
-strudel-rs dj songs/smoke.strudel
+strudel-rs dj songs/house-01.strudel songs/four-on-the-floor-01.strudel
 # または headless 単曲:
-# strudel-rs play --headless songs/smoke.strudel
+# strudel-rs play --headless songs/house-01.strudel
 ```
 
 ### 音声入力（F12 / VAD → Hermes STT → Hermes）
@@ -205,7 +205,7 @@ live TUI で **F12** を押すと録音開始、もう一度 F12 で停止（最
 任意: `STRUDEL_STT_BASE_URL` を置くと HP の HTTP STT に切り替わります（[docs/exhibit/stt-hp.md](./docs/exhibit/stt-hp.md)、オプション 2）。
 
 ```bash
-strudel-rs dj songs/smoke.strudel
+strudel-rs dj songs/house-01.strudel songs/four-on-the-floor-01.strudel
 # F12 で話す → 認識テキストが Hermes → MCP → 音が変わる
 # 任意の HTTP STT:
 # export STRUDEL_STT_BASE_URL=http://192.168.x.x:8090
@@ -248,34 +248,33 @@ hermes --profile dj-hermes mcp test strudel
 
 ### 同梱デモ曲
 
-#### Task 23 展示（DJ 切替デモ向け・短め）
+#### 展示（DJ 切替デモ向け・同じ 124 BPM）
 
 | ファイル | 内容 | テンポ |
 | --- | --- | --- |
-| `songs/techno1.strudel` | duck/orbit + FM ベース + compressor | 126 BPM |
-| `songs/ambient1.strudel` | `wt_organ` / `wt_bright` + vib + 和音（サンプル不要） | 126 BPM |
+| `songs/house-01.strudel` | ハウス clap 2/4 + `plk:lp` | 124 BPM |
+| `songs/four-on-the-floor-01.strudel` | kick+offbeat hats + sine/triangle（サンプル不要でも鳴る） | 124 BPM |
 
 ```bash
-cargo run -- play songs/techno1.strudel
-cargo run -- dj songs/techno1.strudel songs/ambient1.strudel
+cargo run -- play songs/house-01.strudel
+cargo run -- dj songs/house-01.strudel songs/four-on-the-floor-01.strudel
 # 起動後: x 4 で A→B クロスフェード
 cargo test --test e2e
 ```
 
-#### 短いライブループ（`*16` は互換名。中身は 1 サイクル骨格）
+#### ジャンル曲（`songs/<genre>-01.strudel` … `-10`）
 
 | ファイル | ジャンル | テンポ |
 | --- | --- | --- |
-| `songs/techno16.strudel` | ダークテクノ | 128 BPM |
-| `songs/house16.strudel` | ハウス | 122 BPM |
-| `songs/dnb16.strudel` | DnB | 174 BPM |
-| `songs/acid16.strudel` | アシッド / ミニマル | 130 BPM |
-| `songs/garage16.strudel` | UK ガレージ / 2-step | 132 BPM |
-| `songs/smoke.strudel` | スモーク（最短） | 120 BPM |
+| `songs/techno-duck-01.strudel` | テクノ duck/orbit + FM ベース | 126 BPM |
+| `songs/electro-01.strudel` | エレクトロ（同じ 126 で techno-duck と組める） | 126 BPM |
+| `songs/dnb-01.strudel` | DnB | 174 BPM |
+| `songs/acid-01.strudel` | アシッド / 303 filter env | 130 BPM |
+| `songs/house-01.strudel` | ハウス | 124 BPM |
 
 ```bash
-cargo run -- play songs/techno16.strudel
-cargo run -- play songs/house16.strudel --seconds 45
+cargo run -- play songs/techno-duck-01.strudel
+cargo run -- play songs/house-01.strudel --seconds 45
 ```
 
 デモ曲は **短い `$:` ループ**（2–5 トラック）が既定。`<>` でサイクル差分を出し、演奏しながらコードを少しずつ書き換える想定（16 小節 `cat` の長尺アレンジではない）。Strudel 記法（`setcpm` / `$:` / `// @title`）なので REPL からのコピペ改造もしやすい。メタデータは [Strudel: Music metadata](https://strudel.cc/learn/metadata/) に合わせている。

@@ -1,0 +1,10 @@
+// @title electro-23
+// @genre electro
+// @details zap four, wobble + chime @ 126
+setcpm(126/4)
+// drums
+$: s("bd:ez*4, [~ sd:pi]*2, hh:ch*8").gain(0.5)
+// bass
+$: note("0 3 7 2 5 0 ~ 3").scale("C4:minor").s("bs:wb").gain(0.38)
+// lead
+$: note("2 7 3 0").scale("C4:minor").s("plk:ch").gain(0.18).cut(1)

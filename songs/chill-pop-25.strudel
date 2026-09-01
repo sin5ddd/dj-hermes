@@ -1,0 +1,10 @@
+// @title chill-pop-25
+// @genre chill-pop
+// @details tight 808 + house floor + wurli
+setcpm(100/4)
+// drums
+$: s("bd:8t ~ ~ ~, [~ sd:8s]*2, [~ hh:cl]*4").gain(0.5)
+// bass
+$: note("4 1 8 ~").scale("C4:major").s("bs:hf").gain(0.38)
+// lead
+$: note("6 11 9 2").scale("C4:major").s("ep:wr").gain(0.22).attack(0.02).release(0.28).room(0.2).orbit(1)

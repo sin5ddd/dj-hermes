@@ -1,0 +1,10 @@
+// @title ambient-12
+// @genre ambient
+// @details 909 punch + dark growl + muted EP
+setcpm(70/4)
+// drums
+$: s("bd:9p ~ ~ ~, ~ ~ hh:dk ~").gain(0.22)
+// bass
+$: note("5 0 ~ 2").scale("C4:minor").s("bs:gr").gain(0.3)
+// lead
+$: note("<3 6>/2").scale("C4:minor").s("ep:rs").gain(0.22).attack(0.08).release(0.45).room(0.42).orbit(1)

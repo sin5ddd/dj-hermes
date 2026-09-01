@@ -1,0 +1,10 @@
+// @title electro-21
+// @genre electro
+// @details jungle-round four, amen-sub + tight pluck @ 126
+setcpm(126/4)
+// drums
+$: s("bd:jg*4, [~ sd:jg]*2, hh:dn*8").gain(0.5)
+// bass
+$: note("0 2 5 ~ 0 7 3 0").scale("C4:minor").s("bs:am").gain(0.44)
+// lead
+$: note("~ 3 ~ 8").scale("C4:minor").s("plk:dt").gain(0.2).cut(1)

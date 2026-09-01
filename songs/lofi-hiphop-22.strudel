@@ -1,0 +1,10 @@
+// @title lofi-hiphop-22
+// @genre lofi-hiphop
+// @details house floor + gabber mid + keys EP
+setcpm(84/4)
+// drums
+$: s("bd:hf ~ ~ ~, [~ hh:cl]*4").gain(0.42)
+// bass
+$: note("1 5 8 3").scale("C4:minor").s("bs:gb").gain(0.36)
+// lead
+$: note("[0,3,6] ~ [2,5,7] ~").scale("C4:minor").s("ep:ky").gain(0.26).attack(0.01).release(0.3).room(0.32).orbit(1)

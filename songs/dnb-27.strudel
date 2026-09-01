@@ -1,0 +1,10 @@
+// @title dnb-27
+// @genre drum and bass
+// @details gabber + neuro snare, neuro reese + lofi pluck @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:gb sd:ng ~ sd:ng bd:gb ~ bd:gb sd:ng, hh:ns*8]*2").gain(0.64).lpf(2600)
+// bass
+$: note("5 3 7 ~").scale("C4:minor").s("bs:rn").gain(0.36)
+// lead
+$: note("3 6 ~ 0").scale("C4:minor").s("plk:lf").gain(0.2).cut(1)

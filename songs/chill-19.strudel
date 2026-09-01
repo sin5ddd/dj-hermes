@@ -1,0 +1,10 @@
+// @title chill-19
+// @genre chill
+// @details neuro kick + bright reese + kalimba
+setcpm(90/4)
+// drums
+$: s("bd:ng ~ ~ ~, [~ sd:ng]*2, [~ hh:dk]*4").gain(0.4)
+// bass
+$: note("~ 2 7 4").scale("C4:minor").s("bs:rb").gain(0.36)
+// lead
+$: note("1 5 ~ 8").scale("C4:minor").s("plk:kl").gain(0.22)

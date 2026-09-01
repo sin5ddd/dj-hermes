@@ -1,0 +1,10 @@
+// @title ambient-11
+// @genre ambient
+// @details dist 808 + mid growl + soft ambient pluck
+setcpm(70/4)
+// drums
+$: s("bd:8d ~ ~ ~").gain(0.22)
+// bass
+$: note("0 ~ 5 ~").scale("C4:minor").s("bs:bp").gain(0.3)
+// lead
+$: note("7 ~ 2 4").scale("C4:minor").s("plk:am").gain(0.2)

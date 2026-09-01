@@ -1,0 +1,10 @@
+// @title dnb-reese-30
+// @genre drum and bass
+// @details dust, bright-reese + mid 7/2/5 @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:lf ~ sd:br ~ ~ bd:lf ~ sd:br, hh:dk*8]*2").gain(0.62).lpf(2200)
+// bass
+$: note("0 5 2 7").scale("C4:minor").s("bs:rb").gain(0.36)
+// lead
+$: note("7 ~ 2 5").scale("C4:minor").s("bs:rm").gain(0.32)

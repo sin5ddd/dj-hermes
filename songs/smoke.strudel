@@ -1,7 +1,0 @@
-// @title smoke
-// @details short live smoke loop — consolidated drums + scale degrees
-setcpm(120/4)
-// drums
-$: s("bd*4, [~ sd]*2, [~ hh]*4").gain(0.75)
-// bass
-$: note("0 2 4 <6 7>").scale("C2:minor").s("sawtooth").lpf(400).gain(0.55)

@@ -48,7 +48,7 @@ $: note("0 2 4 7").scale("C3:minor")
   .attack(0.05).decay(0.2).sustain(0.6).release(0.2)
 ```
 
-Playable copy: `songs/skill-sidechain-ducking.strudel`. Same duck idea as `songs/techno1.strudel`, with the techno grid (no house snare) and the bass on the ducked orbit.
+Playable copy: `songs/techno-duck-01.strudel`. Techno grid (no house snare) and the bass on the ducked orbit.
 
 | Piece | Role |
 | --- | --- |
@@ -77,21 +77,21 @@ Kick stays on orbit 1 (default) so it does not duck itself.
 
 **`.compressor` on a `$:` is not a track insert.** `deck.rs` stashes `pending_compressor`; `engine.rs` does last-write-wins onto `mixer.set_compressor`. The kick, hats, and both decks go through it after faders and EQ. A bass-line `.compressor("-18:3:6:.003:.12")` therefore **squashes the kick**. Omit it for this recipe. If you want master glue, add `.compressor(...)` as the last method on a late `$:` and know it is the master bus, not that track.
 
-Both decks share one `Transport`. This file is 126 BPM — pair it with `songs/techno1.strudel` or `songs/ambient1.strudel` (also `setcpm(126/4)`). Do **not** pair it with the 174 DnB skill.
+Both decks share one `Transport`. This file is 126 BPM — pair it with `songs/electro-01.strudel` (also `setcpm(126/4)`). Do **not** pair it with 70 BPM ambient or the 174 DnB skill.
 
 ## Try it in this app
 
 ```bash
-strudel-rs play songs/skill-sidechain-ducking.strudel --seconds 12
-strudel-rs play songs/skill-sidechain-ducking.strudel --headless --seconds 8
+strudel-rs play songs/techno-duck-01.strudel --seconds 12
+strudel-rs play songs/techno-duck-01.strudel --headless --seconds 8
 
 # Dual deck — both files are setcpm(126/4)
-strudel-rs dj songs/skill-sidechain-ducking.strudel songs/ambient1.strudel
+strudel-rs dj songs/techno-duck-01.strudel songs/electro-01.strudel
 ```
 
-No device: `cargo test --test e2e skill_sidechain_ducking -- --nocapture`.
+No device: `cargo test --test e2e techno_duck_01 -- --nocapture`.
 
-Live TUI: `/a load skill-sidechain-ducking`. Then `/x 4` to crossfade toward B (equal-power, bar-quantized).
+Live TUI: `/a load techno-duck-01`. Then `/x 4` to crossfade toward B (equal-power, bar-quantized).
 
 ## Variations (still this syntax)
 

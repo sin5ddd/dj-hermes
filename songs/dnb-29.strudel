@@ -1,0 +1,10 @@
+// @title dnb-29
+// @genre drum and bass
+// @details metal ping, dist-square + trans fill @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:mt <~ sd:rm> ~ sd:rm bd:mt ~ <bd:mt sd:rm> ~, hh:pd*4]*2").gain(0.66).lpf(3800)
+// bass
+$: note("0 3 7 2").scale("C4:minor").s("bs:dq").gain(0.42)
+// fx
+$: s("<fx:tf ~ ~ ~>").gain(0.24)

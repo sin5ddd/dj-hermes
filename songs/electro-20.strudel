@@ -1,0 +1,10 @@
+// @title electro-20
+// @genre electro
+// @details neuro four, neuro-reese + neuro pluck @ 126
+setcpm(126/4)
+// drums
+$: s("bd:ng*4, [~ sd:ng]*2, hh:ns*8").gain(0.5)
+// bass
+$: note("7 5 2 0 3 7 0 5").scale("C4:minor").s("bs:rn").gain(0.36)
+// lead
+$: note("5 2 0 7").scale("C4:minor").s("plk:nn").gain(0.2).cut(1)

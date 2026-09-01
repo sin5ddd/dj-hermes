@@ -1,0 +1,10 @@
+// @title chill-30
+// @genre chill
+// @details dnb-tight + dark Reese + hollow fifth pad
+setcpm(90/4)
+// drums
+$: s("bd:dn ~ ~ sd:dn, ~ ~ ~ oh:dn").gain(0.4)
+// bass
+$: note("1 4 8 ~").scale("C4:minor").s("bs:rd").gain(0.36)
+// pad
+$: note("<2 6>/2").scale("C4:minor").s("pf:ff").gain(0.22).attack(0.14).release(0.42).room(0.36).orbit(1)

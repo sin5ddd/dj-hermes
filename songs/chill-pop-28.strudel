@@ -1,0 +1,10 @@
+// @title chill-pop-28
+// @genre chill-pop
+// @details zap kick + hoover + house-bright
+setcpm(100/4)
+// drums
+$: s("bd:ez*4, [~ sd:hd]*2, [~ hh:cl]*4").gain(0.5)
+// bass
+$: note("7 4 11 ~").scale("C4:major").s("bs:hv").gain(0.38)
+// lead
+$: note("4 12 7 9").scale("C4:major").s("plk:hb").gain(0.26)

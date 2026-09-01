@@ -1,0 +1,10 @@
+// @title ambient-18
+// @genre ambient
+// @details hardstyle kick + dark Reese + reverse swell
+setcpm(70/4)
+// drums
+$: s("bd:hs ~ ~ ~, ~ hh:cl ~ ~").gain(0.22)
+// bass
+$: note("~ 3 5 0").scale("C4:minor").s("bs:dk").gain(0.3)
+// lead
+$: note("<2 7 4 0>/2").scale("C4:minor").s("plk:rv").gain(0.2)

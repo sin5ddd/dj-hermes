@@ -1,0 +1,10 @@
+// @title lofi-hiphop-16
+// @genre lofi-hiphop
+// @details disco dry + supersaw bass + FM EP
+setcpm(84/4)
+// drums
+$: s("bd:dc ~ ~ ~, [~ hh:tt]*4").gain(0.42)
+// bass
+$: note("8 0 5 ~").scale("C4:minor").s("bs:sw").gain(0.36)
+// lead
+$: note("5 9 1 4").scale("C4:minor").s("plk:ep").gain(0.26)

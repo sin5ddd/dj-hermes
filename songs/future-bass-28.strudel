@@ -1,0 +1,10 @@
+// @title future-bass-28
+// @genre future-bass
+// @details tight 808 drop, sine-sub + kalimba triad @ 140
+setcpm(140/4)
+// drums
+$: s("bd:8t ~ bd:8t ~, [~ sd:8s]*2, [~ hh:tt]*4").gain(0.48)
+// bass
+$: note("5 0 ~ 4").scale("C4:major").s("bs:ss").gain(0.46)
+// lead
+$: note("2 4 [0,2,4] ~").scale("C4:major").s("plk:kl").gain(0.2).cut(1)

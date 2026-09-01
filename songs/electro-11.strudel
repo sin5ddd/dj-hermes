@@ -1,0 +1,10 @@
+// @title electro-11
+// @genre electro
+// @details dist 808, square-dist run + clav @ 126
+setcpm(126/4)
+// drums
+$: s("bd:8d*4, [~ sd:tr]*2, hh:ns*8").gain(0.5)
+// bass
+$: note("0 5 2 0 7 3 0 5").scale("C4:minor").s("bs:dq").gain(0.42)
+// lead
+$: note("5 ~ 2 7").scale("C4:minor").s("plk:cv").gain(0.2).cut(1)

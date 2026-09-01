@@ -1,0 +1,10 @@
+// @title electro-26
+// @genre electro
+// @details thud four, growl + stab pluck @ 126
+setcpm(126/4)
+// drums
+$: s("bd:tc*4, [~ sd:gt]*2, hh:pd*8").gain(0.5)
+// bass
+$: note("3 0 5 7 2 0 3 5").scale("C4:minor").s("bs:gr").gain(0.38)
+// lead
+$: note("3 ~ 0 5").scale("C4:minor").s("plk:sp").gain(0.2).cut(1)

@@ -1,0 +1,10 @@
+// @title chill-29
+// @genre chill
+// @details dusty kick + acid + reverse swell
+setcpm(90/4)
+// drums
+$: s("bd:lf ~ ~ ~, [~ hh:dk]*4").gain(0.4)
+// bass
+$: note("9 2 ~ 4").scale("C4:minor").s("bs:ac").gain(0.36)
+// lead
+$: note("3 7 10 5").scale("C4:minor").s("plk:rv").gain(0.22)

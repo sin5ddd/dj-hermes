@@ -1,0 +1,10 @@
+// @title dubstep-17
+// @genre dubstep
+// @details cinematic boom, sine-sub + whoosh @ 140
+setcpm(140/4)
+// drums
+$: s("bd:cn ~ ~ ~, [~ ~ sd:fb ~], [~ hh:cl]*4").gain(0.5)
+// bass
+$: note("0 5 2 ~").scale("C4:minor").s("bs:ss").gain(0.46)
+// fx
+$: s("<fx:wh ~ ~ ~>").gain(0.24)

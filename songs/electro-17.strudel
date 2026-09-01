@@ -1,0 +1,10 @@
+// @title electro-17
+// @genre electro
+// @details frenchcore four, mid-bass + acid pluck @ 126
+setcpm(126/4)
+// drums
+$: s("bd:fc*4, [~ sd:fc]*2, hh:fc*8").gain(0.5)
+// bass
+$: note("0 ~ 2 7 0 5 ~ 3").scale("C4:minor").s("bs:fc").gain(0.4)
+// lead
+$: note("0 5 ~ 3").scale("C4:minor").s("plk:ac").gain(0.2).cut(1)

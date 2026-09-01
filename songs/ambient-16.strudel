@@ -1,0 +1,10 @@
+// @title ambient-16
+// @genre ambient
+// @details frenchcore kick + supersaw bass + open harp
+setcpm(70/4)
+// drums
+$: s("bd:fc ~ ~ ~").gain(0.22)
+// bass
+$: note("7 ~ 0 5").scale("C4:minor").s("bs:sw").gain(0.3)
+// lead
+$: note("1 4 ~ 6").scale("C4:minor").s("plk:hp").gain(0.18)

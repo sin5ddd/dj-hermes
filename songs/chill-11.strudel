@@ -1,0 +1,10 @@
+// @title chill-11
+// @genre chill
+// @details dist 808 + mid growl + marimba hook
+setcpm(90/4)
+// drums
+$: s("bd:8d ~ ~ ~, [~ sd:hd]*2, [~ hh:cl]*4").gain(0.4)
+// bass
+$: note("0 5 ~ 3").scale("C4:minor").s("bs:bp").gain(0.36)
+// lead
+$: note("~ 2 6 8").scale("C4:minor").s("plk:mm").gain(0.22)

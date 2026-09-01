@@ -1,0 +1,10 @@
+// @title dnb-reese-28
+// @genre drum and bass
+// @details hardstyle roll, sine-sub + mid degrees @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:hs ~ ~ sd:fc ~ ~ ~ sd:fc, hh:fc*4, [~ oh:fc ~@2]]*2").gain(0.64).lpf(3200)
+// bass
+$: note("7 5 ~ 3").scale("C4:minor").s("bs:ss").gain(0.46)
+// lead
+$: note("6 0 4 2").scale("C4:minor").s("bs:rm").gain(0.32)

@@ -1,7 +1,0 @@
-// @title skill-factory-pcm-reese
-// @details factory PCM batch 1: bs:dk bed (124; no house floor / square sub)
-setcpm(124/4)
-// drums
-$: s("bd*4, [~ cp]*2, [~ hh]*4").gain(0.65)
-// reese
-$: note("0 3 0 <0 -1>").scale("C4:minor").s("bs:dk").gain(0.35)

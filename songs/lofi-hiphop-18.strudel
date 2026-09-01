@@ -1,0 +1,10 @@
+// @title lofi-hiphop-18
+// @genre lofi-hiphop
+// @details zap kick + growl-2 + kalimba
+setcpm(84/4)
+// drums
+$: s("bd:ez ~ sd:rm ~").gain(0.42)
+// bass
+$: note("5 1 8 ~").scale("C4:minor").s("bs:g2").gain(0.36)
+// lead
+$: note("7 ~ 3 6").scale("C4:minor").s("plk:kl").gain(0.26)

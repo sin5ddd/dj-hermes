@@ -1,0 +1,10 @@
+// @title chill-pop-29
+// @genre chill-pop
+// @details 808 boom + growl-2 + monophonic ld:ss
+setcpm(100/4)
+// drums
+$: s("bd:8b*4, [~ hh:hs]*4").gain(0.5)
+// bass
+$: note("3 6 ~ 9").scale("C4:major").s("bs:g2").gain(0.38)
+// lead
+$: note("2 9 6 11").scale("C4:major").s("ld:ss").gain(0.22).cut(1)

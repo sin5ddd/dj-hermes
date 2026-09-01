@@ -1,0 +1,10 @@
+// @title electro-22
+// @genre electro
+// @details dnb-tight four, amen-sub-slug + hp-air @ 126
+setcpm(126/4)
+// drums
+$: s("bd:dn*4, [~ sd:dn]*2, hh:dn*8").gain(0.5)
+// bass
+$: note("5 3 7 0 2 0 5 ~").scale("C4:minor").s("bs:sb").gain(0.44)
+// fx
+$: s("<fx:ha ~ ~ ~>").gain(0.22)

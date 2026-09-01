@@ -1,0 +1,10 @@
+// @title dnb-17
+// @genre drum and bass
+// @details lofi dust, supersaw bass + muted ep @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:lf ~ sd:br ~ bd:lf ~ ~ sd:br, [~ hh:dk]*2]*2").gain(0.62).lpf(2200)
+// bass
+$: note("5 ~ 0 7").scale("C4:minor").s("bs:sw").gain(0.38)
+// lead
+$: note("3 ~ 8 0").scale("C4:minor").s("ep:mt").gain(0.22).cut(1)

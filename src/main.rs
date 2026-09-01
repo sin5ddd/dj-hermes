@@ -74,7 +74,7 @@ Usage:
   strudel-rs mcp
 
   SONG          song path or bare name (default dir: songs/; .strudel/.txt optional)
-                play default: songs/smoke.strudel
+                play default: songs/house-01.strudel
   SONG_A/B      optional decks for dj (A then B; omit both to start empty)
   --seconds N   stop after N seconds (play only; omit to loop until quit)
   --headless    no TUI: meta log only (for scripts / non-TTY)
@@ -97,13 +97,13 @@ Usage:
   Live TUI input:
     bare text     → Hermes (profile dj-hermes; needs API + MCP)
     F12           → voice (Hermes STT → Hermes; optional STRUDEL_STT_BASE_URL)
-    /cmd …        → local (e.g. /a load smoke  /x 4  /bpm 128  /viz  /vfx  /help)
+    /cmd …        → local (e.g. /a load house-01  /x 4  /bpm 128  /viz  /vfx  /help)
     --no-hermes   → bare text is local again (text REPL always local)
   Flags: --no-hermes  --no-voice  --hermes-bin PATH  --hermes-profile NAME  -d/--debug
 
 Examples:
-  cargo run -- play songs/smoke.strudel
-  cargo run -- dj songs/techno1.strudel songs/ambient1.strudel
+  cargo run -- play songs/house-01.strudel
+  cargo run -- dj songs/house-01.strudel songs/four-on-the-floor-01.strudel
   cargo run -- dj                          # empty decks; load from »
   # then:  暗くして   or   /x 4
   # API: curl http://127.0.0.1:{DEFAULT_API_PORT}/status
@@ -364,8 +364,8 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
 
     let song_path = match song_path {
         Some(p) => resolve_song_path(&p.to_string_lossy())?,
-        None => resolve_song_path("smoke")
-            .or_else(|_| resolve_song_path("songs/smoke.strudel"))
+        None => resolve_song_path("house-01")
+            .or_else(|_| resolve_song_path("songs/house-01.strudel"))
             .map_err(|e| format!("default song: {e}"))?,
     };
     let text = std::fs::read_to_string(&song_path)
@@ -923,8 +923,8 @@ mod tests {
     #[test]
     fn dj_args_two_songs_and_flags() {
         let opts = parse_live_session_args(&s(&[
-            "songs/techno1.strudel",
-            "songs/ambient1.strudel",
+            "songs/house-01.strudel",
+            "songs/four-on-the-floor-01.strudel",
             "--no-api",
             "--text",
         ]))
@@ -932,11 +932,11 @@ mod tests {
         .unwrap();
         assert_eq!(
             opts.song_a.as_deref(),
-            Some(Path::new("songs/techno1.strudel"))
+            Some(Path::new("songs/house-01.strudel"))
         );
         assert_eq!(
             opts.song_b.as_deref(),
-            Some(Path::new("songs/ambient1.strudel"))
+            Some(Path::new("songs/four-on-the-floor-01.strudel"))
         );
         assert!(!opts.with_highlight);
         assert!(!opts.api_enabled);

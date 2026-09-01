@@ -1,0 +1,10 @@
+// @title ambient-27
+// @genre ambient
+// @details house floor + growl-2 + FM EP pluck
+setcpm(70/4)
+// drums
+$: s("bd:hf ~ ~ ~").gain(0.22)
+// bass
+$: note("4 ~ 6 0").scale("C4:minor").s("bs:g2").gain(0.3)
+// lead
+$: note("9 5 ~ 2").scale("C4:minor").s("plk:ep").gain(0.2)

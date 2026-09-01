@@ -1,0 +1,10 @@
+// @title chill-18
+// @genre chill
+// @details metal ping + growl-2 + FM EP
+setcpm(90/4)
+// drums
+$: s("bd:mt ~ ~ sd:mt, [~ hh:tt]*4").gain(0.4)
+// bass
+$: note("4 1 ~ 6").scale("C4:minor").s("bs:g2").gain(0.36)
+// lead
+$: note("<[0,4,7] [3,6,10]>").scale("C4:minor").s("plk:ep").gain(0.24)

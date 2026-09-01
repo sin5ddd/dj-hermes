@@ -532,7 +532,7 @@ $: note("0 2 4 7").scale("C3:minor").s("sawtooth").lpf(900).orbit(2).gain(0.35)
 
 Live `.fm` / `.fmh` is **only** for **time-varying lead and bass synths**. Drums and one-shots are **PCM** (`s("bd")`, `s("cp")`, `s("plk:lp")`, `s("plk:s5")`, …). Do not build pluck / bell / metal-hit as live 2-op one-shots.
 
-Playable copy: `songs/skill-fm-sound-design.strudel` (`setcpm(124/4)`). How to trigger issue #21 batch 1 factory stems (`C4:…` / unpitched FX): [Factory PCM batch 1](#factory-pcm-batch-1).
+Apply the inline FM recipe with `strudel_apply_song` (`setcpm(124/4)`). How to trigger issue #21 batch 1 factory stems (`C4:…` / unpitched FX): [Factory PCM batch 1](#factory-pcm-batch-1).
 
 ## When to use
 
@@ -566,7 +566,7 @@ carrier   += inst_freq / sr
 | Knob | Engine meaning | Musical use |
 | --- | --- | --- |
 | `.fm(index)` | Peak deviation (Hz) = `fm_idx * carrier_hz` at env 1 | **Index 2–4** is everyday. **8+ breaks up fast.** Do not put `.fm(8)` on bass. |
-| `.fmh(ratio)` | Modulator advances at `fmh * freq`. Default **1.0** | **Signed-off recipes use integer `fmh`** (`1` growl/pad, `2` lead) = harmonics. `3.5` / `11` = bell / metal **timbre** — those hits are **PCM**, not live FM one-shots. Do **not** copy `techno1`'s `.fmh(1.5)` into this rule. |
+| `.fmh(ratio)` | Modulator advances at `fmh * freq`. Default **1.0** | **Signed-off recipes use integer `fmh`** (`1` growl/pad, `2` lead) = harmonics. `3.5` / `11` = bell / metal **timbre** — those hits are **PCM**, not live FM one-shots. Do **not** copy `techno-duck-01`'s `.fmh(1.5)` into this rule. |
 | `.fmdec` / `.fmsus` | Index env: attack → decay toward sustain. **No FM release.** Defaults 0.001 / 0.1 / **0.0** | `fmsus(0)` is percussive (do not use live FM for that). **Leave sustain** on evolving leads / pads. |
 | `.noise(0..1)` | Pink **mix** into the osc | Not a second operator |
 
@@ -618,7 +618,7 @@ $: note("0 0 3 0").scale("C2:minor")
 
 `.fm(4).fmh(1)` + `lpf(400)` already fills the mids. `.lpenv(3)` is the per-note filter sweep on that parked base (same env law as the 303 skill: `cutoff = base * 2^(lpenv * level)`). **Do not** put `.fm(8)` on bass (it breaks up). **Do not** add a square sub or `bs:rm` on another `$:` — that is a different mix ([strudel-genre-dnb-reese-mid-stab](../strudel-genre-dnb-reese-mid-stab/SKILL.md)).
 
-`songs/techno1.strudel` has another live FM bass (`.s("sine").fm(3).fmh(1.5).lpf(500)` at 126). That is this 2-op world, **not** a signed-off recipe here. Do not fold `.fmh(1.5)` into the integer-ratio rule above.
+`songs/techno-duck-01.strudel` has another live FM bass (`.s("sine").fm(3).fmh(1.5).lpf(500)` at 126). That is this 2-op world, **not** a signed-off recipe here. Do not fold `.fmh(1.5)` into the integer-ratio rule above.
 
 ## PCM one-shots (not live FM)
 
@@ -674,13 +674,14 @@ No `.compressor` (mixer master, last-write). No `.duckorbit`. No square sub. No 
 ## Try it in this app
 
 ```bash
-strudel-rs play songs/skill-fm-sound-design.strudel --seconds 12
-strudel-rs play songs/skill-fm-sound-design.strudel --headless --seconds 8
+# Apply the inline recipe with strudel_apply_song.
+# Existing 124 pair:
+strudel-rs dj songs/house-01.strudel songs/four-on-the-floor-01.strudel
 ```
 
-No device: `cargo test --test e2e skill_fm_sound -- --nocapture`.
+No device: `cargo test --test e2e house_01 -- --nocapture`.
 
-Live TUI: `/a load skill-fm-sound-design`.
+Live TUI: apply the inline recipe with `strudel_apply_song`.
 
 ## Variations (still this syntax)
 
@@ -696,7 +697,7 @@ Do not “vary” by turning the lead into a live FM pluck (`fmsus(0)` + short d
 ## Rules (do not skip)
 
 1. Live `.fm` / `.fmh` = **evolving lead and bass only**. Hits are PCM.
-2. Signed-off numbers stay as written. Integer `fmh` on those recipes (`1` growl/pad, `2` lead). Index 2–4 everyday; **no `.fm(8)` on bass**. Do not copy `techno1`'s `.fmh(1.5)` into that rule.
+2. Signed-off numbers stay as written. Integer `fmh` on those recipes (`1` growl/pad, `2` lead). Index 2–4 everyday; **no `.fm(8)` on bass**. Do not copy `techno-duck-01`'s `.fmh(1.5)` into that rule.
 3. Growl fills the mids — **no** square sub, **no** `bs:rm`, **no** pluck, **no** stab on this demo.
 4. Factory wavs: `C4` on C3 recordings. `plk:s3` is `note("0 ~ 0 ~")` only — and **not** on this minor file. `.cut(1)` on pluck only if monophonic.
 5. This file is **124**. Leftover **120** files stay isolated. Do not DJ-pair 120 with 124.
@@ -710,7 +711,7 @@ Do not “vary” by turning the lead into a live FM pluck (`fmsus(0)` + short d
 - Put `plk:s3` on this C-minor demo (baked E vs the lead's Eb).
 - Play `plk:s3` as `note("[0,2,4]")` (triples the baked triad).
 - Revive the live EP recipe, or substitute PCM `ep:ky` for the evolving lead.
-- Copy `techno1`'s `.fmh(1.5)` into these integer-ratio recipes.
+- Copy `techno-duck-01`'s `.fmh(1.5)` into these integer-ratio recipes.
 - Write `C3:minor` on `plk:lp` / `plk:s5` / `plk:s3` (`SAMPLE_ROOT_HZ` is C4).
 - Write `lead-fm-pluck` or `stab-fm-fifth` (wrong stem).
 - Put `.compressor` or `.duckorbit` on these recipes.
@@ -960,7 +961,7 @@ $: note("0 ~ 0 ~").scale("C4:minor").s("pf:ff").gain(0.25)
 $: s("<fx:up ~ ~ ~>").gain(0.3)
 ```
 
-Copy: `songs/skill-factory-pcm-usage.strudel`.
+Apply the inline recipe with `strudel_apply_song`. `songs/house-01.strudel` is a live factory-PCM house floor.
 
 ### Dark Reese (different bed, same 124 clock)
 
@@ -973,7 +974,7 @@ $: s("bd*4, [~ cp]*2, [~ hh]*4").gain(0.65)
 $: note("0 3 0 <0 -1>").scale("C4:minor").s("bs:dk").gain(0.35)
 ```
 
-Copy: `songs/skill-factory-pcm-reese.strudel`. Play **solo**. Do not `dj` this
+Apply the inline recipe with `strudel_apply_song`. Play **solo**. Do not `dj` this
 with the floor or the lead (those files already have `bs:hf`).
 
 ### Lead only (same clock, not stacked on the floor pad)
@@ -989,28 +990,20 @@ $: note("0 0 4 0").scale("C4:minor").s("bs:hf").gain(0.45)
 $: note("4 ~ 7 4").scale("C4:minor").s("ld:ss").gain(0.28).cut(1)
 ```
 
-Copy: `songs/skill-factory-pcm-lead.strudel`. Shared `setcpm(124/4)` so the
+Apply the inline recipe with `strudel_apply_song`. Shared `setcpm(124/4)` so the
 floor + lead pair can `dj`. Do not add pad or `bs:dk` on this file.
 
 ## Try it in this app
 
 ```bash
-strudel-rs play songs/skill-factory-pcm-usage.strudel --seconds 12
-strudel-rs play songs/skill-factory-pcm-usage.strudel --headless --seconds 8
-
-strudel-rs play songs/skill-factory-pcm-reese.strudel --seconds 12
-strudel-rs play songs/skill-factory-pcm-reese.strudel --headless --seconds 8
-
-strudel-rs play songs/skill-factory-pcm-lead.strudel --seconds 12
-strudel-rs play songs/skill-factory-pcm-lead.strudel --headless --seconds 8
-
-# Dual deck — floor + lead, both setcpm(124/4). Do not pair bs:dk onto either.
-strudel-rs dj songs/skill-factory-pcm-usage.strudel songs/skill-factory-pcm-lead.strudel
+# Apply the inline factory-PCM recipes with strudel_apply_song.
+# Existing 124 pair:
+strudel-rs dj songs/house-01.strudel songs/four-on-the-floor-01.strudel
 ```
 
-No device: `cargo test --test e2e skill_factory_pcm -- --nocapture`.
+No device: `cargo test --test e2e house_01 -- --nocapture`.
 
-Live TUI: `/a load skill-factory-pcm-usage`.
+Live TUI: apply the inline recipes with `strudel_apply_song`.
 
 ## Do not
 

@@ -749,7 +749,7 @@ kick: s("bd*4").gain(0.9)
 hat: s("hh*8").gain(0.3)
 bass: note("c2").s("sawtooth").lpf(400).gain(0.5)
 "#,
-            "songs/smoke.strudel",
+            "songs/house-01.strudel",
         )
         .unwrap();
         let mut e = Engine::new(48_000, 120.0);

@@ -1,0 +1,10 @@
+// @title ambient-29
+// @genre ambient
+// @details noise kick + house floor + high chime
+setcpm(70/4)
+// drums
+$: s("bd:fn ~ ~ ~").gain(0.22)
+// bass
+$: note("~ 5 0 8").scale("C4:minor").s("bs:hf").gain(0.3)
+// lead
+$: note("6 2 8 4").scale("C4:minor").s("plk:ch").gain(0.16)

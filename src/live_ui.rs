@@ -1850,15 +1850,15 @@ mod tests {
         let rows = 24usize;
         let mut lines: Vec<String> = (0..rows).map(|_| pad_clip_ansi("", cols)).collect();
         let result = CompleteResult {
-            candidates: vec!["techno1".into(), "ambient1".into()],
+            candidates: vec!["house-01".into(), "four-on-the-floor-01".into()],
             replace_from: 8,
             hint: None,
         };
         overlay_suggest_modal(&mut lines, cols, rows, &result, 1);
         let joined = lines.join("\n");
         assert!(joined.contains("suggest"), "{joined}");
-        assert!(joined.contains("techno1"), "{joined}");
-        assert!(joined.contains("ambient1"), "{joined}");
+        assert!(joined.contains("house-01"), "{joined}");
+        assert!(joined.contains("four-on-the-floor-01"), "{joined}");
         assert!(joined.contains("↑↓") || joined.contains("選択"), "{joined}");
     }
 

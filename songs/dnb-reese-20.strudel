@@ -1,0 +1,10 @@
+// @title dnb-reese-20
+// @genre drum and bass
+// @details disco-dry, dark-reese + sparse mid @ 174
+setcpm(174/4)
+// drums
+$: s("[bd:dc ~ ~ sd:hd ~ ~ ~ sd:hd, hh:hs*8]*2").gain(0.64).lpf(3600)
+// bass
+$: note("0 6 ~ 2").scale("C4:minor").s("bs:dk").gain(0.34)
+// lead
+$: note("0 2 6 ~").scale("C4:minor").s("bs:rm").gain(0.32)

@@ -49,7 +49,7 @@ Esc                 dismiss suggest (or quit when prompt empty)
 
 # live TUI + Hermes
 bare text           send to Hermes (DJ assistant)
-/…                  local command (e.g. /bpm 128, /a load techno1, /viz)
+/…                  local command (e.g. /bpm 128, /a load house-01, /viz)
 ";
 
 /// How live TUI should route a prompt line.

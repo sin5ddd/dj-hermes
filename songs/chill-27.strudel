@@ -1,0 +1,10 @@
+// @title chill-27
+// @genre chill
+// @details techno thud + dark Reese + keys EP
+setcpm(90/4)
+// drums
+$: s("bd:tc ~ ~ ~, [~ sd:tn]*2").gain(0.4)
+// bass
+$: note("0 6 ~ 2").scale("C4:minor").s("bs:dk").gain(0.36)
+// lead
+$: note("[3,6,10] ~ [1,4,7] ~").scale("C4:minor").s("ep:ky").gain(0.24).attack(0.02).release(0.32).room(0.3).orbit(1)
