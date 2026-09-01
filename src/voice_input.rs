@@ -1,11 +1,16 @@
-//! Live TUI voice input: cpal capture → local STT HTTP → text for Hermes.
+//! Live TUI voice input: cpal capture → STT → text for Hermes.
 //!
 //! Runs off the audio output and UI threads. Transcripts are delivered as
 //! events for the live UI to `HermesHandle::enqueue`.
 //!
-//! STT is OpenAI-compatible `POST {base}/v1/audio/transcriptions` only
-//! (the exhibit box behind `STRUDEL_STT_BASE_URL`, not a cloud vendor).
+//! Default STT is Hermes local Whisper (`transcribe_recording` in the Hermes
+//! venv). `STRUDEL_STT_BASE_URL` opts into OpenAI-compatible
+//! `POST {base}/v1/audio/transcriptions` (the exhibit box, not a cloud vendor).
 
+use std::fs;
+use std::io::Read;
+use std::path::{Path, PathBuf};
+use std::process::{Command, ExitStatus, Stdio};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread;
@@ -30,6 +35,23 @@ const VAD_WINDOW_SECS: f32 = 0.03;
 const TARGET_STT_RATE: u32 = 16_000;
 const WORKER_TICK: Duration = Duration::from_millis(40);
 
+/// Hermes venv helper: local Whisper only (no cloud provider).
+const HERMES_TRANSCRIBE_PY: &str = r#"import json, sys
+from tools.transcription_tools import _get_provider, _load_stt_config
+from tools.voice_mode import transcribe_recording
+p = _get_provider(_load_stt_config())
+if p not in ("local", "local_command"):
+    sys.stdout.write(json.dumps({"ok": False, "error": "stt.provider=%s is not local" % p}))
+    sys.exit(1)
+r = transcribe_recording(sys.argv[1])
+sys.stdout.write(json.dumps({
+    "ok": bool(r.get("success")),
+    "text": (r.get("transcript") or "").strip(),
+    "error": r.get("error") or "",
+}))
+sys.exit(0 if r.get("success") else 1)
+"#;
+
 /// How recording starts.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum VoiceMode {
@@ -48,15 +70,41 @@ impl VoiceMode {
     }
 }
 
+/// Env-independent STT backend pick (`STRUDEL_STT_BASE_URL` nonempty → HTTP).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BackendKind {
+    Hermes,
+    Http,
+}
+
+pub fn select_backend_kind(stt_base_url: Option<&str>) -> BackendKind {
+    match stt_base_url.map(str::trim).filter(|s| !s.is_empty()) {
+        Some(_) => BackendKind::Http,
+        None => BackendKind::Hermes,
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum SttBackend {
+    /// Default. temp WAV → Hermes venv `transcribe_recording` → transcript.
+    Hermes {
+        python: PathBuf,
+        agent_root: PathBuf,
+        profile: String,
+    },
+    /// `STRUDEL_STT_BASE_URL` only (issue #46 option 2 / HP).
+    Http {
+        base_url: String,
+        api_key: String,
+        model: String,
+    },
+}
+
 /// STT + capture settings (env-driven).
 #[derive(Debug, Clone)]
 pub struct SttConfig {
-    /// Optional bearer for the local STT server. Empty = no Authorization header.
-    pub api_key: String,
-    /// Base URL of the local STT server (no trailing slash).
-    pub base_url: String,
+    pub backend: SttBackend,
     pub language: String,
-    pub model: String,
     pub timeout: Duration,
     pub max_recording_secs: f32,
     pub min_recording_secs: f32,
@@ -68,33 +116,60 @@ pub struct SttConfig {
 }
 
 impl SttConfig {
-    /// Build from env. Returns `None` when `STRUDEL_STT_BASE_URL` is missing.
+    /// Build from env. Always `Some` (Hermes backend when URL is unset).
     pub fn from_env() -> Option<Self> {
-        let base_url = env_nonempty("STRUDEL_STT_BASE_URL")?;
-        Some(Self::from_parts(
-            base_url,
-            env_nonempty("STRUDEL_STT_API_KEY").unwrap_or_default(),
-            env_nonempty("STRUDEL_STT_LANGUAGE").unwrap_or_else(|| DEFAULT_LANGUAGE.to_string()),
-            env_nonempty("STRUDEL_STT_MODEL").unwrap_or_else(|| DEFAULT_MODEL.to_string()),
-            env_nonempty("STRUDEL_STT_TIMEOUT_SECS")
-                .and_then(|s| s.parse::<u64>().ok())
-                .filter(|&n| n > 0)
-                .map(Duration::from_secs)
-                .unwrap_or(Duration::from_secs(DEFAULT_TIMEOUT_SECS)),
-            env_nonempty("STRUDEL_VOICE_MAX_SECS")
-                .and_then(|s| s.parse::<f32>().ok())
-                .filter(|&n| n > 0.0)
-                .unwrap_or(DEFAULT_MAX_RECORDING_SECS),
-            VoiceMode::parse(&env_nonempty("STRUDEL_VOICE_MODE").unwrap_or_default()),
-            env_nonempty("STRUDEL_VOICE_SILENCE_THRESHOLD")
-                .and_then(|s| s.parse::<f32>().ok())
-                .filter(|&n| n > 0.0)
-                .unwrap_or(DEFAULT_SILENCE_THRESHOLD),
-            env_nonempty("STRUDEL_VOICE_SILENCE_SECS")
-                .and_then(|s| s.parse::<f32>().ok())
-                .filter(|&n| n > 0.0)
-                .unwrap_or(DEFAULT_SILENCE_SECS),
-        ))
+        let language =
+            env_nonempty("STRUDEL_STT_LANGUAGE").unwrap_or_else(|| DEFAULT_LANGUAGE.to_string());
+        let timeout = env_nonempty("STRUDEL_STT_TIMEOUT_SECS")
+            .and_then(|s| s.parse::<u64>().ok())
+            .filter(|&n| n > 0)
+            .map(Duration::from_secs)
+            .unwrap_or(Duration::from_secs(DEFAULT_TIMEOUT_SECS));
+        let max_recording_secs = env_nonempty("STRUDEL_VOICE_MAX_SECS")
+            .and_then(|s| s.parse::<f32>().ok())
+            .filter(|&n| n > 0.0)
+            .unwrap_or(DEFAULT_MAX_RECORDING_SECS);
+        let mode = VoiceMode::parse(&env_nonempty("STRUDEL_VOICE_MODE").unwrap_or_default());
+        let silence_threshold = env_nonempty("STRUDEL_VOICE_SILENCE_THRESHOLD")
+            .and_then(|s| s.parse::<f32>().ok())
+            .filter(|&n| n > 0.0)
+            .unwrap_or(DEFAULT_SILENCE_THRESHOLD);
+        let silence_secs = env_nonempty("STRUDEL_VOICE_SILENCE_SECS")
+            .and_then(|s| s.parse::<f32>().ok())
+            .filter(|&n| n > 0.0)
+            .unwrap_or(DEFAULT_SILENCE_SECS);
+
+        let backend =
+            match select_backend_kind(std::env::var("STRUDEL_STT_BASE_URL").ok().as_deref()) {
+                BackendKind::Http => {
+                    let base_url = env_nonempty("STRUDEL_STT_BASE_URL")
+                        .unwrap_or_default()
+                        .trim_end_matches('/')
+                        .to_string();
+                    SttBackend::Http {
+                        base_url,
+                        api_key: env_nonempty("STRUDEL_STT_API_KEY").unwrap_or_default(),
+                        model: env_nonempty("STRUDEL_STT_MODEL")
+                            .unwrap_or_else(|| DEFAULT_MODEL.to_string()),
+                    }
+                }
+                BackendKind::Hermes => SttBackend::Hermes {
+                    python: PathBuf::new(),
+                    agent_root: PathBuf::new(),
+                    profile: "dj-hermes".into(),
+                },
+            };
+
+        Some(Self {
+            backend,
+            language,
+            timeout,
+            max_recording_secs,
+            min_recording_secs: DEFAULT_MIN_RECORDING_SECS,
+            mode,
+            silence_threshold,
+            silence_secs,
+        })
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -110,10 +185,12 @@ impl SttConfig {
         silence_secs: f32,
     ) -> Self {
         Self {
-            api_key,
-            base_url: base_url.trim_end_matches('/').to_string(),
+            backend: SttBackend::Http {
+                base_url: base_url.trim_end_matches('/').to_string(),
+                api_key,
+                model,
+            },
             language,
-            model,
             timeout,
             max_recording_secs,
             min_recording_secs: DEFAULT_MIN_RECORDING_SECS,
@@ -124,13 +201,82 @@ impl SttConfig {
     }
 }
 
-/// `true` when a non-empty STT base URL is set (cloud keys do not enable voice).
-pub fn enable_voice(base_url: Option<&str>) -> bool {
-    base_url.map(|s| !s.trim().is_empty()).unwrap_or(false)
+/// Voice capture is allowed whenever the caller starts a handle (mic probe
+/// happens in `VoiceHandle::start`). Cloud vendor keys do not gate this.
+pub fn enable_voice() -> bool {
+    true
 }
 
 pub fn transcription_url(base_url: &str) -> String {
     format!("{}/v1/audio/transcriptions", base_url.trim_end_matches('/'))
+}
+
+pub fn resolve_hermes_python(hermes_bin: &Path) -> Option<PathBuf> {
+    if let Some(p) = env_nonempty("STRUDEL_HERMES_PYTHON") {
+        let pb = PathBuf::from(p);
+        if pb.is_file() {
+            return Some(pb);
+        }
+    }
+    resolve_python_near_hermes_bin(hermes_bin)
+}
+
+fn resolve_python_near_hermes_bin(hermes_bin: &Path) -> Option<PathBuf> {
+    hermes_python_candidates(hermes_bin)
+        .into_iter()
+        .find(|p| p.is_file())
+}
+
+fn hermes_python_candidates(hermes_bin: &Path) -> Vec<PathBuf> {
+    let mut out = Vec::new();
+    let Some(dir) = hermes_bin.parent() else {
+        return out;
+    };
+    out.push(dir.join("python.exe"));
+    out.push(dir.join("python"));
+    if let Some(grand) = dir.parent() {
+        out.push(
+            grand
+                .join("hermes-agent")
+                .join("venv")
+                .join("Scripts")
+                .join("python.exe"),
+        );
+        out.push(
+            grand
+                .join("hermes-agent")
+                .join("venv")
+                .join("bin")
+                .join("python"),
+        );
+    }
+    out.push(
+        dir.join("hermes-agent")
+            .join("venv")
+            .join("Scripts")
+            .join("python.exe"),
+    );
+    out.push(
+        dir.join("hermes-agent")
+            .join("venv")
+            .join("bin")
+            .join("python"),
+    );
+    out
+}
+
+pub fn hermes_agent_root_from_python(python: &Path) -> Option<PathBuf> {
+    let scripts_or_bin = python.parent()?;
+    let dir_name = scripts_or_bin.file_name()?.to_str()?;
+    if dir_name != "Scripts" && dir_name != "bin" {
+        return None;
+    }
+    let venv = scripts_or_bin.parent()?;
+    let venv_name = venv.file_name()?.to_str()?;
+    if venv_name != "venv" && venv_name != ".venv" {
+        return None;
+    }
+    venv.parent().map(Path::to_path_buf)
 }
 
 /// Commands from the live UI to the voice worker.
@@ -801,7 +947,12 @@ fn process_capture_result(
     let (pcm, rate) = downsample_mono(&captured.samples, captured.rate, TARGET_STT_RATE);
     let wav = pcm_i16_to_wav(&pcm, rate);
 
-    match transcribe_wav_bytes(config, &wav) {
+    let result = match &config.backend {
+        SttBackend::Hermes { .. } => transcribe_via_hermes(config, &wav),
+        SttBackend::Http { .. } => transcribe_wav_bytes(config, &wav),
+    };
+
+    match result {
         Ok(text) => {
             let text = text.trim().to_string();
             if text.is_empty() {
@@ -813,9 +964,11 @@ fn process_capture_result(
             }
         }
         Err(e) => {
-            let _ = event_tx.send(VoiceEvent::Failed {
-                message: format!("STT: {e}"),
-            });
+            let message = match &config.backend {
+                SttBackend::Hermes { .. } => format!("Hermes STT: {e}"),
+                SttBackend::Http { .. } => format!("STT: {e}"),
+            };
+            let _ = event_tx.send(VoiceEvent::Failed { message });
         }
     }
     stt_flag.store(false, Ordering::Relaxed);
@@ -883,14 +1036,44 @@ pub fn parse_transcript_json(body: &str) -> Result<String, String> {
         .to_string())
 }
 
+pub fn parse_hermes_stt_json(body: &str) -> Result<String, String> {
+    let v: Value = serde_json::from_str(body).map_err(|_| "hermes stt failed".to_string())?;
+    let ok = v.get("ok").and_then(Value::as_bool).unwrap_or(false);
+    if ok {
+        Ok(v.get("text")
+            .and_then(Value::as_str)
+            .unwrap_or("")
+            .to_string())
+    } else {
+        let err = v
+            .get("error")
+            .and_then(Value::as_str)
+            .unwrap_or("hermes stt failed");
+        Err(if err.is_empty() {
+            "hermes stt failed".into()
+        } else {
+            err.to_string()
+        })
+    }
+}
+
 /// POST `{base}/v1/audio/transcriptions` with multipart WAV.
 pub fn transcribe_wav_bytes(config: &SttConfig, wav: &[u8]) -> Result<String, String> {
+    let SttBackend::Http {
+        base_url,
+        api_key,
+        model,
+    } = &config.backend
+    else {
+        return Err("HTTP STT backend not configured".into());
+    };
+
     let client = reqwest::blocking::Client::builder()
         .timeout(config.timeout)
         .build()
         .map_err(|e| format!("http client: {e}"))?;
 
-    let url = transcription_url(&config.base_url);
+    let url = transcription_url(base_url);
     let part = multipart::Part::bytes(wav.to_vec())
         .file_name("audio.wav")
         .mime_str("audio/wav")
@@ -898,15 +1081,15 @@ pub fn transcribe_wav_bytes(config: &SttConfig, wav: &[u8]) -> Result<String, St
 
     let mut form = multipart::Form::new()
         .part("file", part)
-        .text("model", config.model.clone())
+        .text("model", model.clone())
         .text("response_format", "json");
     if !config.language.is_empty() {
         form = form.text("language", config.language.clone());
     }
 
     let mut req = client.post(&url).multipart(form);
-    if !config.api_key.is_empty() {
-        req = req.bearer_auth(&config.api_key);
+    if !api_key.is_empty() {
+        req = req.bearer_auth(api_key);
     }
 
     let res = req.send().map_err(|e| format!("request: {e}"))?;
@@ -919,6 +1102,116 @@ pub fn transcribe_wav_bytes(config: &SttConfig, wav: &[u8]) -> Result<String, St
     }
 
     parse_transcript_json(&body)
+}
+
+fn transcribe_via_hermes(config: &SttConfig, wav: &[u8]) -> Result<String, String> {
+    let SttBackend::Hermes {
+        python,
+        agent_root,
+        profile,
+    } = &config.backend
+    else {
+        return Err("hermes stt failed".into());
+    };
+
+    let pid = std::process::id();
+    let millis = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis())
+        .unwrap_or(0);
+    let wav_path = std::env::temp_dir().join(format!("strudel-rs-voice-{pid}-{millis}.wav"));
+    fs::write(&wav_path, wav).map_err(|e| format!("write wav: {e}"))?;
+
+    struct RemoveOnDrop(PathBuf);
+    impl Drop for RemoveOnDrop {
+        fn drop(&mut self) {
+            let _ = fs::remove_file(&self.0);
+        }
+    }
+    let _guard = RemoveOnDrop(wav_path.clone());
+
+    let mut path_entries = vec![agent_root.clone()];
+    if let Some(existing) = env_nonempty("PYTHONPATH") {
+        path_entries.extend(std::env::split_paths(&existing));
+    }
+    let pythonpath = std::env::join_paths(&path_entries).map_err(|e| format!("PYTHONPATH: {e}"))?;
+
+    let mut cmd = Command::new(python);
+    cmd.arg("-c")
+        .arg(HERMES_TRANSCRIBE_PY)
+        .arg(&wav_path)
+        .current_dir(agent_root)
+        .env("HERMES_PROFILE", profile)
+        .env("PYTHONPATH", &pythonpath)
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+
+    let mut child = cmd.spawn().map_err(|e| format!("spawn: {e}"))?;
+    let stdout_pipe = child.stdout.take();
+    let stderr_pipe = child.stderr.take();
+    let out_h = stdout_pipe.map(|mut p| {
+        thread::spawn(move || {
+            let mut s = String::new();
+            let _ = p.read_to_string(&mut s);
+            s
+        })
+    });
+    let err_h = stderr_pipe.map(|mut p| {
+        thread::spawn(move || {
+            let mut s = String::new();
+            let _ = p.read_to_string(&mut s);
+            s
+        })
+    });
+
+    let status = wait_child_timeout(&mut child, config.timeout)?;
+    let stdout = out_h.and_then(|h| h.join().ok()).unwrap_or_default();
+    let stderr = err_h.and_then(|h| h.join().ok()).unwrap_or_default();
+
+    match parse_hermes_stt_json(stdout.trim()) {
+        Ok(text) => Ok(text),
+        Err(e) => {
+            if stdout.trim().is_empty() {
+                let detail = stderr.trim();
+                if detail.is_empty() {
+                    let code = status
+                        .code()
+                        .map(|c| c.to_string())
+                        .unwrap_or_else(|| status.to_string());
+                    Err(format!("exit {code}"))
+                } else {
+                    Err(truncate(detail, 300))
+                }
+            } else {
+                Err(e)
+            }
+        }
+    }
+}
+
+fn wait_child_timeout(
+    child: &mut std::process::Child,
+    timeout: Duration,
+) -> Result<ExitStatus, String> {
+    let start = Instant::now();
+    loop {
+        match child.try_wait() {
+            Ok(Some(status)) => return Ok(status),
+            Ok(None) => {
+                if start.elapsed() >= timeout {
+                    let _ = child.kill();
+                    let _ = child.wait();
+                    return Err(format!("timeout ({}s)", timeout.as_secs()));
+                }
+                thread::sleep(Duration::from_millis(50));
+            }
+            Err(e) => {
+                let _ = child.kill();
+                return Err(format!("wait: {e}"));
+            }
+        }
+    }
 }
 
 fn env_nonempty(key: &str) -> Option<String> {
@@ -971,11 +1264,18 @@ mod tests {
     }
 
     #[test]
-    fn enable_voice_requires_base_url() {
-        assert!(!enable_voice(None));
-        assert!(!enable_voice(Some("")));
-        assert!(!enable_voice(Some("   ")));
-        assert!(enable_voice(Some("http://192.168.1.10:8090")));
+    fn backend_kind_http_when_url_set() {
+        assert_eq!(
+            select_backend_kind(Some("http://192.168.1.10:8090")),
+            BackendKind::Http
+        );
+    }
+
+    #[test]
+    fn backend_kind_hermes_when_url_missing() {
+        assert_eq!(select_backend_kind(None), BackendKind::Hermes);
+        assert_eq!(select_backend_kind(Some("")), BackendKind::Hermes);
+        assert_eq!(select_backend_kind(Some("   ")), BackendKind::Hermes);
     }
 
     #[test]
@@ -999,6 +1299,67 @@ mod tests {
         assert_eq!(parse_transcript_json(r#"{"text":""}"#).unwrap(), "");
         assert_eq!(parse_transcript_json(r#"{}"#).unwrap(), "");
         assert!(parse_transcript_json("not-json").is_err());
+    }
+
+    #[test]
+    fn parse_hermes_stt_json_ok_text() {
+        assert_eq!(
+            parse_hermes_stt_json(r#"{"ok":true,"text":"暗くして","error":""}"#).unwrap(),
+            "暗くして"
+        );
+        assert_eq!(
+            parse_hermes_stt_json(r#"{"ok":true,"text":""}"#).unwrap(),
+            ""
+        );
+    }
+
+    #[test]
+    fn parse_hermes_stt_json_rejects_cloud_and_garbage() {
+        let err = parse_hermes_stt_json(r#"{"ok":false,"error":"stt.provider=groq is not local"}"#)
+            .unwrap_err();
+        assert!(err.contains("groq"), "err={err}");
+        assert!(parse_hermes_stt_json("not-json").is_err());
+    }
+
+    #[test]
+    fn resolve_hermes_python_from_install_layout() {
+        let root = std::env::temp_dir().join(format!(
+            "strudel-rs-py-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        struct DirGuard(PathBuf);
+        impl Drop for DirGuard {
+            fn drop(&mut self) {
+                let _ = fs::remove_dir_all(&self.0);
+            }
+        }
+        let _guard = DirGuard(root.clone());
+
+        let bin_dir = root.join("bin");
+        let scripts = root.join("hermes-agent").join("venv").join("Scripts");
+        let unix_bin = root.join("hermes-agent").join("venv").join("bin");
+        fs::create_dir_all(&bin_dir).unwrap();
+        fs::create_dir_all(&scripts).unwrap();
+        fs::create_dir_all(&unix_bin).unwrap();
+
+        let hermes = bin_dir.join("hermes.exe");
+        let py_win = scripts.join("python.exe");
+        let py_unix = unix_bin.join("python");
+        fs::write(&hermes, b"").unwrap();
+        fs::write(&py_win, b"").unwrap();
+        fs::write(&py_unix, b"").unwrap();
+
+        let found = resolve_python_near_hermes_bin(&hermes).expect("python");
+        assert!(
+            found == py_win || found == py_unix,
+            "found={}",
+            found.display()
+        );
+        let agent = hermes_agent_root_from_python(&found).expect("agent root");
+        assert_eq!(agent, root.join("hermes-agent"));
     }
 
     #[test]
@@ -1053,11 +1414,18 @@ mod tests {
             500.0,
             1.2,
         );
-        assert_eq!(cfg.base_url, "http://127.0.0.1:8090");
-        assert!(cfg.api_key.is_empty());
-        assert_eq!(
-            transcription_url(&cfg.base_url),
-            "http://127.0.0.1:8090/v1/audio/transcriptions"
-        );
+        match &cfg.backend {
+            SttBackend::Http {
+                base_url, api_key, ..
+            } => {
+                assert_eq!(base_url, "http://127.0.0.1:8090");
+                assert!(api_key.is_empty());
+                assert_eq!(
+                    transcription_url(base_url),
+                    "http://127.0.0.1:8090/v1/audio/transcriptions"
+                );
+            }
+            SttBackend::Hermes { .. } => panic!("expected Http backend"),
+        }
     }
 }

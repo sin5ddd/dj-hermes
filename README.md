@@ -77,7 +77,7 @@ Recipes (Cursor `SKILL.md` + playable `songs/skill-*.strudel`): [docs/profile/dj
   - A のみ / B のみ / 両方省略も可（空デッキから `/a load` / `/b load`）
   - **入力モデル（live TUI）**
     - **自然文**（例: `暗くして`）→ Hermes（既定プロファイル `dj-hermes`、MCP 経由で操作）
-    - **F12** → マイク録音トグル → **ローカル STT**（`STRUDEL_STT_BASE_URL`）→ 同じ Hermes 経路（画面に Hermes は出ない）
+    - **F12** → マイク録音トグル → **Hermes STT**（内蔵 Whisper。任意で `STRUDEL_STT_BASE_URL`）→ 同じ Hermes 経路（画面に Hermes は出ない）
     - **`/` 付き**（例: `/x 4` `/bpm 128` `/a load techno1`）→ ローカル即時コマンド
     - `--no-hermes` または Hermes 未検出時: 裸入力もローカル（従来どおり）
     - `--no-voice` で F12 音声を明示オフ
@@ -193,26 +193,25 @@ strudel-rs dj songs/smoke.strudel
 # strudel-rs play --headless songs/smoke.strudel
 ```
 
-### 音声入力（F12 / VAD → ローカル STT → Hermes）
+### 音声入力（F12 / VAD → Hermes STT → Hermes）
 
-live TUI で **F12** を押すと録音開始、もう一度 F12 で停止（最大 7 秒）。  
-`POST {STRUDEL_STT_BASE_URL}/v1/audio/transcriptions` で文字化し、既存の Hermes oneshot に渡します。Hermes の対話画面は出ません。クラウド音声 API（xAI / ElevenLabs など）は使いません。
+live TUI で **F12** を押すと録音開始、もう一度 F12 で停止（最大 7 秒）。
+録音 WAV を Hermes 内蔵の local Whisper（`transcribe_recording`）で文字化し、既存の Hermes oneshot に渡します。Hermes の対話画面は出ません。`STRUDEL_STT_BASE_URL` は不要です。クラウド音声 API（xAI / ElevenLabs など）は使いません。
 
-展示で HP に Whisper を置く手順は [docs/exhibit/stt-hp.md](./docs/exhibit/stt-hp.md)。
+前提: Hermes venv に `faster-whisper`（`uv pip install faster-whisper` または `hermes` extra `voice`）。初回は base モデル約 150MB をダウンロードします。
+
+解決できないとき: `STRUDEL_HERMES_PYTHON` に venv の python フルパスを指定します。
+
+任意: `STRUDEL_STT_BASE_URL` を置くと HP の HTTP STT に切り替わります（[docs/exhibit/stt-hp.md](./docs/exhibit/stt-hp.md)、オプション 2）。
 
 ```bash
-# Surface（演奏機）— HP の STT が起動済みであること
-export STRUDEL_STT_BASE_URL=http://192.168.x.x:8090
-# 任意:
-# export STRUDEL_STT_API_KEY=booth-token
-# export STRUDEL_STT_LANGUAGE=ja
-# export STRUDEL_VOICE_MAX_SECS=7
-# export STRUDEL_VOICE_MODE=push    # または vad
 strudel-rs dj songs/smoke.strudel
 # F12 で話す → 認識テキストが Hermes → MCP → 音が変わる
+# 任意の HTTP STT:
+# export STRUDEL_STT_BASE_URL=http://192.168.x.x:8090
 ```
 
-`STRUDEL_STT_BASE_URL` 未設定・マイク無し・`--no-voice` のときは音声のみ無効（TUI / キーボード自然文は従来どおり）。  
+マイク無し・`--no-voice`・Hermes Python 未検出のときは音声のみ無効（TUI / キーボード自然文は従来どおり）。
 default 入力デバイスを使います（`arecord -l` で確認）。
 
 ### Hermes（`config.yaml`）

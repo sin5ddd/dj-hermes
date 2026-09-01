@@ -1,7 +1,10 @@
-# 展示用: HP 上のローカル STT
+# 展示用: HP 上のローカル STT（オプション 2）
 
-Surface の F12 / VAD は、HP の HTTP サーバへ 16 kHz WAV を送り、JSON の `text` を受け取ります。  
-xAI や ElevenLabs などのクラウド音声 API は使いません。演奏プロセスにも Whisper は載せません。
+既定の F12 / VAD は Surface 上の Hermes 内蔵 Whisper です（`STRUDEL_STT_BASE_URL` 不要）。
+この文書は issue #46 の選択肢 2 で、HP に HTTP STT を置く場合です。
+
+`STRUDEL_STT_BASE_URL` を設定すると、Surface は HP の HTTP サーバへ 16 kHz WAV を送り、JSON の `text` を受け取ります。
+xAI や ElevenLabs などのクラウド音声 API は使いません。
 
 関連: [issue #46](https://github.com/sin5ddd/strudel-rust/issues/46)
 
@@ -55,7 +58,7 @@ export STRUDEL_STT_BASE_URL=http://192.168.x.x:8090
 strudel-rs dj songs/techno1.strudel songs/ambient1.strudel
 ```
 
-`STRUDEL_STT_BASE_URL` が無いと音声はオフです（キーボードの自然文は従来どおり）。
+`STRUDEL_STT_BASE_URL` が無いときは既定の Hermes STT です（キーボードの自然文は従来どおり）。
 
 | `STRUDEL_VOICE_MODE` | 動き |
 | --- | --- |
