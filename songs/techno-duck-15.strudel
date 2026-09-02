@@ -1,0 +1,11 @@
+// @title zap-pump
+// @genre techno-duck
+setcpm(126/4)
+// kick
+$: s("bd:ez*4").gain(0.84).duckorbit(2).duckattack(0.030).duckdepth(0.86)
+// hats
+$: s("[~ hh:tt]*4").gain(0.26)
+// bass
+$: note("0 7 2 0").scale("C4:minor").s("bs:hv").orbit(2).gain(0.36)
+// pad
+$: note("3 ~ ~ 5").scale("C4:minor").s("pf:ff").orbit(2).gain(0.20)

@@ -1,0 +1,9 @@
+// @title growl-fade
+// @genre progressive-house
+setcpm(128/4)
+// drums
+$: s("bd:ng*4, [~ cp:gt]*2, hh:hs*8").gain(0.53)
+// bass
+$: note("5 2 0 2").scale("C4:minor").s("bs:gr").gain(0.38)
+// fx
+$: s("<fx:rp ~ ~ ~>").gain(0.26)

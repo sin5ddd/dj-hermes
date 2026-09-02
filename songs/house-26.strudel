@@ -1,0 +1,9 @@
+// @title thud-koto
+// @genre house
+setcpm(124/4)
+// drums
+$: s("bd:tc*4, [~ cp:rm]*2, [~ hh:hs]*4").gain(0.57)
+// bass
+$: note("2 0 3 7").scale("C4:minor").s("bs:rn").gain(0.40)
+// lead
+$: note("3 ~ 7 5  2 0 5 ~").scale("C4:minor").s("plk:kt").gain(0.30).cut(1)

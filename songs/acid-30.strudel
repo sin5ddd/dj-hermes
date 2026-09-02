@@ -1,0 +1,23 @@
+// @title disco-303
+// @genre acid
+setcpm(130/4)
+// drums
+$: s("bd:dc*4, [~ hh:tt]*4").gain(0.58)
+// bass
+$: note("7 5 2 0  3 7 5 2  0 4 7 0  5 2 -1 <3 4>")
+  .scale("C2:minor")
+  .s("square")
+  .lpf("245 245 245 760  245 720 245 245  780 245 245 700  245 245 740 245")
+  .lpq(14)
+  .lpenv(3)
+  .lpattack(0.001)
+  .lpdecay(0.09)
+  .lpsustain(0.05)
+  .cut(1)
+  .gain(0.46)
+  .attack(0.001)
+  .decay(0.1)
+  .sustain(0.12)
+  .release(0.04)
+// fx
+$: s("<fx:rl ~ ~ ~>").gain(0.22)

@@ -1,0 +1,9 @@
+// @title alt-air
+// @genre minimal-techno
+setcpm(126/4)
+// drums
+$: s("bd:01*4, [~ hh:ch]*4").gain(0.48)
+// bass
+$: note("7 ~ 0 ~").scale("C4:minor").s("bs:rd").gain(0.30)
+// fx
+$: s("<fx:fr ~ ~ ~>").gain(0.22)

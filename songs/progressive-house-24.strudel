@@ -1,0 +1,9 @@
+// @title stomp-air
+// @genre progressive-house
+setcpm(128/4)
+// drums
+$: s("bd:gb*4, [~ cp:rm]*2, hh:dk*8").gain(0.57)
+// bass
+$: note("0 5 3 5").scale("C4:minor").s("bs:gb").gain(0.36)
+// fx
+$: s("<fx:fr ~ ~ ~>").gain(0.26)

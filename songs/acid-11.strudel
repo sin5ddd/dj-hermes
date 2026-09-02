@@ -1,0 +1,23 @@
+// @title saw-skip
+// @genre acid
+setcpm(130/4)
+// drums
+$: s("bd:8t*4, [~ hh:hs]*4").gain(0.59)
+// bass
+$: note("2 0 5 2  3 7 0 3  5 0 2 0  7 3 -1 <0 4>")
+  .scale("C2:minor")
+  .s("sawtooth")
+  .lpf("240 240 680 240  240 720 240 240  240 240 760 240  700 240 240 240")
+  .lpq(14)
+  .lpenv(3)
+  .lpattack(0.001)
+  .lpdecay(0.09)
+  .lpsustain(0.05)
+  .cut(1)
+  .gain(0.46)
+  .attack(0.001)
+  .decay(0.1)
+  .sustain(0.12)
+  .release(0.04)
+// pad
+$: note("5 ~ ~ ~").scale("C4:minor").s("pf:ff").gain(0.14)

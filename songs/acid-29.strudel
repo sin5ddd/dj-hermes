@@ -1,0 +1,23 @@
+// @title floor-twist
+// @genre acid
+setcpm(130/4)
+// drums
+$: s("bd:hf*4, [~ hh:hs]*4").gain(0.63)
+// bass
+$: note("3 0 7 5  2 3 0 7  5 0 2 4  -1 7 0 <5 2>")
+  .scale("C2:minor")
+  .s("sawtooth")
+  .lpf("255 255 730 255  255 780 255 255  255 255 710 255  760 255 255 255")
+  .lpq(14)
+  .lpenv(3)
+  .lpattack(0.001)
+  .lpdecay(0.09)
+  .lpsustain(0.05)
+  .cut(1)
+  .gain(0.46)
+  .attack(0.001)
+  .decay(0.1)
+  .sustain(0.12)
+  .release(0.04)
+// pad
+$: note("2 ~ ~ 0").scale("C4:minor").s("pf:ff").gain(0.14)

@@ -1,0 +1,9 @@
+// @title round-air
+// @genre minimal-techno
+setcpm(126/4)
+// drums
+$: s("bd:jg*4, [~ hh:cl]*4").gain(0.52)
+// bass
+$: note("2 ~ 0 ~").scale("C4:minor").s("bs:ht").gain(0.30)
+// fx
+$: s("<fx:nr ~ ~ ~>").gain(0.22)

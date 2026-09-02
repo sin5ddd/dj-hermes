@@ -1,0 +1,9 @@
+// @title nylon-bloom
+// @genre progressive-house
+setcpm(128/4)
+// drums
+$: s("bd:8t*4, [~ cp]*2, [~ hh:hs]*4").gain(0.53)
+// bass
+$: note("0 3 ~ 5").scale("C4:minor").s("bs:ac").gain(0.42)
+// pad
+$: note("7 ~ 2 ~").scale("C4:minor").s("pf:ff").gain(0.20)

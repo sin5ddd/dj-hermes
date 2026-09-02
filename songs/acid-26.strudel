@@ -1,0 +1,23 @@
+// @title thud-run
+// @genre acid
+setcpm(130/4)
+// drums
+$: s("bd:tc*4, [~ hh:hs]*4").gain(0.59)
+// bass
+$: note("2 7 3 0  5 2 7 0  0 4 3 5  7 0 -1 <4 2>")
+  .scale("C2:minor")
+  .s("square")
+  .lpf("260 260 260 750  260 700 260 260  730 260 260 780  260 260 680 260")
+  .lpq(14)
+  .lpenv(3)
+  .lpattack(0.001)
+  .lpdecay(0.09)
+  .lpsustain(0.05)
+  .cut(1)
+  .gain(0.46)
+  .attack(0.001)
+  .decay(0.1)
+  .sustain(0.12)
+  .release(0.04)
+// pad
+$: note("7 ~ ~ 2").scale("C4:minor").s("pf:ff").gain(0.14)

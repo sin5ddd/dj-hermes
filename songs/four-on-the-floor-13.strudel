@@ -1,0 +1,9 @@
+// @title round-riser
+// @genre four-on-the-floor
+setcpm(124/4)
+// drums
+$: s("bd:jg*4, [~ hh:cl]*4").gain(0.64)
+// bass
+$: note("2 0 0 5").scale("C4:minor").s("bs:ht").gain(0.38)
+// fx
+$: s("<fx:nr ~ ~ ~>").gain(0.26)

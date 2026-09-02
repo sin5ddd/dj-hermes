@@ -1,0 +1,9 @@
+// @title break-thin
+// @genre minimal-techno
+setcpm(126/4)
+// drums
+$: s("bd:dn*4, [~ hh:hs]*4").gain(0.50)
+// bass
+$: note("5 ~ 0 ~").scale("C4:minor").s("bs:sw").gain(0.30)
+// lead
+$: note("7 ~ ~ 2").scale("C4:minor").s("ld:ss").gain(0.22).cut(1)

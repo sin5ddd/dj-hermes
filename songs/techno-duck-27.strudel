@@ -1,0 +1,11 @@
+// @title classic-growl
+// @genre techno-duck
+setcpm(126/4)
+// kick
+$: s("bd:00*4").gain(0.86).duckorbit(2).duckattack(0.038).duckdepth(0.86)
+// hats
+$: s("[~ hh:pd]*4").gain(0.30)
+// bass
+$: note("5 0 3 0").scale("C4:minor").s("bs:bp").orbit(2).gain(0.36)
+// pad
+$: note("3 ~ 2 ~").scale("C4:minor").s("pf:ff").orbit(2).gain(0.20)

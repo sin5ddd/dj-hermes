@@ -1,0 +1,9 @@
+// @title zap-dot
+// @genre minimal-techno
+setcpm(126/4)
+// drums
+$: s("bd:ez*4, [~ hh:tt]*4").gain(0.48)
+// bass
+$: note("3 ~ ~ 0").scale("C4:minor").s("bs:hv").gain(0.34)
+// pad
+$: note("2 ~ ~ 8").scale("C4:minor").s("pf:ff").gain(0.14)

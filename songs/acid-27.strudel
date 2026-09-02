@@ -1,0 +1,23 @@
+// @title classic-hop
+// @genre acid
+setcpm(130/4)
+// drums
+$: s("bd:00*4, [~ hh:pd]*4").gain(0.60)
+// bass
+$: note("5 2 0 3  7 5 2 0  4 0 7 3  0 2 5 <-1 7>")
+  .scale("C2:minor")
+  .s("sawtooth")
+  .lpf("240 240 780 240  240 710 240 240  240 240 740 240  690 240 240 240")
+  .lpq(14)
+  .lpenv(3)
+  .lpattack(0.001)
+  .lpdecay(0.09)
+  .lpsustain(0.05)
+  .cut(1)
+  .gain(0.46)
+  .attack(0.001)
+  .decay(0.1)
+  .sustain(0.12)
+  .release(0.04)
+// fx
+$: s("<fx:ry ~ ~ ~>").gain(0.22)

@@ -1,0 +1,9 @@
+// @title tight-acid
+// @genre four-on-the-floor
+setcpm(124/4)
+// drums
+$: s("bd:8t*4, [~ hh:hs]*4").gain(0.61)
+// bass
+$: note("0 5 3 0").scale("C4:minor").s("bs:ac").gain(0.42)
+// lead
+$: note("3 ~ 5 7  0 2 ~ 3").scale("C4:minor").s("plk:ac").gain(0.30).cut(1)

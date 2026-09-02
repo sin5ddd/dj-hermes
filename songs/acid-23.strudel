@@ -1,0 +1,23 @@
+// @title core-leap
+// @genre acid
+setcpm(130/4)
+// drums
+$: s("bd:fc*4, [~ hh:fc]*4").gain(0.62)
+// bass
+$: note("7 2 0 5  3 7 2 0  4 5 0 3  2 -1 0 <7 5>")
+  .scale("C2:minor")
+  .s("sawtooth")
+  .lpf("275 275 690 275  770 275 275 275  275 730 275 275  750 275 275 275")
+  .lpq(14)
+  .lpenv(3)
+  .lpattack(0.001)
+  .lpdecay(0.09)
+  .lpsustain(0.05)
+  .cut(1)
+  .gain(0.46)
+  .attack(0.001)
+  .decay(0.1)
+  .sustain(0.12)
+  .release(0.04)
+// pad
+$: note("0 ~ 2 ~").scale("C4:minor").s("pf:ff").gain(0.14)

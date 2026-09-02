@@ -1,0 +1,23 @@
+// @title amen-scream
+// @genre acid
+setcpm(130/4)
+// drums
+$: s("bd:lf*4, [~ hh:dk]*4").gain(0.63)
+// bass
+$: note("3 2 0 7  5 3 0 2  7 0 4 0  2 5 -1 <3 0>")
+  .scale("C2:minor")
+  .s("square")
+  .lpf("230 700 230 230  230 760 230 230  230 230 740 230  680 230 230 230")
+  .lpq(14)
+  .lpenv(3)
+  .lpattack(0.001)
+  .lpdecay(0.09)
+  .lpsustain(0.05)
+  .cut(1)
+  .gain(0.46)
+  .attack(0.001)
+  .decay(0.1)
+  .sustain(0.12)
+  .release(0.04)
+// pad
+$: note("7 ~ 5 ~").scale("C4:minor").s("pf:ff").gain(0.14)

@@ -1,0 +1,9 @@
+// @title crunch-bright
+// @genre four-on-the-floor
+setcpm(124/4)
+// drums
+$: s("bd:8d*4, hh:cl*8").gain(0.60)
+// bass
+$: note("2 5 3 0").scale("C4:minor").s("bs:rb").gain(0.36)
+// lead
+$: note("0 5 7 ~  3 ~ 2 5").scale("C4:minor").s("plk:hb").gain(0.30).cut(1)

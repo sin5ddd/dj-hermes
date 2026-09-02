@@ -1,0 +1,9 @@
+// @title alt-wurli
+// @genre progressive-house
+setcpm(128/4)
+// drums
+$: s("bd:01*4, [~ cp:gt]*2, [~ hh:ch]*4").gain(0.52)
+// bass
+$: note("3 3 0 5").scale("C4:minor").s("bs:rd").gain(0.38)
+// lead
+$: note("0 5 ~ 2  7 ~ 3 0").scale("C4:minor").s("ep:wr").gain(0.30)

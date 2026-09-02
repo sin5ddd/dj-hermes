@@ -1,0 +1,9 @@
+// @title metal-sweep
+// @genre house
+setcpm(124/4)
+// drums
+$: s("bd:mt*4, [~ cp:dr]*2, [~ hh:ch]*4").gain(0.57)
+// bass
+$: note("3 0 2 5").scale("C4:minor").s("bs:wb").gain(0.36)
+// fx
+$: s("<fx:rw ~ ~ ~>").gain(0.26)

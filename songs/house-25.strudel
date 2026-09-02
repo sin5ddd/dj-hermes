@@ -1,0 +1,9 @@
+// @title punch-spark
+// @genre house
+setcpm(124/4)
+// drums
+$: s("bd:01*4, [~ cp:gt]*2, [~ hh:ch]*4").gain(0.56)
+// bass
+$: note("0 5 ~ 3").scale("C4:minor").s("bs:rd").gain(0.38)
+// fx
+$: s("<fx:fr ~ ~ ~>").gain(0.26)

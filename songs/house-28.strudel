@@ -1,0 +1,9 @@
+// @title nine-soft
+// @genre house
+setcpm(124/4)
+// drums
+$: s("bd:9p*4, [~ cp:dr]*2, [~ hh:cl]*4").gain(0.60)
+// bass
+$: note("0 7 ~ 2").scale("C4:minor").s("bs:mt").gain(0.36)
+// pad
+$: note("2 ~ 5 ~").scale("C4:minor").s("pf:ff").gain(0.20)

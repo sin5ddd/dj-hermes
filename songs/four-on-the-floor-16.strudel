@@ -1,0 +1,9 @@
+// @title ping-wobble
+// @genre four-on-the-floor
+setcpm(124/4)
+// drums
+$: s("bd:mt*4, hh:ch*8").gain(0.61)
+// bass
+$: note("3 2 0 3").scale("C4:minor").s("bs:wb").gain(0.36)
+// fx
+$: s("<fx:rw ~ ~ ~>").gain(0.26)

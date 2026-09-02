@@ -1,0 +1,9 @@
+// @title classic-bp
+// @genre four-on-the-floor
+setcpm(124/4)
+// drums
+$: s("bd:00*4, [~ hh:pd]*4").gain(0.62)
+// bass
+$: note("5 3 0 5").scale("C4:minor").s("bs:bp").gain(0.42)
+// pad
+$: note("7 ~ ~ 2").scale("C4:minor").s("pf:ff").gain(0.20)

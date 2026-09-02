@@ -1,0 +1,9 @@
+// @title floor-rev
+// @genre progressive-house
+setcpm(128/4)
+// drums
+$: s("bd:hf*4, [~ cp:gt]*2, [~ hh:hs]*4").gain(0.57)
+// bass
+$: note("0 3 5 7").scale("C4:minor").s("bs:sb").gain(0.38)
+// pad
+$: note("3 ~ ~ 2").scale("C4:minor").s("pf:ff").gain(0.20)

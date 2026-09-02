@@ -1,0 +1,9 @@
+// @title cine-hold
+// @genre progressive-house
+setcpm(128/4)
+// drums
+$: s("bd:cn*4, [~ cp]*2, [~ hh:ns]*4").gain(0.57)
+// bass
+$: note("2 ~ 5 2").scale("C4:minor").s("bs:ss").gain(0.42)
+// lead
+$: note("5 ~ 3 ~").scale("C4:minor").s("ld:ss").gain(0.30).cut(1)

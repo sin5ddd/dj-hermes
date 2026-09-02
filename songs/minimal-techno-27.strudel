@@ -1,0 +1,9 @@
+// @title classic-dot
+// @genre minimal-techno
+setcpm(126/4)
+// drums
+$: s("bd:00*4, [~ hh:pd]*4").gain(0.50)
+// bass
+$: note("0 ~ 7 5").scale("C4:minor").s("bs:bp").gain(0.34)
+// pad
+$: note("2 ~ 8 ~").scale("C4:minor").s("pf:ff").gain(0.14)

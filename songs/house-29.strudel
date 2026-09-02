@@ -1,0 +1,9 @@
+// @title floor-cym
+// @genre house
+setcpm(124/4)
+// drums
+$: s("bd:hf*4, [~ cp:gt]*2, [~ hh:hs]*4").gain(0.61)
+// bass
+$: note("3 5 0 ~").scale("C4:minor").s("bs:sb").gain(0.38)
+// fx
+$: s("<fx:ry ~ ~ ~>").gain(0.26)

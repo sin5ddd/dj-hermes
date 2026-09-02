@@ -1,0 +1,9 @@
+// @title dist-kalimba
+// @genre house
+setcpm(124/4)
+// drums
+$: s("bd:8d*4, [~ cp:dr]*2, [~ hh:cl]*4").gain(0.56)
+// bass
+$: note("2 5 0 3").scale("C4:minor").s("bs:rb").gain(0.36)
+// lead
+$: note("8 ~ 5 3  0 2 ~ 5").scale("C4:minor").s("plk:kl").gain(0.30).cut(1)

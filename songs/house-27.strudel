@@ -1,0 +1,9 @@
+// @title click-marimba
+// @genre house
+setcpm(124/4)
+// drums
+$: s("bd:00*4, [~ cp]*2, hh:pd*8").gain(0.58)
+// bass
+$: note("5 2 0 5").scale("C4:minor").s("bs:bp").gain(0.42)
+// lead
+$: note("7 5 ~ 0  3 2 ~ 8").scale("C4:minor").s("plk:mm").gain(0.30).cut(1)

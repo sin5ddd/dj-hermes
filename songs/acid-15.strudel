@@ -1,0 +1,23 @@
+// @title zap-climb
+// @genre acid
+setcpm(130/4)
+// drums
+$: s("bd:ez*4, [~ hh:tt]*4").gain(0.58)
+// bass
+$: note("0 2 5 7  3 5 0 2  7 5 3 0  4 0 2 <5 -1>")
+  .scale("C2:minor")
+  .s("sawtooth")
+  .lpf("270 270 690 270  780 270 270 270  270 730 270 270  270 270 750 270")
+  .lpq(14)
+  .lpenv(3)
+  .lpattack(0.001)
+  .lpdecay(0.09)
+  .lpsustain(0.05)
+  .cut(1)
+  .gain(0.46)
+  .attack(0.001)
+  .decay(0.1)
+  .sustain(0.12)
+  .release(0.04)
+// fx
+$: s("<fx:rw ~ ~ ~>").gain(0.22)

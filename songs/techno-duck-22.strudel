@@ -1,0 +1,11 @@
+// @title style-duck
+// @genre techno-duck
+setcpm(126/4)
+// kick
+$: s("bd:hs*4").gain(0.86).duckorbit(2).duckattack(0.038).duckdepth(0.88)
+// hats
+$: s("[~ hh:tt]*4").gain(0.30)
+// bass
+$: note("3 5 0 2").scale("C4:minor").s("bs:g2").orbit(2).gain(0.34)
+// fx
+$: s("<fx:rp ~ ~ ~>").gain(0.26)

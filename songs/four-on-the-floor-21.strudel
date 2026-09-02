@@ -1,0 +1,9 @@
+// @title neuro-growl
+// @genre four-on-the-floor
+setcpm(124/4)
+// drums
+$: s("bd:ng*4, [~ hh:hs]*4").gain(0.61)
+// bass
+$: note("0 2 5 3").scale("C4:minor").s("bs:gr").gain(0.38)
+// pad
+$: note("3 ~ 7 ~").scale("C4:minor").s("pf:ff").gain(0.20)

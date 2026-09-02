@@ -1,0 +1,9 @@
+// @title grit-gap
+// @genre minimal-techno
+setcpm(126/4)
+// drums
+$: s("bd:fn*4, [~ hh:pd]*4").gain(0.52)
+// bass
+$: note("0 ~ 5 2").scale("C4:minor").s("bs:dq").gain(0.32)
+// pad
+$: note("5 ~ ~ 7").scale("C4:minor").s("pf:ff").gain(0.14)

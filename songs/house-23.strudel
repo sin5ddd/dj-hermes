@@ -1,0 +1,9 @@
+// @title french-clav
+// @genre house
+setcpm(124/4)
+// drums
+$: s("bd:fc*4, [~ cp]*2, [~ hh:fc]*4").gain(0.60)
+// bass
+$: note("0 2 7 3").scale("C4:minor").s("bs:fc").gain(0.42)
+// lead
+$: note("5 2 0 ~  3 7 2 ~").scale("C4:minor").s("plk:cv").gain(0.30).cut(1)

@@ -1,0 +1,9 @@
+// @title sub-horizon
+// @genre progressive-house
+setcpm(128/4)
+// drums
+$: s("bd:8b*4, [~ cp:rm]*2, hh*8").gain(0.54)
+// bass
+$: note("0 0 5 5").scale("C4:minor").s("bs:8s").gain(0.36)
+// fx
+$: s("<fx:nr ~ ~ ~>").gain(0.26)

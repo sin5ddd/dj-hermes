@@ -1,0 +1,11 @@
+// @title round-lift
+// @genre techno-duck
+setcpm(126/4)
+// kick
+$: s("bd:jg*4").gain(0.88).duckorbit(2).duckattack(0.042).duckdepth(0.82)
+// hats
+$: s("[~ hh:cl]*4").gain(0.32)
+// bass
+$: note("2 0 5 2").scale("C4:minor").s("bs:ht").orbit(2).gain(0.32)
+// fx
+$: s("<fx:nr ~ ~ ~>").gain(0.26)

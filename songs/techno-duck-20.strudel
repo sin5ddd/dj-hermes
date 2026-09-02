@@ -1,0 +1,11 @@
+// @title crunch-pluck
+// @genre techno-duck
+setcpm(126/4)
+// kick
+$: s("bd:8d*4").gain(0.84).duckorbit(2).duckattack(0.030).duckdepth(0.84)
+// hats
+$: s("hh:cl*8").gain(0.26)
+// bass
+$: note("2 5 0 7").scale("C4:minor").s("bs:rb").orbit(2).gain(0.30)
+// lead
+$: note("0 3 7 ~  5 ~ 2 0").scale("C4:minor").s("plk:ny").orbit(2).gain(0.30).cut(1)
