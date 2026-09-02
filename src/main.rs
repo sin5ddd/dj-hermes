@@ -549,13 +549,13 @@ fn cmd_live_session(opts: LiveSessionOpts) -> Result<(), String> {
         None
     };
 
-    let voice_handle = if with_highlight && hermes_handle.is_some() && voice_enabled {
-        start_voice_for_tui(hermes_handle.as_ref().unwrap().config())
-    } else {
-        if with_highlight && hermes_handle.is_some() && !voice_enabled {
+    let voice_handle = match (with_highlight, voice_enabled, hermes_handle.as_ref()) {
+        (true, true, Some(h)) => start_voice_for_tui(h.config()),
+        (true, false, Some(_)) => {
             eprintln!("voice: disabled (--no-voice)");
+            None
         }
-        None
+        _ => None,
     };
 
     let stream = build_stream(
@@ -595,10 +595,7 @@ fn cmd_live_session(opts: LiveSessionOpts) -> Result<(), String> {
 fn start_voice_for_tui(
     hermes: &strudel_rs::hermes::HermesConfig,
 ) -> Option<strudel_rs::voice_input::VoiceHandle> {
-    let mut cfg = match strudel_rs::voice_input::SttConfig::from_env() {
-        Some(c) => c,
-        None => return None,
-    };
+    let mut cfg = strudel_rs::voice_input::SttConfig::from_env()?;
 
     if matches!(
         cfg.backend,
