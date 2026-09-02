@@ -421,10 +421,15 @@ impl Engine {
         );
 
         let sr = self.transport.sample_rate as f32;
-        if self.mixer.riser_needs_pcm() {
-            let pcm = samples
-                .get_stem("fx", "up")
-                .or_else(|| samples.get_stem("fx", "nr"));
+        if let Some(kind) = self.mixer.oneshot_needs_pcm() {
+            let pcm = match kind {
+                "drop" => samples
+                    .get_stem("fx", "id")
+                    .or_else(|| samples.get_stem("fx", "sd")),
+                _ => samples
+                    .get_stem("fx", "up")
+                    .or_else(|| samples.get_stem("fx", "nr")),
+            };
             self.mixer.set_riser_pcm(pcm);
         }
         // Last-write-wins compressor params from either deck's pattern hits.
@@ -1030,6 +1035,53 @@ b: note("{n}").s("sawtooth").gain(0.8)
         assert!(!e.mixer.has_mix_job());
         assert!(e.mixer.gain_a > 0.9);
         assert!(e.mixer.gain_b.abs() < 0.1);
+    }
+
+    #[test]
+    fn mix_new_fills_wait_for_bar_then_cut() {
+        for kind in [
+            FillKind::Echo,
+            FillKind::Hpf,
+            FillKind::Roll,
+            FillKind::Drop,
+        ] {
+            let mut e = Engine::new(48_000, 120.0);
+            let bank = SampleBank::empty();
+            e.load_song_immediate(0, test_song("c3"));
+            e.load_song_immediate(1, test_song("g3"));
+            e.mixer.set_crossfader(0.0);
+            e.push_command(Command::Mix(mix_fill(kind, 1)));
+            let mut buf = stereo_buf(4_800);
+            e.process(&mut buf, &bank);
+            assert!(
+                !e.mixer.has_mix_job(),
+                "{} must wait for bar",
+                kind.as_str()
+            );
+            process_until_next_bar_applied(&mut e, &bank);
+            assert!(
+                e.mixer.has_mix_job(),
+                "{} should start at bar",
+                kind.as_str()
+            );
+            let mut buf = stereo_buf(96_000);
+            e.process(&mut buf, &bank);
+            if e.mixer.has_mix_job() {
+                let mut buf = stereo_buf(96_000);
+                e.process(&mut buf, &bank);
+            }
+            assert!(
+                !e.mixer.has_mix_job(),
+                "{} job should finish",
+                kind.as_str()
+            );
+            assert!(
+                e.mixer.gain_b > 0.9,
+                "{} should land on B, gain_b={}",
+                kind.as_str(),
+                e.mixer.gain_b
+            );
+        }
     }
 
     #[test]

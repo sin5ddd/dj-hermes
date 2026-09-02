@@ -6,6 +6,7 @@ use std::fs;
 use std::path::PathBuf;
 
 use strudel_rs::engine::{Command, Engine};
+use strudel_rs::mixer::{FillKind, MixAction, MixCommand, MixGrid};
 use strudel_rs::sample::{SampleBank, SAMPLE_ROOT_HZ};
 use strudel_rs::song::parse_song;
 
@@ -427,6 +428,93 @@ fn dj_xfade_house_to_four_on_the_floor() {
     assert!(
         has_energy(&buf, 0.001),
         "four-on-the-floor on B should sound after xfade, peak={}",
+        peak(&buf)
+    );
+    assert!(
+        clip_rail_ratio(&all) < 0.08,
+        "session heavily at clip rail: {}",
+        clip_rail_ratio(&all)
+    );
+}
+
+#[test]
+fn dj_echo_fill_house_to_four_on_the_floor() {
+    let bank = if samples_available() {
+        load_bank()
+    } else {
+        SampleBank::empty()
+    };
+
+    let house = load_song_file("house-01.strudel");
+    let four = load_song_file("four-on-the-floor-01.strudel");
+    let mut e = Engine::new(SR, DJ_BPM);
+    let bl = bar_len(DJ_BPM);
+
+    e.push_command(Command::LoadSong {
+        deck: 0,
+        song: Box::new(house),
+    });
+    let mut all = Vec::new();
+    all.extend(process_n(&mut e, &bank, bl));
+    let buf = process_n(&mut e, &bank, bl);
+    assert_finite_bounded(&buf, "after load A");
+    all.extend(&buf);
+    if e.decks[0].song_title().is_none() {
+        let buf = process_n(&mut e, &bank, bl);
+        assert_finite_bounded(&buf, "extra bar for load A");
+        all.extend(&buf);
+    }
+    assert_eq!(e.decks[0].song_title(), Some("warehouse-intro"));
+
+    e.push_command(Command::LoadSong {
+        deck: 1,
+        song: Box::new(four),
+    });
+    e.push_command(Command::Mix(MixCommand {
+        action: MixAction::Fill,
+        to_deck: 1,
+        bars: 1,
+        eq: true,
+        reset_eq: true,
+        fill: Some(FillKind::Echo),
+        grid: MixGrid::Eighth,
+        mute_track: None,
+        phrase: 1,
+    }));
+
+    let buf = process_n(&mut e, &bank, bl);
+    assert_finite_bounded(&buf, "pending apply");
+    all.extend(&buf);
+    if e.decks[1].song_title().is_none() {
+        let buf = process_n(&mut e, &bank, bl);
+        assert_finite_bounded(&buf, "extra bar for B title");
+        all.extend(&buf);
+    }
+    assert_eq!(e.decks[1].song_title(), Some("sine-pulse"));
+    if !e.mixer.has_mix_job() {
+        let buf = process_n(&mut e, &bank, bl);
+        assert_finite_bounded(&buf, "extra bar for fill start");
+        all.extend(&buf);
+    }
+
+    for i in 0..4 {
+        let buf = process_n(&mut e, &bank, bl);
+        assert_finite_bounded(&buf, &format!("echo fill bar {i}"));
+        all.extend(&buf);
+    }
+
+    assert!(
+        (e.mixer.gain_b - 1.0).abs() < 1e-2,
+        "to gain should be 1, got {}",
+        e.mixer.gain_b
+    );
+
+    let buf = process_n(&mut e, &bank, bl);
+    assert_finite_bounded(&buf, "post-echo four-on-the-floor");
+    all.extend(&buf);
+    assert!(
+        has_energy(&buf, 0.001),
+        "four-on-the-floor on B should sound after echo fill, peak={}",
         peak(&buf)
     );
     assert!(

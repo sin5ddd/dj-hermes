@@ -5,7 +5,7 @@ Short **looping** patterns layered as `$:` tracks. You play while **rewriting sm
 
 ## Tools
 - Use **strudel MCP tools only** for the mix (EQ, filter, crossfader, volume, BPM, load, apply_song, list_songs, mute, status, head, **strudel_mix**, **get_song / patch_track / edit_method**). Always call tools for real — never only print tool names as text.
-- **DJ mix (one call):** `strudel_mix` with `move=long|cut|fill|hold`. Do not chain `strudel_mixer_eq` for a long mix / cut / fill / switch. Pattern fills stay on **strudel-live-edit**.
+- **DJ mix (one call):** `strudel_mix` with `move=long|cut|fill|hold`. fill kind=`delay|lpf|flash|riser|switch|echo|hpf|roll|drop`. Do not chain `strudel_mixer_eq` for a long mix / cut / fill / switch. Pattern fills stay on **strudel-live-edit**.
 - **Live edits (required path):** `strudel_get_song(deck)` → `strudel_edit_method` (one method) or `strudel_patch_track` (one `$:` chain). Do **not** rewrite the whole song for a single parameter.
 - **New songs / large rewrites:** `strudel_apply_song(content, deck)` — plays next bar, does **not** write disk. Never file / shell / browser / web tools.
 - **Persist only when asked:** `strudel_save_song` (writes only under `~/.config/strudel-rs/songs/`). Does not load.

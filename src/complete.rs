@@ -40,7 +40,9 @@ const TOP_LEVEL: &[&str] = &[
     "a", "b", "x", "mix", "bpm", "hush", "status", "help", "quit", "viz", "vfx", "dopa", "flash",
 ];
 const MIX_MOVES: &[&str] = &["long", "cut", "fill", "hold"];
-const MIX_KINDS: &[&str] = &["delay", "lpf", "flash", "riser", "switch"];
+const MIX_KINDS: &[&str] = &[
+    "delay", "lpf", "flash", "riser", "switch", "echo", "hpf", "roll", "drop",
+];
 const DECK_VERBS: &[&str] = &["load", "mute", "unmute", "gain", "head", "x"];
 const VIZ_ARGS: &[&str] = &["on", "off"];
 

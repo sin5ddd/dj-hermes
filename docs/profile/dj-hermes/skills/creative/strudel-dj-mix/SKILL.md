@@ -1,6 +1,6 @@
 ---
 name: strudel-dj-mix
-description: "Use when mixing two decks, long mix, cut-in, fill-in, switch/transformer chops, crossfade hold, つなげる, カットイン, フィル, スイッチ, 次の曲へ."
+description: "Use when mixing two decks, long mix, cut-in, fill-in, switch/transformer chops, crossfade hold, つなげる, カットイン, フィル, スイッチ, 次の曲へ, エコー, ハイパス, ロール, ドロップ, echo, hpf, roll, drop."
 version: 1.0.0
 author: Hermes Agent
 license: MIT
@@ -42,6 +42,10 @@ metadata:
 | 点滅してカット | `strudel_mix(move="fill", kind="flash", to="B")` |
 | ライザー入れてカット | `strudel_mix(move="fill", kind="riser", to="B")` |
 | B から 8 分でスイッチして A | `strudel_mix(move="fill", kind="switch", to="A", grid="8n")` |
+| エコーで消して B へ | `strudel_mix(move="fill", kind="echo", to="B")` |
+| ハイパスで薄くしてカット | `strudel_mix(move="fill", kind="hpf", to="B")` |
+| ロールしてから A | `strudel_mix(move="fill", kind="roll", to="A", grid="8n")` |
+| インパクト入れてカット | `strudel_mix(move="fill", kind="drop", to="B")` |
 | 4 分でスイッチ | `grid="4n"` |
 
 `to` は **着地先**。スイッチの最初のマスは着地の反対（B から始めて A へ）。
@@ -54,6 +58,7 @@ flash は outgoing だけ消す。switch は AB を 100:0 ↔ 0:100 で交互。
 
 - `strudel_mixer_eq` を 4 回積んでロングを再現する
 - ミックスのために `strudel_apply_song` / `strudel_save_song` / `strudel_patch_track`
+- ロールのために `apply_song` で同じヒットを並べない
 - 174 DnB と 124 house をつなぐ（BPM は共有。creative README と同じ）
 - 片デッキに曲がないのに long / switch
 

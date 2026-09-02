@@ -386,10 +386,9 @@ pub(crate) fn mix_command_from_req(r: &MixReq) -> Result<Command, String> {
     let to_deck = deck_idx(to_s)?;
     let fill = match action {
         MixAction::Fill => {
-            let k = r
-                .kind
-                .as_deref()
-                .ok_or("kind required for move=fill (delay|lpf|flash|riser|switch)")?;
+            let k = r.kind.as_deref().ok_or(
+                "kind required for move=fill (delay|lpf|flash|riser|switch|echo|hpf|roll|drop)",
+            )?;
             Some(FillKind::parse(k)?)
         }
         _ => None,
@@ -1741,6 +1740,44 @@ b: note("c3").s("sawtooth").gain(0.8)
                 assert_eq!(m.fill, Some(FillKind::Switch));
                 assert_eq!(m.to_deck, 0);
                 assert_eq!(m.grid, MixGrid::Eighth);
+            }
+            _ => panic!("expected Mix"),
+        }
+    }
+
+    #[tokio::test]
+    async fn mix_fill_echo_queues() {
+        let (state, rx) = test_state();
+        {
+            let song = parse_song(
+                r#"---
+b: note("c3").s("sawtooth").gain(0.8)
+"#,
+                "t",
+            )
+            .unwrap();
+            let mut e = state.engine.lock().unwrap();
+            e.load_song_immediate(0, song.clone());
+            e.load_song_immediate(1, song);
+        }
+        let app = router(state);
+        let res = app
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/mix")
+                    .header("content-type", "application/json")
+                    .body(Body::from(r#"{"move":"fill","kind":"echo","to":"B"}"#))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(res.status(), StatusCode::ACCEPTED);
+        match rx.try_recv().unwrap() {
+            Command::Mix(m) => {
+                assert_eq!(m.action, MixAction::Fill);
+                assert_eq!(m.fill, Some(FillKind::Echo));
+                assert_eq!(m.to_deck, 1);
             }
             _ => panic!("expected Mix"),
         }

@@ -35,7 +35,7 @@ a x [bars]          xfade to deck A
 b x [bars]          xfade to deck B
 mix long A|B [bars] long mix (EQ bass-swap + xfade, next phrase)
 mix cut A|B         cut-in next bar (EQ reset)
-mix fill <kind> A|B [8n|4n]  delay|lpf|flash|riser|switch then cut-in
+mix fill <kind> A|B [8n|4n]  delay|lpf|flash|riser|switch|echo|hpf|roll|drop then cut-in
 mix hold            freeze xfade now
 bpm <n>             BPM from next bar
 hush                stop all (immediate)  [operator]
@@ -424,7 +424,9 @@ fn exec_mix(
     };
     if action == MixAction::Fill {
         if args.len() < 4 {
-            return ExecResult::msg("usage: mix fill delay|lpf|flash|riser|switch A|B [8n|4n]");
+            return ExecResult::msg(
+                "usage: mix fill delay|lpf|flash|riser|switch|echo|hpf|roll|drop A|B [8n|4n]",
+            );
         }
         let kind = match FillKind::parse(args[2]) {
             Ok(k) => k,

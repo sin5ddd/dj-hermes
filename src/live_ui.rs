@@ -120,6 +120,8 @@ struct LiveState {
     cycle_offset_b: i64,
     /// Equal-power crossfader 0=A … 1=B (mirrored from mixer for display).
     xfade_pos: f32,
+    /// In-progress mix macro, shown dim on the XF row.
+    mix_label: Option<String>,
     /// Per-deck EQ sliders 0..=1 (0.5 = flat). Synced with Mixer channel EQ.
     /// Index: [band][deck] with band 0=Hi,1=Mid,2=Lo ; deck 0=A,1=B.
     eq: [[f32; 2]; 3],
@@ -274,6 +276,7 @@ pub fn run(
         cycle_offset_a: 0,
         cycle_offset_b: 0,
         xfade_pos: 0.0,
+        mix_label: None,
         eq: [[0.5; 2]; 3],
         input: String::new(),
         history: Vec::new(),
@@ -699,6 +702,10 @@ fn sync_models_from_engine(state: &mut LiveState, eng: &Engine, sample_rate: u32
             }
         }
     }
+    state.mix_label = eng.mixer.mix_status().map(|s| match &s.kind {
+        Some(k) => format!("MIX {}/{}→{} {}", s.move_name, k, s.to, s.bars_left),
+        None => format!("MIX {}→{} {}", s.move_name, s.to, s.bars_left),
+    });
 }
 
 fn draw_frame(
@@ -799,7 +806,12 @@ fn draw_frame(
     // Crossfader (short track ≤ 10)
     let xf_row = lines.len();
     if lines.len() < rows {
-        let (xf_line, hit) = format_crossfader_line(state.xfade_pos, cols, xf_row as u16);
+        let (xf_line, hit) = format_crossfader_line(
+            state.xfade_pos,
+            cols,
+            xf_row as u16,
+            state.mix_label.as_deref(),
+        );
         state.xf_hit = hit;
         lines.push(xf_line);
     }
@@ -1334,7 +1346,12 @@ fn format_eq_band_line(
 
 /// Crossfader line with track length capped at 10.
 /// Returns `(line, hit)`.
-fn format_crossfader_line(pos: f32, cols: usize, row: u16) -> (String, SliderHit) {
+fn format_crossfader_line(
+    pos: f32,
+    cols: usize,
+    row: u16,
+    mix_label: Option<&str>,
+) -> (String, SliderHit) {
     if cols == 0 {
         return (
             String::new(),
@@ -1356,7 +1373,13 @@ fn format_crossfader_line(pos: f32, cols: usize, row: u16) -> (String, SliderHit
     let content = format!("{prefix}{track}{pct}");
     let content_vis = prefix.chars().count() + track_w + pct.chars().count();
     let pad_left = cols.saturating_sub(content_vis) / 2;
-    let raw = format!("{}{content}", " ".repeat(pad_left));
+    let mut raw = format!("{}{content}", " ".repeat(pad_left));
+    if let Some(s) = mix_label.filter(|s| !s.is_empty()) {
+        raw.push(' ');
+        raw.push_str("\x1b[2m");
+        raw.push_str(s);
+        raw.push_str("\x1b[0m");
+    }
     let line = pad_clip_ansi(&raw, cols);
     let hit = SliderHit {
         row,
@@ -1671,10 +1694,18 @@ mod tests {
 
     #[test]
     fn crossfader_track_capped_at_10() {
-        let (line, hit) = format_crossfader_line(0.5, 120, 5);
+        let (line, hit) = format_crossfader_line(0.5, 120, 5, None);
         assert!(hit.cols <= MAX_SLIDER_TRACK as u16, "cols={}", hit.cols);
         assert!(line.contains("\x1b[47m"));
         assert!(line.contains("XF"));
+    }
+
+    #[test]
+    fn crossfader_line_shows_mix_label() {
+        let (line, hit) = format_crossfader_line(0.5, 120, 5, Some("MIX fill/echo→B 1"));
+        assert!(line.contains("echo"), "{line}");
+        assert!(line.contains("XF"), "{line}");
+        assert!(hit.cols <= MAX_SLIDER_TRACK as u16, "cols={}", hit.cols);
     }
 
     #[test]
@@ -1720,6 +1751,7 @@ mod tests {
             cycle_offset_a: 0,
             cycle_offset_b: 0,
             xfade_pos: 0.0,
+            mix_label: None,
             eq: [[0.5; 2]; 3],
             input: String::new(),
             history: Vec::new(),

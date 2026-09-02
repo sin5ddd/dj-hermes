@@ -246,7 +246,7 @@ fn tools_list() -> Value {
             },
             {
                 "name": "strudel_mix",
-                "description": "DJ mix move in one call. Prefer this over calling mixer_eq multiple times. move=long: EQ bass-swap + xfade. move=cut: next-bar 100% fader, optional EQ reset. move=fill: delay|lpf|flash|riser|switch then cut-in. move=hold: freeze xfade. Switch is AB 100:0 chops (not flash).",
+                "description": "DJ mix move in one call. Prefer this over calling mixer_eq multiple times. move=long: EQ bass-swap + xfade. move=cut: next-bar 100% fader, optional EQ reset. move=fill: delay|lpf|flash|riser|switch|echo|hpf|roll|drop then cut-in. move=hold: freeze xfade. Switch is AB 100:0 chops (not flash). echo=delay wet/fb ramp then cut. hpf=high-pass sweep then cut. roll=beat-repeat then cut. drop=impact one-shot then cut.",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
@@ -255,8 +255,8 @@ fn tools_list() -> Value {
                         "bars": { "type": "integer", "description": "long default 8, fill default 1 (riser 2)" },
                         "eq": { "type": "boolean", "description": "long: apply bass-swap EQ (default true)" },
                         "reset_eq": { "type": "boolean", "description": "cut/fill: flatten EQ at the end (default true)" },
-                        "kind": { "type": "string", "description": "fill only: delay | lpf | flash | riser | switch" },
-                        "grid": { "type": "string", "description": "switch/flash: 8n or 4n (default 8n)" },
+                        "kind": { "type": "string", "description": "fill only: delay | lpf | flash | riser | switch | echo | hpf | roll | drop" },
+                        "grid": { "type": "string", "description": "switch/flash/roll: 8n or 4n (default 8n)" },
                         "mute_track": { "type": "string", "description": "optional track name to mute on the outgoing deck" },
                         "phrase": { "type": "integer", "description": "1, 4, or 8 — start on that bar boundary (default 1)" }
                     },

@@ -10,6 +10,12 @@ const LO_KILL_HZ: f32 = 250.0;
 const LPF_SWEEP_START_HZ: f32 = 12_000.0;
 const LPF_SWEEP_END_HZ: f32 = 200.0;
 const DELAY_WET: f32 = 0.5;
+const ECHO_WET_START: f32 = 0.25;
+const ECHO_WET_END: f32 = 0.70;
+const ECHO_FB_START: f32 = 0.20;
+const ECHO_FB_END: f32 = 0.80;
+const HPF_SWEEP_START_HZ: f32 = 40.0;
+const HPF_SWEEP_END_HZ: f32 = 2_000.0;
 const RISER_GAIN: f32 = 0.35;
 /// Click-soften on switch/cut snaps (AGENTS.md). Not a buffer split.
 const GAIN_RAMP_SEC: f32 = 0.005;
@@ -81,6 +87,10 @@ pub enum FillKind {
     Flash,
     Riser,
     Switch,
+    Echo,
+    Hpf,
+    Roll,
+    Drop,
 }
 
 impl FillKind {
@@ -91,8 +101,12 @@ impl FillKind {
             "flash" => Ok(Self::Flash),
             "riser" => Ok(Self::Riser),
             "switch" => Ok(Self::Switch),
+            "echo" | "echoout" | "echo-out" => Ok(Self::Echo),
+            "hpf" => Ok(Self::Hpf),
+            "roll" | "loop" | "repeat" => Ok(Self::Roll),
+            "drop" | "impact" => Ok(Self::Drop),
             other => Err(format!(
-                "kind must be delay, lpf, flash, riser, or switch: {other}"
+                "kind must be delay, lpf, flash, riser, switch, echo, hpf, roll, or drop: {other}"
             )),
         }
     }
@@ -104,6 +118,10 @@ impl FillKind {
             Self::Flash => "flash",
             Self::Riser => "riser",
             Self::Switch => "switch",
+            Self::Echo => "echo",
+            Self::Hpf => "hpf",
+            Self::Roll => "roll",
+            Self::Drop => "drop",
         }
     }
 
@@ -218,6 +236,34 @@ enum MixJob {
         end_sample: u64,
         period: u64,
         last_step: i64,
+        samples_per_bar: u64,
+    },
+    Echo {
+        to_deck: usize,
+        reset_eq: bool,
+        start_sample: u64,
+        end_sample: u64,
+        samples_per_bar: u64,
+    },
+    Hpf {
+        to_deck: usize,
+        reset_eq: bool,
+        start_sample: u64,
+        end_sample: u64,
+        start_hz: f32,
+        end_hz: f32,
+        samples_per_bar: u64,
+    },
+    Drop {
+        to_deck: usize,
+        reset_eq: bool,
+        end_sample: u64,
+        samples_per_bar: u64,
+    },
+    Roll {
+        to_deck: usize,
+        reset_eq: bool,
+        end_sample: u64,
         samples_per_bar: u64,
     },
 }
@@ -358,9 +404,15 @@ pub struct Mixer {
     delay_l: DelayLine,
     delay_r: DelayLine,
     delay_wet: f32,
+    delay_fb: f32,
     flash_mul: [f32; 2],
     riser_pcm: Option<Arc<Vec<f32>>>,
     riser_idx: usize,
+    roll_l: Vec<f32>,
+    roll_r: Vec<f32>,
+    roll_cap: usize,
+    roll_i: usize,
+    roll_target: usize,
     /// Linear gain ramp toward `gain_a`/`gain_b` (switch/cut snaps).
     ramp_from_a: f32,
     ramp_from_b: f32,
@@ -398,9 +450,15 @@ impl Mixer {
             delay_l: DelayLine::new(delay_n),
             delay_r: DelayLine::new(delay_n),
             delay_wet: 0.0,
+            delay_fb: 0.0,
             flash_mul: [1.0, 1.0],
             riser_pcm: None,
             riser_idx: 0,
+            roll_l: vec![0.0; delay_n],
+            roll_r: vec![0.0; delay_n],
+            roll_cap: 0,
+            roll_i: 0,
+            roll_target: 0,
             ramp_from_a: 1.0,
             ramp_from_b: 0.0,
             ramp_i: 0,
@@ -471,8 +529,12 @@ impl Mixer {
         self.riser_idx = 0;
     }
 
-    pub fn riser_needs_pcm(&self) -> bool {
-        matches!(self.job, Some(MixJob::Riser { .. })) && self.riser_pcm.is_none()
+    pub fn oneshot_needs_pcm(&self) -> Option<&'static str> {
+        match self.job {
+            Some(MixJob::Riser { .. }) if self.riser_pcm.is_none() => Some("riser"),
+            Some(MixJob::Drop { .. }) if self.riser_pcm.is_none() => Some("drop"),
+            _ => None,
+        }
     }
 
     /// Stop fill inserts (delay/LPF/flash/riser) without changing faders.
@@ -480,12 +542,17 @@ impl Mixer {
         self.job = None;
         self.mix_status = None;
         self.delay_wet = 0.0;
+        self.delay_fb = 0.0;
         self.delay_l.clear();
         self.delay_r.clear();
         self.flash_mul = [1.0, 1.0];
         self.riser_pcm = None;
         self.riser_idx = 0;
         self.lpf_hz = None;
+        self.hpf_hz = None;
+        self.roll_target = 0;
+        self.roll_cap = 0;
+        self.roll_i = 0;
     }
 
     fn begin_gain_ramp(&mut self, sr: f32) {
@@ -533,12 +600,17 @@ impl Mixer {
     fn finish_job(&mut self, to_deck: usize, reset_eq: bool, sr: f32) {
         let to = if to_deck > 1 { 0 } else { to_deck };
         self.delay_wet = 0.0;
+        self.delay_fb = 0.0;
         self.delay_l.clear();
         self.delay_r.clear();
         self.flash_mul = [1.0, 1.0];
         self.riser_pcm = None;
         self.riser_idx = 0;
         self.lpf_hz = None;
+        self.hpf_hz = None;
+        self.roll_target = 0;
+        self.roll_cap = 0;
+        self.roll_i = 0;
         self.job = None;
         self.mix_status = None;
         if reset_eq {
@@ -600,6 +672,7 @@ impl Mixer {
                 self.delay_l.clear();
                 self.delay_r.clear();
                 self.delay_wet = DELAY_WET;
+                self.delay_fb = 0.0;
                 self.job = Some(MixJob::Delay {
                     to_deck,
                     reset_eq,
@@ -653,6 +726,56 @@ impl Mixer {
                     samples_per_bar: spb,
                 });
             }
+            FillKind::Echo => {
+                let eighth_sec = (60.0 / bpm.max(1.0) / 2.0) as f32;
+                self.delay_l.set_time_sec(eighth_sec, sr);
+                self.delay_r.set_time_sec(eighth_sec, sr);
+                self.delay_l.clear();
+                self.delay_r.clear();
+                self.delay_wet = ECHO_WET_START;
+                self.delay_fb = ECHO_FB_START;
+                self.job = Some(MixJob::Echo {
+                    to_deck,
+                    reset_eq,
+                    start_sample,
+                    end_sample: end,
+                    samples_per_bar: spb,
+                });
+            }
+            FillKind::Hpf => {
+                self.hpf_hz = Some(HPF_SWEEP_START_HZ);
+                self.job = Some(MixJob::Hpf {
+                    to_deck,
+                    reset_eq,
+                    start_sample,
+                    end_sample: end,
+                    start_hz: HPF_SWEEP_START_HZ,
+                    end_hz: HPF_SWEEP_END_HZ,
+                    samples_per_bar: spb,
+                });
+            }
+            FillKind::Drop => {
+                self.riser_idx = 0;
+                self.job = Some(MixJob::Drop {
+                    to_deck,
+                    reset_eq,
+                    end_sample: end,
+                    samples_per_bar: spb,
+                });
+            }
+            FillKind::Roll => {
+                self.roll_target = (period as usize).min(self.roll_l.len()).max(1);
+                self.roll_cap = 0;
+                self.roll_i = 0;
+                self.roll_l.fill(0.0);
+                self.roll_r.fill(0.0);
+                self.job = Some(MixJob::Roll {
+                    to_deck,
+                    reset_eq,
+                    end_sample: end,
+                    samples_per_bar: spb,
+                });
+            }
         }
     }
 
@@ -664,7 +787,11 @@ impl Mixer {
                 | MixJob::Lpf { end_sample, .. }
                 | MixJob::Flash { end_sample, .. }
                 | MixJob::Riser { end_sample, .. }
-                | MixJob::Switch { end_sample, .. } => *end_sample,
+                | MixJob::Switch { end_sample, .. }
+                | MixJob::Echo { end_sample, .. }
+                | MixJob::Hpf { end_sample, .. }
+                | MixJob::Roll { end_sample, .. }
+                | MixJob::Drop { end_sample, .. } => *end_sample,
             };
             if global_sample < end {
                 return None;
@@ -683,6 +810,18 @@ impl Mixer {
                     to_deck, reset_eq, ..
                 }
                 | MixJob::Switch {
+                    to_deck, reset_eq, ..
+                }
+                | MixJob::Echo {
+                    to_deck, reset_eq, ..
+                }
+                | MixJob::Hpf {
+                    to_deck, reset_eq, ..
+                }
+                | MixJob::Roll {
+                    to_deck, reset_eq, ..
+                }
+                | MixJob::Drop {
                     to_deck, reset_eq, ..
                 } => Some((*to_deck, *reset_eq)),
             }
@@ -727,6 +866,26 @@ impl Mixer {
                 end: u64,
                 period: u64,
                 last_step: i64,
+                spb: u64,
+            },
+            Echo {
+                start: u64,
+                end: u64,
+                spb: u64,
+            },
+            Hpf {
+                start: u64,
+                end: u64,
+                start_hz: f32,
+                end_hz: f32,
+                spb: u64,
+            },
+            Roll {
+                end: u64,
+                spb: u64,
+            },
+            Drop {
+                end: u64,
                 spb: u64,
             },
         }
@@ -793,6 +952,46 @@ impl Mixer {
                 last_step: *last_step,
                 spb: *samples_per_bar,
             },
+            MixJob::Echo {
+                start_sample,
+                end_sample,
+                samples_per_bar,
+                ..
+            } => Step::Echo {
+                start: *start_sample,
+                end: *end_sample,
+                spb: *samples_per_bar,
+            },
+            MixJob::Hpf {
+                start_sample,
+                end_sample,
+                start_hz,
+                end_hz,
+                samples_per_bar,
+                ..
+            } => Step::Hpf {
+                start: *start_sample,
+                end: *end_sample,
+                start_hz: *start_hz,
+                end_hz: *end_hz,
+                spb: *samples_per_bar,
+            },
+            MixJob::Roll {
+                end_sample,
+                samples_per_bar,
+                ..
+            } => Step::Roll {
+                end: *end_sample,
+                spb: *samples_per_bar,
+            },
+            MixJob::Drop {
+                end_sample,
+                samples_per_bar,
+                ..
+            } => Step::Drop {
+                end: *end_sample,
+                spb: *samples_per_bar,
+            },
         };
 
         match step {
@@ -849,6 +1048,27 @@ impl Mixer {
                 }
                 self.update_bars_left(global_sample, end, spb);
             }
+            Step::Echo { start, end, spb } => {
+                let denom = (end - start).max(1) as f32;
+                let t = (global_sample.saturating_sub(start) as f32 / denom).clamp(0.0, 1.0);
+                self.delay_wet = ECHO_WET_START + (ECHO_WET_END - ECHO_WET_START) * t;
+                self.delay_fb = ECHO_FB_START + (ECHO_FB_END - ECHO_FB_START) * t;
+                self.update_bars_left(global_sample, end, spb);
+            }
+            Step::Hpf {
+                start,
+                end,
+                start_hz,
+                end_hz,
+                spb,
+            } => {
+                let denom = (end - start).max(1) as f32;
+                let t = (global_sample.saturating_sub(start) as f32 / denom).clamp(0.0, 1.0);
+                self.hpf_hz = Some(start_hz + (end_hz - start_hz) * t);
+                self.update_bars_left(global_sample, end, spb);
+            }
+            Step::Roll { end, spb } => self.update_bars_left(global_sample, end, spb),
+            Step::Drop { end, spb } => self.update_bars_left(global_sample, end, spb),
         }
         false
     }
@@ -996,6 +1216,7 @@ impl Mixer {
         self.eq_a.ensure_sr(sr);
         self.eq_b.ensure_sr(sr);
         let delay_wet = self.delay_wet;
+        let delay_fb = self.delay_fb;
         let fa = self.flash_mul[0];
         let fb = self.flash_mul[1];
         let ramping = self.ramp_n > 0 && self.ramp_i < self.ramp_n;
@@ -1027,8 +1248,8 @@ impl Mixer {
             let mut r = ea_r * ga * fa + eb_r * gb * fb;
 
             if delay_wet > 0.0 {
-                let dl = self.delay_l.process(l, 0.0);
-                let dr = self.delay_r.process(r, 0.0);
+                let dl = self.delay_l.process(l, delay_fb);
+                let dr = self.delay_r.process(r, delay_fb);
                 l += dl * delay_wet;
                 r += dr * delay_wet;
             }
@@ -1039,6 +1260,27 @@ impl Mixer {
                     self.riser_idx += 1;
                     l += s;
                     r += s;
+                }
+            }
+
+            if self.roll_target > 0 {
+                if self.roll_cap < self.roll_target {
+                    let i = self.roll_i;
+                    if i < self.roll_l.len() {
+                        self.roll_l[i] = l;
+                        self.roll_r[i] = r;
+                    }
+                    self.roll_i += 1;
+                    if self.roll_i >= self.roll_target {
+                        self.roll_cap = self.roll_target;
+                        self.roll_i = 0;
+                    }
+                } else {
+                    let cap = self.roll_cap.max(1);
+                    let i = self.roll_i % cap;
+                    l = self.roll_l[i];
+                    r = self.roll_r[i];
+                    self.roll_i = i + 1;
                 }
             }
 
@@ -1390,5 +1632,131 @@ mod tests {
             e_boost > e_flat * 1.5,
             "Hi boost should raise treble: boost={e_boost} flat={e_flat}"
         );
+    }
+
+    #[test]
+    fn fill_kind_parse_v2() {
+        assert_eq!(FillKind::parse("echo").unwrap(), FillKind::Echo);
+        assert_eq!(FillKind::parse("hpf").unwrap(), FillKind::Hpf);
+        assert_eq!(FillKind::parse("roll").unwrap(), FillKind::Roll);
+        assert_eq!(FillKind::parse("drop").unwrap(), FillKind::Drop);
+        assert_eq!(FillKind::parse("impact").unwrap(), FillKind::Drop);
+        assert_eq!(FillKind::parse("echoout").unwrap(), FillKind::Echo);
+        assert_eq!(FillKind::parse("loop").unwrap(), FillKind::Roll);
+        assert!(FillKind::parse("scratch").is_err());
+        assert_eq!(FillKind::Echo.as_str(), "echo");
+        assert_eq!(FillKind::Hpf.as_str(), "hpf");
+        assert_eq!(FillKind::Roll.as_str(), "roll");
+        assert_eq!(FillKind::Drop.as_str(), "drop");
+        assert_eq!(FillKind::Echo.default_bars(), 1);
+        assert_eq!(FillKind::Hpf.default_bars(), 1);
+        assert_eq!(FillKind::Roll.default_bars(), 1);
+        assert_eq!(FillKind::Drop.default_bars(), 1);
+    }
+
+    #[test]
+    fn fill_echo_ramps_then_cuts() {
+        let mut m = Mixer::new();
+        m.start_fill(
+            FillKind::Echo,
+            1,
+            1,
+            true,
+            MixGrid::Eighth,
+            0,
+            1000.0,
+            120.0,
+            48_000.0,
+        );
+        let _ = m.tick_job(0, 48_000.0);
+        let w0 = m.delay_wet;
+        let _ = m.tick_job(500, 48_000.0);
+        assert!(m.delay_wet > w0);
+        assert!(m.delay_fb > ECHO_FB_START);
+        let done = m.tick_job(1000, 48_000.0);
+        assert!(done);
+        assert!((m.gain_b - 1.0).abs() < 1e-5);
+        assert!(m.delay_wet.abs() < 1e-5);
+        assert!(m.delay_fb.abs() < 1e-5);
+    }
+
+    #[test]
+    fn fill_hpf_sweeps_up() {
+        let mut m = Mixer::new();
+        m.start_fill(
+            FillKind::Hpf,
+            1,
+            1,
+            true,
+            MixGrid::Eighth,
+            0,
+            1000.0,
+            120.0,
+            48_000.0,
+        );
+        let _ = m.tick_job(0, 48_000.0);
+        let h0 = m.hpf_hz.unwrap();
+        let _ = m.tick_job(500, 48_000.0);
+        let h1 = m.hpf_hz.unwrap();
+        assert!(h1 > h0, "hpf should rise: {h0} → {h1}");
+        let done = m.tick_job(1000, 48_000.0);
+        assert!(done);
+        assert!(m.hpf_hz.is_none());
+    }
+
+    #[test]
+    fn fill_drop_cuts_without_pcm() {
+        let mut m = Mixer::new();
+        m.start_fill(
+            FillKind::Drop,
+            1,
+            1,
+            true,
+            MixGrid::Eighth,
+            0,
+            8.0,
+            120.0,
+            48_000.0,
+        );
+        assert_eq!(m.oneshot_needs_pcm(), Some("drop"));
+        let done = m.tick_job(8, 48_000.0);
+        assert!(done);
+        assert!((m.gain_b - 1.0).abs() < 1e-5);
+    }
+
+    #[test]
+    fn fill_roll_repeats_then_cuts() {
+        let mut m = Mixer::new();
+        m.gain_a = 1.0;
+        m.gain_b = 0.0;
+        m.start_fill(
+            FillKind::Roll,
+            1,
+            1,
+            true,
+            MixGrid::Eighth,
+            0,
+            8.0,
+            120.0,
+            48_000.0,
+        );
+        let a_l = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8];
+        let a_r = a_l;
+        let b = [0.0f32; 8];
+        let mut out_l = [0.0f32; 8];
+        let mut out_r = [0.0f32; 8];
+        m.mix(&mut out_l, &mut out_r, &a_l, &a_r, &b, &b, 48_000.0);
+        assert!(out_l[0].abs() > 1e-6);
+        for x in &out_l[1..] {
+            assert!(
+                (x - out_l[0]).abs() < 1e-3,
+                "roll should repeat first sample: first={} got={x}",
+                out_l[0]
+            );
+        }
+        assert!((out_l[7] - 0.8).abs() > 1e-3);
+        let done = m.tick_job(8, 48_000.0);
+        assert!(done);
+        assert!((m.gain_b - 1.0).abs() < 1e-5);
     }
 }
