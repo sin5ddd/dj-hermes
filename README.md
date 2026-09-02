@@ -307,9 +307,11 @@ cargo build --release
 
 | 経路 | 内容 |
 | --- | --- |
-| Push / PR → `master` | `.github/workflows/ci.yml` — fmt, clippy, test, release build（ubuntu + windows） |
+| Push / PR → `master` | `.github/workflows/ci.yml` — fmt, clippy, test, release build（ubuntu + windows）。差分が `**/*.md` / `docs/**` / `songs/**` のみならスキップ |
 | タグ `v*` | `.github/workflows/release.yml` — バイナリを GitHub Release に添付 |
 | Dependabot | cargo / github-actions を週次 |
+
+docs / Markdown / `songs/` だけの変更は CI しない。`songs/` を含むコミットはローカルで `cargo test --test e2e`（共有フック `.githooks/pre-commit` を `.git/hooks/pre-commit` にコピーすると自動。`core.hooksPath` は変えない）。
 
 リリース例:
 

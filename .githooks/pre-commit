@@ -1,0 +1,16 @@
+#!/bin/sh
+# songs/ が stage されているコミットだけ e2e を走らせる。
+# core.hooksPath は使わない（.git/hooks の Git LFS フックを消すため）。
+set -e
+root=$(git rev-parse --show-toplevel)
+cd "$root"
+changed=$(git diff --cached --name-only -- songs)
+if [ -z "$changed" ]; then
+  exit 0
+fi
+if ! command -v cargo >/dev/null 2>&1; then
+  printf >&2 '%s\n' "pre-commit: cargo が PATH にない。songs/ 変更は cargo test --test e2e が必要。"
+  exit 1
+fi
+printf >&2 '%s\n' "pre-commit: songs/ changed → cargo test --test e2e"
+exec cargo test --test e2e

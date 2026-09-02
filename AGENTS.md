@@ -231,6 +231,7 @@ Rust の build/test/clippy 実行時は、利用可能なら `cargo-runner` ス�
 4. **エラー:** パース失敗で演奏を止めない。API/REPL の両方で失敗理由を返す。
 5. **ドキュメント:** コードコメントと README は標準の平易な文章。造語や曖昧な断定を避ける。
 6. **セキュリティ:** ローカル bind（127.0.0.1）前提の API。公開 bind や認証は現スコープ外だが、パス traversal（曲ロード）や無制限入力には注意する。
+7. **docs / `*.md` / `songs/` だけの PR・master push は CI が起動しない。** `songs/` を stage したコミットの前に `cargo test --test e2e`。フック: `.githooks/pre-commit` を `.git/hooks/pre-commit` へコピー（`git config core.hooksPath` は使わない。Git LFS フックが `.git/hooks` にいる）。
 
 ### rustfmt（CI で繰り返し落ちやすい）
 
