@@ -247,7 +247,7 @@ impl LiveState {
 ///
 /// `initial_a` / `initial_b` seed deck highlight models (e.g. songs passed to `dj`).
 /// `hermes` when `Some` routes bare natural language to Hermes (local cmds need `/`).
-/// `voice` when `Some` enables F12 / VAD (local STT → Hermes).
+/// `voice` when `Some` enables F12 / VAD (Hermes STT → Hermes（URL があれば HTTP STT）).
 #[allow(clippy::too_many_arguments)]
 pub fn run(
     tx: Sender<Command>,
@@ -373,7 +373,7 @@ pub fn run(
                                 if let Some(ref v) = voice {
                                     v.toggle();
                                 } else if hermes.is_some() {
-                                    state.push_log("voice: 無効（STRUDEL_STT_BASE_URL を設定）");
+                                    state.push_log("voice: 無効（マイクなし / Hermes Python 未検出 / --no-voice）");
                                 } else {
                                     state.push_log("voice: Hermes off では使えません");
                                 }

@@ -96,7 +96,7 @@ Usage:
   dj: left=A / right=B highlight, » prompt at bottom.
   Live TUI input:
     bare text     → Hermes (profile dj-hermes; needs API + MCP)
-    F12           → voice (local STT → Hermes; needs STRUDEL_STT_BASE_URL)
+    F12           → voice (Hermes STT → Hermes; optional STRUDEL_STT_BASE_URL)
     /cmd …        → local (e.g. /a load house-01  /x 4  /bpm 128  /viz  /vfx  /help)
     --no-hermes   → bare text is local again (text REPL always local)
   Flags: --no-hermes  --no-voice  --hermes-bin PATH  --hermes-profile NAME  -d/--debug
@@ -549,13 +549,13 @@ fn cmd_live_session(opts: LiveSessionOpts) -> Result<(), String> {
         None
     };
 
-    let voice_handle = if with_highlight && hermes_handle.is_some() && voice_enabled {
-        start_voice_for_tui()
-    } else {
-        if with_highlight && hermes_handle.is_some() && !voice_enabled {
+    let voice_handle = match (with_highlight, voice_enabled, hermes_handle.as_ref()) {
+        (true, true, Some(h)) => start_voice_for_tui(h.config()),
+        (true, false, Some(_)) => {
             eprintln!("voice: disabled (--no-voice)");
+            None
         }
-        None
+        _ => None,
     };
 
     let stream = build_stream(
@@ -591,20 +591,54 @@ fn cmd_live_session(opts: LiveSessionOpts) -> Result<(), String> {
     Ok(())
 }
 
-/// Start voice capture worker when `STRUDEL_STT_BASE_URL` is set.
-fn start_voice_for_tui() -> Option<strudel_rs::voice_input::VoiceHandle> {
-    let Some(cfg) = strudel_rs::voice_input::SttConfig::from_env() else {
-        eprintln!("voice: disabled (set STRUDEL_STT_BASE_URL for F12/VAD STT → Hermes)");
-        return None;
-    };
+/// Start voice capture worker (Hermes STT by default; HTTP if URL is set).
+fn start_voice_for_tui(
+    hermes: &strudel_rs::hermes::HermesConfig,
+) -> Option<strudel_rs::voice_input::VoiceHandle> {
+    let mut cfg = strudel_rs::voice_input::SttConfig::from_env()?;
+
+    if matches!(
+        cfg.backend,
+        strudel_rs::voice_input::SttBackend::Hermes { .. }
+    ) {
+        let Some(python) = strudel_rs::voice_input::resolve_hermes_python(&hermes.bin) else {
+            eprintln!(
+                "voice: disabled (Hermes Python が見つからない。STRUDEL_HERMES_PYTHON か STRUDEL_STT_BASE_URL を設定)"
+            );
+            return None;
+        };
+        let Some(agent_root) = strudel_rs::voice_input::hermes_agent_root_from_python(&python)
+        else {
+            eprintln!(
+                "voice: disabled (Hermes Python が見つからない。STRUDEL_HERMES_PYTHON か STRUDEL_STT_BASE_URL を設定)"
+            );
+            return None;
+        };
+        cfg.backend = strudel_rs::voice_input::SttBackend::Hermes {
+            python,
+            agent_root,
+            profile: hermes.profile.clone(),
+        };
+    }
+
     let mode = cfg.mode;
+    let hermes_stt = matches!(
+        cfg.backend,
+        strudel_rs::voice_input::SttBackend::Hermes { .. }
+    );
     match strudel_rs::voice_input::VoiceHandle::start(cfg) {
         Ok(h) => {
-            match mode {
-                strudel_rs::voice_input::VoiceMode::Vad => {
+            match (hermes_stt, mode) {
+                (true, strudel_rs::voice_input::VoiceMode::Vad) => {
+                    eprintln!("voice: VAD listen → Hermes STT → Hermes (F12 pauses)");
+                }
+                (true, strudel_rs::voice_input::VoiceMode::Push) => {
+                    eprintln!("voice: F12 push-to-talk → Hermes STT → Hermes");
+                }
+                (false, strudel_rs::voice_input::VoiceMode::Vad) => {
                     eprintln!("voice: VAD listen → local STT → Hermes (F12 pauses)");
                 }
-                strudel_rs::voice_input::VoiceMode::Push => {
+                (false, strudel_rs::voice_input::VoiceMode::Push) => {
                     eprintln!("voice: F12 push-to-talk → local STT → Hermes");
                 }
             }

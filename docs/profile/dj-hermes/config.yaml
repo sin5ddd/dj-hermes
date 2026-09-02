@@ -30,6 +30,15 @@ tools:
   tool_search:
     enabled: off
 
+# Engine config for transcribe_recording (F12). Not a toolset grant —
+# agent.disabled_toolsets still lists stt so the agent cannot transcribe paths.
+stt:
+  enabled: true
+  provider: local
+  language: ja
+  local:
+    model: base
+
 mcp_servers:
   strudel:
     # Streamable HTTP against the running play/dj API (no strudel-rs.exe spawn).
