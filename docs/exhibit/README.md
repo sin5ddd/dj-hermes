@@ -6,7 +6,7 @@
 
 | 入力 | 挙動 |
 | --- | --- |
-| 自然文（例: `暗くして`） | Hermes（既定プロファイル `dj-hermes`） |
+| 自然文（例: `暗くして`） | Hermes（`dj` は `dj-hermes`、`play` は `play-hermes`） |
 | F12 / VAD | マイク → Hermes 内蔵 local Whisper → 同じ Hermes 経路。任意で HP HTTP STT（[stt-hp.md](./stt-hp.md)） |
 | `/…`（例: `/x 4` `/bpm 128`） | ローカル即時コマンド |
 | `/hush` `/quit` | オペレータ用（来場者案内には出さない） |
@@ -17,7 +17,7 @@
 
 来場者が自由入力する前提です。**モデルの指示遵守だけに頼らず**、ツール面で影響範囲を閉じます。
 
-1. **専用プロファイル `dj-hermes` を使う**（個人用 profile と混ぜない）
+1. **専用プロファイルを使う**（`dj` は `dj-hermes`、`play` は `play-hermes`。個人用 profile と混ぜない）
 2. その profile では **危険 toolset を無効**（terminal / file / browser / web など）。**skills のみ許可**（作曲ガイドの skill_view）
 3. `strudel_hush` は MCP から **exclude 推奨**（緊急停止はオペレータが `/hush` または Esc）
 4. strudel-rs 側でも入力長・制御文字・連打間隔・timeout を制限済み（ターン上限は profile の `agent.max_turns`）

@@ -1,4 +1,4 @@
-//! Combined highlight TUI + command line for `dj` / `play --repl` (demo-oriented).
+//! Combined highlight TUI + command line for `dj` and `play` live sessions.
 //!
 //! Drawing avoids full-screen clears (reduces flicker). Crossfader / EQ support click/drag.
 //! Per-deck Hi/Mid/Lo EQ is wired to Mixer channel EQ via `Command::SetDeckEq`.
@@ -29,11 +29,13 @@ use crate::highlight::{
     active_atoms, active_spans, bar_index, bar_pos, render_ansi_ex, HighlightModel,
 };
 use crate::live_fx::{self, FxState};
+use crate::session::SessionKind;
 use crate::song::Song;
 use crate::viz::{self, VizModel};
 use crate::voice_input::{VoiceEvent, VoiceHandle, VoiceMode};
 
 const HELP_LINE: &str = "F9 vfx  F10 viz  F12音声  ↑↓候補  drag xf/EQ  /a load  /x  /bpm  /help";
+const HELP_LINE_PLAY: &str = "F9 vfx  F10 viz  F12音声  ↑↓候補  drag EQ  /load  /bpm  /help";
 /// Max candidate rows inside the suggest overlay (scroll window).
 const SUGGEST_MAX_ROWS: usize = 10;
 const HELP_LINE_LISTEN: &str = "VAD 待ち  話してね  F12 で一時停止";
@@ -151,6 +153,7 @@ struct LiveState {
     fx: FxState,
     vfx_hit: SliderHit,
     last_frame: Option<Instant>,
+    session: SessionKind,
 }
 
 impl LiveState {
@@ -261,6 +264,7 @@ pub fn run(
     initial_b: Option<HighlightModel>,
     hermes: Option<HermesHandle>,
     voice: Option<VoiceHandle>,
+    session: SessionKind,
 ) -> Result<(), String> {
     let zero_hit = SliderHit {
         row: 0,
@@ -296,6 +300,7 @@ pub fn run(
         fx: FxState::new(),
         vfx_hit: zero_hit,
         last_frame: None,
+        session,
     };
     if let Some(model) = initial_a {
         // Viz model is filled on first engine sync / load; seed highlight only here.
@@ -304,19 +309,27 @@ pub fn run(
     if let Some(model) = initial_b {
         state.set_model(1, model);
     }
+    let play = session.single_deck();
     if hermes.is_some() {
         if let Some(ref v) = voice {
             match v.mode() {
                 VoiceMode::Vad => {
                     state.push_log("live UI · VAD 音声→Hermes  F12 一時停止  /cmd ローカル");
                 }
+                VoiceMode::Push if play => {
+                    state.push_log("live UI · F12 音声→Hermes  /load  /cmd ローカル  drag EQ");
+                }
                 VoiceMode::Push => {
                     state.push_log("live UI · F12 音声→Hermes  /cmd ローカル  drag xf/EQ");
                 }
             }
+        } else if play {
+            state.push_log("live UI · 自然文→Hermes  /load  /cmd ローカル  drag EQ");
         } else {
             state.push_log("live UI · 自然文→Hermes  /cmd ローカル  drag xf/EQ");
         }
+    } else if play {
+        state.push_log("live UI · drag Hi Mid Lo EQ (Hermes off)");
     } else {
         state.push_log("live UI · drag xfader / Hi Mid Lo EQ (Hermes off)");
     }
@@ -561,13 +574,14 @@ fn handle_mouse(state: &mut LiveState, tx: &Sender<Command>, m: crossterm::event
                 state.drag = DragTarget::None;
                 return;
             }
-            if state.xf_hit.contains(m.column, m.row) {
+            if !state.session.single_deck() && state.xf_hit.contains(m.column, m.row) {
                 state.drag = DragTarget::Xf;
                 apply_drag(state, tx, m.column);
                 return;
             }
             for band in 0..3 {
-                for deck in 0..2 {
+                let decks = if state.session.single_deck() { 1 } else { 2 };
+                for deck in 0..decks {
                     if state.eq_hits[band][deck].contains(m.column, m.row) {
                         state.drag = DragTarget::Eq { band, deck };
                         apply_drag(state, tx, m.column);
@@ -722,14 +736,24 @@ fn draw_frame(
         return Ok(());
     }
 
-    // Footer: EQ×3 + xfade + log×3 (reserved) + help + prompt  (= 9)
-    let footer_rows = (3 + 1 + LOG_LINES + 2).min(rows.saturating_sub(2));
+    // Footer: EQ×3 + (xfade) + log×3 (reserved) + help + prompt
+    let single = state.session.single_deck();
+    let xf_rows = if single { 0 } else { 1 };
+    let footer_rows = (3 + xf_rows + LOG_LINES + 2).min(rows.saturating_sub(2));
     let body_rows = rows.saturating_sub(footer_rows);
     let gs = playhead.load(Ordering::Relaxed);
 
     let gutter = 1usize;
-    let half = cols.saturating_sub(gutter) / 2;
-    let right_w = cols.saturating_sub(half + gutter);
+    let half = if single {
+        cols
+    } else {
+        cols.saturating_sub(gutter) / 2
+    };
+    let right_w = if single {
+        0
+    } else {
+        cols.saturating_sub(half + gutter)
+    };
 
     let left_lines = pane_lines(PaneArgs {
         mode: state.body_mode,
@@ -742,17 +766,21 @@ fn draw_frame(
         width: half,
         height: body_rows,
     });
-    let right_lines = pane_lines(PaneArgs {
-        mode: state.body_mode,
-        model: state.model_b.as_ref(),
-        viz: state.viz_b.as_ref(),
-        deck_label: "B",
-        gs,
-        sample_rate,
-        cycle_offset: state.cycle_offset_b,
-        width: right_w,
-        height: body_rows,
-    });
+    let right_lines = if single {
+        Vec::new()
+    } else {
+        pane_lines(PaneArgs {
+            mode: state.body_mode,
+            model: state.model_b.as_ref(),
+            viz: state.viz_b.as_ref(),
+            deck_label: "B",
+            gs,
+            sample_rate,
+            cycle_offset: state.cycle_offset_b,
+            width: right_w,
+            height: body_rows,
+        })
+    };
 
     let mut left_lines = left_lines;
     let mut right_lines = right_lines;
@@ -778,13 +806,20 @@ fn draw_frame(
 
     let mut lines: Vec<String> = Vec::with_capacity(rows);
 
-    for i in 0..body_rows {
-        let left = left_lines.get(i).map(String::as_str).unwrap_or("");
-        let right = right_lines.get(i).map(String::as_str).unwrap_or("");
-        lines.push(format!("{left}│{right}"));
+    if single {
+        for i in 0..body_rows {
+            let left = left_lines.get(i).map(String::as_str).unwrap_or("");
+            lines.push(left.to_string());
+        }
+    } else {
+        for i in 0..body_rows {
+            let left = left_lines.get(i).map(String::as_str).unwrap_or("");
+            let right = right_lines.get(i).map(String::as_str).unwrap_or("");
+            lines.push(format!("{left}│{right}"));
+        }
     }
 
-    // EQ rows: Hi / Mid / Lo  (A and B side by side)
+    // EQ rows: Hi / Mid / Lo  (A and B side by side, or A only in play)
     let eq_start_row = body_rows;
     for (band, band_name) in EQ_BANDS.iter().enumerate() {
         let row = eq_start_row + band;
@@ -797,23 +832,32 @@ fn draw_frame(
             state.eq[band][1],
             cols,
             row as u16,
+            !single,
         );
         state.eq_hits[band][0] = hit_a;
         state.eq_hits[band][1] = hit_b;
         lines.push(line);
     }
 
-    // Crossfader (short track ≤ 10)
-    let xf_row = lines.len();
-    if lines.len() < rows {
-        let (xf_line, hit) = format_crossfader_line(
-            state.xfade_pos,
-            cols,
-            xf_row as u16,
-            state.mix_label.as_deref(),
-        );
-        state.xf_hit = hit;
-        lines.push(xf_line);
+    // Crossfader (short track ≤ 10) — DJ only
+    if single {
+        state.xf_hit = SliderHit {
+            row: 0,
+            col0: 0,
+            cols: 0,
+        };
+    } else {
+        let xf_row = lines.len();
+        if lines.len() < rows {
+            let (xf_line, hit) = format_crossfader_line(
+                state.xfade_pos,
+                cols,
+                xf_row as u16,
+                state.mix_label.as_deref(),
+            );
+            state.xf_hit = hit;
+            lines.push(xf_line);
+        }
     }
 
     // Change log: always exactly LOG_LINES rows (newest at bottom; empty rows reserved).
@@ -839,7 +883,13 @@ fn draw_frame(
 
     if rows >= 2 {
         let help_row = lines.len() as u16;
-        let (help, vfx_hit) = format_help_line(state.vfx_on, state.voice_phase, cols, help_row);
+        let (help, vfx_hit) = format_help_line(
+            state.vfx_on,
+            state.voice_phase,
+            state.session,
+            cols,
+            help_row,
+        );
         state.vfx_hit = vfx_hit;
         lines.push(help);
         let prompt = format!("» {}", state.input);
@@ -852,7 +902,7 @@ fn draw_frame(
 
     // Help takes priority; otherwise show local-command suggest overlay.
     if state.help_open {
-        overlay_help_modal(&mut lines, cols, rows);
+        overlay_help_modal(&mut lines, cols, rows, state.session);
     } else {
         let suggest = suggest_for_state(state, hermes_enabled);
         if suggest_is_open(state, &suggest) {
@@ -924,13 +974,17 @@ fn apply_vfx(
     state.last_frame = Some(now);
 
     let (hits_a, spc_a) = gather_fx_hits(state, 0, gs, sample_rate, half, body_rows);
-    let (hits_b, spc_b) = gather_fx_hits(state, 1, gs, sample_rate, right_w, body_rows);
     state.fx.observe(0, &hits_a, spc_a);
-    state.fx.observe(1, &hits_b, spc_b);
+    if right_w > 0 {
+        let (hits_b, spc_b) = gather_fx_hits(state, 1, gs, sample_rate, right_w, body_rows);
+        state.fx.observe(1, &hits_b, spc_b);
+    }
     state.fx.advance(dt);
     if state.fx.has_visuals() {
         state.fx.composite_lines(0, left, half);
-        state.fx.composite_lines(1, right, right_w);
+        if right_w > 0 {
+            state.fx.composite_lines(1, right, right_w);
+        }
     }
 }
 
@@ -1044,11 +1098,18 @@ fn gather_punchcard_hits(
         .collect()
 }
 
-fn format_help_line(vfx_on: bool, voice: VoicePhase, cols: usize, row: u16) -> (String, SliderHit) {
+fn format_help_line(
+    vfx_on: bool,
+    voice: VoicePhase,
+    session: SessionKind,
+    cols: usize,
+    row: u16,
+) -> (String, SliderHit) {
     let left = match voice {
         VoicePhase::Listening => HELP_LINE_LISTEN,
         VoicePhase::Recording => HELP_LINE_REC,
         VoicePhase::Stt => HELP_LINE_STT,
+        VoicePhase::Idle if session.single_deck() => HELP_LINE_PLAY,
         VoicePhase::Idle => HELP_LINE,
     };
     let btn = if vfx_on { "[VFX:ON]" } else { "[VFX:OFF]" };
@@ -1087,6 +1148,7 @@ fn suggest_for_state(state: &LiveState, hermes_enabled: bool) -> CompleteResult 
         hermes_enabled,
         tracks_a: &tracks_a,
         tracks_b: &tracks_b,
+        session: state.session,
     };
     complete::suggest(&state.input, &ctx)
 }
@@ -1146,8 +1208,8 @@ fn suggest_body_lines(result: &CompleteResult, selected: usize, max_rows: usize)
 }
 
 /// Centered help window overlaid on the current frame (does not use the log area).
-fn overlay_help_modal(lines: &mut [String], cols: usize, rows: usize) {
-    let body: Vec<String> = cmd::HELP
+fn overlay_help_modal(lines: &mut [String], cols: usize, rows: usize, session: SessionKind) {
+    let body: Vec<String> = cmd::help_text(session)
         .trim_end()
         .lines()
         .map(|s| s.to_string())
@@ -1306,7 +1368,8 @@ fn format_track(pos: f32, track_w: usize) -> String {
     track
 }
 
-/// One EQ row: A track left, B track **right-aligned**.
+/// One EQ row: A track left, B track **right-aligned** (DJ).
+/// Play (`show_b == false`): A track only.
 /// e.g. `Hi  A ──□──                              B ──□──`
 fn format_eq_band_line(
     band: &str,
@@ -1314,10 +1377,27 @@ fn format_eq_band_line(
     pos_b: f32,
     cols: usize,
     row: u16,
+    show_b: bool,
 ) -> (String, SliderHit, SliderHit) {
     let track_w = MAX_SLIDER_TRACK.min(10);
     let band_pad = format!("{band:<3}");
     let left_lab = format!("{band_pad} A ");
+    if !show_b {
+        let track_a = format_track(pos_a, track_w);
+        let raw = format!("{left_lab}{track_a}");
+        let line = pad_clip_ansi(&raw, cols);
+        let hit_a = SliderHit {
+            row,
+            col0: left_lab.chars().count() as u16,
+            cols: track_w as u16,
+        };
+        let hit_b = SliderHit {
+            row,
+            col0: 0,
+            cols: 0,
+        };
+        return (line, hit_a, hit_b);
+    }
     let right_lab = "B ";
     let track_a = format_track(pos_a, track_w);
     let track_b = format_track(pos_b, track_w);
@@ -1562,7 +1642,7 @@ fn exec_local(
         state.push_log(msg);
         return true;
     }
-    let result = cmd::exec(body, tx, deck_paths, Some(engine));
+    let result = cmd::exec_in(body, tx, deck_paths, Some(engine), state.session);
     if let Some((deck, song)) = result.loaded {
         state.set_from_song(deck, &song, sample_rate);
     }
@@ -1711,7 +1791,7 @@ mod tests {
     #[test]
     fn eq_band_line_has_a_and_b_tracks() {
         let cols = 80usize;
-        let (line, ha, hb) = format_eq_band_line("Hi", 0.5, 0.5, cols, 3);
+        let (line, ha, hb) = format_eq_band_line("Hi", 0.5, 0.5, cols, 3, true);
         assert!(line.contains("Hi"), "{line}");
         assert!(line.contains("A "), "{line}");
         assert!(line.contains("B "), "{line}");
@@ -1783,7 +1863,19 @@ mod tests {
                 cols: 0,
             },
             last_frame: None,
+            session: SessionKind::Dj,
         }
+    }
+
+    #[test]
+    fn eq_band_line_play_hides_b() {
+        let cols = 80usize;
+        let (line, ha, hb) = format_eq_band_line("Hi", 0.5, 0.5, cols, 3, false);
+        assert!(line.contains("Hi"), "{line}");
+        assert!(line.contains("A "), "{line}");
+        assert!(!line.contains("B "), "{line}");
+        assert_eq!(ha.cols, MAX_SLIDER_TRACK as u16);
+        assert_eq!(hb.cols, 0);
     }
 
     #[test]
@@ -1836,11 +1928,11 @@ mod tests {
 
     #[test]
     fn help_line_has_clickable_vfx_button() {
-        let (line, hit) = format_help_line(true, VoicePhase::Idle, 80, 20);
+        let (line, hit) = format_help_line(true, VoicePhase::Idle, SessionKind::Dj, 80, 20);
         assert!(line.contains("[VFX:ON]"), "{line}");
         assert_eq!(hit.row, 20);
         assert!(hit.cols >= 8);
-        let (line_off, _) = format_help_line(false, VoicePhase::Idle, 80, 20);
+        let (line_off, _) = format_help_line(false, VoicePhase::Idle, SessionKind::Dj, 80, 20);
         assert!(line_off.contains("[VFX:OFF]"), "{line_off}");
     }
 
@@ -1849,7 +1941,7 @@ mod tests {
         let cols = 80usize;
         let rows = 24usize;
         let mut lines: Vec<String> = (0..rows).map(|_| pad_clip_ansi("", cols)).collect();
-        overlay_help_modal(&mut lines, cols, rows);
+        overlay_help_modal(&mut lines, cols, rows, SessionKind::Dj);
         let joined = lines.join("\n");
         assert!(joined.contains("help"), "{joined}");
         assert!(joined.contains("a|b load"), "{joined}");

@@ -24,6 +24,7 @@ use strudel_rs::live_ui;
 use strudel_rs::mcp;
 use strudel_rs::repl;
 use strudel_rs::sample::SampleBank;
+use strudel_rs::session::SessionKind;
 use strudel_rs::song::{parse_song, resolve_song_path};
 
 fn main() {
@@ -68,18 +69,18 @@ fn print_usage() {
 strudel-rs — Strudel live CLI
 
 Usage:
-  strudel-rs play [SONG] [--seconds N] [--headless] [--port N] [--no-api]
+  strudel-rs play [SONG] [--headless] [--seconds N] [--port N] [--no-api]
   strudel-rs dj [SONG_A] [SONG_B] [--port N] [--no-api] [--text]
-  strudel-rs play --repl [SONG_A] [SONG_B]   (same live UI as dj; kept for compatibility)
+  strudel-rs play --repl [SONG_A] [SONG_B]   (same 2-deck live UI as dj; compatibility)
   strudel-rs mcp
 
   SONG          song path or bare name (default dir: songs/; .strudel/.txt optional)
                 play default: songs/house-01.strudel
   SONG_A/B      optional decks for dj (A then B; omit both to start empty)
-  --seconds N   stop after N seconds (play only; omit to loop until quit)
+  --seconds N   stop after N seconds (play + --headless, or timed highlight without prompt)
   --headless    no TUI: meta log only (for scripts / non-TTY)
-  --highlight   explicit highlight TUI (default; also: --hl)
-  --repl        alias path into live UI (prefer: strudel-rs dj …)
+  --highlight   kept for compatibility (play default is live TUI which includes highlight)
+  --repl        alias path into 2-deck live UI (prefer: strudel-rs dj …)
   --repl-text   text-only REPL (same as: dj --text)
   --text        with dj: rustyline text REPL instead of highlight live UI
 
@@ -92,20 +93,22 @@ Usage:
                 DEPRECATED debug stdio bridge → HTTP API.
                 Hermes: set mcp_servers.strudel.url to http://127.0.0.1:PORT/mcp
 
-  Default play loops forever (TUI: q / Esc; headless: Ctrl+C).
+  Default play is a 1-deck live session (highlight + » prompt + Hermes).
+  Quit: q / Esc. --headless loops until Ctrl+C (or --seconds).
   dj: left=A / right=B highlight, » prompt at bottom.
   Live TUI input:
-    bare text     → Hermes (profile dj-hermes; needs API + MCP)
+    bare text     → Hermes (play: profile play-hermes; dj: dj-hermes; needs API + MCP)
     F12           → voice (Hermes STT → Hermes; optional STRUDEL_STT_BASE_URL)
-    /cmd …        → local (e.g. /a load house-01  /x 4  /bpm 128  /viz  /vfx  /help)
+    /cmd …        → local (play: /load house-01  /bpm 128; dj: /a load  /x 4)
     --no-hermes   → bare text is local again (text REPL always local)
   Flags: --no-hermes  --no-voice  --hermes-bin PATH  --hermes-profile NAME  -d/--debug
 
 Examples:
   cargo run -- play songs/house-01.strudel
+  cargo run -- play songs/house-01.strudel --headless --seconds 8
   cargo run -- dj songs/house-01.strudel songs/four-on-the-floor-01.strudel
   cargo run -- dj                          # empty decks; load from »
-  # then:  暗くして   or   /x 4
+  # then:  暗くして   or   /load house-01   or   /x 4
   # API: curl http://127.0.0.1:{DEFAULT_API_PORT}/status
 
 Samples: ./samples (or <song>/../samples). CC0 kit docs in samples/LICENSE.md.
@@ -114,9 +117,10 @@ Exhibit Hermes setup: docs/exhibit/README.md
     );
 }
 
-/// Shared flags for live dual-deck session (`dj` / `play --repl`).
+/// Shared flags for live session (`dj` / `play` / `play --repl`).
 #[derive(Debug)]
 struct LiveSessionOpts {
+    session: SessionKind,
     song_a: Option<PathBuf>,
     song_b: Option<PathBuf>,
     with_highlight: bool,
@@ -217,6 +221,7 @@ fn parse_live_session_args(args: &[String]) -> Result<Option<LiveSessionOpts>, S
 
     let mut it = songs.into_iter();
     Ok(Some(LiveSessionOpts {
+        session: SessionKind::Dj,
         song_a: it.next(),
         song_b: it.next(),
         with_highlight,
@@ -343,6 +348,7 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
         }
         let mut it = song_paths.into_iter();
         return cmd_live_session(LiveSessionOpts {
+            session: SessionKind::Dj,
             song_a: it.next(),
             song_b: it.next(),
             with_highlight: !repl_text,
@@ -359,6 +365,31 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
 
     if song_paths.len() > 1 {
         return Err("play accepts a single SONG (use `dj A B` for dual deck)".into());
+    }
+
+    // Interactive default: 1-deck live UI (prompt + Hermes). Timed / headless
+    // keep the old playback loop (scripts, --seconds demos).
+    if highlight && seconds.is_none() {
+        let song_a = Some(
+            song_paths
+                .into_iter()
+                .next()
+                .unwrap_or_else(|| PathBuf::from("house-01")),
+        );
+        return cmd_live_session(LiveSessionOpts {
+            session: SessionKind::Play,
+            song_a,
+            song_b: None,
+            with_highlight: true,
+            api_enabled,
+            api_port,
+            hermes_enabled,
+            hermes_bin,
+            hermes_profile,
+            voice_enabled,
+            debug,
+            debug_log,
+        });
     }
     let song_path = song_paths.into_iter().next();
 
@@ -426,7 +457,13 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
     let engine = Arc::new(Mutex::new(engine));
     let bank = Arc::new(bank);
 
-    let _api = maybe_start_api(api_enabled, api_port, cmd_tx, Arc::clone(&engine));
+    let _api = maybe_start_api(
+        api_enabled,
+        api_port,
+        cmd_tx,
+        Arc::clone(&engine),
+        SessionKind::Play,
+    );
 
     let stream = build_stream(
         &device,
@@ -454,9 +491,10 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
     Ok(())
 }
 
-/// Dual-deck live session used by `dj` and `play --repl`.
+/// Live session used by `dj`, `play`, and `play --repl`.
 fn cmd_live_session(opts: LiveSessionOpts) -> Result<(), String> {
     let LiveSessionOpts {
+        session,
         song_a,
         song_b,
         with_highlight,
@@ -536,7 +574,13 @@ fn cmd_live_session(opts: LiveSessionOpts) -> Result<(), String> {
     let engine = Arc::new(Mutex::new(engine));
     let bank = Arc::new(bank);
 
-    let _api = maybe_start_api(api_enabled, api_port, cmd_tx.clone(), Arc::clone(&engine));
+    let _api = maybe_start_api(
+        api_enabled,
+        api_port,
+        cmd_tx.clone(),
+        Arc::clone(&engine),
+        session,
+    );
     if with_highlight && hermes_enabled && !api_enabled {
         eprintln!(
             "warning: Hermes needs HTTP API for MCP tools; --no-api will make tool calls fail"
@@ -544,7 +588,7 @@ fn cmd_live_session(opts: LiveSessionOpts) -> Result<(), String> {
     }
 
     let hermes_handle = if with_highlight && hermes_enabled {
-        start_hermes_for_tui(hermes_bin, hermes_profile, debug, debug_log)
+        start_hermes_for_tui(hermes_bin, hermes_profile, debug, debug_log, session)
     } else {
         None
     };
@@ -579,6 +623,7 @@ fn cmd_live_session(opts: LiveSessionOpts) -> Result<(), String> {
             initial_b,
             hermes_handle,
             voice_handle,
+            session,
         )?;
     } else {
         eprintln!(
@@ -657,13 +702,22 @@ fn start_hermes_for_tui(
     hermes_profile: Option<String>,
     debug: bool,
     debug_log: Option<PathBuf>,
+    session: SessionKind,
 ) -> Option<strudel_rs::hermes::HermesHandle> {
     let mut cfg = strudel_rs::hermes::HermesConfig::from_env();
+    cfg.session = session;
     if let Some(bin) = hermes_bin {
         cfg.bin = bin;
     }
     if let Some(profile) = hermes_profile {
         cfg.profile = profile;
+    } else if session == SessionKind::Play {
+        let env_set = std::env::var("STRUDEL_HERMES_PROFILE")
+            .ok()
+            .is_some_and(|s| !s.trim().is_empty());
+        if !env_set {
+            cfg.profile = strudel_rs::hermes::PLAY_PROFILE.to_string();
+        }
     }
     if debug {
         cfg.debug = true;
@@ -720,11 +774,16 @@ fn maybe_start_api(
     port: u16,
     tx: Sender<Command>,
     engine: Arc<Mutex<Engine>>,
+    session: SessionKind,
 ) -> Option<std::thread::JoinHandle<()>> {
     if !enabled {
         return None;
     }
-    let state = AppState { tx, engine };
+    let state = AppState {
+        tx,
+        engine,
+        session,
+    };
     Some(api::spawn_server(state, port))
 }
 

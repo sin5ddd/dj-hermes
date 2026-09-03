@@ -17,6 +17,7 @@ use serde::{Deserialize, Serialize};
 use crate::code::parse_code;
 use crate::engine::{Command, Engine};
 use crate::mixer::{FillKind, MixAction, MixCommand, MixGrid, MixStatus};
+use crate::session::SessionKind;
 use crate::song::{
     ensure_user_songs_dir, list_bundled_songs, list_user_library_songs, parse_song,
     resolve_song_path, resolve_user_song_save_path, Song, Track, MAX_SONG_CONTENT_BYTES,
@@ -39,6 +40,8 @@ pub const ENV_API_BASE: &str = "STRUDEL_API";
 pub struct AppState {
     pub tx: Sender<Command>,
     pub engine: Arc<Mutex<Engine>>,
+    /// Play hides mix MCP tools and defaults omitted `deck` to A.
+    pub session: SessionKind,
 }
 
 /// Channel EQ slider positions (0..=1, 0.5 = flat).
@@ -998,7 +1001,14 @@ mod tests {
     fn test_state() -> (AppState, crossbeam::channel::Receiver<Command>) {
         let (tx, rx) = unbounded();
         let engine = Arc::new(Mutex::new(Engine::new(44100, 120.0)));
-        (AppState { tx, engine }, rx)
+        (
+            AppState {
+                tx,
+                engine,
+                session: SessionKind::Dj,
+            },
+            rx,
+        )
     }
 
     async fn json_body(res: axum::response::Response) -> String {

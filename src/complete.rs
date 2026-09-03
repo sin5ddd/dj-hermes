@@ -5,6 +5,7 @@
 
 use std::path::Path;
 
+use crate::session::SessionKind;
 use crate::song::{list_bundled_songs, list_user_library_songs};
 
 /// Context for mute/unmute track names and Hermes routing.
@@ -13,6 +14,7 @@ pub struct CompleteCtx<'a> {
     pub hermes_enabled: bool,
     pub tracks_a: &'a [String],
     pub tracks_b: &'a [String],
+    pub session: SessionKind,
 }
 
 /// Result of analyzing the current prompt line.
@@ -39,11 +41,19 @@ impl CompleteResult {
 const TOP_LEVEL: &[&str] = &[
     "a", "b", "x", "mix", "bpm", "hush", "status", "help", "quit", "viz", "vfx", "dopa", "flash",
 ];
+const TOP_LEVEL_PLAY: &[&str] = &[
+    "a", "load", "save", "reload", "mute", "unmute", "gain", "head", "bpm", "hush", "status",
+    "help", "quit", "viz", "vfx", "dopa", "flash",
+];
 const MIX_MOVES: &[&str] = &["long", "cut", "fill", "hold"];
 const MIX_KINDS: &[&str] = &[
     "delay", "lpf", "flash", "riser", "switch", "echo", "hpf", "roll", "drop",
 ];
 const DECK_VERBS: &[&str] = &["load", "mute", "unmute", "gain", "head", "x"];
+const DECK_VERBS_PLAY: &[&str] = &["load", "mute", "unmute", "gain", "head", "save", "reload"];
+const PLAY_ALIAS_VERBS: &[&str] = &[
+    "load", "save", "reload", "mute", "unmute", "gain", "head", "cue",
+];
 const VIZ_ARGS: &[&str] = &["on", "off"];
 
 /// Suggest using live song directories (user library + bundled `songs/`).
@@ -186,9 +196,47 @@ fn stage_suggest(
     song_stems: &[String],
 ) -> CompleteResult {
     let _ = trailing_ws;
+    let rewritten;
+    let complete = if ctx.session == SessionKind::Play {
+        match complete {
+            [v, rest @ ..] if PLAY_ALIAS_VERBS.contains(v) => {
+                rewritten = {
+                    let mut t = Vec::with_capacity(rest.len() + 2);
+                    t.push("a");
+                    t.push(*v);
+                    t.extend_from_slice(rest);
+                    t
+                };
+                rewritten.as_slice()
+            }
+            _ => complete,
+        }
+    } else {
+        complete
+    };
+    if ctx.session == SessionKind::Play {
+        if let Some("mix" | "x" | "xfade" | "b" | "B" | "1") = complete.first().copied() {
+            return CompleteResult::empty();
+        }
+    }
+    let top = if ctx.session == SessionKind::Play {
+        TOP_LEVEL_PLAY
+    } else {
+        TOP_LEVEL
+    };
+    let deck_verbs = if ctx.session == SessionKind::Play {
+        DECK_VERBS_PLAY
+    } else {
+        DECK_VERBS
+    };
     match complete {
-        [] => list_result(filter_static(TOP_LEVEL, partial), replace_from, None),
-        [d] if is_deck(d) => list_result(filter_static(DECK_VERBS, partial), replace_from, None),
+        [] => list_result(filter_static(top, partial), replace_from, None),
+        [d] if is_deck(d) => {
+            if ctx.session == SessionKind::Play && !matches!(*d, "a" | "A" | "0") {
+                return CompleteResult::empty();
+            }
+            list_result(filter_static(deck_verbs, partial), replace_from, None)
+        }
         [d, v] if is_deck(d) => match *v {
             "load" => list_result(filter_owned(song_stems, partial), replace_from, None),
             "mute" | "unmute" => {
@@ -343,6 +391,16 @@ mod tests {
             hermes_enabled: hermes,
             tracks_a: a,
             tracks_b: b,
+            session: SessionKind::Dj,
+        }
+    }
+
+    fn ctx_play<'a>(hermes: bool, a: &'a [String], b: &'a [String]) -> CompleteCtx<'a> {
+        CompleteCtx {
+            hermes_enabled: hermes,
+            tracks_a: a,
+            tracks_b: b,
+            session: SessionKind::Play,
         }
     }
 
@@ -451,5 +509,34 @@ mod tests {
     fn colon_slash_legacy() {
         let r = suggest_with_songs(":/st", &ctx(true, &[], &[]), &[]);
         assert_eq!(r.candidates, vec!["status".to_string()]);
+    }
+
+    #[test]
+    fn play_top_level_has_load_not_mix() {
+        let r = suggest_with_songs("/", &ctx_play(true, &[], &[]), &[]);
+        assert!(
+            r.candidates.iter().any(|c| c == "load"),
+            "{:?}",
+            r.candidates
+        );
+        assert!(
+            r.candidates.iter().any(|c| c == "bpm"),
+            "{:?}",
+            r.candidates
+        );
+        assert!(!r.candidates.iter().any(|c| c == "b"), "{:?}", r.candidates);
+        assert!(
+            !r.candidates.iter().any(|c| c == "mix"),
+            "{:?}",
+            r.candidates
+        );
+        assert!(!r.candidates.iter().any(|c| c == "x"), "{:?}", r.candidates);
+    }
+
+    #[test]
+    fn play_load_alias_suggests_songs() {
+        let s = songs(&["house-01", "dnb-01"]);
+        let r = suggest_with_songs("/load ho", &ctx_play(true, &[], &[]), &s);
+        assert_eq!(r.candidates, vec!["house-01".to_string()]);
     }
 }

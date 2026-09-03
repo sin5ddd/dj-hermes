@@ -21,6 +21,7 @@ use serde_json::{json, Map, Value};
 
 use crate::api::{deck_idx, default_api_base, snapshot, AppState, StatusInfo, DEFAULT_API_PORT};
 use crate::engine::Command;
+use crate::session::SessionKind;
 use crate::song::{
     ensure_user_songs_dir, list_bundled_songs, list_user_library_songs, parse_song,
     resolve_song_path, resolve_user_song_save_path, MAX_SONG_CONTENT_BYTES,
@@ -48,6 +49,28 @@ enum ToolBackend<'a> {
     },
     /// In-process: same process as play/dj API.
     Local { state: &'a AppState },
+}
+
+impl ToolBackend<'_> {
+    fn session(&self) -> SessionKind {
+        match self {
+            ToolBackend::Local { state } => state.session,
+            // Stdio debug bridge lists the full DJ tool set.
+            ToolBackend::Http { .. } => SessionKind::Dj,
+        }
+    }
+}
+
+const MIX_TOOL_NAMES: &[&str] = &[
+    "strudel_mixer_eq",
+    "strudel_mixer_filter",
+    "strudel_mixer_crossfader",
+    "strudel_xfade",
+    "strudel_mix",
+];
+
+fn is_mix_tool(name: &str) -> bool {
+    MIX_TOOL_NAMES.contains(&name)
 }
 
 // ── Streamable HTTP (primary) ───────────────────────────────────────────────
@@ -145,7 +168,7 @@ fn handle_rpc(msg: &Value, backend: &ToolBackend<'_>) -> Option<Value> {
             Ok(initialize_result(&params))
         }
         "ping" => Ok(json!({})),
-        "tools/list" => Ok(tools_list()),
+        "tools/list" => Ok(tools_list(backend.session())),
         "tools/call" => {
             let params = msg.get("params").cloned().unwrap_or(json!({}));
             tools_call(backend, params)
@@ -192,9 +215,9 @@ fn initialize_result(params: &Value) -> Value {
     })
 }
 
-fn tools_list() -> Value {
+fn tools_list(session: SessionKind) -> Value {
     // Order: Mixer → Deck → Transport
-    json!({
+    let mut v = json!({
         "tools": [
             {
                 "name": "strudel_mixer_eq",
@@ -422,7 +445,27 @@ fn tools_list() -> Value {
                 }
             }
         ]
-    })
+    });
+    if session == SessionKind::Play {
+        if let Some(arr) = v["tools"].as_array_mut() {
+            arr.retain(|t| t["name"].as_str().map(|n| !is_mix_tool(n)).unwrap_or(true));
+            for t in arr.iter_mut() {
+                if let Some(req) = t["inputSchema"]["required"].as_array_mut() {
+                    req.retain(|x| x.as_str() != Some("deck"));
+                }
+                if let Some(deck) = t
+                    .pointer_mut("/inputSchema/properties/deck")
+                    .and_then(|d| d.as_object_mut())
+                {
+                    deck.insert(
+                        "description".into(),
+                        json!("optional in play; always deck A"),
+                    );
+                }
+            }
+        }
+    }
+    v
 }
 
 fn tools_call(backend: &ToolBackend<'_>, params: Value) -> Result<Value, Value> {
@@ -651,6 +694,12 @@ fn tools_call_http(
 // ── In-process tool exec (HTTP /mcp) ────────────────────────────────────────
 
 fn tools_call_local(state: &AppState, name: &str, args: &Value) -> Result<Value, Value> {
+    if state.session == SessionKind::Play && is_mix_tool(name) {
+        return Ok(tool_text_result(
+            "this tool is dj-only; play is a single-deck session (deck A)".into(),
+            true,
+        ));
+    }
     let outcome = match name {
         "strudel_mixer_eq" => local_mixer_eq(state, args),
         "strudel_mixer_filter" => local_mixer_filter(state, args),
@@ -686,6 +735,31 @@ fn tools_call_local(state: &AppState, name: &str, args: &Value) -> Result<Value,
 
 fn send_cmd(state: &AppState, cmd: Command) -> Result<(), String> {
     state.tx.send(cmd).map_err(|e| e.to_string())
+}
+
+/// Deck argument: required in DJ; omitted → A in play; B is rejected in play.
+fn arg_deck(state: &AppState, args: &Value) -> Result<usize, String> {
+    match args
+        .get("deck")
+        .and_then(|v| v.as_str())
+        .filter(|s| !s.is_empty())
+    {
+        None => {
+            if state.session == SessionKind::Play {
+                Ok(0)
+            } else {
+                Err("deck required (string)".into())
+            }
+        }
+        Some(s) => {
+            let d = deck_idx(s)?;
+            if state.session == SessionKind::Play && d != 0 {
+                Err("play is single-deck (A only); use strudel-rs dj for deck B".into())
+            } else {
+                Ok(d)
+            }
+        }
+    }
 }
 
 fn local_mixer_eq(state: &AppState, args: &Value) -> Result<String, String> {
@@ -855,11 +929,7 @@ fn local_load_song(state: &AppState, args: &Value) -> Result<String, String> {
         .get("path")
         .and_then(|v| v.as_str())
         .ok_or_else(|| "path required (string)".to_string())?;
-    let deck_s = args
-        .get("deck")
-        .and_then(|v| v.as_str())
-        .ok_or_else(|| "deck required (string)".to_string())?;
-    let deck = deck_idx(deck_s)?;
+    let deck = arg_deck(state, args)?;
     let resolved = resolve_song_path(path)?;
     let text = std::fs::read_to_string(&resolved).map_err(|e| format!("read: {e}"))?;
     let path_str = resolved.to_string_lossy();
@@ -884,18 +954,15 @@ fn local_list_songs() -> Result<String, String> {
 }
 
 fn local_get_song(state: &AppState, args: &Value) -> Result<String, String> {
-    let deck_s = args
-        .get("deck")
-        .and_then(|v| v.as_str())
-        .ok_or_else(|| "deck required (string)".to_string())?;
-    let deck = deck_idx(deck_s)?;
+    let deck = arg_deck(state, args)?;
+    let label = if deck == 0 { "A" } else { "B" };
     let e = state
         .engine
         .lock()
         .map_err(|e| format!("engine lock: {e}"))?;
     let song = e.decks[deck]
         .song_ref()
-        .ok_or_else(|| format!("deck {deck_s} has no song loaded"))?;
+        .ok_or_else(|| format!("deck {label} has no song loaded"))?;
     let tracks: Vec<Value> = song
         .track_sources()
         .into_iter()
@@ -959,11 +1026,8 @@ fn local_apply_patched_song(
 }
 
 fn local_patch_track(state: &AppState, args: &Value) -> Result<String, String> {
-    let deck_s = args
-        .get("deck")
-        .and_then(|v| v.as_str())
-        .ok_or_else(|| "deck required (string)".to_string())?;
-    let deck = deck_idx(deck_s)?;
+    let deck = arg_deck(state, args)?;
+    let label = if deck == 0 { "A" } else { "B" };
     let track = args
         .get("track")
         .and_then(|v| v.as_str())
@@ -983,18 +1047,15 @@ fn local_patch_track(state: &AppState, args: &Value) -> Result<String, String> {
         e.decks[deck]
             .song_ref()
             .cloned()
-            .ok_or_else(|| format!("deck {deck_s} has no song loaded"))?
+            .ok_or_else(|| format!("deck {label} has no song loaded"))?
     };
     let patched = song.patch_track(track, op, code, name)?;
     local_apply_patched_song(state, deck, patched)
 }
 
 fn local_edit_method(state: &AppState, args: &Value) -> Result<String, String> {
-    let deck_s = args
-        .get("deck")
-        .and_then(|v| v.as_str())
-        .ok_or_else(|| "deck required (string)".to_string())?;
-    let deck = deck_idx(deck_s)?;
+    let deck = arg_deck(state, args)?;
+    let label = if deck == 0 { "A" } else { "B" };
     let track = args
         .get("track")
         .and_then(|v| v.as_str())
@@ -1017,7 +1078,7 @@ fn local_edit_method(state: &AppState, args: &Value) -> Result<String, String> {
         e.decks[deck]
             .song_ref()
             .cloned()
-            .ok_or_else(|| format!("deck {deck_s} has no song loaded"))?
+            .ok_or_else(|| format!("deck {label} has no song loaded"))?
     };
     let patched = song.edit_method(track, op, method, method_args)?;
     local_apply_patched_song(state, deck, patched)
@@ -1034,11 +1095,7 @@ fn local_apply_song(state: &AppState, args: &Value) -> Result<String, String> {
             content.len()
         ));
     }
-    let deck_s = args
-        .get("deck")
-        .and_then(|v| v.as_str())
-        .ok_or_else(|| "deck required (string)".to_string())?;
-    let deck = deck_idx(deck_s)?;
+    let deck = arg_deck(state, args)?;
     let song = parse_song(content, "")?;
     local_apply_patched_song(state, deck, song)
 }
@@ -1051,18 +1108,20 @@ fn local_save_song(state: &AppState, args: &Value) -> Result<String, String> {
     let content = match args.get("content").and_then(|v| v.as_str()) {
         Some(c) if !c.is_empty() => c.to_string(),
         _ => {
-            let deck_s = args
-                .get("deck")
-                .and_then(|v| v.as_str())
-                .ok_or_else(|| "content or deck required".to_string())?;
-            let deck = deck_idx(deck_s)?;
+            if args.get("deck").and_then(|v| v.as_str()).is_none()
+                && state.session != SessionKind::Play
+            {
+                return Err("content or deck required".into());
+            }
+            let deck = arg_deck(state, args)?;
+            let label = if deck == 0 { "A" } else { "B" };
             let e = state
                 .engine
                 .lock()
                 .map_err(|e| format!("engine lock: {e}"))?;
             let song = e.decks[deck]
                 .song_ref()
-                .ok_or_else(|| format!("deck {deck_s} has no song loaded"))?;
+                .ok_or_else(|| format!("deck {label} has no song loaded"))?;
             song.source.clone()
         }
     };
@@ -1101,10 +1160,7 @@ fn local_save_song(state: &AppState, args: &Value) -> Result<String, String> {
 }
 
 fn local_mute(state: &AppState, args: &Value) -> Result<String, String> {
-    let deck_s = args
-        .get("deck")
-        .and_then(|v| v.as_str())
-        .ok_or_else(|| "deck required (string)".to_string())?;
+    let deck = arg_deck(state, args)?;
     let track = args
         .get("track")
         .and_then(|v| v.as_str())
@@ -1113,7 +1169,6 @@ fn local_mute(state: &AppState, args: &Value) -> Result<String, String> {
         .get("muted")
         .and_then(|v| v.as_bool())
         .ok_or_else(|| "muted required".to_string())?;
-    let deck = deck_idx(deck_s)?;
     if track.trim().is_empty() {
         return Err("track name is empty".into());
     }
@@ -1129,10 +1184,7 @@ fn local_mute(state: &AppState, args: &Value) -> Result<String, String> {
 }
 
 fn local_head(state: &AppState, args: &Value) -> Result<String, String> {
-    let deck_s = args
-        .get("deck")
-        .and_then(|v| v.as_str())
-        .ok_or_else(|| "deck required (string)".to_string())?;
+    let deck = arg_deck(state, args)?;
     let bar = args
         .get("bar")
         .and_then(|v| v.as_u64())
@@ -1140,7 +1192,6 @@ fn local_head(state: &AppState, args: &Value) -> Result<String, String> {
     if bar < 1 {
         return Err("bar must be >= 1 (1 = first bar)".into());
     }
-    let deck = deck_idx(deck_s)?;
     send_cmd(state, Command::Head { deck, bar })?;
     Ok("ok (202)".into())
 }
@@ -1346,12 +1397,32 @@ mod tests {
     fn test_state() -> (AppState, crossbeam::channel::Receiver<Command>) {
         let (tx, rx) = unbounded();
         let engine = Arc::new(Mutex::new(Engine::new(48_000, 120.0)));
-        (AppState { tx, engine }, rx)
+        (
+            AppState {
+                tx,
+                engine,
+                session: SessionKind::Dj,
+            },
+            rx,
+        )
+    }
+
+    fn test_state_play() -> (AppState, crossbeam::channel::Receiver<Command>) {
+        let (tx, rx) = unbounded();
+        let engine = Arc::new(Mutex::new(Engine::new(48_000, 120.0)));
+        (
+            AppState {
+                tx,
+                engine,
+                session: SessionKind::Play,
+            },
+            rx,
+        )
     }
 
     #[test]
     fn tools_list_mixer_deck_transport_no_set_code() {
-        let v = tools_list();
+        let v = tools_list(SessionKind::Dj);
         let tools = v["tools"].as_array().unwrap();
         assert_eq!(tools.len(), 17);
         let names: Vec<_> = tools.iter().filter_map(|t| t["name"].as_str()).collect();
@@ -1464,6 +1535,78 @@ mod tests {
         });
         let resp = handle_rpc(&list, &backend).expect("list reply");
         assert_eq!(resp["result"]["tools"].as_array().unwrap().len(), 17);
+    }
+
+    #[test]
+    fn tools_list_play_omits_mix_and_defaults_deck() {
+        let v = tools_list(SessionKind::Play);
+        let tools = v["tools"].as_array().unwrap();
+        let names: Vec<_> = tools.iter().filter_map(|t| t["name"].as_str()).collect();
+        assert_eq!(names.len(), 12);
+        for mix in MIX_TOOL_NAMES {
+            assert!(!names.contains(mix), "{mix} should be hidden in play");
+        }
+        assert!(names.contains(&"strudel_apply_song"));
+        assert!(names.contains(&"strudel_set_bpm"));
+        let load = tools
+            .iter()
+            .find(|t| t["name"] == "strudel_load_song")
+            .unwrap();
+        let req = load["inputSchema"]["required"].as_array().unwrap();
+        assert!(!req.iter().any(|x| x.as_str() == Some("deck")), "{req:?}");
+        assert!(req.iter().any(|x| x.as_str() == Some("path")), "{req:?}");
+    }
+
+    #[test]
+    fn play_apply_omits_deck_and_rejects_mix() {
+        let (state, rx) = test_state_play();
+        let backend = ToolBackend::Local { state: &state };
+        let apply = json!({
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "tools/call",
+            "params": {
+                "name": "strudel_apply_song",
+                "arguments": {
+                    "content": "// @title t\nsetcpm(30)\n$: s(\"bd*4\")\n"
+                }
+            }
+        });
+        let resp = handle_rpc(&apply, &backend).unwrap();
+        assert_eq!(resp["result"]["isError"], false, "{resp}");
+        match rx.try_recv().unwrap() {
+            Command::LoadSong { deck, .. } => assert_eq!(deck, 0),
+            _ => panic!("expected LoadSong"),
+        }
+
+        let mix = json!({
+            "jsonrpc": "2.0",
+            "id": 2,
+            "method": "tools/call",
+            "params": {
+                "name": "strudel_xfade",
+                "arguments": { "to": "B" }
+            }
+        });
+        let resp = handle_rpc(&mix, &backend).unwrap();
+        assert_eq!(resp["result"]["isError"], true);
+        let text = resp["result"]["content"][0]["text"].as_str().unwrap();
+        assert!(text.contains("dj-only"), "{text}");
+        assert!(rx.try_recv().is_err());
+
+        let b = json!({
+            "jsonrpc": "2.0",
+            "id": 3,
+            "method": "tools/call",
+            "params": {
+                "name": "strudel_get_song",
+                "arguments": { "deck": "B" }
+            }
+        });
+        let resp = handle_rpc(&b, &backend).unwrap();
+        assert_eq!(resp["result"]["isError"], true);
+        let text = resp["result"]["content"][0]["text"].as_str().unwrap();
+        assert!(text.contains("single-deck"), "{text}");
     }
 
     #[test]

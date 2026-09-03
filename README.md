@@ -43,31 +43,30 @@ Linux では ALSA 開発ヘッダが必要なことがあります（例: `libas
 
 ```bash
 strudel-rs play songs/house-01.strudel
-strudel-rs play songs/house-01.strudel --seconds 15
 # TUI なし（メタログのみ・スクリプト向け）
-strudel-rs play songs/house-01.strudel --headless
+strudel-rs play songs/house-01.strudel --headless --seconds 8
 # デュアルデッキ live UI（曲は省略可）。両曲は 124 BPM で同じ Transport。
 strudel-rs dj songs/house-01.strudel songs/four-on-the-floor-01.strudel
 strudel-rs dj
 # 開発時
 cargo run -- dj songs/house-01.strudel songs/four-on-the-floor-01.strudel
-# genre examples (same Transport BPM per pair)
-strudel-rs play songs/four-on-the-floor-01.strudel --seconds 12
+# genre examples
+strudel-rs play songs/four-on-the-floor-01.strudel
 strudel-rs play songs/house-01.strudel --headless --seconds 8
 strudel-rs dj songs/house-01.strudel songs/four-on-the-floor-01.strudel
-strudel-rs play songs/dnb-01.strudel --seconds 12
+strudel-rs play songs/dnb-01.strudel
 strudel-rs play songs/techno-duck-01.strudel --headless --seconds 8
-# 130 BPM acid / 303 filter env (play solo)
-strudel-rs play songs/acid-01.strudel --seconds 12
+strudel-rs play songs/acid-01.strudel
 ```
 
 Recipes (Cursor `SKILL.md` + playable `songs/<genre>-01.strudel`): [docs/profile/dj-hermes/skills/creative/](./docs/profile/dj-hermes/skills/creative/).
 
-- **既定はループ再生**（終了: TUI なら `q` / Esc、`--headless` なら Ctrl+C）
-- `--seconds N`: N 秒で自動停止（スクリプト向け）
-- **既定はミニ記法ライブハイライト TUI**（曲ソース表示・再生中 atom を ANSI 強調）
-- `--headless`: 旧来のメタログのみ（TTY 不要・CI / パイプ向け）
-- **`dj [SONG_A] [SONG_B]`**: **ハイライト + コマンド行**のライブ UI + `songs/` ウォッチャ（デモ / DJ 向け）
+- **`play` の既定は 1 デッキ live UI**（ハイライト + `»` プロンプト + Hermes）。終了は `q` / Esc
+- `--headless`: メタログのみ（TTY 不要・CI / パイプ向け。Ctrl+C で終了）
+- `--seconds N`: 時間制限。`--headless` と組み合わせるか、プロンプト無しのハイライト視聴に使う
+- Hermes 既定プロファイルは **`play-hermes`**（[docs/profile/play-hermes/](./docs/profile/play-hermes/)）。mix / xfade は呼ばない。スキル正本は `dj-hermes` からコピーし `strudel-dj-mix` を外す
+- ローカルコマンド例（play）: `/load house-01` `/save visitor-1` `/mute drums` `/bpm 128` `/viz` `/vfx`。デッキ B と `/x` `/mix` は `dj` 向け
+- **`dj [SONG_A] [SONG_B]`**: **ハイライト + コマンド行**の 2 デッキ live UI（デモ / DJ 向け）
   - 画面上段: **左 = デッキ A / 右 = デッキ B** のミニ記法ハイライト（同時表示）
   - **`F10` または `/viz`**: 上段を **punchcard** に切替。上段=ドラム（`$:` ごとレーン・**一色**）、下段=ノートのピアノロール（**楽器＝note `$:` ごと色分け**）。`/viz on` / `/viz off` も可
   - **`F9` または `/vfx`**（別名 `/dopa` `/flash`）: ヒットに合わせた VFX（ドラム固有色・波紋・メロディビーム・ライザー色相）。既定 On。ヘルプ行の `[VFX]` をクリックしても切替。ハットなどの細かいヒットは局所のみ（全画面の点滅はしない）
@@ -88,8 +87,8 @@ Recipes (Cursor `SKILL.md` + playable `songs/<genre>-01.strudel`): [docs/profile
     - `/a mute kick` / `/bpm 128` / `/status` / `/help` / `/viz` / `/vfx`
     - オペレータ: `/hush` `/quit`
   - `--text`: ハイライトなしの rustyline テキスト REPL（**裸コマンドのまま**。Hermes は TUI のみ）
-  - 互換: `play --repl` / `play --repl-text` も同じセッションを起動（A/B 2 曲可）
-  - 展示向け Hermes 手順・プロンプトインジェクション対策: [docs/exhibit/README.md](./docs/exhibit/README.md)
+  - 互換: `play --repl` / `play --repl-text` も同じ **2 デッキ** セッションを起動（A/B 2 曲可）。1 デッキの曲編集は `strudel-rs play`
+  - 展示向け Hermes 手順・プロンプトインジェクション対策: [docs/exhibit/README.md](./docs/exhibit/README.md)（play は `play-hermes`、dj は `dj-hermes`）
 - サンプルは `./samples`（Sonic Pi 由来 CC0、**Git LFS**）。曲は `songs/*.strudel`
 - **記法 → リズム / 和声 / DJ の対応**と再利用スキル: [docs/profile/dj-hermes/skills/creative/README.md](./docs/profile/dj-hermes/skills/creative/README.md)（例: `songs/four-on-the-floor-01.strudel`, `songs/house-01.strudel`）
 - 出力デバイスが無い環境ではエラー終了（`cargo test` / build はデバイス不要）
@@ -177,6 +176,8 @@ curl -s -X POST -H "Content-Type: application/json" \
 | Deck | `strudel_load_song` / `strudel_apply_song` / `strudel_list_songs` / `strudel_save_song` / `strudel_mute` / `strudel_head` |
 | Transport | `strudel_hush` / `strudel_status` |
 
+`strudel-rs play` の MCP は Mixer の mix/xfade/EQ/filter/crossfader を `tools/list` から外します。`strudel_set_bpm` と Deck / Transport は残します。省略した `deck` は A です。`dj` は上表の全ツールです。
+
 曲の差し替えは **`strudel_load_song`**（`.strudel` ファイル）または **`strudel_apply_song`**（全文・無書き込み）。新規の永続化は **`strudel_save_song`**（書き込み先は `~/.config/strudel-rs/songs/` のみ、演奏は変えない）。HTTP `PUT /code` はスクリプト用に残置。
 
 ### 手順
@@ -189,6 +190,8 @@ curl -s -X POST -H "Content-Type: application/json" \
 # ターミナル 1 — 演奏（API + /mcp も同時に立つ）
 cd /path/to/strudel-rust
 strudel-rs dj songs/house-01.strudel songs/four-on-the-floor-01.strudel
+# 1 曲 live 編集:
+# strudel-rs play songs/house-01.strudel
 # または headless 単曲:
 # strudel-rs play --headless songs/house-01.strudel
 ```

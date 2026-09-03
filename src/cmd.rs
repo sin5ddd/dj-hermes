@@ -9,6 +9,7 @@ use std::sync::{Arc, Mutex};
 use crossbeam::channel::Sender;
 
 use crate::engine::{Command, Engine};
+use crate::session::SessionKind;
 use crate::song::{
     ensure_user_songs_dir, parse_song, resolve_song_path, resolve_user_song_save_path, Song,
     MAX_SONG_CONTENT_BYTES,
@@ -51,6 +52,69 @@ Esc                 dismiss suggest (or quit when prompt empty)
 bare text           send to Hermes (DJ assistant)
 /…                  local command (e.g. /bpm 128, /a load house-01, /viz)
 ";
+
+/// Help for `strudel-rs play` (one song on deck A; no mix / xfade / B).
+pub const HELP_PLAY: &str = "\
+# local commands (live TUI: prefix with / )
+load <file>         load song (bare name → songs/; alias of a load)
+reload              re-read last loaded file (next bar)
+save [name]         write current source to user library (no playback change)
+mute <track>        mute track (next bar)
+unmute <track>
+gain <0..1>         fader (immediate)
+head <bar>          cue song bar (1-based; applies next bar). alias: cue
+a load|save|…       same verbs with an explicit deck A prefix
+bpm <n>             BPM from next bar
+hush                stop all (immediate)  [operator]
+status
+help
+quit / q            [operator]
+viz [on|off]        toggle body punchcard / highlight (live TUI)
+vfx [on|off]        toggle hit VFX overlay (live TUI; default on). aliases: dopa, flash
+↑↓ / Tab / Enter    suggest overlay: select / apply / apply+run (live TUI)
+Esc                 dismiss suggest (or quit when prompt empty)
+
+# live TUI + Hermes
+bare text           send to Hermes (play assistant)
+/…                  local command (e.g. /bpm 128, /load house-01, /viz)
+
+play is one song (deck A). mix / xfade / deck B: use `strudel-rs dj`.
+";
+
+/// Help body for the current session (overlay / `help` command).
+pub fn help_text(session: SessionKind) -> &'static str {
+    match session {
+        SessionKind::Play => HELP_PLAY,
+        SessionKind::Dj => HELP,
+    }
+}
+
+const PLAY_ALIAS_VERBS: &[&str] = &[
+    "load", "save", "reload", "mute", "unmute", "gain", "head", "cue",
+];
+
+fn preprocess_play_line(line: &str) -> Result<String, String> {
+    let args: Vec<&str> = line.split_whitespace().collect();
+    if args.is_empty() {
+        return Ok(line.to_string());
+    }
+    let head = args[0];
+    if parse_deck(head) == Some(1) {
+        return Err(
+            "play は1曲（デッキ A）です。デッキ B は `strudel-rs dj` を使ってください。".into(),
+        );
+    }
+    if matches!(head, "mix" | "x" | "xfade") {
+        return Err("mix / xfade は dj 専用です。play は1曲です。".into());
+    }
+    if parse_deck(head) == Some(0) && args.get(1).is_some_and(|v| matches!(*v, "x" | "xfade")) {
+        return Err("mix / xfade は dj 専用です。play は1曲です。".into());
+    }
+    if PLAY_ALIAS_VERBS.contains(&head) {
+        return Ok(format!("a {line}"));
+    }
+    Ok(line.to_string())
+}
 
 /// How live TUI should route a prompt line.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -130,11 +194,23 @@ impl ExecResult {
 }
 
 /// Parse and run one command line. `engine` is optional (status / default xfade target).
+/// Dual-deck (DJ) session — same as [`exec_in`] with [`SessionKind::Dj`].
 pub fn exec(
     line: &str,
     tx: &Sender<Command>,
     deck_paths: &DeckPaths,
     engine: Option<&Arc<Mutex<Engine>>>,
+) -> ExecResult {
+    exec_in(line, tx, deck_paths, engine, SessionKind::Dj)
+}
+
+/// Parse and run one command line in a DJ or play session.
+pub fn exec_in(
+    line: &str,
+    tx: &Sender<Command>,
+    deck_paths: &DeckPaths,
+    engine: Option<&Arc<Mutex<Engine>>>,
+    session: SessionKind,
 ) -> ExecResult {
     let line = line.trim();
     if line.is_empty() {
@@ -146,6 +222,18 @@ pub fn exec(
     }
     // Strip a leading ':' so old muscle memory still works a bit.
     let line = line.strip_prefix(':').unwrap_or(line);
+    let rewritten;
+    let line = if session == SessionKind::Play {
+        match preprocess_play_line(line) {
+            Ok(s) => {
+                rewritten = s;
+                rewritten.as_str()
+            }
+            Err(m) => return ExecResult::msg(m),
+        }
+    } else {
+        line
+    };
     let args: Vec<&str> = line.split_whitespace().collect();
     if args.is_empty() {
         return ExecResult {
@@ -161,7 +249,7 @@ pub fn exec(
             let _ = tx.send(Command::Hush);
             return ExecResult::quit();
         }
-        "help" | "h" | "?" => return ExecResult::msg(HELP.trim_end()),
+        "help" | "h" | "?" => return ExecResult::msg(help_text(session).trim_end()),
         "hush" => {
             let _ = tx.send(Command::Hush);
             return ExecResult::msg("(hushed)");
@@ -756,5 +844,48 @@ mod tests {
         assert!(written.contains("@title t"), "{written}");
 
         let _ = std::fs::remove_dir_all(&home);
+    }
+
+    #[test]
+    fn play_aliases_load_to_deck_a() {
+        let (tx, rx) = unbounded();
+        let paths = new_deck_paths();
+        let r = exec_in("load no_such.strudel", &tx, &paths, None, SessionKind::Play);
+        assert!(!r.quit);
+        let m = &r.messages[0];
+        assert!(
+            m.contains("song not found") || m.contains("read error") || m.contains("parse"),
+            "{m}"
+        );
+        assert!(rx.try_recv().is_err());
+    }
+
+    #[test]
+    fn play_rejects_deck_b_and_mix() {
+        let (tx, rx) = unbounded();
+        let paths = new_deck_paths();
+        let r = exec_in("b load house-01", &tx, &paths, None, SessionKind::Play);
+        assert!(r.messages[0].contains("dj"), "{}", r.messages[0]);
+        assert!(rx.try_recv().is_err());
+        let r = exec_in("x 4", &tx, &paths, None, SessionKind::Play);
+        assert!(r.messages[0].contains("dj"), "{}", r.messages[0]);
+        assert!(rx.try_recv().is_err());
+        let r = exec_in("mix hold", &tx, &paths, None, SessionKind::Play);
+        assert!(r.messages[0].contains("dj"), "{}", r.messages[0]);
+        assert!(rx.try_recv().is_err());
+        let r = exec_in("a x 4", &tx, &paths, None, SessionKind::Play);
+        assert!(r.messages[0].contains("dj"), "{}", r.messages[0]);
+        assert!(rx.try_recv().is_err());
+    }
+
+    #[test]
+    fn play_help_omits_xfade() {
+        let (tx, _rx) = unbounded();
+        let paths = new_deck_paths();
+        let r = exec_in("help", &tx, &paths, None, SessionKind::Play);
+        let h = r.messages.join("\n");
+        assert!(h.contains("/load"), "{h}");
+        assert!(!h.contains("xfade to the other deck"), "{h}");
+        assert!(h.contains("strudel-rs dj"), "{h}");
     }
 }

@@ -170,7 +170,7 @@ Release プロファイル目安（プラン）: `opt-level = 3`, `lto = true`, 
 6. **バッファまたぎ**はスプリットせず安全性優先（最大 1 バッファずれ許容）。
 7. **cpal は I/O のみ。** Synths/Effects/Samples 相当は自前 DSP。Strudel 全機能は目標にせず **ティアA** を Task 1–22 の完了条件とする（B/C は任意 Task 23–24）。
 8. **Punchcard/Pianoroll 可視化**は任意 Task 25（完了）。`dj` live UI で `F10` / `/viz` により body を highlight ⇔ punchcard 切替。エディタ埋め込みは非対応。
-9. **ミニ記法ライブハイライト**は任意 Task 26。`play` の**既定表示**（曲ソース + 再生中 atom の ANSI 強調）。旧メタログのみは `--headless`。audio スレッドでは span 計算しない（UI 再評価）。
+9. **ミニ記法ライブハイライト**は任意 Task 26。`play` の既定は **1 デッキ live UI**（ハイライト + `»` + Hermes `play-hermes`）。旧メタログのみは `--headless`。audio スレッドでは span 計算しない（UI 再評価）。
 10. 依存をむやみに増やさない。パーサジェネレータや重いシリアライズ層は避ける。ネット経由サンプルロードはデモ範囲外。
 
 ---
@@ -180,9 +180,10 @@ Release プロファイル目安（プラン）: `opt-level = 3`, `lto = true`, 
 ### CLI / REPL 例
 
 ```
-./strudel-rs dj songs/house-01.strudel songs/four-on-the-floor-01.strudel   # live UI + API(:17878)
+./strudel-rs play songs/house-01.strudel   # 1 デッキ live UI + Hermes (play-hermes) + API(:17878)
+./strudel-rs dj songs/house-01.strudel songs/four-on-the-floor-01.strudel   # 2 デッキ + mix
 # または空起動: ./strudel-rs dj
-# プロンプト: a load … / b load … / x 4
+# play プロンプト: /load …    dj プロンプト: /a load … / b load … / x 4
 ```
 
 ### HTTP
