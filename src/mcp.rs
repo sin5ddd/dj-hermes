@@ -450,22 +450,42 @@ fn tools_list(session: SessionKind) -> Value {
         if let Some(arr) = v["tools"].as_array_mut() {
             arr.retain(|t| t["name"].as_str().map(|n| !is_mix_tool(n)).unwrap_or(true));
             for t in arr.iter_mut() {
-                if let Some(req) = t["inputSchema"]["required"].as_array_mut() {
-                    req.retain(|x| x.as_str() != Some("deck"));
-                }
-                if let Some(deck) = t
-                    .pointer_mut("/inputSchema/properties/deck")
-                    .and_then(|d| d.as_object_mut())
-                {
-                    deck.insert(
-                        "description".into(),
-                        json!("optional in play; always deck A"),
-                    );
-                }
+                play_relax_deck_schema(t);
             }
         }
     }
     v
+}
+
+/// Play: `deck` is optional (always A). Do not use `Value` IndexMut here —
+/// missing keys would be inserted as JSON `null`, and xAI rejects
+/// `"required": null` (`/required: null is not of type "array"`).
+fn play_relax_deck_schema(tool: &mut Value) {
+    let Some(schema) = tool.get_mut("inputSchema").and_then(Value::as_object_mut) else {
+        return;
+    };
+    let drop_required = schema
+        .get_mut("required")
+        .and_then(Value::as_array_mut)
+        .map(|req| {
+            req.retain(|x| x.as_str() != Some("deck"));
+            req.is_empty()
+        })
+        .unwrap_or(false);
+    if drop_required {
+        schema.remove("required");
+    }
+    if let Some(deck) = schema
+        .get_mut("properties")
+        .and_then(Value::as_object_mut)
+        .and_then(|p| p.get_mut("deck"))
+        .and_then(Value::as_object_mut)
+    {
+        deck.insert(
+            "description".into(),
+            json!("optional in play; always deck A"),
+        );
+    }
 }
 
 fn tools_call(backend: &ToolBackend<'_>, params: Value) -> Result<Value, Value> {
@@ -1555,6 +1575,44 @@ mod tests {
         let req = load["inputSchema"]["required"].as_array().unwrap();
         assert!(!req.iter().any(|x| x.as_str() == Some("deck")), "{req:?}");
         assert!(req.iter().any(|x| x.as_str() == Some("path")), "{req:?}");
+
+        for t in tools {
+            let name = t["name"].as_str().unwrap_or("?");
+            match t.get("inputSchema").and_then(|s| s.get("required")) {
+                None => {}
+                Some(Value::Array(a)) => {
+                    assert!(
+                        !a.is_empty(),
+                        "{name}: empty required must be omitted (xAI rejects null/empty)"
+                    );
+                    assert!(
+                        !a.iter().any(|x| x.as_str() == Some("deck")),
+                        "{name}: deck must not stay required in play"
+                    );
+                }
+                other => panic!("{name}: required must be a JSON array or absent, got {other:?}"),
+            }
+        }
+        let list = tools
+            .iter()
+            .find(|t| t["name"] == "strudel_list_songs")
+            .unwrap();
+        assert!(
+            list.get("inputSchema")
+                .and_then(|s| s.get("required"))
+                .is_none(),
+            "list_songs must not gain required:null via IndexMut"
+        );
+        let get = tools
+            .iter()
+            .find(|t| t["name"] == "strudel_get_song")
+            .unwrap();
+        assert!(
+            get.get("inputSchema")
+                .and_then(|s| s.get("required"))
+                .is_none(),
+            "get_song required was only deck; omit after play relax"
+        );
     }
 
     #[test]
