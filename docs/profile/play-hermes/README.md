@@ -13,8 +13,9 @@
 | `SOUL.md` | 1 曲 live 編集向け人格 |
 | `profile.yaml` | プロファイル説明 |
 | `.no-bundled-skills` | バンドル skills を載せないマーカー |
+| `skills/creative/strudel-seqtrak/` | SEQTRAK MIDI 作曲スキル（play 専用の正本） |
 
-**スキルの正本は `dj-hermes` 側**です。このディレクトリには `skills/` を複製しません。インストール時に `dj-hermes` の creative スキルをコピーし、`strudel-dj-mix` だけ外します。
+**スキルの正本はほぼ `dj-hermes` 側**です。インストール時に `dj-hermes` の creative スキルをコピーし、`strudel-dj-mix` だけ外します。例外が **SEQTRAK MIDI**（`skills/creative/strudel-seqtrak/`）。こちらは play 専用なのでこのディレクトリが正本です。
 
 **含めないもの（マシン固有・秘密）**
 
@@ -41,6 +42,8 @@ cp docs/profile/play-hermes/.no-bundled-skills "$PROFILE_DIR/"
 mkdir -p "$PROFILE_DIR/skills"
 cp -R docs/profile/dj-hermes/skills/creative "$PROFILE_DIR/skills/"
 rm -rf "$PROFILE_DIR/skills/creative/strudel-dj-mix"
+cp -R docs/profile/play-hermes/skills/creative/strudel-seqtrak \
+     "$PROFILE_DIR/skills/creative/"
 
 hermes --profile play-hermes model
 ```
@@ -59,7 +62,11 @@ New-Item -ItemType Directory -Force -Path (Join-Path $dst "skills") | Out-Null
 Copy-Item -Recurse -Force docs\profile\dj-hermes\skills\creative `
           (Join-Path $dst "skills\creative")
 Remove-Item -Recurse -Force (Join-Path $dst "skills\creative\strudel-dj-mix")
+Copy-Item -Recurse -Force docs\profile\play-hermes\skills\creative\strudel-seqtrak `
+          (Join-Path $dst "skills\creative\strudel-seqtrak")
 hermes --profile play-hermes model
 ```
 
 演奏本体は `strudel-rs play`（既定プロファイル `play-hermes`）。`dj` はこれまでどおり `dj-hermes` です。
+
+SEQTRAK 展示は `strudel-rs play --midi-only --midi-port SEQTRAK`（ポート確認は `play --midi-list`）。スキルは **strudel-seqtrak**。

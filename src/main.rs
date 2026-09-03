@@ -70,7 +70,7 @@ strudel-rs — Strudel live CLI
 
 Usage:
   strudel-rs play [SONG] [--headless] [--seconds N] [--port N] [--no-api]
-                 [--midi] [--midi-port NAME|INDEX] [--midi-list]
+                 [--midi] [--midi-only] [--midi-port NAME|INDEX] [--midi-list]
   strudel-rs dj [SONG_A] [SONG_B] [--port N] [--no-api] [--text]
   strudel-rs play --repl [SONG_A] [SONG_B]   (same 2-deck live UI as dj; compatibility)
   strudel-rs mcp
@@ -85,7 +85,8 @@ Usage:
   --repl-text   text-only REPL (same as: dj --text)
   --text        with dj: rustyline text REPL instead of highlight live UI
 
-  --midi        play only: Note On/Off to a MIDI port (built-in synth still sounds)
+  --midi        play only: notes + CC + Bank/PC to a MIDI port (built-in synth still sounds)
+  --midi-only   like --midi, but skip the built-in synth (SEQTRAK exhibit)
   --midi-port   port index or name substring (USB SEQTRAK; Linux BLE if ALSA listed)
   --midi-list   print MIDI outputs and exit (same list as --midi-port)
 
@@ -113,6 +114,7 @@ Examples:
   cargo run -- play songs/house-01.strudel --headless --seconds 8
   cargo run -- play songs/house-01.strudel --midi
   cargo run -- play --midi-list
+  cargo run -- play songs/house-01.strudel --midi-only --midi-port SEQTRAK
   cargo run -- play songs/house-01.strudel --headless --seconds 8 --midi-port \"TouchOSC Bridge\"
   cargo run -- dj songs/house-01.strudel songs/four-on-the-floor-01.strudel
   cargo run -- dj                          # empty decks; load from »
@@ -146,6 +148,8 @@ struct LiveSessionOpts {
     debug_log: Option<PathBuf>,
     /// MIDI worker; keep alive for the session. `play --midi` only.
     midi_handle: Option<strudel_rs::midi::MidiHandle>,
+    /// Skip synth/sample voices; MIDI still fires (`play --midi-only`).
+    midi_only: bool,
 }
 
 /// Parse `dj` / live-session CLI. Returns `Ok(None)` when `--help` was printed.
@@ -244,6 +248,7 @@ fn parse_live_session_args(args: &[String]) -> Result<Option<LiveSessionOpts>, S
         debug,
         debug_log,
         midi_handle: None,
+        midi_only: false,
     }))
 }
 
@@ -257,17 +262,6 @@ fn print_midi_ports() -> Result<(), String> {
         }
     }
     Ok(())
-}
-
-/// Connect or warn; play continues with the built-in synth either way.
-fn open_midi_or_warn(port: Option<&str>) -> Option<strudel_rs::midi::MidiHandle> {
-    match strudel_rs::midi::connect(port) {
-        Ok(h) => Some(h),
-        Err(e) => {
-            eprintln!("warning: midi: {e} (continuing with built-in synth)");
-            None
-        }
-    }
 }
 
 fn attach_midi(engine: &mut Engine, handle: Option<&strudel_rs::midi::MidiHandle>) {
@@ -311,6 +305,7 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
     let mut debug_log: Option<PathBuf> = None;
     let mut cli_port: Option<u16> = None;
     let mut midi = false;
+    let mut midi_only = false;
     let mut midi_port: Option<String> = None;
     let mut midi_list = false;
     let mut i = 0;
@@ -385,6 +380,10 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
             "--midi" => {
                 midi = true;
             }
+            "--midi-only" => {
+                midi = true;
+                midi_only = true;
+            }
             "--midi-list" => {
                 midi_list = true;
             }
@@ -419,7 +418,16 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
         return Err("MIDI output is play-only (not `play --repl` or `dj`)".into());
     }
     let midi_handle = if midi {
-        open_midi_or_warn(midi_port.as_deref())
+        match strudel_rs::midi::connect(midi_port.as_deref()) {
+            Ok(h) => Some(h),
+            Err(e) if midi_only => {
+                return Err(format!("midi-only: {e}"));
+            }
+            Err(e) => {
+                eprintln!("warning: midi: {e} (continuing with built-in synth)");
+                None
+            }
+        }
     } else {
         None
     };
@@ -443,6 +451,7 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
             debug,
             debug_log,
             midi_handle: None,
+            midi_only: false,
         });
     }
 
@@ -473,6 +482,7 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
             debug,
             debug_log,
             midi_handle,
+            midi_only,
         });
     }
     let song_path = song_paths.into_iter().next();
@@ -514,6 +524,9 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
 
     let mut engine = Engine::new(sample_rate, bpm);
     attach_midi(&mut engine, midi_handle.as_ref());
+    if midi_only {
+        engine.set_midi_only(true);
+    }
     let playhead = engine.playhead_handle();
     engine.load_song_immediate(0, song);
 
@@ -593,6 +606,7 @@ fn cmd_live_session(opts: LiveSessionOpts) -> Result<(), String> {
         debug,
         debug_log,
         midi_handle: _midi_handle,
+        midi_only,
     } = opts;
 
     let host = cpal::default_host();
@@ -612,6 +626,9 @@ fn cmd_live_session(opts: LiveSessionOpts) -> Result<(), String> {
 
     let mut engine = Engine::new(sample_rate, 120.0);
     attach_midi(&mut engine, _midi_handle.as_ref());
+    if midi_only {
+        engine.set_midi_only(true);
+    }
     let deck_paths: DeckPaths = new_deck_paths();
     let mut initial_a: Option<HighlightModel> = None;
     let mut initial_b: Option<HighlightModel> = None;

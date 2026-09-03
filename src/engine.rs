@@ -144,6 +144,11 @@ impl Engine {
         self.decks[0].set_midi(Some(tx));
     }
 
+    /// `--midi-only`: deck A sends MIDI and does not render synth/sample audio.
+    pub fn set_midi_only(&mut self, yes: bool) {
+        self.decks[0].set_midi_only(yes);
+    }
+
     /// NoteOff hanging notes and drop the sender clone so the MIDI worker can exit.
     pub fn shutdown_midi(&mut self) {
         self.decks[0].shutdown_midi();
@@ -1373,5 +1378,38 @@ $: note("g3").s("sawtooth")
         assert_eq!(pc_n, 1, "bank/pc once per load: {ev2:?}");
         drop(e);
         drop(h);
+    }
+
+    #[test]
+    fn midi_only_silent_audio_still_sends_notes() {
+        let (h, log) = midi_log();
+        let mut e = Engine::new(48_000, 120.0);
+        e.set_midi(h.sender());
+        e.set_midi_only(true);
+        e.load_song_immediate(0, midi_song(r#"$: note("c3").s("sawtooth").gain(0.8)"#));
+        let bank = SampleBank::empty();
+        let mut buf = stereo_buf(48_000);
+        e.process(&mut buf, &bank);
+        let peak = buf.iter().fold(0.0f32, |a, x| a.max(x.abs()));
+        assert!(peak < 1e-6, "midi-only must not render synth: peak={peak}");
+        let ev = snap_midi(&log);
+        assert!(
+            ev.iter()
+                .any(|x| matches!(x, crate::midi::MidiEvent::NoteOn { .. })),
+            "expected MIDI notes: {ev:?}"
+        );
+        drop(e);
+        drop(h);
+    }
+
+    #[test]
+    fn midi_with_synth_still_audible() {
+        let mut e = Engine::new(48_000, 120.0);
+        e.load_song_immediate(0, midi_song(r#"$: note("c3").s("sawtooth").gain(0.8)"#));
+        let bank = SampleBank::empty();
+        let mut buf = stereo_buf(48_000);
+        e.process(&mut buf, &bank);
+        let peak = buf.iter().fold(0.0f32, |a, x| a.max(x.abs()));
+        assert!(peak > 0.01, "soft synth should sound: peak={peak}");
     }
 }

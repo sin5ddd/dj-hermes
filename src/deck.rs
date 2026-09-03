@@ -72,6 +72,8 @@ pub struct Deck {
     midi_cc_last: [[Option<u8>; 128]; 16],
     /// Send Bank Select + PC once on the bar after `load`.
     midi_prog_pending: bool,
+    /// `--midi-only`: emit MIDI, do not spawn synth/sample voices.
+    midi_only: bool,
 }
 
 impl Deck {
@@ -94,12 +96,18 @@ impl Deck {
             midi_timed: Vec::new(),
             midi_cc_last: [[None; 128]; 16],
             midi_prog_pending: false,
+            midi_only: false,
         }
     }
 
     /// Attach a MIDI sender (play deck A). Audio thread only `try_send`s.
     pub fn set_midi(&mut self, tx: Option<Sender<MidiEvent>>) {
         self.midi_tx = tx;
+    }
+
+    /// Skip synth/sample voices (exhibit: SEQTRAK only). MIDI still fires.
+    pub fn set_midi_only(&mut self, yes: bool) {
+        self.midi_only = yes;
     }
 
     /// Panic notes then drop the sender so `MidiHandle` join is not stuck on this clone.
@@ -541,6 +549,10 @@ impl Deck {
     }
 
     fn spawn_hit(&mut self, hit: &ScheduledHit, samples: &SampleBank, sr: f32, now: u64) {
+        if self.midi_only {
+            self.midi_note_on(hit, now, None);
+            return;
+        }
         if hit.duck.count > 0 {
             self.trigger_duck(&hit.duck, sr);
         }

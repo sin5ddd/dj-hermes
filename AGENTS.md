@@ -14,7 +14,7 @@
 | ------------ | --------------------------------------------------------------------------------- |
 | 人間（編集） | 演奏はオンメモリ。ディスク反映は明示 save。エディタ変更を鳴らすには `/a load` または `/a reload` |
 | 人間（操作） | live TUI: 自然文→Hermes、`/` 付きでローカルコマンド。`--text` は rustyline 裸コマンド |
-| LLM / Hermes | TUI から `hermes -z`（profile `dj-hermes`）+ MCP。HTTP API の `POST /mcp`（stdio `strudel-rs mcp` は非推奨デバッグ用） |
+| LLM / Hermes | TUI から `hermes -z`（`play` は `play-hermes`、`dj` は `dj-hermes`）+ MCP。HTTP API の `POST /mcp`（stdio `strudel-rs mcp` は非推奨デバッグ用） |
 
 主な体験:
 
@@ -89,6 +89,7 @@ Song をロードして鳴らす再生ユニット ×2。両デッキは同一 T
         │
         ▼
  Deck A  ◄── Transport ──►  Deck B
+   │ MIDI（play の deck A のみ。--midi / --midi-only）
         │
         ▼
       Mixer（フェーダー / EQ・フィルター / xfade）
@@ -172,6 +173,7 @@ Release プロファイル目安（プラン）: `opt-level = 3`, `lto = true`, 
 8. **Punchcard/Pianoroll 可視化**は任意 Task 25（完了）。`dj` live UI で `F10` / `/viz` により body を highlight ⇔ punchcard 切替。エディタ埋め込みは非対応。
 9. **ミニ記法ライブハイライト**は任意 Task 26。`play` の既定は **1 デッキ live UI**（ハイライト + `»` + Hermes `play-hermes`）。旧メタログのみは `--headless`。audio スレッドでは span 計算しない（UI 再評価）。
 10. 依存をむやみに増やさない。パーサジェネレータや重いシリアライズ層は避ける。ネット経由サンプルロードはデモ範囲外。
+11. **MIDI は `play` のデッキ A のみ**（`dj` / `play --repl` は出さない）。層はノート + ユーザーガイド 18.3 CC + Bank Select/Program Change。SysEx（MIDI Data Table）と MIDI クロックは送らない。`--midi` ではソフトシンセも鳴る。展示の本体だけは `--midi-only`。midir 以外の MIDI/BLE crate は足さない。Linux BLE は OS が出した ALSA ポート。Windows BLE MIDI は対象外。
 
 ---
 
@@ -181,6 +183,7 @@ Release プロファイル目安（プラン）: `opt-level = 3`, `lto = true`, 
 
 ```
 ./strudel-rs play songs/house-01.strudel   # 1 デッキ live UI + Hermes (play-hermes) + API(:17878)
+./strudel-rs play songs/house-01.strudel --midi-only --midi-port SEQTRAK
 ./strudel-rs dj songs/house-01.strudel songs/four-on-the-floor-01.strudel   # 2 デッキ + mix
 # または空起動: ./strudel-rs dj
 # play プロンプト: /load …    dj プロンプト: /a load … / b load … / x 4

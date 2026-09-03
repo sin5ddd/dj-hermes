@@ -124,6 +124,8 @@ Cross-cutting:
 | [strudel-live-edit](./strudel-live-edit/SKILL.md) | Natural language → one-track / one-method live edits | — |
 | [strudel-dj-mix](./strudel-dj-mix/SKILL.md) | A/B mix macros (`strudel_mix` one call: long / cut / fill / switch / hold) | — |
 
+Play 専用（このツリーには置かない）: [strudel-seqtrak](../../../play-hermes/skills/creative/strudel-seqtrak/SKILL.md) — Yamaha SEQTRAK への MIDI（`play --midi` / `--midi-only`）。`dj-hermes` にはコピーしない。
+
 Genre recipes (`strudel-genre-*`):
 
 | Skill | When | Example song |

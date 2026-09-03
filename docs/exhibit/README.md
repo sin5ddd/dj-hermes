@@ -35,6 +35,8 @@ cd /path/to/strudel-rust
 strudel-rs dj songs/house-01.strudel songs/four-on-the-floor-01.strudel
 # 開発時
 cargo run -- dj songs/house-01.strudel songs/four-on-the-floor-01.strudel
+# SEQTRAK（1 曲。本体だけ鳴らす）
+strudel-rs play songs/house-01.strudel --midi-only --midi-port SEQTRAK
 ```
 
 - HTTP API が `http://127.0.0.1:17878` で生きていること（`--no-api` にしない）
