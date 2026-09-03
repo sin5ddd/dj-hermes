@@ -14,6 +14,7 @@ pub mod highlight;
 pub mod live_fx;
 pub mod live_ui;
 pub mod mcp;
+pub mod midi;
 pub mod mini;
 pub mod mixer;
 pub mod repl;

@@ -29,6 +29,8 @@ pub struct Track {
     pub name: String,
     pub code: PatternCode,
     pub muted: bool,
+    /// 1-based MIDI channel from `// @midi ch=N` (1..=16). `None` = map by sound.
+    pub midi_ch: Option<u8>,
 }
 
 /// Optional music metadata from Strudel-style `@tag` comments.
@@ -392,6 +394,7 @@ pub fn parse_song(text: &str, path: &str) -> Result<Song, String> {
     let mut meta = SongMeta::default();
     let mut tracks = Vec::new();
     let mut pending_label: Option<String> = None;
+    let mut pending_midi_ch: Option<u8> = None;
     let mut anon_idx = 0usize;
     let mut block_buf: Option<String> = None;
 
@@ -454,7 +457,13 @@ pub fn parse_song(text: &str, path: &str) -> Result<Song, String> {
 
         // Line comments: Strudel @tags, legacy title:, or label for the next `$:` track.
         if let Some(comment) = strip_line_comment(line) {
-            handle_comment_body(comment, &mut title, &mut meta, &mut pending_label);
+            handle_comment_body(
+                comment,
+                &mut title,
+                &mut meta,
+                &mut pending_label,
+                &mut pending_midi_ch,
+            );
             i += 1;
             continue;
         }
@@ -526,6 +535,7 @@ pub fn parse_song(text: &str, path: &str) -> Result<Song, String> {
             name,
             code,
             muted: false,
+            midi_ch: pending_midi_ch.take(),
         });
         i = last_line + 1;
     }
@@ -763,6 +773,9 @@ impl Song {
         for t in &mut song.tracks {
             if let Some(old) = self.tracks.iter().find(|o| o.name == t.name) {
                 t.muted = old.muted;
+                if t.midi_ch.is_none() {
+                    t.midi_ch = old.midi_ch;
+                }
             }
         }
         Ok(song)
@@ -871,13 +884,50 @@ fn strip_line_comment(line: &str) -> Option<&str> {
     None
 }
 
+/// Pull `@midi ch=N` (N = 1..=16) out of a comment. Remaining text is the label.
+pub fn take_at_midi_ch(comment: &str) -> (Option<u8>, String) {
+    let mut ch = None;
+    let mut kept: Vec<&str> = Vec::new();
+    let mut tokens = comment.split_whitespace().peekable();
+    while let Some(tok) = tokens.next() {
+        if tok.eq_ignore_ascii_case("@midi") {
+            if let Some(next) = tokens.peek() {
+                if let Some(n) = parse_ch_eq(next) {
+                    ch = Some(n);
+                    tokens.next();
+                    continue;
+                }
+            }
+            continue;
+        }
+        kept.push(tok);
+    }
+    (ch, kept.join(" "))
+}
+
+fn parse_ch_eq(tok: &str) -> Option<u8> {
+    let t = tok.trim().to_ascii_lowercase();
+    let n = t.strip_prefix("ch=")?;
+    let v: u8 = n.parse().ok()?;
+    (1..=16).contains(&v).then_some(v)
+}
+
 /// Apply one comment body: metadata tags and/or track label for the next `$:`.
 fn handle_comment_body(
     comment: &str,
     title: &mut Option<String>,
     meta: &mut SongMeta,
     pending_label: &mut Option<String>,
+    pending_midi_ch: &mut Option<u8>,
 ) {
+    if comment.is_empty() {
+        return;
+    }
+    let (midi_ch, rest) = take_at_midi_ch(comment);
+    if let Some(ch) = midi_ch {
+        *pending_midi_ch = Some(ch);
+    }
+    let comment = rest.trim();
     if comment.is_empty() {
         return;
     }
@@ -1193,6 +1243,47 @@ $: s("bd")
         assert_eq!(s.title, "Block Title");
         assert_eq!(s.meta.by, vec!["Jane Doe"]);
         assert_eq!(s.meta.details.as_deref(), Some("Line one. Line two."));
+    }
+
+    #[test]
+    fn midi_ch_comment_on_track() {
+        let s = parse_song(
+            r#"
+// @midi ch=9 lead
+$: note("c3").s("sawtooth")
+// drums
+// @midi ch=1
+$: s("bd*4")
+$: s("hh")
+"#,
+            "t",
+        )
+        .unwrap();
+        assert_eq!(s.tracks[0].name, "lead");
+        assert_eq!(s.tracks[0].midi_ch, Some(9));
+        assert_eq!(s.tracks[1].name, "drums");
+        assert_eq!(s.tracks[1].midi_ch, Some(1));
+        assert_eq!(s.tracks[2].name, "$0");
+        assert_eq!(s.tracks[2].midi_ch, None);
+    }
+
+    #[test]
+    fn midi_only_comment_keeps_prior_label() {
+        let s = parse_song(
+            "// bass\n// @midi ch=10\n$: note(\"c2\").s(\"sawtooth\")\n",
+            "t",
+        )
+        .unwrap();
+        assert_eq!(s.tracks[0].name, "bass");
+        assert_eq!(s.tracks[0].midi_ch, Some(10));
+    }
+
+    #[test]
+    fn midi_ch_out_of_range_is_ignored() {
+        let s = parse_song("// @midi ch=0\n$: s(\"bd\")\n", "t").unwrap();
+        assert_eq!(s.tracks[0].midi_ch, None);
+        let s = parse_song("// @midi ch=17\n$: s(\"bd\")\n", "t").unwrap();
+        assert_eq!(s.tracks[0].midi_ch, None);
     }
 
     #[test]

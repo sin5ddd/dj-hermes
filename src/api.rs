@@ -456,6 +456,7 @@ fn song_from_code(code: &str) -> Result<Song, String> {
         tracks: vec![Track {
             name: "main".into(),
             muted: false,
+            midi_ch: None,
             code: pattern,
         }],
     })

@@ -45,6 +45,9 @@ Linux では ALSA 開発ヘッダが必要なことがあります（例: `libas
 strudel-rs play songs/house-01.strudel
 # TUI なし（メタログのみ・スクリプト向け）
 strudel-rs play songs/house-01.strudel --headless --seconds 8
+# MIDI 出力（SEQTRAK 等）。ポート確認: strudel-rs play --midi-list
+strudel-rs play songs/house-01.strudel --midi
+strudel-rs play songs/house-01.strudel --midi-port SEQTRAK
 # デュアルデッキ live UI（曲は省略可）。両曲は 124 BPM で同じ Transport。
 strudel-rs dj songs/house-01.strudel songs/four-on-the-floor-01.strudel
 strudel-rs dj
@@ -64,6 +67,10 @@ Recipes (Cursor `SKILL.md` + playable `songs/<genre>-01.strudel`): [docs/profile
 - **`play` の既定は 1 デッキ live UI**（ハイライト + `»` プロンプト + Hermes）。終了は `q` / Esc
 - `--headless`: メタログのみ（TTY 不要・CI / パイプ向け。Ctrl+C で終了）
 - `--seconds N`: 時間制限。`--headless` と組み合わせるか、プロンプト無しのハイライト視聴に使う
+- `--midi` / `--midi-port <名前または番号>`: `play` のみ。ヒットを MIDI 出力へ Note On/Off（ソフト音源も同時に鳴る。ポートが無いときは警告して継続）。`--midi-list` で出力ポートを出して終了。Linux では USB と、OS が BLE MIDI を ALSA シーケンサに出していればそのポートも同じ一覧に並ぶ（アプリは GATT を話さない。Windows の BLE MIDI は対象外）
+  - 仮想ポート（TouchOSC Bridge など）の確認は TUI より headless の方が見やすい。最初の NoteOn と終了時の送信件数が stderr に出る。終了は TUI なら `q`（空入力の Esc も終了）
+  - 例: `strudel-rs play songs/house-01.strudel --headless --seconds 8 --midi-port "TouchOSC Bridge"`
+  - ドラムは ch1–7 の note 60（C4）。GM キットのキック番号ではない。TouchOSC 側は Bridge を MIDI 入力に選び、ch1 付近を表示する
 - Hermes 既定プロファイルは **`play-hermes`**（[docs/profile/play-hermes/](./docs/profile/play-hermes/)）。mix / xfade は呼ばない。スキル正本は `dj-hermes` からコピーし `strudel-dj-mix` を外す
 - ローカルコマンド例（play）: `/load house-01` `/save visitor-1` `/mute drums` `/bpm 128` `/viz` `/vfx`。デッキ B と `/x` `/mix` は `dj` 向け
 - **`dj [SONG_A] [SONG_B]`**: **ハイライト + コマンド行**の 2 デッキ live UI（デモ / DJ 向け）

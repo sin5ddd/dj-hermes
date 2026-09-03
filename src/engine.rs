@@ -4,10 +4,12 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 
 use crate::deck::Deck;
+use crate::midi::MidiEvent;
 use crate::mixer::{MixAction, MixCommand, Mixer};
 use crate::sample::SampleBank;
 use crate::song::Song;
 use crate::transport::Transport;
+use crossbeam::channel::Sender;
 
 pub enum Command {
     LoadSong {
@@ -135,6 +137,16 @@ impl Engine {
     /// Shared playhead for highlight / viz UI threads.
     pub fn playhead_handle(&self) -> Arc<AtomicU64> {
         Arc::clone(&self.playhead)
+    }
+
+    /// MIDI out for deck A only (`play`). Audio thread `try_send`s; the worker sends.
+    pub fn set_midi(&mut self, tx: Sender<MidiEvent>) {
+        self.decks[0].set_midi(Some(tx));
+    }
+
+    /// NoteOff hanging notes and drop the sender clone so the MIDI worker can exit.
+    pub fn shutdown_midi(&mut self) {
+        self.decks[0].shutdown_midi();
     }
 
     fn next_bar(&self) -> u64 {
@@ -1094,5 +1106,163 @@ b: note("{n}").s("sawtooth").gain(0.8)
         e.push_command(Command::Hush);
         assert!(!e.mixer.has_mix_job());
         assert!(e.mixer.xfade().is_none());
+    }
+
+    fn midi_log() -> (
+        crate::midi::MidiHandle,
+        std::sync::Arc<std::sync::Mutex<Vec<crate::midi::MidiEvent>>>,
+    ) {
+        let null = crate::midi::NullMidi::new();
+        let log = std::sync::Arc::clone(&null.events);
+        (crate::midi::spawn_sink(Box::new(null)), log)
+    }
+
+    fn snap_midi(
+        log: &std::sync::Arc<std::sync::Mutex<Vec<crate::midi::MidiEvent>>>,
+    ) -> Vec<crate::midi::MidiEvent> {
+        std::thread::sleep(std::time::Duration::from_millis(40));
+        log.lock().map(|g| g.clone()).unwrap_or_default()
+    }
+
+    fn midi_song(body: &str) -> Song {
+        parse_song(&format!("setcpm(30)\n{body}"), "t").unwrap()
+    }
+
+    #[test]
+    fn midi_bd_and_sd_use_separate_channels() {
+        let (h, log) = midi_log();
+        let mut e = Engine::new(48_000, 120.0);
+        e.set_midi(h.sender());
+        e.load_song_immediate(0, midi_song(r#"$: s("bd*4, [~ sd]*2")"#));
+        let bank = SampleBank::empty();
+        let mut buf = stereo_buf(96_000);
+        e.process(&mut buf, &bank);
+        let ev = snap_midi(&log);
+        let ons: Vec<u8> = ev
+            .iter()
+            .filter_map(|x| match x {
+                crate::midi::MidiEvent::NoteOn { ch, .. } => Some(*ch),
+                _ => None,
+            })
+            .collect();
+        assert!(ons.contains(&0), "kick ch1 missing: {ons:?}");
+        assert!(ons.contains(&1), "snare ch2 missing: {ons:?}");
+        drop(e);
+        drop(h);
+    }
+
+    #[test]
+    fn midi_note_off_after_on() {
+        let (h, log) = midi_log();
+        let mut e = Engine::new(48_000, 120.0);
+        e.set_midi(h.sender());
+        e.load_song_immediate(0, midi_song(r#"$: s("bd*4")"#));
+        let bank = SampleBank::empty();
+        let mut buf = stereo_buf(96_000);
+        e.process(&mut buf, &bank);
+        let ev = snap_midi(&log);
+        assert!(
+            matches!(ev.first(), Some(crate::midi::MidiEvent::NoteOn { .. })),
+            "first should be NoteOn: {ev:?}"
+        );
+        let mut on_open = 0i32;
+        for x in &ev {
+            match x {
+                crate::midi::MidiEvent::NoteOn { .. } => on_open += 1,
+                crate::midi::MidiEvent::NoteOff { .. } => on_open -= 1,
+            }
+            assert!(on_open >= 0, "NoteOff before matching On: {ev:?}");
+        }
+        assert!(
+            ev.iter()
+                .any(|x| matches!(x, crate::midi::MidiEvent::NoteOff { .. })),
+            "expected NoteOff: {ev:?}"
+        );
+        drop(e);
+        drop(h);
+    }
+
+    #[test]
+    fn midi_survives_bar_cross() {
+        let (h, log) = midi_log();
+        let mut e = Engine::new(48_000, 120.0);
+        e.set_midi(h.sender());
+        e.load_song_immediate(0, midi_song(r#"$: s("bd*4")"#));
+        let bank = SampleBank::empty();
+        let mut buf = stereo_buf(96_000);
+        e.process(&mut buf, &bank);
+        let n1 = snap_midi(&log)
+            .iter()
+            .filter(|x| matches!(x, crate::midi::MidiEvent::NoteOn { .. }))
+            .count();
+        let mut buf = stereo_buf(96_000);
+        e.process(&mut buf, &bank);
+        let n2 = snap_midi(&log)
+            .iter()
+            .filter(|x| matches!(x, crate::midi::MidiEvent::NoteOn { .. }))
+            .count();
+        assert!(n1 >= 4, "bar 0 should fire 4 kicks, got {n1}");
+        assert!(n2 >= n1 + 4, "bar 1 should add more NoteOns ({n1} → {n2})");
+        drop(e);
+        drop(h);
+    }
+
+    #[test]
+    fn midi_at_ch_override_and_deck_b_silent() {
+        let (h, log) = midi_log();
+        let mut e = Engine::new(48_000, 120.0);
+        e.set_midi(h.sender());
+        e.load_song_immediate(1, midi_song("// @midi ch=9\n$: s(\"bd*4\")\n"));
+        let bank = SampleBank::empty();
+        let mut buf = stereo_buf(48_000);
+        e.process(&mut buf, &bank);
+        let ev = snap_midi(&log);
+        assert!(ev.is_empty(), "deck B must not emit MIDI: {ev:?}");
+
+        e.load_song_immediate(0, midi_song("// @midi ch=9\n$: s(\"bd*4\")\n"));
+        let mut buf = stereo_buf(48_000);
+        e.process(&mut buf, &bank);
+        let ev = snap_midi(&log);
+        assert!(
+            ev.iter()
+                .any(|x| matches!(x, crate::midi::MidiEvent::NoteOn { ch: 8, .. })),
+            "override ch=9 → 0-based 8: {ev:?}"
+        );
+        drop(e);
+        drop(h);
+    }
+
+    #[test]
+    fn midi_synth_ordinal_third_returns_to_ch8() {
+        let (h, log) = midi_log();
+        let mut e = Engine::new(48_000, 120.0);
+        e.set_midi(h.sender());
+        e.load_song_immediate(
+            0,
+            midi_song(
+                r#"
+$: note("c3").s("sawtooth")
+$: note("e3").s("sawtooth")
+$: note("g3").s("sawtooth")
+"#,
+            ),
+        );
+        let bank = SampleBank::empty();
+        let mut buf = stereo_buf(48_000);
+        e.process(&mut buf, &bank);
+        let ev = snap_midi(&log);
+        let ons: Vec<u8> = ev
+            .iter()
+            .filter_map(|x| match x {
+                crate::midi::MidiEvent::NoteOn { ch, .. } => Some(*ch),
+                _ => None,
+            })
+            .collect();
+        let n7 = ons.iter().filter(|c| **c == 7).count();
+        let n8 = ons.iter().filter(|c| **c == 8).count();
+        assert_eq!(n7, 2, "synth 1 and 3 → ch8: {ons:?}");
+        assert_eq!(n8, 1, "synth 2 → ch9: {ons:?}");
+        drop(e);
+        drop(h);
     }
 }

@@ -2,6 +2,7 @@
 
 use crate::code::{Adsr, DuckParams, FilterParams, ModParams, PatternCode};
 use crate::dsp::{equal_power_pan, orbit_index, CompressorParams, DuckState, OrbitFx, NUM_ORBITS};
+use crate::midi::{self, MidiEvent};
 use crate::mini;
 use crate::sample::{SampleBank, SampleVoice, VoiceKind, SAMPLE_ROOT_HZ};
 use crate::scale::resolve_pitch_with_add;
@@ -9,6 +10,7 @@ use crate::song::Song;
 use crate::sound::{resolve_sound_with_bank, split_sound_selector, ResolvedSound, SampleSelector};
 use crate::synth::{OscSource, Voice};
 use crate::transport::Transport;
+use crossbeam::channel::Sender;
 
 pub const MAX_VOICES: usize = 32;
 
@@ -38,6 +40,10 @@ struct ScheduledHit {
     delayfeedback: f32,
     room: f32,
     roomsize: f32,
+    /// 1-based override from `// @midi ch=N`.
+    midi_ch: Option<u8>,
+    /// 0 = first synth `$:`, 1 = second (MIDI ch 8 / 9).
+    synth_ordinal: u8,
 }
 
 pub struct Deck {
@@ -59,6 +65,9 @@ pub struct Deck {
     orbit_fx: [OrbitFx; NUM_ORBITS],
     /// Last compressor params seen on a spawned hit (Engine may promote to Mixer).
     pub pending_compressor: Option<CompressorParams>,
+    midi_tx: Option<Sender<MidiEvent>>,
+    midi_slots: Vec<Option<(u8, u8)>>,
+    midi_timed: Vec<(u64, u8, u8)>,
 }
 
 impl Deck {
@@ -76,7 +85,21 @@ impl Deck {
             ducks: [DuckState::default(); NUM_ORBITS],
             orbit_fx: std::array::from_fn(|_| OrbitFx::new()),
             pending_compressor: None,
+            midi_tx: None,
+            midi_slots: vec![None; MAX_VOICES],
+            midi_timed: Vec::new(),
         }
+    }
+
+    /// Attach a MIDI sender (play deck A). Audio thread only `try_send`s.
+    pub fn set_midi(&mut self, tx: Option<Sender<MidiEvent>>) {
+        self.midi_tx = tx;
+    }
+
+    /// Panic notes then drop the sender so `MidiHandle` join is not stuck on this clone.
+    pub fn shutdown_midi(&mut self) {
+        self.midi_panic();
+        self.midi_tx = None;
     }
 
     /// Replace the loaded song and force a clean reschedule.
@@ -85,6 +108,7 @@ impl Deck {
     /// [`Self::unload`]) so hot-reload does not stack a new bar-head onset on top of
     /// leftover voices (heard as ~2× level on the first hit after load).
     pub fn load(&mut self, song: Song) {
+        self.midi_panic();
         self.song = Some(song);
         for v in &mut self.voices {
             *v = None;
@@ -101,6 +125,7 @@ impl Deck {
     }
 
     pub fn unload(&mut self) {
+        self.midi_panic();
         self.song = None;
         for v in &mut self.voices {
             *v = None;
@@ -134,6 +159,7 @@ impl Deck {
     /// Jump pattern content so that at `apply_global_bar` the deck plays 1-based `bar_1based`.
     /// Clears ringing voices and forces reschedule.
     pub fn head_to_bar(&mut self, bar_1based: u64, apply_global_bar: u64) {
+        self.midi_panic();
         let target_cycle = bar_1based.saturating_sub(1);
         self.cycle_offset = target_cycle as i64 - apply_global_bar as i64;
         for v in &mut self.voices {
@@ -183,19 +209,37 @@ impl Deck {
         // Sample timestamps follow the shared transport; pattern content may be offset (head/cue).
         let bar_start = (global_bar as f64 * spb) as u64;
         let pattern_bar = self.pattern_bar(global_bar);
-        let tracks: Vec<PatternCode> = self
+        let tracks: Vec<(PatternCode, Option<u8>, bool)> = self
             .song
             .as_ref()
             .map(|s| {
                 s.tracks
                     .iter()
                     .filter(|t| !t.muted)
-                    .map(|t| t.code.clone())
+                    .map(|t| {
+                        let has_fm = t.code.mod_params.fm.abs() > 1e-6;
+                        let is_syn = midi::track_is_synth(&t.code.sound, t.code.is_note, has_fm);
+                        (t.code.clone(), t.midi_ch, is_syn)
+                    })
                     .collect()
             })
             .unwrap_or_default();
-        for pc in &tracks {
-            schedule_track_into(&mut self.scheduled, pc, pattern_bar, bar_start, spb);
+        let mut synth_i = 0u8;
+        for (pc, midi_ch, is_syn) in &tracks {
+            // 0 → ch 8, 1 → ch 9, 2+ → ch 8 (map_channel treats only 1 as SYNTH 2).
+            let ord = if *is_syn { synth_i } else { 0 };
+            schedule_track_into(
+                &mut self.scheduled,
+                pc,
+                pattern_bar,
+                bar_start,
+                spb,
+                *midi_ch,
+                ord,
+            );
+            if *is_syn {
+                synth_i = synth_i.saturating_add(1);
+            }
         }
         self.scheduled.sort_by_key(|e| e.at_sample);
         self.scheduled_bar = global_bar;
@@ -208,6 +252,8 @@ fn schedule_track_into(
     bar: u64,
     bar_start: u64,
     spb: f64,
+    midi_ch: Option<u8>,
+    synth_ordinal: u8,
 ) {
     let speed = pc.speed.max(1e-6);
     let len_scale = pc.length_scale() as f64;
@@ -307,29 +353,92 @@ fn schedule_track_into(
                 delayfeedback: pc.delayfeedback,
                 room: pc.room,
                 roomsize: pc.roomsize,
+                midi_ch,
+                synth_ordinal,
             });
         }
     }
 }
 
 impl Deck {
-    fn alloc_voice(&mut self, voice: VoiceKind) {
+    fn alloc_voice(&mut self, voice: VoiceKind) -> usize {
         if let Some(cut) = voice.cut_group() {
-            for slot in self.voices.iter_mut() {
-                if let Some(v) = slot {
-                    if v.cut_group() == Some(cut) {
-                        *slot = None;
-                    }
+            for i in 0..self.voices.len() {
+                if self.voices[i]
+                    .as_ref()
+                    .is_some_and(|v| v.cut_group() == Some(cut))
+                {
+                    self.midi_off_slot(i);
+                    self.voices[i] = None;
                 }
             }
         }
-        if let Some(slot) = self.voices.iter_mut().find(|v| v.is_none()) {
-            *slot = Some(voice);
-            return;
+        if let Some(i) = self.voices.iter().position(|v| v.is_none()) {
+            self.voices[i] = Some(voice);
+            return i;
         }
         let i = self.steal_cursor % MAX_VOICES;
+        self.midi_off_slot(i);
         self.voices[i] = Some(voice);
         self.steal_cursor = self.steal_cursor.wrapping_add(1);
+        i
+    }
+
+    fn push_midi(&self, ev: MidiEvent) {
+        if let Some(tx) = &self.midi_tx {
+            midi::try_push(tx, ev);
+        }
+    }
+
+    fn midi_off_slot(&mut self, i: usize) {
+        let pair = self.midi_slots.get_mut(i).and_then(Option::take);
+        if let Some((ch, note)) = pair {
+            self.push_midi(MidiEvent::NoteOff { ch, note });
+        }
+    }
+
+    fn midi_panic(&mut self) {
+        for i in 0..self.midi_slots.len() {
+            self.midi_off_slot(i);
+        }
+        let timed: Vec<(u64, u8, u8)> = self.midi_timed.drain(..).collect();
+        for (_, ch, note) in timed {
+            self.push_midi(MidiEvent::NoteOff { ch, note });
+        }
+    }
+
+    fn midi_note_on(&mut self, hit: &ScheduledHit, now: u64, slot: Option<usize>) {
+        let has_fm = hit.mods.fm.abs() > 1e-6;
+        let (ch, note, vel) = midi::map_hit(
+            &hit.sound,
+            hit.freq,
+            hit.is_note,
+            has_fm,
+            hit.midi_ch,
+            hit.synth_ordinal,
+            hit.gain,
+        );
+        self.push_midi(MidiEvent::NoteOn { ch, note, vel });
+        if let Some(i) = slot {
+            if i < self.midi_slots.len() {
+                self.midi_slots[i] = Some((ch, note));
+            }
+        } else {
+            self.midi_timed
+                .push((now.saturating_add(hit.len_samples), ch, note));
+        }
+    }
+
+    fn flush_timed_midi(&mut self, now: u64) {
+        let mut i = 0;
+        while i < self.midi_timed.len() {
+            if self.midi_timed[i].0 <= now {
+                let (_, ch, note) = self.midi_timed.remove(i);
+                self.push_midi(MidiEvent::NoteOff { ch, note });
+            } else {
+                i += 1;
+            }
+        }
     }
 
     fn trigger_duck(&mut self, duck: &DuckParams, sr: f32) {
@@ -344,7 +453,7 @@ impl Deck {
         }
     }
 
-    fn spawn_hit(&mut self, hit: &ScheduledHit, samples: &SampleBank, sr: f32) {
+    fn spawn_hit(&mut self, hit: &ScheduledHit, samples: &SampleBank, sr: f32, now: u64) {
         if hit.duck.count > 0 {
             self.trigger_duck(&hit.duck, sr);
         }
@@ -366,14 +475,17 @@ impl Deck {
 
         let bank_ref = hit.bank.as_deref();
         let Some((base, sel)) = split_sound_selector(&hit.sound) else {
+            self.midi_note_on(hit, now, None);
             return;
         };
         let Ok(resolved) = resolve_sound_with_bank(&base, bank_ref, samples) else {
+            self.midi_note_on(hit, now, None);
             return;
         };
-        match resolved {
+        let slot = match resolved {
             ResolvedSound::Wave(w) => {
                 if !matches!(sel, SampleSelector::Default) {
+                    self.midi_note_on(hit, now, None);
                     return;
                 }
                 let v = Voice::new(
@@ -389,10 +501,11 @@ impl Deck {
                 )
                 .with_adsr_timing(sr, hit.len_samples)
                 .with_pan(hit.pan);
-                self.alloc_voice(VoiceKind::Synth(Box::new(v)));
+                Some(self.alloc_voice(VoiceKind::Synth(Box::new(v))))
             }
             ResolvedSound::Noise(n) => {
                 if !matches!(sel, SampleSelector::Default) {
+                    self.midi_note_on(hit, now, None);
                     return;
                 }
                 let v = Voice::new(
@@ -408,10 +521,11 @@ impl Deck {
                 )
                 .with_adsr_timing(sr, hit.len_samples)
                 .with_pan(hit.pan);
-                self.alloc_voice(VoiceKind::Synth(Box::new(v)));
+                Some(self.alloc_voice(VoiceKind::Synth(Box::new(v))))
             }
             ResolvedSound::Wavetable(table) => {
                 if !matches!(sel, SampleSelector::Default) {
+                    self.midi_note_on(hit, now, None);
                     return;
                 }
                 let v = Voice::new(
@@ -427,7 +541,7 @@ impl Deck {
                 )
                 .with_adsr_timing(sr, hit.len_samples)
                 .with_pan(hit.pan);
-                self.alloc_voice(VoiceKind::Synth(Box::new(v)));
+                Some(self.alloc_voice(VoiceKind::Synth(Box::new(v))))
             }
             ResolvedSound::Sample(name) => {
                 let data = match &sel {
@@ -436,6 +550,7 @@ impl Deck {
                     SampleSelector::Stem(slug) => samples.get_stem(&name, slug),
                 };
                 let Some(data) = data else {
+                    self.midi_note_on(hit, now, None);
                     return;
                 };
                 let pitch_ratio = if hit.is_note && hit.freq > 0.0 {
@@ -457,8 +572,11 @@ impl Deck {
                 )
                 .with_adsr_timing(sr, hit.len_samples)
                 .with_pan(hit.pan);
-                self.alloc_voice(VoiceKind::Sample(v));
+                Some(self.alloc_voice(VoiceKind::Sample(v)))
             }
+        };
+        if let Some(i) = slot {
+            self.midi_note_on(hit, now, Some(i));
         }
     }
 
@@ -487,21 +605,30 @@ impl Deck {
             {
                 let hit = self.scheduled[self.next_event].clone();
                 self.next_event += 1;
-                self.spawn_hit(&hit, samples, sr);
+                self.spawn_hit(&hit, samples, sr, now);
             }
+            self.flush_timed_midi(now);
 
             let mut acc_l = [0.0f32; NUM_ORBITS];
             let mut acc_r = [0.0f32; NUM_ORBITS];
-            for slot in self.voices.iter_mut() {
-                if let Some(voice) = slot {
-                    match voice.next_sample(sr) {
-                        Some(x) => {
-                            let oi = voice.orbit_index();
-                            let (gl, gr) = equal_power_pan(voice.pan());
-                            acc_l[oi] += x * gl;
-                            acc_r[oi] += x * gr;
-                        }
-                        None => *slot = None,
+            for vi in 0..self.voices.len() {
+                let stepped = self.voices[vi].as_mut().map(|voice| {
+                    let oi = voice.orbit_index();
+                    let pan = voice.pan();
+                    (voice.next_sample(sr), oi, pan)
+                });
+                let Some((sample, oi, pan)) = stepped else {
+                    continue;
+                };
+                match sample {
+                    Some(x) => {
+                        let (gl, gr) = equal_power_pan(pan);
+                        acc_l[oi] += x * gl;
+                        acc_r[oi] += x * gr;
+                    }
+                    None => {
+                        self.midi_off_slot(vi);
+                        self.voices[vi] = None;
                     }
                 }
             }
@@ -580,7 +707,7 @@ bass: note("c3 e3 g3").s("sawtooth").gain(0.8)
         use crate::code::parse_code;
         let pc = parse_code(r#"s("bd").ply(4).gain(0.5)"#).unwrap();
         let mut hits = Vec::new();
-        schedule_track_into(&mut hits, &pc, 0, 0, 48_000.0);
+        schedule_track_into(&mut hits, &pc, 0, 0, 48_000.0, None, 0);
         assert_eq!(hits.len(), 4);
         // Equal spacing within the bar (speed=1).
         let starts: Vec<u64> = hits.iter().map(|h| h.at_sample).collect();
@@ -598,8 +725,8 @@ bass: note("c3 e3 g3").s("sawtooth").gain(0.8)
             parse_code(r#"note("0").scale("C4:major").add(2).s("sine").gain(0.5)"#).unwrap();
         let mut h0 = Vec::new();
         let mut h2 = Vec::new();
-        schedule_track_into(&mut h0, &base, 0, 0, 48_000.0);
-        schedule_track_into(&mut h2, &shifted, 0, 0, 48_000.0);
+        schedule_track_into(&mut h0, &base, 0, 0, 48_000.0, None, 0);
+        schedule_track_into(&mut h2, &shifted, 0, 0, 48_000.0, None, 0);
         assert_eq!(h0.len(), 1);
         assert_eq!(h2.len(), 1);
         // C major: degree 0+2 == degree 2 ≈ E4
@@ -613,7 +740,7 @@ bass: note("c3 e3 g3").s("sawtooth").gain(0.8)
         let pc =
             parse_code(r#"note("[0,2,4]").scale("C3:minor").s("triangle").gain(0.3)"#).unwrap();
         let mut hits = Vec::new();
-        schedule_track_into(&mut hits, &pc, 0, 0, 48_000.0);
+        schedule_track_into(&mut hits, &pc, 0, 0, 48_000.0, None, 0);
         assert_eq!(hits.len(), 3, "comma-parallel degrees are three voices");
         let mut freqs: Vec<f32> = hits.iter().map(|h| h.freq).collect();
         freqs.sort_by(|a, b| a.partial_cmp(b).unwrap());
@@ -631,7 +758,7 @@ bass: note("c3 e3 g3").s("sawtooth").gain(0.8)
         let pc =
             parse_code(r#"note("[0,4,9]").scale("C4:major").s("triangle").gain(0.3)"#).unwrap();
         let mut hits = Vec::new();
-        schedule_track_into(&mut hits, &pc, 0, 0, 48_000.0);
+        schedule_track_into(&mut hits, &pc, 0, 0, 48_000.0, None, 0);
         assert_eq!(hits.len(), 3, "spread parallel degrees are three voices");
         let mut freqs: Vec<f32> = hits.iter().map(|h| h.freq).collect();
         freqs.sort_by(|a, b| a.partial_cmp(b).unwrap());
@@ -649,7 +776,7 @@ bass: note("c3 e3 g3").s("sawtooth").gain(0.8)
         use crate::code::{note_to_hz, parse_code};
         let pc = parse_code(r#"note("c3'min").s("triangle").gain(0.3)"#).unwrap();
         let mut hits = Vec::new();
-        schedule_track_into(&mut hits, &pc, 0, 0, 48_000.0);
+        schedule_track_into(&mut hits, &pc, 0, 0, 48_000.0, None, 0);
         assert_eq!(hits.len(), 1, "deck does not expand chord suffixes");
         assert!((hits[0].freq - note_to_hz("c3").unwrap()).abs() < 1.0);
     }
@@ -659,7 +786,7 @@ bass: note("c3 e3 g3").s("sawtooth").gain(0.8)
         use crate::code::parse_code;
         let pat = parse_code(r#"s("bd bd").lpf("100 900").gain(0.5)"#).unwrap();
         let mut hits = Vec::new();
-        schedule_track_into(&mut hits, &pat, 0, 0, 48_000.0);
+        schedule_track_into(&mut hits, &pat, 0, 0, 48_000.0, None, 0);
         assert_eq!(hits.len(), 2);
         assert!((hits[0].filter.lpf.unwrap() - 100.0).abs() < 1.0);
         assert!((hits[1].filter.lpf.unwrap() - 900.0).abs() < 1.0);
@@ -667,7 +794,7 @@ bass: note("c3 e3 g3").s("sawtooth").gain(0.8)
         let lfo =
             parse_code(r#"note("c3").s("sawtooth").lpf(sine.rangex(500,4000)).gain(0.4)"#).unwrap();
         let mut h2 = Vec::new();
-        schedule_track_into(&mut h2, &lfo, 0, 0, 48_000.0);
+        schedule_track_into(&mut h2, &lfo, 0, 0, 48_000.0, None, 0);
         assert_eq!(h2.len(), 1);
         assert!(h2[0].mods.lpf_lfo.is_some());
         assert!(h2[0].filter.lpf.is_some());
