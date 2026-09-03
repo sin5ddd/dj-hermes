@@ -1,0 +1,15 @@
+// @title quiet-pane
+// @by strudel-rs
+// @details one ping, air fx, slow crystal @ 96
+setcpm(96/4)
+// drums
+$: s("bd:mt ~ ~ ~, perc:cm ~ ~ perc:tg").gain(0.32)
+// bass
+$: note("0 ~ ~ ~").scale("C4:lydian").s("bs:ss").gain(0.24)
+// pad
+$: note("0 ~ ~ ~").scale("C4:lydian").s("pf:ff").gain(0.22).cut(1)
+  .attack(0.3).decay(0.4).sustain(0.75).release(0.6).room(0.46).orbit(1)
+// lead
+$: note("4 ~ ~ 3  ~ ~ <7 6> ~").scale("C4:lydian").s("plk:fc").gain(0.16).cut(1)
+// fx
+$: s("<~ ~ fx:ha ~>").gain(0.18)

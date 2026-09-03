@@ -1,0 +1,13 @@
+// @title harbor-bongo
+// @by strudel-rs
+// @details busier bongo, same Am cycle @ 96
+setcpm(96/4)
+// drums
+$: s("bd:dc ~ ~ ~, perc:bh perc:bl perc:bh perc:bl, perc:ah ~ ~ perc:al").gain(0.38)
+// bass
+$: note("0 ~ 4 0").scale("<A4:minor D4:dorian G4:mixolydian C4:major>").s("bs:ht").gain(0.3)
+// pad
+$: note("0 ~ ~ ~").scale("<A4:minor D4:dorian G4:mixolydian C4:major>").s("pf:ff").gain(0.2).cut(1)
+  .attack(0.15).decay(0.3).sustain(0.65).release(0.45).room(0.36).orbit(1)
+// lead
+$: note("4 2 0 2  ~ 4 <5 7> ~").scale("<A4:minor D4:dorian G4:mixolydian C4:major>").s("plk:am").gain(0.18).cut(1)

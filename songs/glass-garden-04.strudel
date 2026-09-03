@@ -1,0 +1,13 @@
+// @title prism-ride
+// @by strudel-rs
+// @details ride bell, triangle, music box @ 96
+setcpm(96/4)
+// drums
+$: s("bd:mt ~ ~ bd:mt, perc:rb ~ perc:tg ~, perc:cm ~ ~ perc:tm").gain(0.34)
+// bass
+$: note("0 ~ ~ ~").scale("C4:lydian").s("bs:ss").gain(0.26)
+// pad
+$: note("0 ~ ~ ~").scale("C4:lydian").s("pf:ff").gain(0.2).cut(1)
+  .attack(0.2).decay(0.3).sustain(0.7).release(0.5).room(0.38).orbit(1)
+// lead
+$: note("7 4 ~ 3  4 ~ <6 11> ~").scale("C4:lydian").s("plk:mx").gain(0.16).cut(1)

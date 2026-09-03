@@ -1,0 +1,13 @@
+// @title lantern-tamb
+// @by strudel-rs
+// @details tambourine + agogo, Rhodes follows cycle @ 96
+setcpm(96/4)
+// drums
+$: s("bd:dc ~ ~ ~, perc:tb ~ perc:ah perc:tb, perc:bh ~ perc:bl ~").gain(0.36)
+// bass
+$: note("0 ~ 4 ~").scale("<A4:minor D4:dorian G4:mixolydian C4:major>").s("bs:ht").gain(0.28)
+// keys
+$: note("[0,4] ~ [0,2,4] ~").scale("<A4:minor D4:dorian G4:mixolydian C4:major>").s("ep:rs").gain(0.16)
+  .attack(0.02).decay(0.4).sustain(0.35).release(0.35).room(0.32).orbit(1)
+// lead
+$: note("~ 4 ~ 2  ~ 0 <5 4> ~").scale("<A4:minor D4:dorian G4:mixolydian C4:major>").s("plk:am").gain(0.18).cut(1)

@@ -1,0 +1,15 @@
+// @title glass-garden
+// @by strudel-rs
+// @details metal ping, chime/triangle, fifth pad, crystal pluck @ 96
+setcpm(96/4)
+// drums
+$: s("bd:mt ~ ~ bd:mt, perc:cm ~ perc:tg ~, ~ perc:gs ~ perc:tm").gain(0.36)
+// bass
+$: note("0 ~ ~ ~").scale("C4:lydian").s("bs:ss").gain(0.28)
+// pad
+$: note("0 ~ ~ ~").scale("C4:lydian").s("pf:ff").gain(0.2).cut(1)
+  .attack(0.2).decay(0.3).sustain(0.7).release(0.5).room(0.4).orbit(1)
+// lead
+$: note("4 ~ 3 4  ~ 6 <7 3> ~").scale("C4:lydian").s("plk:fc").gain(0.18).cut(1)
+// fx
+$: s("<~ ~ ~ fx:gs>").gain(0.2)

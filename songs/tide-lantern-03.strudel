@@ -1,0 +1,13 @@
+// @title turn-dorian
+// @by strudel-rs
+// @details cycle starts D dorian, sparse agogo @ 96
+setcpm(96/4)
+// drums
+$: s("bd:dc ~ ~ ~, perc:bh ~ perc:bl ~, perc:al ~ perc:ah ~").gain(0.36)
+// bass
+$: note("0 ~ 4 ~").scale("<D4:dorian G4:mixolydian C4:major A4:minor>").s("bs:ht").gain(0.3)
+// pad
+$: note("0 ~ ~ ~").scale("<D4:dorian G4:mixolydian C4:major A4:minor>").s("pf:ff").gain(0.2).cut(1)
+  .attack(0.15).decay(0.3).sustain(0.65).release(0.45).room(0.36).orbit(1)
+// lead
+$: note("~ 2 4 0  ~ 5 <4 2> 0").scale("<D4:dorian G4:mixolydian C4:major A4:minor>").s("plk:am").gain(0.2).cut(1)

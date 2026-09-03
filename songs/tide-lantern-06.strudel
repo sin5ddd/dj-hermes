@@ -1,0 +1,15 @@
+// @title low-tide
+// @by strudel-rs
+// @details sparse perc, long pad, rev-verb every 4 @ 96
+setcpm(96/4)
+// drums
+$: s("bd:dc ~ ~ ~, perc:bl ~ ~ perc:bh, perc:al ~ ~ ~").gain(0.34)
+// bass
+$: note("0 ~ ~ ~").scale("<A4:minor D4:dorian G4:mixolydian C4:major>").s("bs:ht").gain(0.28)
+// pad
+$: note("0 ~ ~ ~").scale("<A4:minor D4:dorian G4:mixolydian C4:major>").s("pf:ff").gain(0.22).cut(1)
+  .attack(0.2).decay(0.35).sustain(0.7).release(0.55).room(0.42).orbit(1)
+// lead
+$: note("~ 4 ~ ~  ~ 2 ~ 0").scale("<A4:minor D4:dorian G4:mixolydian C4:major>").s("plk:am").gain(0.18).cut(1)
+// fx
+$: s("<~ ~ ~ fx:rv>").gain(0.18)

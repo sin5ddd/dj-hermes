@@ -817,3 +817,69 @@ fn factory_pcm_flat_stems_resolve_exactly() {
     assert!(!bank.has("fx-riser-noise"));
     assert!(!bank.has("lead_supersaw"));
 }
+
+#[test]
+fn catalog_sketches_parse_and_render() {
+    const FAMILIES: &[&str] = &["night-market", "glass-garden", "clockwork", "tide-lantern"];
+    let dir = songs_dir();
+    let mut files: Vec<(String, String)> = Vec::new();
+    for family in FAMILIES {
+        let mut n = 0usize;
+        for entry in fs::read_dir(&dir).unwrap() {
+            let name = entry.unwrap().file_name().to_string_lossy().into_owned();
+            if name.starts_with(family) && name.ends_with(".strudel") {
+                n += 1;
+                files.push((name, family.to_string()));
+            }
+        }
+        assert!(n >= 6, "{family} expected at least 6 songs, got {n}");
+    }
+    files.sort_by(|a, b| a.0.cmp(&b.0));
+    for (file, family) in &files {
+        let song = load_song_file(file);
+        assert!(
+            !song.title.ends_with(".strudel"),
+            "{file} needs @title, got {}",
+            song.title
+        );
+        assert!(
+            (song.bpm.unwrap() - 96.0).abs() < 1e-6,
+            "{file} should share 96 BPM for dj pairing, got {:?}",
+            song.bpm
+        );
+        assert!(
+            song.tracks.len() >= 3 && song.tracks.len() <= 5,
+            "{file} track count {}",
+            song.tracks.len()
+        );
+        if file == &format!("{family}-01.strudel") {
+            assert_eq!(song.title, *family, "{file}");
+        }
+    }
+
+    if !samples_available() {
+        eprintln!("skip catalog_sketches render: samples/ not found");
+        return;
+    }
+    let bank = load_bank();
+    if bank.get_stem("perc", "cv").is_none()
+        || bank.get_stem("perc", "tk").is_none()
+        || bank.get_stem("tom", "lo").is_none()
+    {
+        eprintln!("skip catalog_sketches render: perc/tom wavs not loaded (LFS?)");
+        return;
+    }
+    for (file, _) in &files {
+        let buf = render_song(file, 96.0, &bank, file);
+        assert!(
+            has_energy(&buf, 0.001),
+            "{file} should sound, peak={}",
+            peak(&buf)
+        );
+        assert!(
+            clip_rail_ratio(&buf) < 0.05,
+            "{file} clip rail: {}",
+            clip_rail_ratio(&buf)
+        );
+    }
+}

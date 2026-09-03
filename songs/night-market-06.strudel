@@ -1,0 +1,13 @@
+// @title dusk-phrygian
+// @by strudel-rs
+// @details rim/clave, muted EP, phrygian kalimba @ 96
+setcpm(96/4)
+// drums
+$: s("bd:cn ~ ~ ~, perc:rm ~ perc:cv ~, [~ perc:sk]*4").gain(0.38)
+// bass
+$: note("0 ~ 1 ~  0 ~ <4 3> ~").scale("C4:phrygian").s("bs:ht").gain(0.3)
+// keys
+$: note("[0,2,4] ~ [1,4] ~").scale("C4:phrygian").s("ep:mt").gain(0.16)
+  .attack(0.02).decay(0.45).sustain(0.3).release(0.4).room(0.36).orbit(1)
+// lead
+$: note("~ 4 ~ 1  ~ 0 <2 4> ~").scale("C4:phrygian").s("plk:kl").gain(0.18).cut(1)

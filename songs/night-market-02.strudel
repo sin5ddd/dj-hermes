@@ -1,0 +1,13 @@
+// @title stall-lantern
+// @by strudel-rs
+// @details muted EP, snaps/cabasa, sparse kalimba @ 96
+setcpm(96/4)
+// drums
+$: s("bd:cn ~ ~ ~, perc:sn ~ perc:cb ~, [~ perc:sk]*4").gain(0.38)
+// bass
+$: note("0 ~ ~ ~  ~ 4 ~ ~").scale("C4:dorian").s("bs:ht").gain(0.3)
+// keys
+$: note("[0,4] ~ [0,2,5] ~").scale("C4:dorian").s("ep:mt").gain(0.18)
+  .attack(0.02).decay(0.45).sustain(0.3).release(0.4).room(0.34).orbit(1)
+// lead
+$: note("~ 0 ~ 4  ~ 2 <4 0> ~").scale("C4:dorian").s("plk:kl").gain(0.18).cut(1)

@@ -1,0 +1,13 @@
+// @title alley-clave
+// @by strudel-rs
+// @details denser clave, snap cluster, kalimba call @ 96
+setcpm(96/4)
+// drums
+$: s("bd:cn ~ ~ ~, perc:cv perc:cv ~ perc:cw, perc:np ~ ~ perc:sk").gain(0.4)
+// bass
+$: note("0 ~ 4 0  ~ 5 ~ 3").scale("C4:dorian").s("bs:ht").gain(0.32)
+// keys
+$: note("~ [0,2,4] ~ [0,4,6]").scale("C4:dorian").s("ep:rs").gain(0.16)
+  .attack(0.01).decay(0.4).sustain(0.35).release(0.35).room(0.3).orbit(1)
+// lead
+$: note("4 2 0 ~  2 <4 6> ~ 0").scale("C4:dorian").s("plk:kl").gain(0.2).cut(1)

@@ -1,0 +1,13 @@
+// @title spice-walk
+// @by strudel-rs
+// @details tambourine, harp, walking dorian bass @ 96
+setcpm(96/4)
+// drums
+$: s("bd:cn ~ ~ ~, perc:tb ~ perc:cw perc:tb, [~ perc:tr]*2").gain(0.38)
+// bass
+$: note("0 2 ~ 4  ~ 3 <5 4> ~").scale("C4:dorian").s("bs:ht").gain(0.3)
+// keys
+$: note("[0,2,4] ~ ~ [4,5]").scale("C4:dorian").s("ep:rs").gain(0.16)
+  .attack(0.01).decay(0.4).sustain(0.35).release(0.35).room(0.32).orbit(1)
+// lead
+$: note("7 ~ 4 5  ~ 2 <4 0> ~").scale("C4:dorian").s("plk:hp").gain(0.18).cut(1)
