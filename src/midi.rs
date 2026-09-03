@@ -1,4 +1,4 @@
-//! MIDI output for `strudel-rs play` (notes now; CC / Bank+PC later).
+//! MIDI output for `strudel-rs play` (notes, 18.3 CC, Bank Select + Program Change).
 //!
 //! Audio thread only `try_send`s. A dedicated thread talks to `midir`.
 //! Linux BLE MIDI is an ALSA sequencer port the OS already exposed — this
@@ -18,19 +18,48 @@ pub const DRUM_NOTE: u8 = 60;
 
 const QUEUE_CAP: usize = 1024;
 
-/// Events the MIDI thread can send. CC / Program Change are added later.
+/// SEQTRAK 18.3 / Data List CCs we transmit.
+pub const CC_BANK_MSB: u8 = 0;
+pub const CC_BANK_LSB: u8 = 32;
+pub const CC_VOLUME: u8 = 7;
+pub const CC_PAN: u8 = 10;
+pub const CC_RESONANCE: u8 = 71;
+pub const CC_ATTACK: u8 = 73;
+pub const CC_CUTOFF: u8 = 74;
+pub const CC_DECAY: u8 = 75;
+pub const CC_REVERB: u8 = 91;
+pub const CC_DELAY: u8 = 94;
+pub const CC_FM_AMOUNT: u8 = 117;
+
+const MAX_HIT_CCS: usize = 9;
+
+/// Events the MIDI thread can send.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum MidiEvent {
     NoteOn { ch: u8, note: u8, vel: u8 },
     NoteOff { ch: u8, note: u8 },
+    Cc { ch: u8, cc: u8, val: u8 },
+    ProgramChange { ch: u8, program: u8 },
 }
 
 impl MidiEvent {
     /// Channel voice bytes (status + data). `ch` is 0..=15.
+    /// Program Change occupies only the first two bytes; see [`Self::byte_len`].
     pub fn to_bytes(self) -> [u8; 3] {
         match self {
             MidiEvent::NoteOn { ch, note, vel } => [0x90 | (ch & 0x0F), note, vel],
             MidiEvent::NoteOff { ch, note } => [0x80 | (ch & 0x0F), note, 0],
+            MidiEvent::Cc { ch, cc, val } => [0xB0 | (ch & 0x0F), cc, val],
+            MidiEvent::ProgramChange { ch, program } => [0xC0 | (ch & 0x0F), program, 0],
+        }
+    }
+
+    /// Bytes to put on the wire. Program Change is 2 bytes; a trailing 0
+    /// would be a second PC under running status (ALSA).
+    pub fn byte_len(self) -> usize {
+        match self {
+            MidiEvent::ProgramChange { .. } => 2,
+            _ => 3,
         }
     }
 }
@@ -43,6 +72,12 @@ impl std::fmt::Display for MidiEvent {
             }
             MidiEvent::NoteOff { ch, note } => {
                 write!(f, "NoteOff ch={} note={note}", ch + 1)
+            }
+            MidiEvent::Cc { ch, cc, val } => {
+                write!(f, "CC ch={} cc={cc} val={val}", ch + 1)
+            }
+            MidiEvent::ProgramChange { ch, program } => {
+                write!(f, "PC ch={} program={program}", ch + 1)
             }
         }
     }
@@ -85,7 +120,8 @@ struct MidirSink {
 
 impl MidiSink for MidirSink {
     fn emit(&mut self, ev: MidiEvent) {
-        match self.conn.send(&ev.to_bytes()) {
+        let bytes = ev.to_bytes();
+        match self.conn.send(&bytes[..ev.byte_len()]) {
             Ok(()) => {
                 self.sent = self.sent.saturating_add(1);
                 if self.sent == 1 {
@@ -362,6 +398,77 @@ pub fn map_hit(
     (ch, note, vel)
 }
 
+/// 0..=1 → 0..=127.
+pub fn unit_to_cc7(x: f32) -> u8 {
+    (x.clamp(0.0, 1.0) * 127.0).round() as u8
+}
+
+/// 0..=1 → 1..=127 (center 0.5 → 64).
+pub fn pan_to_cc(pan: f32) -> u8 {
+    ((pan.clamp(0.0, 1.0) * 126.0).round() as u8)
+        .saturating_add(1)
+        .min(127)
+}
+
+/// Hz 20..=8000, log map → 0..=127.
+pub fn hz_to_cutoff_cc(hz: f32) -> u8 {
+    let hz = hz.clamp(20.0, 8000.0);
+    let span = (8000.0_f32 / 20.0).log2();
+    let t = (hz / 20.0).log2() / span;
+    (t.clamp(0.0, 1.0) * 127.0).round() as u8
+}
+
+/// Engine Q 0..=16 → 0..=127.
+pub fn q_to_cc(q: f32) -> u8 {
+    (q.clamp(0.0, 16.0) / 16.0 * 127.0).round() as u8
+}
+
+/// FM index 0..=32 → 0..=127.
+pub fn fm_to_cc(fm: f32) -> u8 {
+    (fm.clamp(0.0, 32.0) / 32.0 * 127.0).round() as u8
+}
+
+/// Snapshot at Note On (LFO is already sampled into `lpf`).
+#[derive(Clone, Copy)]
+pub struct HitCcInput {
+    pub ch: u8,
+    pub gain: f32,
+    pub pan: f32,
+    pub lpf: Option<f32>,
+    pub lpq: f32,
+    pub attack: f32,
+    pub decay: f32,
+    pub release: f32,
+    pub room: f32,
+    pub delay: f32,
+    pub fm: f32,
+}
+
+/// CCs to send at Note On (not every sample). `ch` is 0..=15.
+/// Returns `(pairs, n)` into a stack array — no heap.
+pub fn hit_ccs(hit: HitCcInput) -> ([(u8, u8); MAX_HIT_CCS], usize) {
+    let mut out = [(0u8, 0u8); MAX_HIT_CCS];
+    let mut n = 0usize;
+    let mut push = |cc: u8, val: u8| {
+        out[n] = (cc, val);
+        n += 1;
+    };
+    push(CC_VOLUME, unit_to_cc7(hit.gain));
+    push(CC_PAN, pan_to_cc(hit.pan));
+    if let Some(hz) = hit.lpf {
+        push(CC_CUTOFF, hz_to_cutoff_cc(hz));
+    }
+    push(CC_RESONANCE, q_to_cc(hit.lpq));
+    push(CC_ATTACK, unit_to_cc7(hit.attack));
+    push(CC_DECAY, unit_to_cc7(hit.decay.max(hit.release)));
+    push(CC_REVERB, unit_to_cc7(hit.room));
+    push(CC_DELAY, unit_to_cc7(hit.delay));
+    if hit.ch == 9 && hit.fm.abs() > 1e-6 {
+        push(CC_FM_AMOUNT, fm_to_cc(hit.fm));
+    }
+    (out, n)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -467,5 +574,72 @@ mod tests {
             vel: 90,
         };
         assert_eq!(on.to_string(), "NoteOn ch=1 note=60 vel=90");
+    }
+
+    #[test]
+    fn cc_and_pc_bytes() {
+        assert_eq!(
+            MidiEvent::Cc {
+                ch: 0,
+                cc: 7,
+                val: 64
+            }
+            .to_bytes(),
+            [0xB0, 7, 64]
+        );
+        let pc = MidiEvent::ProgramChange { ch: 7, program: 12 };
+        assert_eq!(pc.to_bytes(), [0xC7, 12, 0]);
+        assert_eq!(pc.byte_len(), 2);
+        assert_eq!(&pc.to_bytes()[..pc.byte_len()], &[0xC7, 12]);
+    }
+
+    #[test]
+    fn pan_center_is_64() {
+        assert_eq!(pan_to_cc(0.0), 1);
+        assert_eq!(pan_to_cc(0.5), 64);
+        assert_eq!(pan_to_cc(1.0), 127);
+    }
+
+    fn hit_cc_input(ch: u8, lpf: Option<f32>, fm: f32) -> HitCcInput {
+        HitCcInput {
+            ch,
+            gain: 0.5,
+            pan: 0.5,
+            lpf,
+            lpq: 0.707,
+            attack: 0.01,
+            decay: 0.1,
+            release: 0.1,
+            room: 0.0,
+            delay: 0.0,
+            fm,
+        }
+    }
+
+    #[test]
+    fn hit_ccs_skips_cutoff_without_lpf() {
+        let (pairs, n) = hit_ccs(hit_cc_input(0, None, 0.0));
+        let ccs: Vec<u8> = pairs[..n].iter().map(|p| p.0).collect();
+        assert!(ccs.contains(&CC_VOLUME));
+        assert!(!ccs.contains(&CC_CUTOFF));
+        assert!(!ccs.contains(&CC_FM_AMOUNT));
+    }
+
+    #[test]
+    fn hit_ccs_fm_only_on_dx_channel() {
+        let (pairs10, n10) = hit_ccs(hit_cc_input(9, None, 4.0));
+        assert!(pairs10[..n10].iter().any(|p| p.0 == CC_FM_AMOUNT));
+        let (pairs8, n8) = hit_ccs(hit_cc_input(7, None, 4.0));
+        assert!(!pairs8[..n8].iter().any(|p| p.0 == CC_FM_AMOUNT));
+    }
+
+    #[test]
+    fn hit_ccs_includes_cutoff_when_lpf() {
+        let (pairs, n) = hit_ccs(hit_cc_input(0, Some(800.0), 0.0));
+        assert!(pairs[..n].iter().any(|p| p.0 == CC_CUTOFF));
+        assert_eq!(hz_to_cutoff_cc(20.0), 0);
+        assert_eq!(hz_to_cutoff_cc(8000.0), 127);
+        assert_eq!(unit_to_cc7(0.0), 0);
+        assert_eq!(unit_to_cc7(1.0), 127);
     }
 }

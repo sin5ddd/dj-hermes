@@ -68,6 +68,10 @@ pub struct Deck {
     midi_tx: Option<Sender<MidiEvent>>,
     midi_slots: Vec<Option<(u8, u8)>>,
     midi_timed: Vec<(u64, u8, u8)>,
+    /// Last CC value per channel (0..=15) and controller (0..=127). Dedup sends.
+    midi_cc_last: [[Option<u8>; 128]; 16],
+    /// Send Bank Select + PC once on the bar after `load`.
+    midi_prog_pending: bool,
 }
 
 impl Deck {
@@ -88,6 +92,8 @@ impl Deck {
             midi_tx: None,
             midi_slots: vec![None; MAX_VOICES],
             midi_timed: Vec::new(),
+            midi_cc_last: [[None; 128]; 16],
+            midi_prog_pending: false,
         }
     }
 
@@ -109,6 +115,8 @@ impl Deck {
     /// leftover voices (heard as ~2× level on the first hit after load).
     pub fn load(&mut self, song: Song) {
         self.midi_panic();
+        self.midi_cc_last = [[None; 128]; 16];
+        self.midi_prog_pending = true;
         self.song = Some(song);
         for v in &mut self.voices {
             *v = None;
@@ -209,7 +217,7 @@ impl Deck {
         // Sample timestamps follow the shared transport; pattern content may be offset (head/cue).
         let bar_start = (global_bar as f64 * spb) as u64;
         let pattern_bar = self.pattern_bar(global_bar);
-        let tracks: Vec<(PatternCode, Option<u8>, bool)> = self
+        let tracks: Vec<(PatternCode, crate::song::MidiAnnot, bool)> = self
             .song
             .as_ref()
             .map(|s| {
@@ -219,13 +227,28 @@ impl Deck {
                     .map(|t| {
                         let has_fm = t.code.mod_params.fm.abs() > 1e-6;
                         let is_syn = midi::track_is_synth(&t.code.sound, t.code.is_note, has_fm);
-                        (t.code.clone(), t.midi_ch, is_syn)
+                        (
+                            t.code.clone(),
+                            crate::song::MidiAnnot {
+                                ch: t.midi_ch,
+                                msb: t.midi_msb,
+                                lsb: t.midi_lsb,
+                                pc: t.midi_pc,
+                            },
+                            is_syn,
+                        )
                     })
                     .collect()
             })
             .unwrap_or_default();
+        if self.midi_prog_pending {
+            self.midi_prog_pending = false;
+            if self.midi_tx.is_some() {
+                self.send_midi_programs(&tracks);
+            }
+        }
         let mut synth_i = 0u8;
-        for (pc, midi_ch, is_syn) in &tracks {
+        for (pc, annot, is_syn) in &tracks {
             // 0 → ch 8, 1 → ch 9, 2+ → ch 8 (map_channel treats only 1 as SYNTH 2).
             let ord = if *is_syn { synth_i } else { 0 };
             schedule_track_into(
@@ -234,7 +257,7 @@ impl Deck {
                 pattern_bar,
                 bar_start,
                 spb,
-                *midi_ch,
+                annot.ch,
                 ord,
             );
             if *is_syn {
@@ -390,6 +413,54 @@ impl Deck {
         }
     }
 
+    fn push_cc(&mut self, ch: u8, cc: u8, val: u8) {
+        let chi = (ch & 0x0F) as usize;
+        let cci = cc as usize;
+        if self.midi_cc_last[chi][cci] == Some(val) {
+            return;
+        }
+        self.midi_cc_last[chi][cci] = Some(val);
+        self.push_midi(MidiEvent::Cc {
+            ch: chi as u8,
+            cc,
+            val,
+        });
+    }
+
+    fn send_midi_programs(&mut self, tracks: &[(PatternCode, crate::song::MidiAnnot, bool)]) {
+        let mut synth_i = 0u8;
+        for (pc, annot, is_syn) in tracks {
+            let ord = if *is_syn { synth_i } else { 0 };
+            if *is_syn {
+                synth_i = synth_i.saturating_add(1);
+            }
+            if annot.msb.is_none() && annot.lsb.is_none() && annot.pc.is_none() {
+                continue;
+            }
+            let has_fm = pc.mod_params.fm.abs() > 1e-6;
+            let ch = midi::map_channel(&pc.sound, has_fm, annot.ch, ord);
+            let msb = annot.msb.unwrap_or(0);
+            let lsb = annot.lsb.unwrap_or(0);
+            // SOUND SELECT runs on Program Change; always send Bank then PC.
+            self.push_midi(MidiEvent::Cc {
+                ch,
+                cc: midi::CC_BANK_MSB,
+                val: msb,
+            });
+            self.push_midi(MidiEvent::Cc {
+                ch,
+                cc: midi::CC_BANK_LSB,
+                val: lsb,
+            });
+            self.midi_cc_last[ch as usize][midi::CC_BANK_MSB as usize] = Some(msb);
+            self.midi_cc_last[ch as usize][midi::CC_BANK_LSB as usize] = Some(lsb);
+            self.push_midi(MidiEvent::ProgramChange {
+                ch,
+                program: annot.pc.unwrap_or(0),
+            });
+        }
+    }
+
     fn midi_off_slot(&mut self, i: usize) {
         let pair = self.midi_slots.get_mut(i).and_then(Option::take);
         if let Some((ch, note)) = pair {
@@ -418,6 +489,22 @@ impl Deck {
             hit.synth_ordinal,
             hit.gain,
         );
+        let (ccs, n) = midi::hit_ccs(midi::HitCcInput {
+            ch,
+            gain: hit.gain,
+            pan: hit.pan,
+            lpf: hit.filter.lpf,
+            lpq: hit.filter.lpq,
+            attack: hit.adsr.attack,
+            decay: hit.adsr.decay,
+            release: hit.adsr.release,
+            room: hit.room,
+            delay: hit.delay,
+            fm: hit.mods.fm,
+        });
+        for &(cc, val) in &ccs[..n] {
+            self.push_cc(ch, cc, val);
+        }
         self.push_midi(MidiEvent::NoteOn { ch, note, vel });
         if let Some(i) = slot {
             if i < self.midi_slots.len() {

@@ -457,6 +457,9 @@ fn song_from_code(code: &str) -> Result<Song, String> {
             name: "main".into(),
             muted: false,
             midi_ch: None,
+            midi_msb: None,
+            midi_lsb: None,
+            midi_pc: None,
             code: pattern,
         }],
     })

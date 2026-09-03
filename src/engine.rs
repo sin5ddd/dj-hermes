@@ -1162,14 +1162,17 @@ b: note("{n}").s("sawtooth").gain(0.8)
         e.process(&mut buf, &bank);
         let ev = snap_midi(&log);
         assert!(
-            matches!(ev.first(), Some(crate::midi::MidiEvent::NoteOn { .. })),
-            "first should be NoteOn: {ev:?}"
+            ev.iter()
+                .any(|x| matches!(x, crate::midi::MidiEvent::NoteOn { .. })),
+            "expected NoteOn: {ev:?}"
         );
         let mut on_open = 0i32;
         for x in &ev {
             match x {
                 crate::midi::MidiEvent::NoteOn { .. } => on_open += 1,
                 crate::midi::MidiEvent::NoteOff { .. } => on_open -= 1,
+                crate::midi::MidiEvent::Cc { .. }
+                | crate::midi::MidiEvent::ProgramChange { .. } => {}
             }
             assert!(on_open >= 0, "NoteOff before matching On: {ev:?}");
         }
@@ -1262,6 +1265,112 @@ $: note("g3").s("sawtooth")
         let n8 = ons.iter().filter(|c| **c == 8).count();
         assert_eq!(n7, 2, "synth 1 and 3 → ch8: {ons:?}");
         assert_eq!(n8, 1, "synth 2 → ch9: {ons:?}");
+        drop(e);
+        drop(h);
+    }
+
+    #[test]
+    fn midi_cc_volume_not_resent_on_same_gain() {
+        let (h, log) = midi_log();
+        let mut e = Engine::new(48_000, 120.0);
+        e.set_midi(h.sender());
+        e.load_song_immediate(0, midi_song(r#"$: s("bd*4").gain(0.5)"#));
+        let bank = SampleBank::empty();
+        let mut buf = stereo_buf(96_000);
+        e.process(&mut buf, &bank);
+        let ev = snap_midi(&log);
+        let vols: Vec<u8> = ev
+            .iter()
+            .filter_map(|x| match x {
+                crate::midi::MidiEvent::Cc {
+                    ch: 0,
+                    cc: crate::midi::CC_VOLUME,
+                    val,
+                } => Some(*val),
+                _ => None,
+            })
+            .collect();
+        assert_eq!(vols.len(), 1, "same gain must not resend CC7: {vols:?}");
+        assert_eq!(vols[0], crate::midi::unit_to_cc7(0.5));
+        assert!(
+            matches!(ev.first(), Some(crate::midi::MidiEvent::Cc { .. })),
+            "CCs should precede notes: {ev:?}"
+        );
+        drop(e);
+        drop(h);
+    }
+
+    #[test]
+    fn midi_no_program_without_annotation() {
+        let (h, log) = midi_log();
+        let mut e = Engine::new(48_000, 120.0);
+        e.set_midi(h.sender());
+        e.load_song_immediate(0, midi_song(r#"$: s("bd*4")"#));
+        let bank = SampleBank::empty();
+        let mut buf = stereo_buf(48_000);
+        e.process(&mut buf, &bank);
+        let ev = snap_midi(&log);
+        assert!(
+            !ev.iter().any(|x| matches!(
+                x,
+                crate::midi::MidiEvent::ProgramChange { .. }
+                    | crate::midi::MidiEvent::Cc {
+                        cc: crate::midi::CC_BANK_MSB | crate::midi::CC_BANK_LSB,
+                        ..
+                    }
+            )),
+            "unexpected bank/pc: {ev:?}"
+        );
+        drop(e);
+        drop(h);
+    }
+
+    #[test]
+    fn midi_bank_then_pc_on_load_bar() {
+        let (h, log) = midi_log();
+        let mut e = Engine::new(48_000, 120.0);
+        e.set_midi(h.sender());
+        e.load_song_immediate(
+            0,
+            midi_song("// @midi ch=8 msb=63 lsb=0 pc=12\n$: note(\"c3\").s(\"sawtooth\")\n"),
+        );
+        let bank = SampleBank::empty();
+        let mut buf = stereo_buf(48_000);
+        e.process(&mut buf, &bank);
+        let ev = snap_midi(&log);
+        let kinds: Vec<&str> = ev
+            .iter()
+            .filter_map(|x| match x {
+                crate::midi::MidiEvent::Cc {
+                    ch: 7,
+                    cc: crate::midi::CC_BANK_MSB,
+                    val: 63,
+                } => Some("msb"),
+                crate::midi::MidiEvent::Cc {
+                    ch: 7,
+                    cc: crate::midi::CC_BANK_LSB,
+                    val: 0,
+                } => Some("lsb"),
+                crate::midi::MidiEvent::ProgramChange { ch: 7, program: 12 } => Some("pc"),
+                crate::midi::MidiEvent::NoteOn { ch: 7, .. } => Some("on"),
+                _ => None,
+            })
+            .collect();
+        let msb = kinds.iter().position(|k| *k == "msb");
+        let lsb = kinds.iter().position(|k| *k == "lsb");
+        let pc = kinds.iter().position(|k| *k == "pc");
+        let on = kinds.iter().position(|k| *k == "on");
+        assert!(msb.is_some() && lsb.is_some() && pc.is_some(), "{kinds:?}");
+        assert!(msb < lsb && lsb < pc, "MSB, LSB, PC order: {kinds:?}");
+        assert!(pc < on, "program before notes: {kinds:?}");
+        let mut buf = stereo_buf(96_000);
+        e.process(&mut buf, &bank);
+        let ev2 = snap_midi(&log);
+        let pc_n = ev2
+            .iter()
+            .filter(|x| matches!(x, crate::midi::MidiEvent::ProgramChange { .. }))
+            .count();
+        assert_eq!(pc_n, 1, "bank/pc once per load: {ev2:?}");
         drop(e);
         drop(h);
     }

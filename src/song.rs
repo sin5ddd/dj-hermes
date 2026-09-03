@@ -31,6 +31,42 @@ pub struct Track {
     pub muted: bool,
     /// 1-based MIDI channel from `// @midi ch=N` (1..=16). `None` = map by sound.
     pub midi_ch: Option<u8>,
+    /// Bank Select MSB (CC0) from `// @midi msb=N` / `bank=M,L`.
+    pub midi_msb: Option<u8>,
+    /// Bank Select LSB (CC32).
+    pub midi_lsb: Option<u8>,
+    /// Program Change from `// @midi pc=N`.
+    pub midi_pc: Option<u8>,
+}
+
+/// Parsed `// @midi …` fields (all optional).
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct MidiAnnot {
+    pub ch: Option<u8>,
+    pub msb: Option<u8>,
+    pub lsb: Option<u8>,
+    pub pc: Option<u8>,
+}
+
+impl MidiAnnot {
+    pub fn is_empty(self) -> bool {
+        self.ch.is_none() && self.msb.is_none() && self.lsb.is_none() && self.pc.is_none()
+    }
+
+    fn merge(&mut self, other: MidiAnnot) {
+        if other.ch.is_some() {
+            self.ch = other.ch;
+        }
+        if other.msb.is_some() {
+            self.msb = other.msb;
+        }
+        if other.lsb.is_some() {
+            self.lsb = other.lsb;
+        }
+        if other.pc.is_some() {
+            self.pc = other.pc;
+        }
+    }
 }
 
 /// Optional music metadata from Strudel-style `@tag` comments.
@@ -394,7 +430,7 @@ pub fn parse_song(text: &str, path: &str) -> Result<Song, String> {
     let mut meta = SongMeta::default();
     let mut tracks = Vec::new();
     let mut pending_label: Option<String> = None;
-    let mut pending_midi_ch: Option<u8> = None;
+    let mut pending_midi = MidiAnnot::default();
     let mut anon_idx = 0usize;
     let mut block_buf: Option<String> = None;
 
@@ -462,7 +498,7 @@ pub fn parse_song(text: &str, path: &str) -> Result<Song, String> {
                 &mut title,
                 &mut meta,
                 &mut pending_label,
-                &mut pending_midi_ch,
+                &mut pending_midi,
             );
             i += 1;
             continue;
@@ -531,11 +567,15 @@ pub fn parse_song(text: &str, path: &str) -> Result<Song, String> {
         let code = parse_code(code_raw)
             .map_err(|e| format!("line {} ({}): {}", lineno + 1, name, e))?
             .with_source_base(code_abs);
+        let midi = std::mem::take(&mut pending_midi);
         tracks.push(Track {
             name,
             code,
             muted: false,
-            midi_ch: pending_midi_ch.take(),
+            midi_ch: midi.ch,
+            midi_msb: midi.msb,
+            midi_lsb: midi.lsb,
+            midi_pc: midi.pc,
         });
         i = last_line + 1;
     }
@@ -776,6 +816,15 @@ impl Song {
                 if t.midi_ch.is_none() {
                     t.midi_ch = old.midi_ch;
                 }
+                if t.midi_msb.is_none() {
+                    t.midi_msb = old.midi_msb;
+                }
+                if t.midi_lsb.is_none() {
+                    t.midi_lsb = old.midi_lsb;
+                }
+                if t.midi_pc.is_none() {
+                    t.midi_pc = old.midi_pc;
+                }
             }
         }
         Ok(song)
@@ -886,30 +935,90 @@ fn strip_line_comment(line: &str) -> Option<&str> {
 
 /// Pull `@midi ch=N` (N = 1..=16) out of a comment. Remaining text is the label.
 pub fn take_at_midi_ch(comment: &str) -> (Option<u8>, String) {
-    let mut ch = None;
+    let (a, rest) = take_at_midi(comment);
+    (a.ch, rest)
+}
+
+/// Pull `@midi` key=value tokens (`ch`, `msb`, `lsb`, `pc`, `bank=M,L`).
+pub fn take_at_midi(comment: &str) -> (MidiAnnot, String) {
+    let mut annot = MidiAnnot::default();
     let mut kept: Vec<&str> = Vec::new();
     let mut tokens = comment.split_whitespace().peekable();
     while let Some(tok) = tokens.next() {
         if tok.eq_ignore_ascii_case("@midi") {
-            if let Some(next) = tokens.peek() {
-                if let Some(n) = parse_ch_eq(next) {
-                    ch = Some(n);
+            while let Some(next) = tokens.peek().copied() {
+                if let Some(parsed) = parse_midi_kv(next) {
+                    annot.merge(parsed);
                     tokens.next();
-                    continue;
+                } else {
+                    break;
                 }
             }
             continue;
         }
         kept.push(tok);
     }
-    (ch, kept.join(" "))
+    (annot, kept.join(" "))
+}
+
+fn parse_midi_kv(tok: &str) -> Option<MidiAnnot> {
+    let t = tok.trim().to_ascii_lowercase();
+    if let Some(n) = parse_ch_eq(&t) {
+        return Some(MidiAnnot {
+            ch: Some(n),
+            ..MidiAnnot::default()
+        });
+    }
+    if let Some(n) = parse_cc7_eq(&t, "msb=") {
+        return Some(MidiAnnot {
+            msb: Some(n),
+            ..MidiAnnot::default()
+        });
+    }
+    if let Some(n) = parse_cc7_eq(&t, "lsb=") {
+        return Some(MidiAnnot {
+            lsb: Some(n),
+            ..MidiAnnot::default()
+        });
+    }
+    if let Some(n) = parse_cc7_eq(&t, "pc=") {
+        return Some(MidiAnnot {
+            pc: Some(n),
+            ..MidiAnnot::default()
+        });
+    }
+    if let Some((msb, lsb)) = parse_bank_eq(&t) {
+        return Some(MidiAnnot {
+            msb: Some(msb),
+            lsb: Some(lsb),
+            ..MidiAnnot::default()
+        });
+    }
+    None
 }
 
 fn parse_ch_eq(tok: &str) -> Option<u8> {
-    let t = tok.trim().to_ascii_lowercase();
-    let n = t.strip_prefix("ch=")?;
+    let n = tok.strip_prefix("ch=")?;
     let v: u8 = n.parse().ok()?;
     (1..=16).contains(&v).then_some(v)
+}
+
+fn parse_cc7_eq(tok: &str, prefix: &str) -> Option<u8> {
+    let n = tok.strip_prefix(prefix)?;
+    let v: u16 = n.parse().ok()?;
+    (v <= 127).then_some(v as u8)
+}
+
+fn parse_bank_eq(tok: &str) -> Option<(u8, u8)> {
+    let rest = tok.strip_prefix("bank=")?;
+    if let Some((a, b)) = rest.split_once(',') {
+        let msb: u16 = a.parse().ok()?;
+        let lsb: u16 = b.parse().ok()?;
+        (msb <= 127 && lsb <= 127).then_some((msb as u8, lsb as u8))
+    } else {
+        let msb: u16 = rest.parse().ok()?;
+        (msb <= 127).then_some((msb as u8, 0))
+    }
 }
 
 /// Apply one comment body: metadata tags and/or track label for the next `$:`.
@@ -918,14 +1027,14 @@ fn handle_comment_body(
     title: &mut Option<String>,
     meta: &mut SongMeta,
     pending_label: &mut Option<String>,
-    pending_midi_ch: &mut Option<u8>,
+    pending_midi: &mut MidiAnnot,
 ) {
     if comment.is_empty() {
         return;
     }
-    let (midi_ch, rest) = take_at_midi_ch(comment);
-    if let Some(ch) = midi_ch {
-        *pending_midi_ch = Some(ch);
+    let (annot, rest) = take_at_midi(comment);
+    if !annot.is_empty() {
+        pending_midi.merge(annot);
     }
     let comment = rest.trim();
     if comment.is_empty() {
@@ -1284,6 +1393,26 @@ $: s("hh")
         assert_eq!(s.tracks[0].midi_ch, None);
         let s = parse_song("// @midi ch=17\n$: s(\"bd\")\n", "t").unwrap();
         assert_eq!(s.tracks[0].midi_ch, None);
+    }
+
+    #[test]
+    fn midi_bank_pc_comment() {
+        let s = parse_song(
+            "// @midi ch=8 msb=63 lsb=0 pc=12 lead\n$: note(\"c3\").s(\"sawtooth\")\n",
+            "t",
+        )
+        .unwrap();
+        assert_eq!(s.tracks[0].name, "lead");
+        assert_eq!(s.tracks[0].midi_ch, Some(8));
+        assert_eq!(s.tracks[0].midi_msb, Some(63));
+        assert_eq!(s.tracks[0].midi_lsb, Some(0));
+        assert_eq!(s.tracks[0].midi_pc, Some(12));
+
+        let s = parse_song("// @midi bank=12,3 pc=40\n$: s(\"bd\")\n", "t").unwrap();
+        assert_eq!(s.tracks[0].midi_msb, Some(12));
+        assert_eq!(s.tracks[0].midi_lsb, Some(3));
+        assert_eq!(s.tracks[0].midi_pc, Some(40));
+        assert_eq!(s.tracks[0].name, "$0");
     }
 
     #[test]
