@@ -4,7 +4,7 @@ Assistant-agnostic recipes for this engine: **to make music of type X, write Str
 
 These are Hermes-format `SKILL.md` files (`name`, `description` starting with “Use when”, `version`, `author`, `license`, `metadata.hermes`). Folders are named `strudel-*` (genre recipes `strudel-genre-*`). This tree documents how **this repo** turns notation into rhythm, harmony, genre, and DJ mix.
 
-Engine-accurate recipes (formerly unprefixed folders such as `four-on-the-floor`) were merged into the matching `strudel-*` skill, or renamed when there was no overlap. Playable files live under `songs/<genre>/01.strudel` (and `02`…); those copies are still **thin (about 3 `$:`)** until a follow-up rewrite. **New apply / skill examples** use the 7–8 track bed in [strudel-composition](./strudel-composition/SKILL.md). This directory is the canonical skill tree and the copy source for the live `dj-hermes` profile. `strudel-live-edit` also lives here (natural-language live edits); it is not a song-recipe skill.
+Engine-accurate recipes (formerly unprefixed folders such as `four-on-the-floor`) were merged into the matching `strudel-*` skill, or renamed when there was no overlap. Playable files live under `songs/<genre>/01.strudel` (and `02`…) and follow the 7–8 track bed in [strudel-composition](./strudel-composition/SKILL.md). This directory is the canonical skill tree and the copy source for the live `dj-hermes` profile. `strudel-live-edit` also lives here (natural-language live edits); it is not a song-recipe skill.
 
 Do not invent syntax from the public Strudel REPL. Only patterns that parse and play here belong in a skill.
 
@@ -115,7 +115,7 @@ Cross-cutting:
 
 | Skill | When | Example song |
 | --- | --- | --- |
-| [strudel-composition](./strudel-composition/SKILL.md) | 7–8 `$:` tracks, 4-bar phrases, mini-notation | — (inline bed; `songs/` still thin) |
+| [strudel-composition](./strudel-composition/SKILL.md) | 7–8 `$:` tracks, 4-bar phrases, mini-notation | `songs/<genre>/01.strudel` |
 | [strudel-data-format](./strudel-data-format/SKILL.md) | `.strudel` save/load shape | — |
 | [strudel-sound-design](./strudel-sound-design/SKILL.md) | Synths, FX, live 2-op FM, factory PCM stems | — (inline recipes; apply via `strudel_apply_song`) |
 | [strudel-pcm-catalog](./strudel-pcm-catalog/SKILL.md) | rust-fm-synthe `part:slug`（`bd:8b`, `hh:cl`）。意味は INDEX | — |
@@ -141,7 +141,7 @@ Genre recipes (`strudel-genre-*`):
 | [strudel-genre-chill-pop](./strudel-genre-chill-pop/SKILL.md) | Japanese city pop: IV–iii–ii–I maj7 + Rhodes; not EDM I–I–IV–I, not 王道 | — |
 | [strudel-genre-dubstep](./strudel-genre-dubstep/SKILL.md) | Dubstep | — |
 | [strudel-genre-electro](./strudel-genre-electro/SKILL.md) | Electro | — |
-| [strudel-genre-future-bass](./strudel-genre-future-bass/SKILL.md) | Kawaii Future Bass: 140 half-time 2-step + J-pop 王道進行 (IV–V–iii–vi; 小室 is a named swap); not `bd*4` | `songs/future-bass/01.strudel` (old four-on-the-floor demo; skill fence is the target) |
+| [strudel-genre-future-bass](./strudel-genre-future-bass/SKILL.md) | Kawaii Future Bass: 140 half-time 2-step + J-pop 王道進行 (IV–V–iii–vi; 小室 is a named swap); not `bd*4` | `songs/future-bass/01.strudel` |
 | [strudel-genre-lofi-hiphop](./strudel-genre-lofi-hiphop/SKILL.md) | Lo-fi hip hop | — |
 | [strudel-genre-minimal-techno](./strudel-genre-minimal-techno/SKILL.md) | Minimal Techno | — |
 | [strudel-genre-progressive-house](./strudel-genre-progressive-house/SKILL.md) | Progressive House | — |
@@ -184,5 +184,5 @@ Headless hosts without an audio device: `cargo test --test e2e` renders through 
 
 1. New directory `docs/profile/dj-hermes/skills/creative/strudel-<name>/SKILL.md` (genre recipes: `strudel-genre-<name>`). Hermes YAML: `name`, `description` starting with “Use when”, `version`, `author`, `license`, `metadata.hermes` (`tags`, `related_skills`).
 2. Include: when, the exact `$:` pattern (**7–8 tracks** per strudel-composition), **why it sounds that way** (cite mini/scale/mixer/duck behavior), and a play/dj command.
-3. Point at an existing `songs/<genre>/01.strudel` if one exists, and say it may still be a thin demo. The skill fence is the target. Every `songs/**/*.strudel` is parsed by `tests/e2e.rs`.
+3. Point at an existing `songs/<genre>/01.strudel` if one exists. Every `songs/**/*.strudel` is parsed by `tests/e2e.rs`.
 4. Fence only syntax this parser accepts (`setcpm` + `$:`. No `stack()` / `.cpm()`). No `in_bank=no` PCM keys.
