@@ -1,10 +1,24 @@
 // @title chill-pop-04
 // @genre chill-pop
-// @details sparse 808 + sine sub + high major hook
 setcpm(100/4)
 // drums
-$: s("bd:8t ~ ~ ~, [~ sd]*2, [~ hh]*4").gain(0.45)
+$: s("bd ~ bd ~, [~ sd]*2, hh*8, <~ ~ ~ [bd sd bd sd]>").gain(0.5)
 // bass
-$: note("0 ~ ~ 0").scale("C4:major").s("bs:su").gain(0.4)
+$: note("0 ~ 4 0  0 ~ <4 7 2 0>").scale("<A2:lydian Ab2:phrygian F#2:dorian E2:major>")
+  .s("sine").lpf(250).gain(0.42)
 // lead
-$: note("4 7 9 4").scale("C4:major").s("square").lpf(2400).gain(0.18)
+$: note("~ 2 4 6  4 2 ~ <0 2 4 6>").scale("<A4:lydian Ab4:phrygian F#4:dorian E4:major>")
+  .s("plk:ps").gain(0.16).cut(1)
+// hook
+$: note("0 ~ 2 6  ~ 4 2 <6 4 2 0>").scale("<A4:lydian Ab4:phrygian F#4:dorian E4:major>")
+  .s("ep:rs").gain(0.22)
+// arp
+$: note("0 2 4 6  4 2 0 ~").scale("<A5:lydian Ab5:phrygian F#5:dorian E5:major>")
+  .s("plk:ny").gain(0.12).cut(1)
+// chords
+$: note("[0,2,6] ~ [0,2,6] ~").scale("<A3:lydian Ab3:phrygian F#3:dorian E3:major>")
+  .s("triangle").lpf(1400).gain(0.24).room(0.25).orbit(2)
+// pad
+$: note("[0,4]").scale("<A3:lydian Ab3:phrygian F#3:dorian E3:major>")
+  .s("sawtooth").lpf(1100).gain(0.14)
+  .attack(0.08).release(0.3)

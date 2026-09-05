@@ -1,10 +1,25 @@
 // @title chill-15
 // @genre chill
-// @details noise kick + hoover + wurli
 setcpm(90/4)
 // drums
-$: s("bd:fn ~ ~ ~, [~ sd:cs]*2").gain(0.4)
+$: s("bd:hf ~ ~ bd:hf ~ ~ sd ~, [~ hh]*4, perc:sk, <~ ~ ~ oh>").gain(0.42)
 // bass
-$: note("2 6 0 ~").scale("C4:minor").s("bs:hv").gain(0.36)
+$: note("0 ~ 2 ~ 0 <3 4 2 0>").scale("<F4:minor F4:minor Bb4:dorian F4:minor>")
+  .s("bs:hf").gain(0.4)
 // lead
-$: note("~ 5 8 3").scale("C4:minor").s("ep:wr").gain(0.22).attack(0.03).release(0.3).room(0.3).orbit(1)
+$: note("~ 4 ~ 7 ~ <6 9 7 4>").scale("<F4:minor F4:minor Bb4:dorian F4:minor>")
+  .s("triangle").lpf(1800).gain(0.16)
+// hook
+$: note("0@2 4 7@2 ~").scale("<F4:minor F4:minor Bb4:dorian F4:minor>")
+  .s("plk:am").gain(0.18).cut(1)
+// arp
+$: note("~ 7 12 7  4 0 ~ 2").scale("<F5:minor F5:minor Bb5:dorian F5:minor>")
+  .s("plk:hp").gain(0.12).cut(1)
+// chords
+$: note("[0,2,4] ~ [0,2,4] ~").scale("<F3:minor F3:minor Bb3:dorian F3:minor>")
+  .s("triangle").lpf(1200).gain(0.22).room(0.3).orbit(2)
+  .attack(0.04).release(0.3)
+// pad
+$: note("[0,4]").scale("<F3:minor F3:minor Bb3:dorian F3:minor>")
+  .s("wt_organ").lpf(900).gain(0.16).room(0.35).orbit(2)
+  .attack(0.12).release(0.5)

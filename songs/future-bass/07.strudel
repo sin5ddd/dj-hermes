@@ -1,10 +1,27 @@
 // @title future-bass-07
 // @genre future-bass
-// @details 909 kick, sine + fx:up @ 140
 setcpm(140/4)
-// drums
-$: s("bd:9p*4, [~ sd:9s]*2, [~ hh:hs]*4").gain(0.48)
+// kick
+$: s("bd ~ bd ~").gain(0.85).duckorbit(2).duckattack(0.05).duckdepth(0.8)
+// hats
+$: s("~ ~ sd ~, hh*8, <~ ~ ~ [hh*16]>").gain(0.42)
 // bass
-$: note("4 ~ 0 4").scale("C2:major").s("sine").lpf(160).gain(0.48)
-// fx
-$: s("<fx:up ~ ~ ~>").gain(0.24)
+$: note("0 ~ 0 <0 4 0 2>").scale("<C#5:lydian Eb5:mixolydian C5:phrygian F5:minor>")
+  .s("bs:su").gain(0.4).orbit(2)
+// lead
+$: note("4@2 7 9@2  7 4 <2 0> ~").scale("<C#5:lydian Eb5:mixolydian C5:phrygian F5:minor>")
+  .s("ld:ss").gain(0.16).cut(1)
+// hook
+$: note("~ 11 ~ 12  ~ 9 ~ <11 12>").scale("<C#5:lydian Eb5:mixolydian C5:phrygian F5:minor>")
+  .s("plk:mx").gain(0.18).cut(1)
+// arp
+$: note("0 4 ~ 7  4 ~ 9 4").scale("<C#5:lydian Eb5:mixolydian C5:phrygian F5:minor>")
+  .s("plk:fg").gain(0.14).cut(1)
+// chords
+$: note("[0,4,9] ~ [0,4,9] ~").scale("<C#5:lydian Eb5:mixolydian C5:phrygian F5:minor>")
+  .s("sawtooth").lpf(1800).gain(0.22).orbit(2)
+  .attack(0.02).decay(0.2).sustain(0.4).release(0.15)
+// pad
+$: note("[0,4]").scale("<C#5:lydian Eb5:mixolydian C5:phrygian F5:minor>")
+  .s("sine").fm(1.2).fmh(1).fmdec(0.8).fmsus(0.4)
+  .room(0.3).orbit(2).gain(0.14)

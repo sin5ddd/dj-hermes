@@ -1,9 +1,23 @@
-// @title fifth-gap
+// @title minimal-techno-07
 // @genre minimal-techno
 setcpm(126/4)
 // drums
-$: s("bd*4, [~ hh]*4").gain(0.52)
+$: s("bd*4, hh*8, <~ ~ ~ cp>").gain(0.7)
 // bass
-$: note("0 ~ ~ 0").scale("C2:minor").s("sawtooth").lpf(280).gain(0.4)
+$: note("0 ~ 3 ~").scale("<Ab2:minor Ab2:minor Ab2:minor Eb3:phrygian>")
+  .s("sawtooth").lpf(320).gain(0.4)
+// lead
+$: note("~ ~ 7 ~").scale("<Ab4:minor Ab4:minor Ab4:minor Eb5:phrygian>")
+  .s("square").lpf(2000).gain(0.1)
+// hook
+$: note("~ 4 ~ ~").scale("<Ab4:minor Ab4:minor Ab4:minor Eb5:phrygian>")
+  .s("plk:ac").gain(0.12).cut(1)
+// arp
+$: s("<~ perc:tk ~ perc:st>").gain(0.12)
+// chords
+$: note("~ [0,2,4] ~ ~").scale("<Ab3:minor Ab3:minor Ab3:minor Eb4:phrygian>")
+  .s("triangle").lpf(1100).gain(0.14)
 // pad
-$: note("4 ~ 0 ~").scale("C4:minor").s("pf:ff").gain(0.16)
+$: note("[0,4]").scale("<Ab3:minor Ab3:minor Ab3:minor Eb4:phrygian>")
+  .s("sine").lpf(600).orbit(2).gain(0.1)
+  .attack(0.12).release(0.4)

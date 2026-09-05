@@ -1,10 +1,24 @@
 // @title chill-pop-08
 // @genre chill-pop
-// @details zap kick + growl bass + monophonic ld:ss
 setcpm(100/4)
 // drums
-$: s("bd:ez*4, [~ sd]*2, [~ hh]*4").gain(0.5)
+$: s("bd ~ bd ~, [~ sd]*2, hh*8, <~ ~ ~ [bd sd bd sd]>").gain(0.5)
 // bass
-$: note("0 ~ 4 0").scale("C4:major").s("bs:g2").gain(0.36)
+$: note("0 ~ 4 0  0 ~ <4 7 2 0>").scale("<D3:lydian C#3:phrygian B2:dorian A2:major>")
+  .s("sine").lpf(250).gain(0.42)
 // lead
-$: note("7 ~ 9 4").scale("C4:major").s("ld:ss").gain(0.24).cut(1)
+$: note("~ 2 4 6  4 2 ~ <0 2 4 6>").scale("<D5:lydian C#5:phrygian B4:dorian A4:major>")
+  .s("plk:ps").gain(0.16).cut(1)
+// hook
+$: note("0 ~ 2 6  ~ 4 2 <6 4 2 0>").scale("<D5:lydian C#5:phrygian B4:dorian A4:major>")
+  .s("ep:rs").gain(0.22)
+// arp
+$: note("0 2 4 6  4 2 0 ~").scale("<D6:lydian C#6:phrygian B5:dorian A5:major>")
+  .s("plk:ny").gain(0.12).cut(1)
+// chords
+$: note("[0,2,6] ~ [0,2,6] ~").scale("<D4:lydian C#4:phrygian B3:dorian A3:major>")
+  .s("triangle").lpf(1400).gain(0.24).room(0.25).orbit(2)
+// pad
+$: note("[0,4]").scale("<D4:lydian C#4:phrygian B3:dorian A3:major>")
+  .s("sawtooth").lpf(1100).gain(0.14)
+  .attack(0.08).release(0.3)

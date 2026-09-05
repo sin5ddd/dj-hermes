@@ -1,10 +1,25 @@
 // @title chill-16
 // @genre chill
-// @details gabber kick + supersaw bass + nylon pop
 setcpm(90/4)
 // drums
-$: s("bd:gb ~ ~ sd:gt, [~ hh:cl]*4").gain(0.4)
+$: s("bd:hf ~ ~ bd:hf ~ ~ sd ~, [~ hh]*4, perc:sk, <~ ~ ~ oh>").gain(0.42)
 // bass
-$: note("5 ~ 1 4").scale("C4:minor").s("bs:sw").gain(0.36)
+$: note("0 ~ 2 ~ 0 <3 4 2 0>").scale("<G4:minor G4:minor C5:dorian G4:minor>")
+  .s("bs:hf").gain(0.4)
 // lead
-$: note("6 9 2 ~").scale("C4:minor").s("plk:ny").gain(0.22)
+$: note("~ 4 ~ 7 ~ <6 9 7 4>").scale("<G4:minor G4:minor C5:dorian G4:minor>")
+  .s("triangle").lpf(1800).gain(0.16)
+// hook
+$: note("0@2 4 7@2 ~").scale("<G4:minor G4:minor C5:dorian G4:minor>")
+  .s("plk:am").gain(0.18).cut(1)
+// arp
+$: note("~ 7 12 7  4 0 ~ 2").scale("<G5:minor G5:minor C6:dorian G5:minor>")
+  .s("plk:hp").gain(0.12).cut(1)
+// chords
+$: note("[0,2,4] ~ [0,2,4] ~").scale("<G3:minor G3:minor C4:dorian G3:minor>")
+  .s("triangle").lpf(1200).gain(0.22).room(0.3).orbit(2)
+  .attack(0.04).release(0.3)
+// pad
+$: note("[0,4]").scale("<G3:minor G3:minor C4:dorian G3:minor>")
+  .s("wt_organ").lpf(900).gain(0.16).room(0.35).orbit(2)
+  .attack(0.12).release(0.5)

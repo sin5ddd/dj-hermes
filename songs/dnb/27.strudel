@@ -1,10 +1,28 @@
 // @title dnb-27
 // @genre drum and bass
-// @details gabber + neuro snare, neuro reese + lofi pluck @ 174
 setcpm(174/4)
 // drums
-$: s("[bd:gb sd:ng ~ sd:ng bd:gb ~ bd:gb sd:ng, hh:ns*8]*2").gain(0.64).lpf(2600)
+$: s("[bd <~ sd> ~ sd ~ <bd ~> <bd sd> <bd ~>, hh*4, [~@5 oh ~@2]]*2").gain(0.7).lpf(2500)
 // bass
-$: note("5 3 7 ~").scale("C4:minor").s("bs:rn").gain(0.36)
+$: note("0 3 0 <0 -1 0 3>").scale("Ab2:minor")
+  .s("square").lpf(120).gain(0.42)
+  .attack(0.01).decay(0.5).release(0.4)
+// bass-mid
+$: note("0 3 0 <0 -1 0 3>").scale("Ab2:minor")
+  .s("sawtooth").lpf(1000).gain(0.32)
+  .attack(0.01).decay(0.4).release(0.3)
 // lead
-$: note("3 6 ~ 0").scale("C4:minor").s("plk:lf").gain(0.2).cut(1)
+$: note("~ 7 ~ <9 7 4 11>").scale("<Ab4:minor Ab4:minor Eb5:phrygian Ab4:minor>")
+  .s("square").lpf(2600).gain(0.14)
+// hook
+$: note("~ 4 ~ <7 4 4 7>").scale("<Ab4:minor Ab4:minor Eb5:phrygian Ab4:minor>")
+  .s("plk:dt").gain(0.16).cut(1)
+// arp
+$: s("<~ perc:st ~ perc:tm>").gain(0.16)
+// chords
+$: note("[0,4] ~ [0,4] ~").scale("<Ab3:minor Ab3:minor Eb4:phrygian Ab3:minor>")
+  .s("triangle").lpf(1500).gain(0.16)
+// pad
+$: note("[0,4]").scale("<Ab3:minor Ab3:minor Eb4:phrygian Ab3:minor>")
+  .s("sine").fm(1.2).fmh(1).fmdec(0.8).fmsus(0.4)
+  .room(0.22).orbit(2).gain(0.12)

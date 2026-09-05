@@ -1,11 +1,26 @@
 // @title electro-05
 // @genre electro
-// @details zap kick, live FM bass + plk:lp @ 126
 setcpm(126/4)
 // drums
-$: s("bd:ez*4, [~ sd:pi]*2, hh:ch*8").gain(0.5)
+$: s("bd*4, ~ sd ~ sd, hh*8, <~ ~ ~ [bd sd bd sd]>").gain(0.62)
 // bass
-$: note("0 0 3 0 2 5 0 4").scale("C2:minor").s("sine").fm(3).fmh(2).lpf(640).gain(0.42)
-  .attack(0.001).decay(0.08).sustain(0.2).release(0.04)
+$: note("0 ~ 0 <3 0 0 5>").scale("<F2:minor F2:minor C3:phrygian F2:minor>")
+  .s("square").lpf(500).gain(0.46)
+  .attack(0.001).decay(0.08).sustain(0.15).release(0.04)
 // lead
-$: note("7 4 0 2").scale("C4:minor").s("plk:lp").gain(0.22).cut(1)
+$: note("~ 7 4 <9 7 12 7>").scale("<F4:minor F4:minor C5:phrygian F4:minor>")
+  .s("wt_bright").lpf(3200).gain(0.14)
+// hook
+$: note("12 ~ 7 <12 15 12 7>").scale("<F4:minor F4:minor C5:phrygian F4:minor>")
+  .s("square").penv(12).pattack(0.001).pdecay(0.08).lpf(2400).gain(0.16)
+// arp
+$: note("~ 0 3 7  3 0 ~ 5").scale("<F5:minor F5:minor C6:phrygian F5:minor>")
+  .s("plk:cv").gain(0.14).cut(1)
+// chords
+$: note("[0,2,4] ~ [0,2,4] ~").scale("<F3:minor F3:minor C4:phrygian F3:minor>")
+  .s("triangle").lpf(1600).gain(0.2)
+  .attack(0.001).decay(0.12).sustain(0.1).release(0.06)
+// pad
+$: note("[0,4]").scale("<F3:minor F3:minor C4:phrygian F3:minor>")
+  .s("sawtooth").lpf(900).gain(0.14)
+  .attack(0.04).decay(0.15).sustain(0.5).release(0.2)

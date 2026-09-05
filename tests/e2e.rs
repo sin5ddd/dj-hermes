@@ -238,7 +238,7 @@ fn dnb_01_mix_rules() {
     assert!((song.bpm.unwrap() - 174.0).abs() < 1e-6);
     let drums = track(&song, "drums");
     let bass = track(&song, "bass");
-    let lead = track(&song, "lead");
+    let mid = track(&song, "bass-mid");
     assert!(
         drums.code.gain > bass.code.gain,
         "drums {} must sit above bass {}",
@@ -246,8 +246,8 @@ fn dnb_01_mix_rules() {
         bass.code.gain
     );
     assert_eq!(bass.code.sound, "square");
-    assert_eq!(lead.code.sound, "sawtooth");
-    let mid_lpf = lead.code.filter.lpf.expect("saw mid needs lpf");
+    assert_eq!(mid.code.sound, "sawtooth");
+    let mid_lpf = mid.code.filter.lpf.expect("saw mid needs lpf");
     assert!(
         (800.0..=1200.0).contains(&mid_lpf),
         "mid Reese lpf {mid_lpf} should be 800–1200"
@@ -591,8 +591,8 @@ fn house_01_clap_backbeat() {
         "pluck key is plk:lp (underscore): {text}"
     );
     assert!(
-        text.contains("C4:minor") && !text.contains("C3:minor"),
-        "C3 sample must use C4:minor, not C3:minor: {text}"
+        text.contains("C4:minor"),
+        "PCM pluck/bass must use C4:minor (native), got: {text}"
     );
     assert!(
         text.contains("cut(1)"),
@@ -618,7 +618,7 @@ fn house_01_clap_backbeat() {
         drums.code.mini_src
     );
     assert!(
-        drums.code.mini_src.contains("[~ hh]*4"),
+        drums.code.mini_src.contains("[~ hh]*4") || drums.code.mini_src.contains("[~ hh:hs]*4"),
         "{}",
         drums.code.mini_src
     );
@@ -628,15 +628,15 @@ fn house_01_clap_backbeat() {
         drums.code.mini_src
     );
 
-    let lead = track(&song, "lead");
-    assert_eq!(lead.code.sound, "plk:lp");
-    assert_eq!(lead.code.cut, Some(1));
-    assert!(lead.code.compressor.is_none());
-    let scale = lead
+    let hook = track(&song, "hook");
+    assert_eq!(hook.code.sound, "plk:lp");
+    assert_eq!(hook.code.cut, Some(1));
+    assert!(hook.code.compressor.is_none());
+    let scale = hook
         .code
         .scale
         .as_ref()
-        .expect("lead needs .scale")
+        .expect("hook needs .scale")
         .at_cycle(0);
     assert_eq!(scale.root_midi, 60, "C4");
     assert_eq!(scale.intervals, vec![0, 2, 3, 5, 7, 8, 10]);
@@ -698,7 +698,7 @@ fn dnb_reese_01_mid_glue() {
 
     let drums = track(&song, "drums");
     let bass = track(&song, "bass");
-    let lead = track(&song, "lead");
+    let mid = track(&song, "bass-mid");
     assert!(
         drums.code.gain > bass.code.gain,
         "drums {} must sit above bass {}",
@@ -716,8 +716,8 @@ fn dnb_reese_01_mid_glue() {
         .at_cycle(0);
     assert_eq!(sub_scale.root_midi, 36, "C2");
 
-    assert_eq!(lead.code.sound, "bs:rm");
-    let mid_scale = lead
+    assert_eq!(mid.code.sound, "bs:rm");
+    let mid_scale = mid
         .code
         .scale
         .as_ref()

@@ -1,11 +1,24 @@
 // @title ambient-08
 // @genre ambient
-// @details tight 808 kick + amen sub + sine air
 setcpm(70/4)
 // drums
-$: s("bd:8t ~ ~ ~, ~ hh ~ ~").gain(0.2)
+$: s("bd:lf ~ ~ ~").gain(0.18)
 // bass
-$: note("0 2 ~ 0").scale("C4:minor").s("bs:am").gain(0.3)
+$: note("0 ~ ~ <0 0 ~ 0>").scale("<A4:minor A4:minor E5:dorian A4:minor>")
+  .s("bs:su").gain(0.28)
 // lead
-$: note("2 0 ~ 5").scale("C4:minor").s("sine").lpf(1400).gain(0.12)
-  .attack(0.2).release(0.5).delay(0.3).orbit(2)
+$: note("~ 7 ~ <9 7 4 11>").scale("<A4:minor A4:minor E5:dorian A4:minor>")
+  .s("plk:bl").gain(0.1).cut(1)
+// hook
+$: note("0@2 ~ 4@2 ~").scale("<A4:minor A4:minor E5:dorian A4:minor>")
+  .s("plk:am").gain(0.16).cut(1)
+// arp
+$: s("<~ perc:cm ~ perc:tg>").gain(0.1)
+// chords
+$: note("[0,2,4] ~ ~ ~").scale("<A3:minor A3:minor E4:dorian A3:minor>")
+  .s("triangle").lpf(800).gain(0.18)
+  .attack(0.2).release(0.8)
+// pad
+$: note("[0,4]").scale("<A4:minor A4:minor E5:dorian A4:minor>")
+  .s("pf:ff").gain(0.24)
+  .attack(0.3).decay(0.4).sustain(0.7).release(0.6).room(0.5).orbit(1)

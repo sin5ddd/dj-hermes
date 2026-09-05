@@ -1,23 +1,36 @@
-// @title square-riser
-// @genre acid
+// @title acid-02
+// @genre acid techno
 setcpm(130/4)
 // drums
-$: s("bd:tc*4, [~ hh]*4").gain(0.64)
+$: s("bd*4, [~ hh]*4, <~ ~ ~ [~@3 bd ~@4]>").gain(0.62)
 // bass
-$: note("0 2 3 4  2 3 0 <-1 2>  0 3 7 3  2 0 4 0")
-  .scale("C2:minor")
-  .s("square")
-  .lpf("240 240 700 240  240 740 240 240  660 240 240 720  240 240 760 240")
+$: note("0 ~ 0 <0 0 3 0>").scale("<D2:minor D2:minor A2:phrygian D2:minor>")
+  .s("sine").lpf(180).gain(0.32)
+// hook
+$: note("0 0 3 0  7 3 2 0  4 4 3 0  -1 3 0 <2 5>")
+  .scale("D2:minor")
+  .s("sawtooth")
+  .lpf("260 260 720 260  760 260 260 260  260 680 260 260  740 720 260 260")
   .lpq(14)
   .lpenv(3)
   .lpattack(0.001)
   .lpdecay(0.09)
   .lpsustain(0.05)
   .cut(1)
-  .gain(0.46)
+  .gain(0.44)
   .attack(0.001)
   .decay(0.1)
   .sustain(0.12)
   .release(0.04)
-// fx
-$: s("<fx:up ~ ~ ~>").gain(0.22)
+// lead
+$: note("~ 7 ~ <9 7 4 12>").scale("<D4:minor D4:minor A4:phrygian D4:minor>")
+  .s("square").lpf(2400).gain(0.12)
+// arp
+$: s("<~ perc:mh ~ perc:tm>").gain(0.14)
+// chords
+$: note("[0,4] ~ ~ [0,4]").scale("<D3:minor D3:minor A3:phrygian D3:minor>")
+  .s("triangle").lpf(880).gain(0.16)
+// pad
+$: note("[0,4]").scale("<D3:minor D3:minor A3:phrygian D3:minor>")
+  .s("wt_organ").lpf(700).room(0.25).orbit(2).gain(0.12)
+  .attack(0.1).release(0.4)

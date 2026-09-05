@@ -1,9 +1,25 @@
-// @title disco-mid
-// @genre four-on-the-floor
+// @title four-on-the-floor-30
+// @genre techno
 setcpm(124/4)
 // drums
-$: s("bd:dc*4, [~ hh:tt]*4").gain(0.60)
+$: s("bd*4, [~ hh]*4, <~ ~ ~ [bd sd bd sd]>").gain(0.62)
 // bass
-$: note("5 0 7 2").scale("C4:minor").s("bs:rm").gain(0.40)
+$: note("0 0 2 <4 0 3 0>").scale("<B2:minor B2:minor F#3:phrygian B2:minor>")
+  .s("sawtooth").lpf(400).gain(0.44)
+  .attack(0.001).decay(0.08).sustain(0.2).release(0.05)
 // lead
-$: note("3 0 ~ 5  7 ~ 2 0").scale("C4:minor").s("plk:ps").gain(0.30).cut(1)
+$: note("~ 7 6 <4 9 3 7>").scale("<B4:minor B4:minor F#5:phrygian B4:minor>")
+  .s("square").lpf(2800).gain(0.15)
+// hook
+$: note("~ 4 ~ <7 4 4 7>").scale("<B4:minor B4:minor F#5:phrygian B4:minor>")
+  .s("plk:s5").gain(0.18).cut(1)
+// arp
+$: note("0 3 0 7  3 0 5 ~").scale("<B5:minor B5:minor F#6:phrygian B5:minor>")
+  .s("plk:ac").gain(0.12).cut(1)
+// chords
+$: note("[0,2,4] ~ [0,2,4] ~").scale("<B3:minor B3:minor F#4:phrygian B3:minor>")
+  .s("triangle").lpf(1200).gain(0.22)
+// pad
+$: note("[0,4]").scale("<B3:minor B3:minor F#4:phrygian B3:minor>")
+  .s("sawtooth").lpf(800).orbit(2).gain(0.16)
+  .attack(0.08).decay(0.2).sustain(0.7).release(0.4)

@@ -1,11 +1,28 @@
-// @title grit-pump
-// @genre techno-duck
+// @title techno-duck-18
+// @genre techno
 setcpm(126/4)
 // kick
-$: s("bd:fn*4").gain(0.88).duckorbit(2).duckattack(0.042).duckdepth(0.80)
+$: s("bd*4").gain(0.9).duckorbit(2).duckattack(0.04).duckdepth(0.95)
 // hats
-$: s("[~ hh:pd]*4").gain(0.32)
+$: s("[~ hh]*4, <~ ~ ~ hh*8>").gain(0.38)
 // bass
-$: note("5 2 0 3").scale("C4:minor").s("bs:dq").orbit(2).gain(0.34)
+$: note("0 0 2 <4 6 2 0>").scale("<A2:minor A2:minor E3:phrygian A2:minor>")
+  .s("sine").fm(3).fmh(1.5).lpf(500).gain(0.52)
+  .attack(0.005).decay(0.1).sustain(0.3).release(0.08)
+  .orbit(2)
+// lead
+$: note("~ 7 4 <9 7 4 2>").scale("<A4:minor A4:minor E5:phrygian A4:minor>")
+  .s("sine").fm(3).fmh(2).fmatt(0.01).fmdec(0.3).fmsus(0.25)
+  .lpf(1800).lpenv(2).gain(0.16)
+// hook
+$: note("~ 4 ~ <7 4 4 7>").scale("<A4:minor A4:minor E5:phrygian A4:minor>")
+  .s("plk:s5").gain(0.16).cut(1)
+// arp
+$: s("<~ perc:tm ~ perc:st>").gain(0.18)
+// chords
+$: note("[0,2,4] ~ ~ ~").scale("<A3:minor A3:minor E4:phrygian A3:minor>")
+  .s("triangle").lpf(1100).gain(0.18).orbit(2)
 // pad
-$: note("5 ~ 7 ~").scale("C4:minor").s("pf:ff").orbit(2).gain(0.20)
+$: note("[0,4]").scale("<A3:minor A3:minor E4:phrygian A3:minor>")
+  .s("sawtooth").lpf(900).orbit(2).gain(0.28)
+  .attack(0.05).decay(0.2).sustain(0.6).release(0.2)

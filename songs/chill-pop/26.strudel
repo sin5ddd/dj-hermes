@@ -1,10 +1,24 @@
 // @title chill-pop-26
 // @genre chill-pop
-// @details jungle round + bright reese + major stab [0,4,9]
 setcpm(100/4)
 // drums
-$: s("bd:jg*4, [~ sd:jg]*2, hh:hs*8").gain(0.5)
+$: s("bd ~ bd ~, [~ sd]*2, hh*8, <~ ~ ~ [bd sd bd sd]>").gain(0.5)
 // bass
-$: note("9 5 ~ 3").scale("C4:major").s("bs:rb").gain(0.38)
+$: note("0 ~ 4 0  0 ~ <4 7 2 0>").scale("<A2:dorian D3:mixolydian G2:major E3:minor>")
+  .s("sine").lpf(250).gain(0.42)
 // lead
-$: note("[0,4,9] ~ [4,7,12] ~").scale("C4:major").s("plk:s3").gain(0.26)
+$: note("~ 2 4 6  4 2 ~ <0 2 4 6>").scale("<A4:dorian D5:mixolydian G4:major E5:minor>")
+  .s("plk:ps").gain(0.16).cut(1)
+// hook
+$: note("0 ~ 2 6  ~ 4 2 <6 4 2 0>").scale("<A4:dorian D5:mixolydian G4:major E5:minor>")
+  .s("ep:rs").gain(0.22)
+// arp
+$: note("0 2 4 6  4 2 0 ~").scale("<A5:dorian D6:mixolydian G5:major E6:minor>")
+  .s("plk:ny").gain(0.12).cut(1)
+// chords
+$: note("[0,2,6] ~ [0,2,6] ~").scale("<A3:dorian D4:mixolydian G3:major E4:minor>")
+  .s("triangle").lpf(1400).gain(0.24).room(0.25).orbit(2)
+// pad
+$: note("[0,4]").scale("<A3:dorian D4:mixolydian G3:major E4:minor>")
+  .s("sawtooth").lpf(1100).gain(0.14)
+  .attack(0.08).release(0.3)

@@ -1,10 +1,28 @@
 // @title dnb-15
 // @genre drum and bass
-// @details hardstyle kick, hoover + chime @ 174
 setcpm(174/4)
 // drums
-$: s("[bd:hs ~ ~ sd:fc bd:hs ~ ~ sd:fc, hh:fc*4]*2").gain(0.64).lpf(3600)
+$: s("[bd <~ sd> ~ sd ~ <bd ~> <bd sd> <bd ~>, hh*8, [~@5 oh ~@2]]*2").gain(0.7).lpf(4000)
 // bass
-$: note("0 ~ 5 2").scale("C4:minor").s("bs:hv").gain(0.38)
+$: note("0 3 0 <0 -1 0 3>").scale("F2:minor")
+  .s("square").lpf(120).gain(0.42)
+  .attack(0.01).decay(0.5).release(0.4)
+// bass-mid
+$: note("0 3 0 <0 -1 0 3>").scale("F2:minor")
+  .s("sawtooth").lpf(1000).gain(0.32)
+  .attack(0.01).decay(0.4).release(0.3)
 // lead
-$: note("~ 7 ~ 2").scale("C4:minor").s("plk:ch").gain(0.2).cut(1)
+$: note("~ 7 ~ <9 7 4 11>").scale("<F4:minor F4:minor C5:phrygian F4:minor>")
+  .s("square").lpf(2600).gain(0.14)
+// hook
+$: note("~ 4 ~ <7 4 4 7>").scale("<F4:minor F4:minor C5:phrygian F4:minor>")
+  .s("plk:dt").gain(0.16).cut(1)
+// arp
+$: s("<~ perc:st ~ perc:tm>").gain(0.16)
+// chords
+$: note("[0,4] ~ [0,4] ~").scale("<F3:minor F3:minor C4:phrygian F3:minor>")
+  .s("triangle").lpf(1500).gain(0.16)
+// pad
+$: note("[0,4]").scale("<F3:minor F3:minor C4:phrygian F3:minor>")
+  .s("sine").fm(1.2).fmh(1).fmdec(0.8).fmsus(0.4)
+  .room(0.22).orbit(2).gain(0.12)

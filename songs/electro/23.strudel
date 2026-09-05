@@ -1,10 +1,26 @@
 // @title electro-23
 // @genre electro
-// @details zap four, wobble + chime @ 126
 setcpm(126/4)
 // drums
-$: s("bd:ez*4, [~ sd:pi]*2, hh:ch*8").gain(0.5)
+$: s("bd*4, ~ sd ~ sd, hh*8, <~ ~ ~ [bd sd bd sd]>").gain(0.62)
 // bass
-$: note("0 3 7 2 5 0 ~ 3").scale("C4:minor").s("bs:wb").gain(0.38)
+$: note("0 ~ 0 <3 0 0 5>").scale("<Eb2:minor Eb2:minor Bb2:phrygian Eb2:minor>")
+  .s("square").lpf(500).gain(0.46)
+  .attack(0.001).decay(0.08).sustain(0.15).release(0.04)
 // lead
-$: note("2 7 3 0").scale("C4:minor").s("plk:ch").gain(0.18).cut(1)
+$: note("~ 7 4 <9 7 12 7>").scale("<Eb4:minor Eb4:minor Bb4:phrygian Eb4:minor>")
+  .s("wt_bright").lpf(2200).gain(0.14)
+// hook
+$: note("12 ~ 7 <12 15 12 7>").scale("<Eb4:minor Eb4:minor Bb4:phrygian Eb4:minor>")
+  .s("square").penv(12).pattack(0.001).pdecay(0.08).lpf(2400).gain(0.16)
+// arp
+$: note("~ 0 3 7  3 0 ~ 5").scale("<Eb5:minor Eb5:minor Bb5:phrygian Eb5:minor>")
+  .s("plk:cv").gain(0.14).cut(1)
+// chords
+$: note("[0,2,4] ~ [0,2,4] ~").scale("<Eb3:minor Eb3:minor Bb3:phrygian Eb3:minor>")
+  .s("triangle").lpf(1600).gain(0.2)
+  .attack(0.001).decay(0.12).sustain(0.1).release(0.06)
+// pad
+$: note("[0,4]").scale("<Eb3:minor Eb3:minor Bb3:phrygian Eb3:minor>")
+  .s("sawtooth").lpf(900).gain(0.14)
+  .attack(0.04).decay(0.15).sustain(0.5).release(0.2)

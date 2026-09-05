@@ -1,10 +1,23 @@
-// @title one-fm
+// @title minimal-techno-08
 // @genre minimal-techno
 setcpm(126/4)
 // drums
-$: s("bd:tc*4, [~ hh]*4").gain(0.52)
+$: s("bd*4, hh*8, <~ ~ ~ cp>").gain(0.7)
 // bass
-$: note("0 ~ ~ ~").scale("C2:minor")
-  .s("sine").fm(2.5).fmh(1).fmdec(0.4).fmsus(0.3).lpf(360).gain(0.4)
-// fx
-$: s("<fx:up ~ ~ ~>").gain(0.2)
+$: note("0 ~ 3 ~").scale("<A2:minor A2:minor A2:minor E3:phrygian>")
+  .s("sawtooth").lpf(320).gain(0.4)
+// lead
+$: note("~ ~ 7 ~").scale("<A4:minor A4:minor A4:minor E5:phrygian>")
+  .s("square").lpf(2000).gain(0.1)
+// hook
+$: note("~ 4 ~ ~").scale("<A4:minor A4:minor A4:minor E5:phrygian>")
+  .s("plk:ac").gain(0.12).cut(1)
+// arp
+$: s("<~ perc:tk ~ perc:st>").gain(0.12)
+// chords
+$: note("~ [0,2,4] ~ ~").scale("<A3:minor A3:minor A3:minor E4:phrygian>")
+  .s("triangle").lpf(1100).gain(0.14)
+// pad
+$: note("[0,4]").scale("<A3:minor A3:minor A3:minor E4:phrygian>")
+  .s("sine").lpf(600).orbit(2).gain(0.1)
+  .attack(0.12).release(0.4)

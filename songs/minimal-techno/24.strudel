@@ -1,9 +1,23 @@
-// @title stomp-dot
+// @title minimal-techno-24
 // @genre minimal-techno
 setcpm(126/4)
 // drums
-$: s("bd:gb*4, hh:dk*8").gain(0.53)
+$: s("bd*4, hh*8, <~ ~ ~ cp>").gain(0.7)
 // bass
-$: note("0 ~ 3 5").scale("C4:minor").s("bs:gb").gain(0.28)
+$: note("0 ~ 3 ~").scale("<E2:minor E2:minor E2:minor B2:phrygian>")
+  .s("sawtooth").lpf(320).gain(0.4)
+// lead
+$: note("~ ~ 7 ~").scale("<E4:minor E4:minor E4:minor B4:phrygian>")
+  .s("square").lpf(2000).gain(0.1)
+// hook
+$: note("~ 4 ~ ~").scale("<E4:minor E4:minor E4:minor B4:phrygian>")
+  .s("plk:ac").gain(0.12).cut(1)
+// arp
+$: s("<~ perc:tk ~ perc:st>").gain(0.12)
+// chords
+$: note("~ [0,2,4] ~ ~").scale("<E3:minor E3:minor E3:minor B3:phrygian>")
+  .s("triangle").lpf(1100).gain(0.14)
 // pad
-$: note("3 ~ ~ 2").scale("C4:minor").s("pf:ff").gain(0.14)
+$: note("[0,4]").scale("<E3:minor E3:minor E3:minor B3:phrygian>")
+  .s("sine").lpf(600).orbit(2).gain(0.1)
+  .attack(0.12).release(0.4)

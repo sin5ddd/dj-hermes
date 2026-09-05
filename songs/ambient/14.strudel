@@ -1,10 +1,24 @@
 // @title ambient-14
 // @genre ambient
-// @details dnb-tight + neuro reese + kalimba
 setcpm(70/4)
 // drums
-$: s("bd:dn ~ ~ sd:rm").gain(0.22)
+$: s("~ ~ ~ ~").gain(0.18)
 // bass
-$: note("~ 0 7 3").scale("C4:minor").s("bs:rn").gain(0.3)
+$: note("0 ~ ~ <0 0 ~ 0>").scale("<E4:minor E4:minor B4:dorian E4:minor>")
+  .s("bs:su").gain(0.28)
 // lead
-$: note("4 ~ 8 1").scale("C4:minor").s("plk:kl").gain(0.2)
+$: note("~ 7 ~ <9 7 4 11>").scale("<E4:minor E4:minor B4:dorian E4:minor>")
+  .s("plk:bl").gain(0.1).cut(1)
+// hook
+$: note("0@2 ~ 4@2 ~").scale("<E4:minor E4:minor B4:dorian E4:minor>")
+  .s("plk:am").gain(0.16).cut(1)
+// arp
+$: s("<~ perc:cm ~ perc:tg>").gain(0.1)
+// chords
+$: note("[0,2,4] ~ ~ ~").scale("<E3:minor E3:minor B3:dorian E3:minor>")
+  .s("triangle").lpf(800).gain(0.18)
+  .attack(0.2).release(0.8)
+// pad
+$: note("[0,4]").scale("<E4:minor E4:minor B4:dorian E4:minor>")
+  .s("pf:ff").gain(0.24)
+  .attack(0.3).decay(0.4).sustain(0.7).release(0.6).room(0.5).orbit(1)

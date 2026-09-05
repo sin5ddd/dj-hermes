@@ -1,10 +1,24 @@
 // @title chill-pop-24
 // @genre chill-pop
-// @details disco dry + tight house + soft pop [0,4,9]
 setcpm(100/4)
 // drums
-$: s("bd:dc*4, [~ cp:dr]*2, [~ hh:cl]*4").gain(0.5)
+$: s("bd ~ bd ~, [~ sd]*2, hh*8, <~ ~ ~ [bd sd bd sd]>").gain(0.5)
 // bass
-$: note("5 9 2 7").scale("C4:major").s("bs:ht").gain(0.38)
+$: note("0 ~ 4 0  0 ~ <4 7 2 0>").scale("<F#2:dorian B2:mixolydian E2:major C#3:minor>")
+  .s("sine").lpf(250).gain(0.42)
 // lead
-$: note("[4,9,12] ~ [0,4,9] ~").scale("C4:major").s("plk:ps").gain(0.26)
+$: note("~ 2 4 6  4 2 ~ <0 2 4 6>").scale("<F#4:dorian B4:mixolydian E4:major C#5:minor>")
+  .s("plk:ps").gain(0.16).cut(1)
+// hook
+$: note("0 ~ 2 6  ~ 4 2 <6 4 2 0>").scale("<F#4:dorian B4:mixolydian E4:major C#5:minor>")
+  .s("ep:rs").gain(0.22)
+// arp
+$: note("0 2 4 6  4 2 0 ~").scale("<F#5:dorian B5:mixolydian E5:major C#6:minor>")
+  .s("plk:ny").gain(0.12).cut(1)
+// chords
+$: note("[0,2,6] ~ [0,2,6] ~").scale("<F#3:dorian B3:mixolydian E3:major C#4:minor>")
+  .s("triangle").lpf(1400).gain(0.24).room(0.25).orbit(2)
+// pad
+$: note("[0,4]").scale("<F#3:dorian B3:mixolydian E3:major C#4:minor>")
+  .s("sawtooth").lpf(1100).gain(0.14)
+  .attack(0.08).release(0.3)

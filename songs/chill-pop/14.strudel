@@ -1,10 +1,24 @@
 // @title chill-pop-14
 // @genre chill-pop
-// @details noise kick + acid + major stab
 setcpm(100/4)
 // drums
-$: s("bd:fn ~ ~ ~, [~ sd:hd]*2, [~ hh:cl]*4").gain(0.5)
+$: s("bd ~ bd ~, [~ sd]*2, hh*8, <~ ~ ~ [bd sd bd sd]>").gain(0.5)
 // bass
-$: note("~ 2 6 0").scale("C4:major").s("bs:ac").gain(0.38)
+$: note("0 ~ 4 0  0 ~ <4 7 2 0>").scale("<E2:major C#3:mixolydian F#2:mixolydian B2:mixolydian>")
+  .s("sine").lpf(250).gain(0.42)
 // lead
-$: note("6 9 4 11").scale("C4:major").s("plk:sm").gain(0.24)
+$: note("~ 2 4 6  4 2 ~ <0 2 4 6>").scale("<E4:major C#5:mixolydian F#4:mixolydian B4:mixolydian>")
+  .s("plk:ps").gain(0.16).cut(1)
+// hook
+$: note("0 ~ 2 6  ~ 4 2 <6 4 2 0>").scale("<E4:major C#5:mixolydian F#4:mixolydian B4:mixolydian>")
+  .s("ep:rs").gain(0.22)
+// arp
+$: note("0 2 4 6  4 2 0 ~").scale("<E5:major C#6:mixolydian F#5:mixolydian B5:mixolydian>")
+  .s("plk:ny").gain(0.12).cut(1)
+// chords
+$: note("[0,2,6] ~ [0,2,6] ~").scale("<E3:major C#4:mixolydian F#3:mixolydian B3:mixolydian>")
+  .s("triangle").lpf(1400).gain(0.24).room(0.25).orbit(2)
+// pad
+$: note("[0,4]").scale("<E3:major C#4:mixolydian F#3:mixolydian B3:mixolydian>")
+  .s("sawtooth").lpf(1100).gain(0.14)
+  .attack(0.08).release(0.3)

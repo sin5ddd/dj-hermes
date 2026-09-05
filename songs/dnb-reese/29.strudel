@@ -1,10 +1,24 @@
 // @title dnb-reese-29
 // @genre drum and bass
-// @details metal rim, dark-reese + hollow 0/7/4 @ 174
 setcpm(174/4)
 // drums
-$: s("[bd:mt <~ sd:rm> ~ sd:rm bd:mt ~ <bd:mt sd:rm> ~, hh:pd*4]*2").gain(0.66).lpf(3600)
+$: s("[bd <~ sd> ~ sd ~ <bd ~> <bd sd> <bd ~>, hh*4, [~@5 oh ~@2]]*2").gain(0.7).lpf(2500)
 // bass
-$: note("2 5 7 0").scale("C4:minor").s("bs:dk").gain(0.34)
+$: note("0 3 0 <0 -1>").scale("Bb2:minor").s("square").lpf(120).gain(0.42)
+// bass-mid
+$: note("0 3 0 <0 -1>").scale("Bb4:minor").s("bs:rm").gain(0.36)
+// hook
+$: note("~ 4 ~ <7 4>").scale("Bb4:minor").s("plk:s5").gain(0.2).cut(1)
 // lead
-$: note("0 ~ 7 4").scale("C4:minor").s("plk:s5").gain(0.2).cut(1)
+$: note("~ 11 7 <12 9 7 4>").scale("<Bb4:minor Bb4:minor F5:phrygian Bb4:minor>")
+  .s("square").lpf(2800).gain(0.12)
+// arp
+$: note("~ 0 7 12  7 0 ~ 4").scale("<Bb5:minor Bb5:minor F6:phrygian Bb5:minor>")
+  .s("plk:dt").gain(0.12).cut(1)
+// chords
+$: note("[0,4] ~ ~ [0,4]").scale("<Bb3:minor Bb3:minor F4:phrygian Bb3:minor>")
+  .s("triangle").lpf(1400).gain(0.14)
+// pad
+$: note("[0,4]").scale("<Bb3:minor Bb3:minor F4:phrygian Bb3:minor>")
+  .s("sine").fm(1.2).fmh(1).fmdec(0.8).fmsus(0.4)
+  .room(0.2).orbit(2).gain(0.12)

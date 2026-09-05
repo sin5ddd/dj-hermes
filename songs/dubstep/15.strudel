@@ -1,10 +1,25 @@
 // @title dubstep-15
 // @genre dubstep
-// @details fm-noise, neuro-reese + fall @ 140
 setcpm(140/4)
 // drums
-$: s("bd:fn ~ <bd:fn ~> ~, [~ ~ sd:ng ~], hh:ns*8").gain(0.5)
+$: s("bd ~ ~ ~ bd ~ sd ~, hh*16, <~ ~ ~ [bd sd bd sd]>").gain(0.72)
 // bass
-$: note("0 7 ~ 5").scale("C4:minor").s("bs:rn").gain(0.36)
-// fx
-$: s("<fx:fl ~ ~ ~>").gain(0.24)
+$: note("0 0 3 <0 0 3 -1>").scale("<F2:minor F2:minor C3:phrygian F2:minor>")
+  .s("sawtooth").lpf(sine.rangex(80, 600)).lpq(6).gain(0.5)
+// lead
+$: note("~ 7 ~ <10 7 3 7>").scale("<F3:minor F3:minor C4:phrygian F3:minor>")
+  .s("sawtooth").fm(4).fmh(1).fmdec(0.25).fmsus(0.2)
+  .lpf(800).gain(0.16)
+// hook
+$: note("~ 4 ~ <7 4 4 7>").scale("<F4:minor F4:minor C5:phrygian F4:minor>")
+  .s("plk:s5").gain(0.18).cut(1)
+// arp
+$: note("~ ~ 12 ~").scale("<F4:minor F4:minor C5:phrygian F4:minor>")
+  .s("square").lpf(2400).gain(0.1)
+// chords
+$: note("[0,4] ~ ~ [0,4]").scale("<F3:minor F3:minor C4:phrygian F3:minor>")
+  .s("triangle").lpf(900).gain(0.16)
+// pad
+$: note("[0,4]").scale("<F3:minor F3:minor C4:phrygian F3:minor>")
+  .s("wt_organ").lpf(700).gain(0.12).room(0.25).orbit(2)
+  .attack(0.08).release(0.3)

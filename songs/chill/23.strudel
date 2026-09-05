@@ -1,10 +1,25 @@
 // @title chill-23
 // @genre chill
-// @details disco dry + sub-bass + lofi pluck
 setcpm(90/4)
 // drums
-$: s("bd:dc ~ ~ sd:fb").gain(0.4)
+$: s("bd:hf ~ ~ bd:hf ~ ~ sd ~, [~ hh]*4, <~ ~ ~ oh>").gain(0.42)
 // bass
-$: note("2 5 8 ~").scale("C4:minor").s("bs:sb").gain(0.36)
+$: note("0 ~ 2 ~ 0 <3 4 2 0>").scale("<Eb4:minor Eb4:minor Ab4:dorian Eb4:minor>")
+  .s("bs:hf").gain(0.4)
 // lead
-$: note("9 4 ~ 1").scale("C4:minor").s("plk:lf").gain(0.22)
+$: note("~ 4 ~ 7 ~ <6 9 7 4>").scale("<Eb4:minor Eb4:minor Ab4:dorian Eb4:minor>")
+  .s("triangle").lpf(1800).gain(0.16)
+// hook
+$: note("0@2 4 7@2 ~").scale("<Eb4:minor Eb4:minor Ab4:dorian Eb4:minor>")
+  .s("plk:am").gain(0.18).cut(1)
+// arp
+$: note("~ 7 12 7  4 0 ~ 2").scale("<Eb5:minor Eb5:minor Ab5:dorian Eb5:minor>")
+  .s("plk:hp").gain(0.12).cut(1)
+// chords
+$: note("[0,2,4] ~ [0,2,4] ~").scale("<Eb3:minor Eb3:minor Ab3:dorian Eb3:minor>")
+  .s("triangle").lpf(1200).gain(0.22).room(0.3).orbit(2)
+  .attack(0.04).release(0.3)
+// pad
+$: note("[0,4]").scale("<Eb3:minor Eb3:minor Ab3:dorian Eb3:minor>")
+  .s("wt_organ").lpf(900).gain(0.16).room(0.35).orbit(2)
+  .attack(0.12).release(0.5)

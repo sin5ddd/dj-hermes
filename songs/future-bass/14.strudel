@@ -1,10 +1,27 @@
 // @title future-bass-14
 // @genre future-bass
-// @details metal ping drop, tight-house + add9 @ 140
 setcpm(140/4)
-// drums
-$: s("bd:mt ~ bd:mt ~, [~ sd:pp]*2, [~ hh:hs]*4").gain(0.48)
+// kick
+$: s("bd ~ bd ~").gain(0.85).duckorbit(2).duckattack(0.05).duckdepth(0.8)
+// hats
+$: s("~ ~ sd ~, hh*8, <~ ~ ~ [hh*16]>").gain(0.42)
 // bass
-$: note("2 ~ 0 7").scale("C4:major").s("bs:ht").gain(0.42)
+$: note("0 ~ 0 <0 4 0 2>").scale("<C#5:minor A4:lydian B4:mixolydian E4:major>")
+  .s("bs:su").gain(0.4).orbit(2)
 // lead
-$: note("[0,4,9] 2 ~ 9").scale("C4:major").s("plk:hb").gain(0.22).cut(1)
+$: note("4@2 7 9@2  7 4 <2 0> ~").scale("<C#5:minor A4:lydian B4:mixolydian E4:major>")
+  .s("ld:ss").gain(0.16).cut(1)
+// hook
+$: note("~ 11 ~ 12  ~ 9 ~ <11 12>").scale("<C#5:minor A4:lydian B4:mixolydian E4:major>")
+  .s("plk:mx").gain(0.18).cut(1)
+// arp
+$: note("0 4 ~ 7  4 ~ 9 4").scale("<C#5:minor A4:lydian B4:mixolydian E4:major>")
+  .s("plk:fg").gain(0.14).cut(1)
+// chords
+$: note("[0,4,9] ~ [0,4,9] ~").scale("<C#5:minor A4:lydian B4:mixolydian E4:major>")
+  .s("sawtooth").lpf(1800).gain(0.22).orbit(2)
+  .attack(0.02).decay(0.2).sustain(0.4).release(0.15)
+// pad
+$: note("[0,4]").scale("<C#5:minor A4:lydian B4:mixolydian E4:major>")
+  .s("sine").fm(1.2).fmh(1).fmdec(0.8).fmsus(0.4)
+  .room(0.3).orbit(2).gain(0.14)

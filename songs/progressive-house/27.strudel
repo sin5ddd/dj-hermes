@@ -1,9 +1,24 @@
-// @title stock-soft
+// @title progressive-house-27
 // @genre progressive-house
 setcpm(128/4)
 // drums
-$: s("bd:00*4, [~ cp]*2, hh:pd*8").gain(0.54)
+$: s("bd*4, [~ cp]*2, hh*8, <~ ~ ~ oh>").gain(0.58)
 // bass
-$: note("5 0 0 3").scale("C4:minor").s("bs:bp").gain(0.42)
-// fx
-$: s("<fx:ry ~ ~ ~>").gain(0.26)
+$: note("0 0 4 <0 2 4 0>").scale("<Ab4:minor Ab4:minor C#5:dorian Ab4:minor>")
+  .s("bs:hf").gain(0.42)
+// lead
+$: note("4@2 7 9@3 ~").scale("<Ab4:minor Ab4:minor C#5:dorian Ab4:minor>")
+  .s("ld:ss").gain(0.16).cut(1)
+// hook
+$: note("~ 7 4 <9 7 4 2>").scale("<Ab4:minor Ab4:minor C#5:dorian Ab4:minor>")
+  .s("plk:hb").gain(0.18).cut(1)
+// arp
+$: note("0 2 4 7  4 2 0 ~").scale("<Ab5:minor Ab5:minor C#6:dorian Ab5:minor>")
+  .s("triangle").lpf(1800).gain(0.12)
+// chords
+$: note("[0,2,4] ~ [0,2,4] ~").scale("<Ab3:minor Ab3:minor C#4:dorian Ab3:minor>")
+  .s("sawtooth").lpf(1200).gain(0.24)
+  .attack(0.04).release(0.25)
+// pad
+$: note("[0,4]").scale("<Ab3:minor Ab3:minor C#4:dorian Ab3:minor>")
+  .s("sawtooth").lpf(900).attack(0.1).release(0.4).gain(0.18).room(0.4).orbit(2)

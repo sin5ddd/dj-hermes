@@ -1,10 +1,24 @@
 // @title chill-pop-09
 // @genre chill-pop
-// @details 808 boom + sine sub + fx:up once per 4 bars
 setcpm(100/4)
 // drums
-$: s("bd:8b*4, [~ hh]*4").gain(0.48)
+$: s("bd ~ bd ~, [~ sd]*2, hh*8, <~ ~ ~ [bd sd bd sd]>").gain(0.5)
 // bass
-$: note("0 0 ~ 4").scale("C4:major").s("bs:ss").gain(0.4)
-// fx
-$: s("<fx:up ~ ~ ~>").gain(0.24)
+$: note("0 ~ 4 0  0 ~ <4 7 2 0>").scale("<Eb3:lydian D3:phrygian C3:dorian Bb2:major>")
+  .s("sine").lpf(250).gain(0.42)
+// lead
+$: note("~ 2 4 6  4 2 ~ <0 2 4 6>").scale("<Eb5:lydian D5:phrygian C5:dorian Bb4:major>")
+  .s("plk:ps").gain(0.16).cut(1)
+// hook
+$: note("0 ~ 2 6  ~ 4 2 <6 4 2 0>").scale("<Eb5:lydian D5:phrygian C5:dorian Bb4:major>")
+  .s("ep:rs").gain(0.22)
+// arp
+$: note("0 2 4 6  4 2 0 ~").scale("<Eb6:lydian D6:phrygian C6:dorian Bb5:major>")
+  .s("plk:ny").gain(0.12).cut(1)
+// chords
+$: note("[0,2,6] ~ [0,2,6] ~").scale("<Eb4:lydian D4:phrygian C4:dorian Bb3:major>")
+  .s("triangle").lpf(1400).gain(0.24).room(0.25).orbit(2)
+// pad
+$: note("[0,4]").scale("<Eb4:lydian D4:phrygian C4:dorian Bb3:major>")
+  .s("sawtooth").lpf(1100).gain(0.14)
+  .attack(0.08).release(0.3)

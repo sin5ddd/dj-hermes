@@ -1,10 +1,25 @@
 // @title lofi-hiphop-10
 // @genre lofi-hiphop
-// @details oh accent + acid bass + monophonic ld:ss
 setcpm(84/4)
 // drums
-$: s("bd:lf ~ sd ~, ~ oh ~ ~").gain(0.44)
+$: s("bd:lf ~ ~ sd, [~ hh]*4, <~ ~ ~ [bd:lf sd bd:lf sd]>").gain(0.44)
 // bass
-$: note("0 ~ -1 0").scale("C4:minor").s("bs:ac").gain(0.36)
+$: note("0 ~ 2 <0 0 3 2>").scale("<B4:minor B4:minor E5:dorian B4:minor>")
+  .s("bs:su").gain(0.38)
 // lead
-$: note("5 ~ 0 3").scale("C4:minor").s("ld:ss").gain(0.22).cut(1)
+$: note("~ 4 7 <5 4 0 2>").scale("<B4:minor B4:minor E5:dorian B4:minor>")
+  .s("plk:lf").gain(0.18).cut(1)
+// hook
+$: note("[0,2,4] ~ [0,3,5] ~").scale("<B4:minor B4:minor E5:dorian B4:minor>")
+  .s("ep:rs").gain(0.22)
+  .attack(0.05).decay(0.3).sustain(0.5).release(0.3)
+// arp
+$: note("~ 0 4 7  ~ 4 0 2").scale("<B5:minor B5:minor E6:dorian B5:minor>")
+  .s("plk:ny").gain(0.12).cut(1)
+// chords
+$: note("[0,2,4] ~ [0,2,4] ~").scale("<B3:minor B3:minor E4:dorian B3:minor>")
+  .s("triangle").lpf(1100).gain(0.2).room(0.3).orbit(1)
+// pad
+$: note("[0,4]").scale("<B3:minor B3:minor E4:dorian B3:minor>")
+  .s("triangle").lpf(800).gain(0.14)
+  .attack(0.15).release(0.5).room(0.35).orbit(1)

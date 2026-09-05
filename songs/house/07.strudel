@@ -1,9 +1,24 @@
-// @title disco-line
+// @title house-07
 // @genre house
 setcpm(124/4)
 // drums
-$: s("bd:9p*4, [~ cp]*2, hh*8").gain(0.62)
+$: s("bd:hf*4, [~ cp]*2, [~ hh:hs]*4, <~ ~ ~ [~@3 bd:hf ~@4]>").gain(0.58)
 // bass
-$: note("0 3 0 2").scale("C2:minor").s("sine").lpf(260).gain(0.46)
+$: note("0 0 4 <0 2 4 0>").scale("<Ab4:minor Ab4:minor Eb5:dorian Ab4:minor>")
+  .s("bs:hf").gain(0.42)
 // lead
-$: note("7 4 0 2  4 0 ~ 3").scale("C4:minor").s("plk:hd").gain(0.36).cut(1)
+$: note("~ 7 4 <7 9 4 2>").scale("<Ab4:minor Ab4:minor Eb5:dorian Ab4:minor>")
+  .s("ld:ss").gain(0.16).cut(1)
+// hook
+$: note("4 ~ 7 4  2 0 ~ -1").scale("<Ab4:minor Ab4:minor Eb5:dorian Ab4:minor>")
+  .s("plk:lp").gain(0.22).cut(1)
+// arp
+$: note("~ 0 4 7  ~ 4 0 2").scale("<Ab5:minor Ab5:minor Eb6:dorian Ab5:minor>")
+  .s("plk:hd").gain(0.14).cut(1)
+// chords
+$: note("[0,2,4] ~ [0,2,4] ~").scale("<Ab3:minor Ab3:minor Eb4:dorian Ab3:minor>")
+  .s("triangle").lpf(1400).gain(0.24)
+// pad
+$: note("[0,4]").scale("<Ab3:minor Ab3:minor Eb4:dorian Ab3:minor>")
+  .s("sine").fm(1.2).fmh(1).fmdec(0.8).fmsus(0.4)
+  .room(0.3).orbit(2).gain(0.16)

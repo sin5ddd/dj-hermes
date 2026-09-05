@@ -1,10 +1,24 @@
 // @title ambient-19
 // @genre ambient
-// @details metal ping + bright reese + marimba
 setcpm(70/4)
 // drums
-$: s("bd:mt ~ ~ sd:pi").gain(0.22)
+$: s("~ ~ ~ ~").gain(0.18)
 // bass
-$: note("4 0 2 ~").scale("C4:minor").s("bs:rb").gain(0.3)
+$: note("0 ~ ~ <0 0 ~ 0>").scale("<Bb4:minor Bb4:minor F5:dorian Bb4:minor>")
+  .s("bs:su").gain(0.28)
 // lead
-$: note("8 ~ 3 5").scale("C4:minor").s("plk:mm").gain(0.2)
+$: note("~ 7 ~ <9 7 4 11>").scale("<Bb4:minor Bb4:minor F5:dorian Bb4:minor>")
+  .s("plk:bl").gain(0.1).cut(1)
+// hook
+$: note("0@2 ~ 4@2 ~").scale("<Bb4:minor Bb4:minor F5:dorian Bb4:minor>")
+  .s("plk:am").gain(0.16).cut(1)
+// arp
+$: s("<~ perc:cm ~ perc:tg>").gain(0.1)
+// chords
+$: note("[0,2,4] ~ ~ ~").scale("<Bb3:minor Bb3:minor F4:dorian Bb3:minor>")
+  .s("triangle").lpf(800).gain(0.18)
+  .attack(0.2).release(0.8)
+// pad
+$: note("[0,4]").scale("<Bb4:minor Bb4:minor F5:dorian Bb4:minor>")
+  .s("pf:ff").gain(0.24)
+  .attack(0.3).decay(0.4).sustain(0.7).release(0.6).room(0.5).orbit(1)
