@@ -39,6 +39,25 @@ stt:
   local:
     model: base
 
+# Spoken replies (voice mode). Not a toolset grant — disabled_toolsets
+# still lists tts so the agent cannot call the TTS tool.
+# Piper is in-process (no extra HTTP endpoint). First run downloads the voice.
+# Japanese replies need a ja_* voice; en_US-* will mangle かな/漢字.
+tts:
+  provider: piper
+  piper:
+    voice: ja_JP-hifi_captain-medium
+
+# Hands-free profile wake. openWakeWord cannot retarget "hey hermes";
+# sherpa is open-vocabulary KWS (not STT). Spoken: "Hey, dee jay"
+# (two-word / 2+ syllable English). Pause, then the command.
+wake_word:
+  enabled: true
+  provider: sherpa
+  phrase: "hey dee jay"
+  surface: auto
+  start_new_session: true
+
 mcp_servers:
   strudel:
     # Streamable HTTP against the running play/dj API (no strudel-rs.exe spawn).
