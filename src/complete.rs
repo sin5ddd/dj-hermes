@@ -6,7 +6,9 @@
 use std::path::Path;
 
 use crate::session::SessionKind;
-use crate::song::{list_bundled_songs, list_user_library_songs};
+use crate::song::{
+    is_genre_slug, list_bundled_genres, list_bundled_slots, list_user_library_songs,
+};
 
 /// Context for mute/unmute track names and Hermes routing.
 #[derive(Clone, Copy, Debug)]
@@ -39,11 +41,12 @@ impl CompleteResult {
 }
 
 const TOP_LEVEL: &[&str] = &[
-    "a", "b", "x", "mix", "bpm", "hush", "status", "help", "quit", "viz", "vfx", "dopa", "flash",
+    "a", "b", "x", "mix", "bpm", "hush", "status", "help", "list", "quit", "viz", "vfx", "dopa",
+    "flash",
 ];
 const TOP_LEVEL_PLAY: &[&str] = &[
     "a", "load", "save", "reload", "mute", "unmute", "gain", "head", "bpm", "hush", "status",
-    "help", "quit", "viz", "vfx", "dopa", "flash",
+    "help", "list", "quit", "viz", "vfx", "dopa", "flash",
 ];
 const MIX_MOVES: &[&str] = &["long", "cut", "fill", "hold"];
 const MIX_KINDS: &[&str] = &[
@@ -230,13 +233,35 @@ fn stage_suggest(
         DECK_VERBS
     };
     match complete {
-        [] => list_result(filter_static(top, partial), replace_from, None),
+        [] => {
+            let mut c = filter_static(top, partial);
+            if ctx.session == SessionKind::Play {
+                for g in filter_owned(song_stems, partial) {
+                    if !c.iter().any(|x| x == &g) {
+                        c.push(g);
+                    }
+                }
+            }
+            list_result(c, replace_from, None)
+        }
         [d] if is_deck(d) => {
             if ctx.session == SessionKind::Play && !matches!(*d, "a" | "A" | "0") {
                 return CompleteResult::empty();
             }
-            list_result(filter_static(deck_verbs, partial), replace_from, None)
+            let mut c = filter_static(deck_verbs, partial);
+            for g in filter_owned(song_stems, partial) {
+                if !c.iter().any(|x| x == &g) {
+                    c.push(g);
+                }
+            }
+            list_result(c, replace_from, None)
         }
+        ["list"] => list_result(filter_owned(song_stems, partial), replace_from, None),
+        [g] if ctx.session == SessionKind::Play && is_genre_slug(g) => list_result(
+            filter_owned(&list_bundled_slots(g), partial),
+            replace_from,
+            None,
+        ),
         [d, v] if is_deck(d) => match *v {
             "load" => list_result(filter_owned(song_stems, partial), replace_from, None),
             "mute" | "unmute" => {
@@ -246,11 +271,23 @@ fn stage_suggest(
             "gain" => hint_only(replace_from, "<0..1>"),
             "head" | "cue" => hint_only(replace_from, "<bar>=1"),
             "x" | "xfade" => hint_only(replace_from, "<bars>"),
+            other if is_genre_slug(other) => list_result(
+                filter_owned(&list_bundled_slots(other), partial),
+                replace_from,
+                None,
+            ),
             _ => CompleteResult::empty(),
         },
         // Path/track already has at least one completed token after the verb.
         // Keep suggesting only while the user is still typing the last token.
-        [d, v, _rest @ ..] if is_deck(d) && (*v == "load") => {
+        [d, v, rest @ ..] if is_deck(d) && (*v == "load") => {
+            if rest.len() == 1 && is_genre_slug(rest[0]) {
+                return list_result(
+                    filter_owned(&list_bundled_slots(rest[0]), partial),
+                    replace_from,
+                    None,
+                );
+            }
             if partial.is_empty() {
                 CompleteResult::empty()
             } else {
@@ -333,13 +370,10 @@ fn hint_only(replace_from: usize, hint: &str) -> CompleteResult {
     }
 }
 
-/// Unique bare stems from user library + bundled demos (sorted).
+/// Genre folder names plus user-library stems (not every `house/01` slot).
 pub fn collect_song_stems() -> Vec<String> {
-    let mut out: Vec<String> = Vec::new();
-    for name in list_user_library_songs()
-        .into_iter()
-        .chain(list_bundled_songs())
-    {
+    let mut out: Vec<String> = list_bundled_genres().into_iter().map(|g| g.name).collect();
+    for name in list_user_library_songs() {
         let stem = Path::new(&name)
             .file_stem()
             .and_then(|s| s.to_str())
@@ -410,7 +444,7 @@ mod tests {
 
     #[test]
     fn hermes_natural_language_no_suggest() {
-        let s = songs(&["house-01"]);
+        let s = songs(&["house"]);
         let r = suggest_with_songs("暗くして", &ctx(true, &[], &[]), &s);
         assert!(!r.has_display());
         assert!(r.candidates.is_empty());
@@ -439,25 +473,33 @@ mod tests {
 
     #[test]
     fn load_path_filters_songs() {
-        let s = songs(&[
-            "techno-duck-01",
-            "techno-duck-02",
-            "house-01",
-            "four-on-the-floor-01",
-        ]);
+        let s = songs(&["techno-duck", "house", "four-on-the-floor"]);
         let r = suggest_with_songs("/a load te", &ctx(true, &[], &[]), &s);
-        assert_eq!(
-            r.candidates,
-            vec!["techno-duck-01".to_string(), "techno-duck-02".to_string()]
-        );
+        assert_eq!(r.candidates, vec!["techno-duck".to_string()]);
     }
 
     #[test]
     fn load_after_space_lists_all() {
-        let s = songs(&["house-01", "four-on-the-floor-01"]);
+        let s = songs(&["house", "four-on-the-floor"]);
         let r = suggest_with_songs("/a load ", &ctx(true, &[], &[]), &s);
         assert_eq!(r.candidates.len(), 2);
-        assert!(r.candidates.contains(&"house-01".to_string()));
+        assert!(r.candidates.contains(&"house".to_string()));
+    }
+
+    #[test]
+    fn deck_suggests_genre_after_verbs() {
+        let s = songs(&["house", "acid"]);
+        let r = suggest_with_songs("/a h", &ctx(true, &[], &[]), &s);
+        assert!(
+            r.candidates.iter().any(|c| c == "house"),
+            "{:?}",
+            r.candidates
+        );
+        assert!(
+            r.candidates.iter().any(|c| c == "head"),
+            "{:?}",
+            r.candidates
+        );
     }
 
     #[test]
@@ -488,14 +530,14 @@ mod tests {
 
     #[test]
     fn apply_preserves_slash_prefix() {
-        let s = songs(&["techno-duck-01", "techno-duck-02", "house-01"]);
+        let s = songs(&["techno-duck", "house"]);
         let r = suggest_with_songs("/a load te", &ctx(true, &[], &[]), &s);
         let applied = apply_candidate("/a load te", &r, 0).unwrap();
-        assert_eq!(applied, "/a load techno-duck-01 ");
-        let unique = suggest_with_songs("/a load house-01", &ctx(true, &[], &[]), &s);
+        assert_eq!(applied, "/a load techno-duck ");
+        let unique = suggest_with_songs("/a load house", &ctx(true, &[], &[]), &s);
         assert_eq!(
-            apply_candidate("/a load house-01", &unique, 0).unwrap(),
-            "/a load house-01 "
+            apply_candidate("/a load house", &unique, 0).unwrap(),
+            "/a load house "
         );
     }
 

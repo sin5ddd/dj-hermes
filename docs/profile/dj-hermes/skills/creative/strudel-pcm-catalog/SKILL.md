@@ -52,7 +52,7 @@ $: note("0 0 4 0").scale("C4:minor").s("bs:ht").gain(0.45)
 $: s("<fx:up ~ ~ ~>").gain(0.3)
 ```
 
-Apply the inline recipe with `strudel_apply_song`. `songs/house-01.strudel` uses `bd:hf` / `bs:su` / `plk:lp` as a live example.
+Apply the inline recipe with `strudel_apply_song`. `songs/house/01.strudel` uses `bd:hf` / `bs:su` / `plk:lp` as a live example.
 
 ## 役割 → まずこれを試す
 

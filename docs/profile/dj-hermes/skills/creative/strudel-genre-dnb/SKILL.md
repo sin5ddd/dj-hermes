@@ -62,7 +62,7 @@ $: note("[0,4]").scale("<C3:minor C3:minor G3:phrygian C3:minor>")
 
 Keep the break `*2` (not `.fast(2)`). Drums `.gain(0.7)` stays **above** the sub (0.42). Square at **C2** is `// bass`; saw mid is `// bass-mid`. Never `db`.
 
-`songs/dnb-01.strudel` is still a thin demo (break + two Reese layers). Apply the fence above, not the on-disk file.
+`songs/dnb/01.strudel` is still a thin demo (break + two Reese layers). Apply the fence above, not the on-disk file.
 
 Keep drums on **one** `$:` (comma layers). Do not use `stack()`.
 
@@ -97,8 +97,8 @@ Both decks share one `Transport`. This file is 174 BPM. Do **not** pair it with 
 
 ```bash
 # From the repo root (needs samples/bd, sd, hh, oh)
-strudel-rs play songs/dnb-01.strudel --seconds 12
-strudel-rs play songs/dnb-01.strudel --headless --seconds 8
+strudel-rs play songs/dnb/01.strudel --seconds 12
+strudel-rs play songs/dnb/01.strudel --headless --seconds 8
 ```
 
 The on-disk song is still the thin demo. For a full bed, `strudel_apply_song` the Pattern fence. Play **solo** at 174.
@@ -131,7 +131,7 @@ Live TUI: `/a load dnb-01` (or the `songs/` path). HTTP: `POST /song/load` with 
 - [ ] Break `*2`, drums gain **above** sub. Never `db`. Never `.fast(2)`
 - [ ] Square `C2` + `lpf(120)` as bass; saw `C2` + `lpf(1000)` as bass-mid
 - [ ] 4-bar phrase on lead / hook / chords / pad. Melody call-and-response
-- [ ] Play **solo** at 174. `songs/dnb-01.strudel` is still a thin demo; this fence is the new target
+- [ ] Play **solo** at 174. `songs/dnb/01.strudel` is still a thin demo; this fence is the new target
 
 ## Do not
 

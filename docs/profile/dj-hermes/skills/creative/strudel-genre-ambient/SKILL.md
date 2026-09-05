@@ -22,7 +22,7 @@ metadata:
 
 キックは薄い、または無し。パッドが主。メロは休符多め。gain は低め。
 BPM 目安 60–90。フェンスは **70**（`setcpm(70/4)`）。
-ハウスやチルより疎い。`songs/ambient-01.strudel` はまだ薄いデモ。目標はこのフェンスの 7 本。
+ハウスやチルより疎い。`songs/ambient/01.strudel` はまだ薄いデモ。目標はこのフェンスの 7 本。
 
 ## When
 
@@ -80,7 +80,7 @@ $: note("[0,4]").scale("<C4:minor C4:minor G4:dorian C4:minor>")
 4. `note("c3'maj")` は root 単音。和音は `[0,2,4]`
 5. `pf:ff` を `[0,2,4]` で鳴らす（中身は 5 度のまま三重になる）
 6. `bs:su` の上に `bs:hf` や別のサブを重ねる
-7. `songs/ambient-01.strudel` を正本だと思って 3 本のまま apply する
+7. `songs/ambient/01.strudel` を正本だと思って 3 本のまま apply する
 8. 70 BPM を 126 テクノと DJ ペアにする（Transport は 1 つ）
 
 ## Checklist

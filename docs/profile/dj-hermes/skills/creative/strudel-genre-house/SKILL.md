@@ -61,7 +61,7 @@ $: note("[0,4]").scale("<C3:minor C3:minor G3:dorian C3:minor>")
 
 This fence is the new target (7 tracks: one bass, so perc is not required). Do not “improve” the hook degrees `4 ~ 7 4  2 0 ~ -1` or the clap grid `[~ cp]*2`. Do not add `bs:su`.
 
-`songs/house-01.strudel` is still a thin demo (drums + pluck). Apply the fence above, not the on-disk file.
+`songs/house/01.strudel` is still a thin demo (drums + pluck). Apply the fence above, not the on-disk file.
 
 | Piece | Role |
 | --- | --- |
@@ -137,25 +137,25 @@ Lead / hook / arp are call-and-response (rests on different eighths). Do not fil
 
 House in this tree is ~120–128. This file is **124**. Techno kick-front examples may also sit at 124 for a shared clock, but they must **not** grow a clap. A 130 acid / 126 duck / 174 DnB file is a different tempo — do not pair them.
 
-Both decks share one `Transport`. A DJ pair must use the **same** `setcpm`. Pair this file with `songs/four-on-the-floor-01.strudel` (also `setcpm(124/4)`). Do not pair a techno file that is not 124.
+Both decks share one `Transport`. A DJ pair must use the **same** `setcpm`. Pair this file with `songs/four-on-the-floor/01.strudel` (also `setcpm(124/4)`). Do not pair a techno file that is not 124.
 
 No `.compressor` on a `$:` — that writes the **mixer master** (last-write) and will squash the kick. No duck work in this skill.
 
 ## Try it in this app
 
 ```bash
-strudel-rs play songs/house-01.strudel --seconds 12
-strudel-rs play songs/house-01.strudel --headless --seconds 8
+strudel-rs play songs/house/01.strudel --seconds 12
+strudel-rs play songs/house/01.strudel --headless --seconds 8
 
 # Dual deck — both files are setcpm(124/4). Do not pair a different BPM.
-strudel-rs dj songs/house-01.strudel songs/four-on-the-floor-01.strudel
+strudel-rs dj songs/house/01.strudel songs/four-on-the-floor/01.strudel
 ```
 
 The on-disk song is still the thin demo. For a full bed, `strudel_apply_song` the Pattern fence.
 
 No device: `cargo test --test e2e house_01 -- --nocapture`.
 
-Live TUI: `/a load house-01`.
+Live TUI: `/a house 01`.
 
 ## Variations (still this syntax)
 
@@ -173,7 +173,7 @@ Do not add `[~ sd]*2`. Do not drop the clap onto the techno skill song. Do not a
 - [ ] 4-bar phrase on pitched tracks (`.scale("<C4:minor C4:minor G4:dorian C4:minor>")` and octave variants)
 - [ ] Clap grid `[~ cp]*2`. Hook degrees `4 ~ 7 4  2 0 ~ -1`. Do not rewrite either
 - [ ] PCM pitched at `C4:`. One bass (`bs:hf`). Chords `[0,2,4]`, pad `[0,4]`
-- [ ] `songs/house-01.strudel` is still a thin demo; this fence is the new target
+- [ ] `songs/house/01.strudel` is still a thin demo; this fence is the new target
 
 ## Do not
 
@@ -183,7 +183,7 @@ Do not add `[~ sd]*2`. Do not drop the clap onto the techno skill song. Do not a
 - Write `lead-fm-pluck` or `lead-fm_pluck` — the key is `plk:lp`.
 - Use `plk:s5` / `bs:rm` here. Do not add `bs:su`.
 - Write `in_bank=no` PCM (`ld:ac`, `pf:al`, `dr:*`, `ps:*`). Allowed long PCM: `ld:ss`, `pf:ff`.
-- Ship a 2-track loop for a new apply. Do not treat `songs/house-01.strudel` as the full bed.
+- Ship a 2-track loop for a new apply. Do not treat `songs/house/01.strudel` as the full bed.
 - `note("c3'maj")` when you want a chord — suffix is root only.
 - Put `.compressor` on a track. Do not add `.duckorbit`.
 - Pair this file with another `setcpm` (shared clock; the other tempo is discarded).

@@ -182,9 +182,9 @@ Release プロファイル目安（プラン）: `opt-level = 3`, `lto = true`, 
 ### CLI / REPL 例
 
 ```
-./strudel-rs play songs/house-01.strudel   # 1 デッキ live UI + Hermes (play-hermes) + API(:17878)
-./strudel-rs play songs/house-01.strudel --midi-only --midi-port SEQTRAK
-./strudel-rs dj songs/house-01.strudel songs/four-on-the-floor-01.strudel   # 2 デッキ + mix
+./strudel-rs play songs/house/01.strudel   # 1 デッキ live UI + Hermes (play-hermes) + API(:17878)
+./strudel-rs play songs/house/01.strudel --midi-only --midi-port SEQTRAK
+./strudel-rs dj songs/house/01.strudel songs/four-on-the-floor/01.strudel   # 2 デッキ + mix
 # または空起動: ./strudel-rs dj
 # play プロンプト: /load …    dj プロンプト: /a load … / b load … / x 4
 ```

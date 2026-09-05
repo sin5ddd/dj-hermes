@@ -18,12 +18,16 @@ fn songs_dir() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("songs")
 }
 
+fn song_path(rel: &str) -> PathBuf {
+    rel.split(['/', '\\']).fold(songs_dir(), |p, c| p.join(c))
+}
+
 fn samples_dir() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("samples")
 }
 
 fn load_song_file(name: &str) -> strudel_rs::song::Song {
-    let path = songs_dir().join(name);
+    let path = song_path(name);
     let text = fs::read_to_string(&path).unwrap_or_else(|e| panic!("read {}: {e}", path.display()));
     parse_song(&text, path.to_string_lossy().as_ref())
         .unwrap_or_else(|e| panic!("parse {}: {e}", path.display()))
@@ -128,9 +132,7 @@ fn all_bundled_songs_parse() {
     let dir = songs_dir();
     assert!(dir.is_dir(), "songs/ missing at {}", dir.display());
     let mut count = 0;
-    for entry in fs::read_dir(&dir).unwrap() {
-        let entry = entry.unwrap();
-        let path = entry.path();
+    for path in strudel_rs::song::collect_song_files(&dir) {
         if path.extension().and_then(|e| e.to_str()) != Some("strudel") {
             continue;
         }
@@ -142,13 +144,13 @@ fn all_bundled_songs_parse() {
     }
     assert!(
         count >= 2,
-        "expected at least house-01 + four-on-the-floor-01, got {count}"
+        "expected at least house/01 + four-on-the-floor/01, got {count}"
     );
 }
 
 #[test]
 fn showcase_songs_use_task23_features() {
-    let techno = fs::read_to_string(songs_dir().join("techno-duck-01.strudel")).unwrap();
+    let techno = fs::read_to_string(song_path("techno-duck/01.strudel")).unwrap();
     assert!(techno.contains("fm(") || techno.contains(".fm("));
     assert!(techno.contains("duckorbit("));
     assert!(
@@ -160,7 +162,7 @@ fn showcase_songs_use_task23_features() {
         "techno-duck-01 must not set master compressor from a track"
     );
 
-    let house = fs::read_to_string(songs_dir().join("house-01.strudel")).unwrap();
+    let house = fs::read_to_string(song_path("house/01.strudel")).unwrap();
     assert!(
         house.contains(".scale(") || house.contains("scale("),
         "house-01 should use .scale(...) with degree patterns"
@@ -169,7 +171,7 @@ fn showcase_songs_use_task23_features() {
 
 #[test]
 fn four_on_the_floor_sounds_without_samples() {
-    let song = load_song_file("four-on-the-floor-01.strudel");
+    let song = load_song_file("four-on-the-floor/01.strudel");
     assert_eq!(song.title, "sine-pulse");
     assert!((song.bpm.unwrap() - 124.0).abs() < 1e-6);
     let bank = SampleBank::empty();
@@ -196,7 +198,7 @@ fn four_on_the_floor_sounds_without_samples() {
 
 #[test]
 fn four_on_the_floor_01_grid() {
-    let song = load_song_file("four-on-the-floor-01.strudel");
+    let song = load_song_file("four-on-the-floor/01.strudel");
     assert_eq!(song.title, "sine-pulse");
     assert!((song.bpm.unwrap() - 124.0).abs() < 1e-6);
     let drums = track(&song, "drums");
@@ -212,7 +214,7 @@ fn four_on_the_floor_01_grid() {
         return;
     }
     let buf = render_song(
-        "four-on-the-floor-01.strudel",
+        "four-on-the-floor/01.strudel",
         124.0,
         &load_bank(),
         "four-on-the-floor-01",
@@ -231,7 +233,7 @@ fn four_on_the_floor_01_grid() {
 
 #[test]
 fn dnb_01_mix_rules() {
-    let song = load_song_file("dnb-01.strudel");
+    let song = load_song_file("dnb/01.strudel");
     assert_eq!(song.title, "dnb-01");
     assert!((song.bpm.unwrap() - 174.0).abs() < 1e-6);
     let drums = track(&song, "drums");
@@ -276,14 +278,14 @@ fn dnb_01_sounds_with_samples() {
         !bank.has("db"),
         "db must not resolve — that atom is silence"
     );
-    let buf = render_song("dnb-01.strudel", 174.0, &bank, "dnb-01");
+    let buf = render_song("dnb/01.strudel", 174.0, &bank, "dnb-01");
     assert!(has_energy(&buf, 0.001), "dnb-01 peak={}", peak(&buf));
     assert!(clip_rail_ratio(&buf) < 0.05, "dnb-01 clip");
 }
 
 #[test]
 fn techno_duck_01_mix_rules() {
-    let song = load_song_file("techno-duck-01.strudel");
+    let song = load_song_file("techno-duck/01.strudel");
     assert_eq!(song.title, "pump-core");
     assert!((song.bpm.unwrap() - 126.0).abs() < 1e-6);
     let kick = track(&song, "kick");
@@ -322,7 +324,7 @@ fn techno_duck_01_sounds_with_samples() {
         return;
     }
     let buf = render_song(
-        "techno-duck-01.strudel",
+        "techno-duck/01.strudel",
         126.0,
         &load_bank(),
         "techno-duck-01",
@@ -343,8 +345,8 @@ fn dj_xfade_house_to_four_on_the_floor() {
         SampleBank::empty()
     };
 
-    let house = load_song_file("house-01.strudel");
-    let four = load_song_file("four-on-the-floor-01.strudel");
+    let house = load_song_file("house/01.strudel");
+    let four = load_song_file("four-on-the-floor/01.strudel");
     assert!(
         (house.bpm.unwrap() - four.bpm.unwrap()).abs() < 1e-6,
         "DJ pair must share one BPM, got {:?} vs {:?}",
@@ -445,8 +447,8 @@ fn dj_echo_fill_house_to_four_on_the_floor() {
         SampleBank::empty()
     };
 
-    let house = load_song_file("house-01.strudel");
-    let four = load_song_file("four-on-the-floor-01.strudel");
+    let house = load_song_file("house/01.strudel");
+    let four = load_song_file("four-on-the-floor/01.strudel");
     let mut e = Engine::new(SR, DJ_BPM);
     let bl = bar_len(DJ_BPM);
 
@@ -526,7 +528,7 @@ fn dj_echo_fill_house_to_four_on_the_floor() {
 
 #[test]
 fn acid_01_filter_envelope() {
-    let path = songs_dir().join("acid-01.strudel");
+    let path = song_path("acid/01.strudel");
     let text = fs::read_to_string(&path).unwrap();
     assert!(
         text.contains("lpenv(3)") && !text.contains("lpenv(3.5)"),
@@ -545,7 +547,7 @@ fn acid_01_filter_envelope() {
         "this recipe is the filter env, not duck/compressor"
     );
 
-    let song = load_song_file("acid-01.strudel");
+    let song = load_song_file("acid/01.strudel");
     assert_eq!(song.title, "saw-303");
     assert!(
         song.bpm.is_some() && (song.bpm.unwrap() - 130.0).abs() < 0.1,
@@ -559,7 +561,7 @@ fn acid_01_filter_envelope() {
     } else {
         SampleBank::empty()
     };
-    let buf = render_song("acid-01.strudel", bpm, &bank, "acid-01");
+    let buf = render_song("acid/01.strudel", bpm, &bank, "acid-01");
     assert!(
         has_energy(&buf, 0.001),
         "acid-01 should sound, peak={}",
@@ -574,7 +576,7 @@ fn acid_01_filter_envelope() {
 
 #[test]
 fn house_01_clap_backbeat() {
-    let path = songs_dir().join("house-01.strudel");
+    let path = song_path("house/01.strudel");
     let text = fs::read_to_string(&path).unwrap();
     assert!(
         text.contains("[~ cp]*2"),
@@ -601,7 +603,7 @@ fn house_01_clap_backbeat() {
         "no duck / track compressor in this recipe: {text}"
     );
 
-    let song = load_song_file("house-01.strudel");
+    let song = load_song_file("house/01.strudel");
     assert_eq!(song.title, "warehouse-intro");
     assert!(
         song.bpm.is_some() && (song.bpm.unwrap() - 124.0).abs() < 1e-6,
@@ -648,7 +650,7 @@ fn house_01_clap_backbeat() {
         eprintln!("skip house_01 render: factory stems not loaded (LFS?)");
         return;
     }
-    let buf = render_song("house-01.strudel", 124.0, &bank, "house-01");
+    let buf = render_song("house/01.strudel", 124.0, &bank, "house-01");
     assert!(
         has_energy(&buf, 0.001),
         "house-01 should sound, peak={}",
@@ -663,7 +665,7 @@ fn house_01_clap_backbeat() {
 
 #[test]
 fn dnb_reese_01_mid_glue() {
-    let path = songs_dir().join("dnb-reese-01.strudel");
+    let path = song_path("dnb-reese/01.strudel");
     let text = fs::read_to_string(&path).unwrap();
     assert!(
         !text.contains(".fast("),
@@ -686,7 +688,7 @@ fn dnb_reese_01_mid_glue() {
         "no house clap on this grid: {text}"
     );
 
-    let song = load_song_file("dnb-reese-01.strudel");
+    let song = load_song_file("dnb-reese/01.strudel");
     assert_eq!(song.title, "dnb-reese-01");
     assert!(
         song.bpm.is_some() && (song.bpm.unwrap() - 174.0).abs() < 1e-6,
@@ -747,7 +749,7 @@ fn dnb_reese_01_mid_glue() {
         eprintln!("skip dnb_reese_01 render: samples/ not found");
         return;
     }
-    let buf = render_song("dnb-reese-01.strudel", 174.0, &load_bank(), "dnb-reese-01");
+    let buf = render_song("dnb-reese/01.strudel", 174.0, &load_bank(), "dnb-reese-01");
     assert!(
         has_energy(&buf, 0.001),
         "dnb-reese-01 should sound, peak={}",
@@ -825,11 +827,12 @@ fn catalog_sketches_parse_and_render() {
     let mut files: Vec<(String, String)> = Vec::new();
     for family in FAMILIES {
         let mut n = 0usize;
-        for entry in fs::read_dir(&dir).unwrap() {
+        let family_dir = dir.join(family);
+        for entry in fs::read_dir(&family_dir).unwrap() {
             let name = entry.unwrap().file_name().to_string_lossy().into_owned();
-            if name.starts_with(family) && name.ends_with(".strudel") {
+            if name.ends_with(".strudel") {
                 n += 1;
-                files.push((name, family.to_string()));
+                files.push((format!("{family}/{name}"), family.to_string()));
             }
         }
         assert!(n >= 6, "{family} expected at least 6 songs, got {n}");

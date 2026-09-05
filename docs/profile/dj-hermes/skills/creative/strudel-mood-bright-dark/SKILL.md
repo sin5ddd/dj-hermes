@@ -26,7 +26,7 @@ metadata:
 - You already have (or are writing) a loop and need a **transform**, not a new genre recipe.
 - You are **not** switching house → techno → DnB. Tempo and drum grid stay put. A pair that will be mixed must share one `setcpm`.
 
-Apply the inline dark / bright recipes with `strudel_apply_song`. Same 124 house grid as `songs/house-01.strudel`.
+Apply the inline dark / bright recipes with `strudel_apply_song`. Same 124 house grid as `songs/house/01.strudel`.
 
 ## The five moves
 
@@ -155,7 +155,7 @@ Square sub stays a **synth**. `s("square")` resolves in `sound.rs` before the ba
 
 Write stems exactly. `lead-fm-pluck` and `stab-fm-fifth` do not resolve (silent; performance continues).
 
-This pair is **not** the 174 DnB recipe. `bs:rm` here is a dark mid at 124 house. Do not copy the DnB break, and do not DJ-pair these recipes with `songs/dnb-reese-01.strudel`.
+This pair is **not** the 174 DnB recipe. `bs:rm` here is a dark mid at 124 house. Do not copy the DnB break, and do not DJ-pair these recipes with `songs/dnb-reese/01.strudel`.
 
 ## 5. Filter / EQ layer
 
@@ -227,7 +227,7 @@ Square + `lpf(140)` vs saw + `lpf(1400)` is the synth-spectrum move. Drums stay 
 ```bash
 # Apply the inline recipes with strudel_apply_song (same 124 clock).
 # Existing 124 pair:
-strudel-rs dj songs/house-01.strudel songs/four-on-the-floor-01.strudel
+strudel-rs dj songs/house/01.strudel songs/four-on-the-floor/01.strudel
 ```
 
 No device: `cargo test --test e2e house_01 -- --nocapture`.

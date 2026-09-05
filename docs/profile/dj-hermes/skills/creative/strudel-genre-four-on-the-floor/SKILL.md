@@ -87,7 +87,7 @@ $: note("[0,4]").scale("<C3:minor C3:minor G3:phrygian C3:minor>")
   .attack(0.08).decay(0.2).sustain(0.7).release(0.4)
 ```
 
-`songs/four-on-the-floor-01.strudel` is still a thin demo (drums only). Apply the full-song fence, not the on-disk file.
+`songs/four-on-the-floor/01.strudel` is still a thin demo (drums only). Apply the full-song fence, not the on-disk file.
 
 Bass is a synth sub at **C2** (`sawtooth` + `lpf(400)`). Do not stack another sub (`bs:su` / `bs:hf` / `bs:dk` / a second `square`+low lpf). PCM hook/arp stay at **C4/C5**. Chords `[0,2,4]`, pad `[0,4]`. Lead / hook / arp rest on different slots.
 
@@ -110,16 +110,16 @@ The full-song drums add `<~ ~ ~ [bd sd bd sd]>`: bars 1–3 stay the pulse; bar 
 
 **House** (`bd*4, [~ cp]*2, [~ hh]*4`) adds claps at 0.25 and 0.75. That is a backbeat, not techno four-on-the-floor. See [strudel-genre-house](../strudel-genre-house/SKILL.md). Do not stack `sd` on those hits.
 
-Both decks share one `Transport`. A DJ pair must use the **same** `setcpm`. This example is 124 BPM; `songs/house-01.strudel` uses `setcpm(124/4)` for that reason.
+Both decks share one `Transport`. A DJ pair must use the **same** `setcpm`. This example is 124 BPM; `songs/house/01.strudel` uses `setcpm(124/4)` for that reason.
 
 ## Try it in this app
 
 ```bash
 # From the repo root (needs samples/bd, hh)
-strudel-rs play songs/four-on-the-floor-01.strudel --seconds 12
+strudel-rs play songs/four-on-the-floor/01.strudel --seconds 12
 
 # Dual deck — both files are setcpm(124/4); do not pair a different BPM
-strudel-rs dj songs/house-01.strudel songs/four-on-the-floor-01.strudel
+strudel-rs dj songs/house/01.strudel songs/four-on-the-floor/01.strudel
 ```
 
 The on-disk song is still the thin drum demo. For a full bed, `strudel_apply_song` the full-song fence.
@@ -142,13 +142,13 @@ Live TUI: `/a load four-on-the-floor-01` (or the `songs/` path). HTTP: `POST /so
 - [ ] New apply is **7 `$:`** (drums, bass, lead, hook, arp, chords, pad)
 - [ ] 4-bar phrase on pitched tracks; drums 1-bar + 4th-bar fill is OK
 - [ ] Synth bass at `C2:`. PCM at `C4:` / `C5:`. Chords `[0,2,4]`, pad `[0,4]`
-- [ ] `songs/four-on-the-floor-01.strudel` is still a thin demo; the full-song fence is the new target
+- [ ] `songs/four-on-the-floor/01.strudel` is still a thin demo; the full-song fence is the new target
 
 ## Do not
 
 - Call `bd*4, [~ cp]*2` techno — that is a house backbeat (see [strudel-genre-house](../strudel-genre-house/SKILL.md)).
 - Put `[~ cp]*2` on this kick-front grid. Techno: **no clap**.
-- Ship drums-only for a new apply. Do not treat `songs/four-on-the-floor-01.strudel` as the full bed.
+- Ship drums-only for a new apply. Do not treat `songs/four-on-the-floor/01.strudel` as the full bed.
 - Pair this file with a song at another `setcpm` (shared clock; the other tempo is discarded).
 - Write `in_bank=no` PCM (`ld:ac`, `pf:al`, `dr:*`, `ps:*`). Allowed long PCM: `ld:ss`, `pf:ff`.
 - Stack subs (`bs:su` / `bs:hf` / `bs:dk` / a second `square`+low lpf).

@@ -79,7 +79,7 @@ Saw + low LPF keeps the bass out of the triad’s midrange. Triangle + higher LP
 
 ```bash
 # Apply the inline recipe with strudel_apply_song, or pair existing 124 files:
-strudel-rs dj songs/house-01.strudel songs/four-on-the-floor-01.strudel
+strudel-rs dj songs/house/01.strudel songs/four-on-the-floor/01.strudel
 ```
 
 No audio device: `cargo test --test e2e four_on_the_floor -- --nocapture`.

@@ -64,7 +64,7 @@ $: note("[0,4]").scale("<C3:minor C3:minor G3:phrygian C3:minor>")
 
 Kick `$:` keeps `.duckorbit(2).duckattack(0.04).duckdepth(0.85)`. Hats have **no** `duckorbit`. FM bass and pad (and chords) sit on **orbit 2**. Bass degrees stay the old `0 0 2 <4 6>` shape, expanded to four `<>` children and wrapped in a 4-bar scale.
 
-`songs/techno-duck-01.strudel` is still a thin demo (kick, hats, bass, pad). Apply the fence above, not the on-disk file.
+`songs/techno-duck/01.strudel` is still a thin demo (kick, hats, bass, pad). Apply the fence above, not the on-disk file.
 
 | Piece | Role |
 | --- | --- |
@@ -101,16 +101,16 @@ Hats stay on a **separate** `$:` with no `duckorbit`. If hats shared the kick li
 
 Lead uses live 2-op FM (`sine` + `.fm` / `.lpenv`) — not `in_bank=no` PCM. Arp is sparse perc (`perc:tm` / `perc:st`), not a second bass. Do not add `bs:su`.
 
-Both decks share one `Transport`. This file is 126 BPM — pair it with `songs/electro-01.strudel` (also `setcpm(126/4)`). Do **not** pair it with 70 BPM ambient or the 174 DnB skill.
+Both decks share one `Transport`. This file is 126 BPM — pair it with `songs/electro/01.strudel` (also `setcpm(126/4)`). Do **not** pair it with 70 BPM ambient or the 174 DnB skill.
 
 ## Try it in this app
 
 ```bash
-strudel-rs play songs/techno-duck-01.strudel --seconds 12
-strudel-rs play songs/techno-duck-01.strudel --headless --seconds 8
+strudel-rs play songs/techno-duck/01.strudel --seconds 12
+strudel-rs play songs/techno-duck/01.strudel --headless --seconds 8
 
 # Dual deck — both files are setcpm(126/4)
-strudel-rs dj songs/techno-duck-01.strudel songs/electro-01.strudel
+strudel-rs dj songs/techno-duck/01.strudel songs/electro/01.strudel
 ```
 
 The on-disk song is still the thin demo. For a full bed, `strudel_apply_song` the Pattern fence.
@@ -143,7 +143,7 @@ Live TUI: `/a load techno-duck-01`. Then `/x 4` to crossfade toward B (equal-pow
 - [ ] Bass + pad (+ chords) on orbit 2. Synth bass at `C2:`
 - [ ] 4-bar `.scale("<…>")` on pitched tracks. Hats may stay 1-bar + 4th-bar fill
 - [ ] No clap. Pad `[0,4]` (old rising pad was `0 2 4 7`)
-- [ ] `songs/techno-duck-01.strudel` is still a thin demo; this fence is the new target
+- [ ] `songs/techno-duck/01.strudel` is still a thin demo; this fence is the new target
 
 ## Do not
 

@@ -21,7 +21,7 @@ metadata:
 
 遅め BPM、乾いたドラム、柔らかいキー。BPM 目安 75–90。フェンスは **84**（`setcpm(84/4)`）。
 キックは `bd:lf`。ハットは遅い。ハウスの clap グリッドは使わない。
-`songs/lofi-hiphop-01.strudel` はまだ薄いデモ。目標はこのフェンスの 7 本。
+`songs/lofi-hiphop/01.strudel` はまだ薄いデモ。目標はこのフェンスの 7 本。
 
 ## When
 
@@ -78,7 +78,7 @@ $: note("[0,4]").scale("<C3:minor C3:minor F3:dorian C3:minor>")
 3. `note("c3'maj")` は root 単音。和音は `[0,2,4]`
 4. `bs:su` の上に `bs:hf` や別のサブを重ねる
 5. `ep:rs` / `plk:lf` に `.scale("C3:…")` を付ける（1 オクターブ下がる）
-6. `songs/lofi-hiphop-01.strudel` を正本だと思って 3 本のまま apply する
+6. `songs/lofi-hiphop/01.strudel` を正本だと思って 3 本のまま apply する
 7. 84 BPM を 124 ハウスと DJ ペアにする（Transport は 1 つ）
 
 ## Checklist

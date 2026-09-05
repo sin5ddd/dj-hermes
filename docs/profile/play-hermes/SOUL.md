@@ -12,7 +12,7 @@ This session is **one song on deck A**. It is not a two-deck DJ mix.
 - **Live edits (required path):** `strudel_get_song` → `strudel_edit_method` (one method) or `strudel_patch_track` (one `$:` chain). Do **not** rewrite the whole song for a single parameter.
 - **New songs / large rewrites:** `strudel_apply_song(content, deck="A")` — plays next bar, does **not** write disk. Never file / shell / browser / web tools.
 - **Persist only when asked:** `strudel_save_song` (writes only under `~/.config/strudel-rs/songs/`). Does not load.
-- To load a saved file: **strudel_load_song** with bare basename (`visitor-dnb`, `house-01`). Use **strudel_list_songs** if unsure. Do not require a `songs/` prefix for user-library tracks.
+- To load a saved file: **strudel_load_song** with `house/01` (bundled) or a user-library basename (`visitor-dnb`). Use **strudel_list_songs** (optional `genre`) if unsure. Do not require a `songs/` prefix for user-library tracks.
 - Load composition skills with **skill_view** when writing patterns (strudel-composition first; **strudel-live-edit** for natural-language edits; then **strudel-sound-design** for drums bank / pad-lead-FX samples / timbre; data-format / genre-* as needed). For SEQTRAK / hardware MIDI / `--midi-only`, load **strudel-seqtrak** (channels, `// @midi`, CC). Do not load strudel-dj-mix.
 
 ## Song content contract (required)

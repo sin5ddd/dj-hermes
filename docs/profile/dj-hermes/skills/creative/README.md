@@ -4,7 +4,7 @@ Assistant-agnostic recipes for this engine: **to make music of type X, write Str
 
 These are Hermes-format `SKILL.md` files (`name`, `description` starting with “Use when”, `version`, `author`, `license`, `metadata.hermes`). Folders are named `strudel-*` (genre recipes `strudel-genre-*`). This tree documents how **this repo** turns notation into rhythm, harmony, genre, and DJ mix.
 
-Engine-accurate recipes (formerly unprefixed folders such as `four-on-the-floor`) were merged into the matching `strudel-*` skill, or renamed when there was no overlap. Playable files live under `songs/<genre>-01.strudel` (and `-02`…`-10`); those copies are still **thin (about 3 `$:`)** until a follow-up rewrite. **New apply / skill examples** use the 7–8 track bed in [strudel-composition](./strudel-composition/SKILL.md). This directory is the canonical skill tree and the copy source for the live `dj-hermes` profile. `strudel-live-edit` also lives here (natural-language live edits); it is not a song-recipe skill.
+Engine-accurate recipes (formerly unprefixed folders such as `four-on-the-floor`) were merged into the matching `strudel-*` skill, or renamed when there was no overlap. Playable files live under `songs/<genre>/01.strudel` (and `02`…); those copies are still **thin (about 3 `$:`)** until a follow-up rewrite. **New apply / skill examples** use the 7–8 track bed in [strudel-composition](./strudel-composition/SKILL.md). This directory is the canonical skill tree and the copy source for the live `dj-hermes` profile. `strudel-live-edit` also lives here (natural-language live edits); it is not a song-recipe skill.
 
 Do not invent syntax from the public Strudel REPL. Only patterns that parse and play here belong in a skill.
 
@@ -107,7 +107,7 @@ Bundled one-shots: `samples/bd`, `sd`, `hh`, `oh`, `cp` (`samples/cp/00.wav`), p
 - Mixer faders + per-deck Hi/Mid/Lo EQ (shelves at 6 kHz / 1 kHz / 200 Hz) + master LPF/HPF.
 - Crossfade: `gainA = cos(θ)`, `gainB = sin(θ)` for `θ` in `0 … π/2` (`mixer.rs`). Starts on a bar boundary; `hush` is immediate.
 - `.compressor(...)` on a `$:` is **mixer master**, last-write (`engine.rs`) — not a track insert. It will squash the kick.
-- Try a pair **at the same BPM**: `strudel-rs dj songs/house-01.strudel songs/four-on-the-floor-01.strudel` (both `setcpm(124/4)`) then `/x 4`. A second file at another `setcpm` does not keep its own tempo. Do not pair 174 DnB with 126 techno.
+- Try a pair **at the same BPM**: `strudel-rs dj songs/house/01.strudel songs/four-on-the-floor/01.strudel` (both `setcpm(124/4)`) then `/x 4`. A second file at another `setcpm` does not keep its own tempo. Do not pair 174 DnB with 126 techno.
 
 ## Skills in this tree
 
@@ -130,25 +130,25 @@ Genre recipes (`strudel-genre-*`):
 
 | Skill | When | Example song |
 | --- | --- | --- |
-| [strudel-genre-four-on-the-floor](./strudel-genre-four-on-the-floor/SKILL.md) | Techno kick+offbeat hats (`bd*4, [~ hh]*4`); no clap | `songs/four-on-the-floor-01.strudel` |
-| [strudel-genre-house](./strudel-genre-house/SKILL.md) | House clap on 2/4 (`[~ cp]*2`, not stacked with `sd`) + C4:minor pluck | `songs/house-01.strudel` |
-| [strudel-genre-techno-duck](./strudel-genre-techno-duck/SKILL.md) | Techno kick ducks pad **and** bass; short recover; no track compressor | `songs/techno-duck-01.strudel` |
-| [strudel-genre-acid](./strudel-genre-acid/SKILL.md) | TB-303: per-note `lpenv`, high `lpq`, not static `lpf` + amp ADSR | `songs/acid-01.strudel` |
-| [strudel-genre-dnb](./strudel-genre-dnb/SKILL.md) | 174 BPM break, drums above sub, square+saw Reese; mini `*2` not `.fast(2)` | `songs/dnb-01.strudel` |
-| [strudel-genre-dnb-reese-mid-stab](./strudel-genre-dnb-reese-mid-stab/SKILL.md) | 174 BPM break, square C2 sub + `bs:rm` at C4 + hollow-fifth stab | `songs/dnb-reese-01.strudel` |
+| [strudel-genre-four-on-the-floor](./strudel-genre-four-on-the-floor/SKILL.md) | Techno kick+offbeat hats (`bd*4, [~ hh]*4`); no clap | `songs/four-on-the-floor/01.strudel` |
+| [strudel-genre-house](./strudel-genre-house/SKILL.md) | House clap on 2/4 (`[~ cp]*2`, not stacked with `sd`) + C4:minor pluck | `songs/house/01.strudel` |
+| [strudel-genre-techno-duck](./strudel-genre-techno-duck/SKILL.md) | Techno kick ducks pad **and** bass; short recover; no track compressor | `songs/techno-duck/01.strudel` |
+| [strudel-genre-acid](./strudel-genre-acid/SKILL.md) | TB-303: per-note `lpenv`, high `lpq`, not static `lpf` + amp ADSR | `songs/acid/01.strudel` |
+| [strudel-genre-dnb](./strudel-genre-dnb/SKILL.md) | 174 BPM break, drums above sub, square+saw Reese; mini `*2` not `.fast(2)` | `songs/dnb/01.strudel` |
+| [strudel-genre-dnb-reese-mid-stab](./strudel-genre-dnb-reese-mid-stab/SKILL.md) | 174 BPM break, square C2 sub + `bs:rm` at C4 + hollow-fifth stab | `songs/dnb-reese/01.strudel` |
 | [strudel-genre-ambient](./strudel-genre-ambient/SKILL.md) | Ambient | — |
 | [strudel-genre-chill](./strudel-genre-chill/SKILL.md) | Chill / downtempo | — |
 | [strudel-genre-chill-pop](./strudel-genre-chill-pop/SKILL.md) | Japanese city pop: IV–iii–ii–I maj7 + Rhodes; not EDM I–I–IV–I, not 王道 | — |
 | [strudel-genre-dubstep](./strudel-genre-dubstep/SKILL.md) | Dubstep | — |
 | [strudel-genre-electro](./strudel-genre-electro/SKILL.md) | Electro | — |
-| [strudel-genre-future-bass](./strudel-genre-future-bass/SKILL.md) | Kawaii Future Bass: 140 half-time 2-step + J-pop 王道進行 (IV–V–iii–vi; 小室 is a named swap); not `bd*4` | `songs/future-bass-01.strudel` (old four-on-the-floor demo; skill fence is the target) |
+| [strudel-genre-future-bass](./strudel-genre-future-bass/SKILL.md) | Kawaii Future Bass: 140 half-time 2-step + J-pop 王道進行 (IV–V–iii–vi; 小室 is a named swap); not `bd*4` | `songs/future-bass/01.strudel` (old four-on-the-floor demo; skill fence is the target) |
 | [strudel-genre-lofi-hiphop](./strudel-genre-lofi-hiphop/SKILL.md) | Lo-fi hip hop | — |
 | [strudel-genre-minimal-techno](./strudel-genre-minimal-techno/SKILL.md) | Minimal Techno | — |
 | [strudel-genre-progressive-house](./strudel-genre-progressive-house/SKILL.md) | Progressive House | — |
 
-`songs/acid-01.strudel` is the 303 filter-envelope live loop (130 BPM). Play it solo — another 303 on the other deck doubles the acid, it is not a mix.
+`songs/acid/01.strudel` is the 303 filter-envelope live loop (130 BPM). Play it solo — another 303 on the other deck doubles the acid, it is not a mix.
 
-Other genre demos: `songs/house-01.strudel`, `songs/four-on-the-floor-01.strudel`, `songs/ambient-01.strudel`, `songs/dnb-01.strudel`, `songs/techno-duck-01.strudel`, `songs/electro-01.strudel`. Ambient is **70 BPM** — do not DJ-pair it with 126 techno.
+Other genre demos: `songs/house/01.strudel`, `songs/four-on-the-floor/01.strudel`, `songs/ambient/01.strudel`, `songs/dnb/01.strudel`, `songs/techno-duck/01.strudel`, `songs/electro/01.strudel`. Ambient is **70 BPM** — do not DJ-pair it with 126 techno.
 
 ## How to try any example
 
@@ -156,26 +156,26 @@ From the repo root (needs `songs/` and `samples/`):
 
 ```bash
 # Highlight TUI (q / Esc to quit)
-strudel-rs play songs/four-on-the-floor-01.strudel --seconds 12
+strudel-rs play songs/four-on-the-floor/01.strudel --seconds 12
 
 # No TTY / CI
-strudel-rs play songs/house-01.strudel --headless --seconds 8
+strudel-rs play songs/house/01.strudel --headless --seconds 8
 
 # Dual deck — both files must share one setcpm (here 124/4)
-strudel-rs dj songs/house-01.strudel songs/four-on-the-floor-01.strudel
+strudel-rs dj songs/house/01.strudel songs/four-on-the-floor/01.strudel
 
-strudel-rs play songs/dnb-01.strudel --seconds 12
-strudel-rs play songs/techno-duck-01.strudel --headless --seconds 8
+strudel-rs play songs/dnb/01.strudel --seconds 12
+strudel-rs play songs/techno-duck/01.strudel --headless --seconds 8
 
 # Dual deck — both files must share one setcpm (here 126/4). Do not pair with 174 DnB or 70 ambient.
-strudel-rs dj songs/techno-duck-01.strudel songs/electro-01.strudel
+strudel-rs dj songs/techno-duck/01.strudel songs/electro/01.strudel
 
-strudel-rs play songs/acid-01.strudel --seconds 12
-strudel-rs play songs/acid-01.strudel --headless --seconds 8
+strudel-rs play songs/acid/01.strudel --seconds 12
+strudel-rs play songs/acid/01.strudel --headless --seconds 8
 
 # 174 DnB with sampled mid Reese — play solo. Do not pair with 124 house.
-strudel-rs play songs/dnb-reese-01.strudel --seconds 12
-strudel-rs play songs/dnb-reese-01.strudel --headless --seconds 8
+strudel-rs play songs/dnb-reese/01.strudel --seconds 12
+strudel-rs play songs/dnb-reese/01.strudel --headless --seconds 8
 ```
 
 Headless hosts without an audio device: `cargo test --test e2e` renders through `Engine::process` (no ALSA).
@@ -184,5 +184,5 @@ Headless hosts without an audio device: `cargo test --test e2e` renders through 
 
 1. New directory `docs/profile/dj-hermes/skills/creative/strudel-<name>/SKILL.md` (genre recipes: `strudel-genre-<name>`). Hermes YAML: `name`, `description` starting with “Use when”, `version`, `author`, `license`, `metadata.hermes` (`tags`, `related_skills`).
 2. Include: when, the exact `$:` pattern (**7–8 tracks** per strudel-composition), **why it sounds that way** (cite mini/scale/mixer/duck behavior), and a play/dj command.
-3. Point at an existing `songs/<genre>-01.strudel` if one exists, and say it may still be a thin demo. The skill fence is the target. Every `songs/*.strudel` is parsed by `tests/e2e.rs`.
+3. Point at an existing `songs/<genre>/01.strudel` if one exists, and say it may still be a thin demo. The skill fence is the target. Every `songs/**/*.strudel` is parsed by `tests/e2e.rs`.
 4. Fence only syntax this parser accepts (`setcpm` + `$:`. No `stack()` / `.cpm()`). No `in_bank=no` PCM keys.

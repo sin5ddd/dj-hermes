@@ -193,9 +193,219 @@ pub fn list_user_library_songs() -> Vec<String> {
         .unwrap_or_default()
 }
 
-/// Bundled demo song basenames under [`DEFAULT_SONGS_DIR`] relative to cwd.
+/// One bundled genre folder and how many `.strudel` / `.txt` slots it has.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct BundledGenre {
+    pub name: String,
+    pub count: usize,
+}
+
+/// Bundled demo refs under [`DEFAULT_SONGS_DIR`].
+///
+/// After the genre-folder layout this is `house/01` (no extension), plus any
+/// leftover top-level basenames. Prefer [`list_bundled_genres`] for menus.
 pub fn list_bundled_songs() -> Vec<String> {
-    list_song_basenames_in(Path::new(DEFAULT_SONGS_DIR))
+    let root = Path::new(DEFAULT_SONGS_DIR);
+    let mut out: Vec<String> = list_song_basenames_in(root)
+        .into_iter()
+        .map(|n| strip_known_song_ext(&n).to_string())
+        .collect();
+    for g in list_bundled_genres() {
+        for slot in list_bundled_slots(&g.name) {
+            out.push(format!("{}/{slot}", g.name));
+        }
+    }
+    out.sort();
+    out.dedup();
+    out
+}
+
+/// Genre folders under [`DEFAULT_SONGS_DIR`], sorted by name.
+pub fn list_bundled_genres() -> Vec<BundledGenre> {
+    list_bundled_genres_in(Path::new(DEFAULT_SONGS_DIR))
+}
+
+fn list_bundled_genres_in(root: &Path) -> Vec<BundledGenre> {
+    let mut out = Vec::new();
+    let Ok(rd) = std::fs::read_dir(root) else {
+        return out;
+    };
+    for ent in rd.flatten() {
+        let path = ent.path();
+        if !path.is_dir() {
+            continue;
+        }
+        let Some(name) = path.file_name().and_then(|s| s.to_str()) else {
+            continue;
+        };
+        if !is_genre_slug(name) {
+            continue;
+        }
+        let count = list_bundled_slots_in(&path).len();
+        if count == 0 {
+            continue;
+        }
+        out.push(BundledGenre {
+            name: name.to_string(),
+            count,
+        });
+    }
+    out.sort_by(|a, b| a.name.cmp(&b.name));
+    out
+}
+
+/// Slot numbers (`01`, `02`, …) in `songs/<genre>/`.
+pub fn list_bundled_slots(genre: &str) -> Vec<String> {
+    if !is_genre_slug(genre) {
+        return Vec::new();
+    }
+    list_bundled_slots_in(&Path::new(DEFAULT_SONGS_DIR).join(genre))
+}
+
+fn list_bundled_slots_in(dir: &Path) -> Vec<String> {
+    let mut out = Vec::new();
+    for name in list_song_basenames_in(dir) {
+        let stem = strip_known_song_ext(&name);
+        if let Some(nn) = normalize_slot_index(stem) {
+            if !out.iter().any(|s| s == &nn) {
+                out.push(nn);
+            }
+        }
+    }
+    out.sort();
+    out
+}
+
+/// `.strudel` / `.txt` files under `dir` and one level of subdirectories.
+pub fn collect_song_files(dir: &Path) -> Vec<PathBuf> {
+    let mut out = Vec::new();
+    collect_song_files_into(dir, &mut out, 0);
+    out.sort();
+    out
+}
+
+fn collect_song_files_into(dir: &Path, out: &mut Vec<PathBuf>, depth: u8) {
+    let Ok(rd) = std::fs::read_dir(dir) else {
+        return;
+    };
+    for ent in rd.flatten() {
+        let path = ent.path();
+        if path.is_file() {
+            if known_song_ext(&path).is_some() {
+                out.push(path);
+            }
+        } else if path.is_dir() && depth < 1 {
+            collect_song_files_into(&path, out, depth + 1);
+        }
+    }
+}
+
+/// ASCII genre folder / TUI token (`house`, `chill-pop`, `four-on-the-floor`).
+pub fn is_genre_slug(s: &str) -> bool {
+    if s.is_empty() || s.len() > 64 {
+        return false;
+    }
+    let mut chars = s.chars();
+    let Some(first) = chars.next() else {
+        return false;
+    };
+    if !first.is_ascii_alphanumeric() {
+        return false;
+    }
+    chars.all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+}
+
+/// `1` / `01` / `01.strudel` → `01`. Rejects 0 and values above 99.
+pub fn normalize_slot_index(raw: &str) -> Option<String> {
+    let t = strip_known_song_ext(raw.trim());
+    if t.is_empty() || !t.chars().all(|c| c.is_ascii_digit()) {
+        return None;
+    }
+    let n: u32 = t.parse().ok()?;
+    if (1..=99).contains(&n) {
+        Some(format!("{n:02}"))
+    } else {
+        None
+    }
+}
+
+pub fn looks_like_slot_index(raw: &str) -> bool {
+    normalize_slot_index(raw).is_some()
+}
+
+fn strip_known_song_ext(s: &str) -> &str {
+    s.strip_suffix(".strudel")
+        .or_else(|| s.strip_suffix(".txt"))
+        .unwrap_or(s)
+}
+
+/// Bundled genre + 2-digit slot, if `input` names one (`house/01`, `house-01`).
+///
+/// `visitor-dnb` does not match (the tail is not a number).
+pub fn parse_bundled_slot(input: &str) -> Option<(String, String)> {
+    let mut s = input.trim().replace('\\', "/");
+    if s.is_empty() {
+        return None;
+    }
+    while let Some(rest) = s.strip_prefix("./") {
+        s = rest.to_string();
+    }
+    let s = s.strip_prefix("songs/").unwrap_or(s.as_str());
+    let s = strip_known_song_ext(s);
+    if s.is_empty() {
+        return None;
+    }
+    if let Some((genre, num)) = s.split_once('/') {
+        if genre.contains('/') || num.contains('/') {
+            return None;
+        }
+        if !is_genre_slug(genre) {
+            return None;
+        }
+        let nn = normalize_slot_index(num)?;
+        return Some((genre.to_string(), nn));
+    }
+    let (genre, num) = s.rsplit_once('-')?;
+    if !is_genre_slug(genre) {
+        return None;
+    }
+    let nn = normalize_slot_index(num)?;
+    Some((genre.to_string(), nn))
+}
+
+/// `songs/<genre>/<nn>.strudel` (relative to cwd).
+pub fn bundled_slot_path(genre: &str, nn: &str) -> PathBuf {
+    PathBuf::from(DEFAULT_SONGS_DIR)
+        .join(genre)
+        .join(format!("{nn}.strudel"))
+}
+
+/// Hint for `GET /songs` / `strudel_list_songs`.
+pub const SONGS_LOAD_HINT: &str = "Bundled: strudel_load_song path=\"house/01\" (or legacy house-01). Filter with genre=\"house\" to list numbers. User library: basename only (visitor-dnb), no songs/ prefix.";
+
+/// Snapshot for list_songs (HTTP + MCP).
+#[derive(Debug, Clone)]
+pub struct SongListing {
+    pub user_library: Vec<String>,
+    pub genres: Vec<BundledGenre>,
+    pub bundled: Vec<String>,
+    pub load_hint: &'static str,
+}
+
+pub fn song_listing(genre: Option<&str>) -> SongListing {
+    let bundled = match genre {
+        Some(g) if is_genre_slug(g) => list_bundled_slots(g)
+            .into_iter()
+            .map(|n| format!("{g}/{n}"))
+            .collect(),
+        _ => Vec::new(),
+    };
+    SongListing {
+        user_library: list_user_library_songs(),
+        genres: list_bundled_genres(),
+        bundled,
+        load_hint: SONGS_LOAD_HINT,
+    }
 }
 
 /// Normalize a user-facing save name to a safe file name (`*.strudel`).
@@ -286,6 +496,8 @@ fn has_dir_component(path: &Path) -> bool {
 ///
 /// - Bare names (no directory): **user library** (`~/.config/strudel-rs/songs`) →
 ///   [`DEFAULT_SONGS_DIR`] → cwd.
+/// - Genre slots (`house/01`, `house-01`): user-library basename first, then
+///   `songs/<genre>/<nn>.strudel`, then the legacy flat `songs/<genre>-<nn>.strudel`.
 /// - Missing `.strudel` / `.txt` is filled in; **`.strudel` before `.txt`**.
 /// - Paths with a directory (e.g. `songs/foo.strudel`): try the path as written,
 ///   then also resolve the **basename** the same way as a bare name. Models often
@@ -400,6 +612,40 @@ pub fn song_path_candidates(input: &str) -> Result<Vec<PathBuf>, String> {
                     push(&mut out, PathBuf::from(name).with_extension("txt"));
                 }
             }
+        }
+    }
+
+    if let Some((genre, nn)) = parse_bundled_slot(input) {
+        let mut slot_paths = Vec::new();
+        push(&mut slot_paths, bundled_slot_path(&genre, &nn));
+        push(
+            &mut slot_paths,
+            PathBuf::from(DEFAULT_SONGS_DIR)
+                .join(&genre)
+                .join(format!("{nn}.txt")),
+        );
+        push(
+            &mut slot_paths,
+            PathBuf::from(DEFAULT_SONGS_DIR).join(format!("{genre}-{nn}.strudel")),
+        );
+        push(
+            &mut slot_paths,
+            PathBuf::from(DEFAULT_SONGS_DIR).join(format!("{genre}-{nn}.txt")),
+        );
+        let insert_at = match &user_dir {
+            Some(ud) => out
+                .iter()
+                .position(|p| !p.starts_with(ud))
+                .unwrap_or(out.len()),
+            None => 0,
+        };
+        let mut i = insert_at;
+        for pth in slot_paths {
+            if out.iter().any(|x| x == &pth) {
+                continue;
+            }
+            out.insert(i, pth);
+            i += 1;
         }
     }
 
@@ -1274,9 +1520,9 @@ bass: note("c2 eb2 g2 bb2").s("sawtooth").lpf(400).gain(0.7)
 
     #[test]
     fn parses_house_01_file() {
-        let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("songs/house-01.strudel");
-        let text = std::fs::read_to_string(&path).expect("house-01.strudel");
-        let s = parse_song(&text, "songs/house-01.strudel").unwrap();
+        let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("songs/house/01.strudel");
+        let text = std::fs::read_to_string(&path).expect("house/01.strudel");
+        let s = parse_song(&text, "songs/house/01.strudel").unwrap();
         assert_eq!(s.title, "warehouse-intro");
         assert_eq!(s.tracks.len(), 3);
         assert_eq!(s.tracks[0].code.sound, "bd:hf");
@@ -1575,11 +1821,9 @@ $: s("hh*8").gain(0.3)
 
     #[test]
     fn bundled_songs_parse() {
-        let dir = concat!(env!("CARGO_MANIFEST_DIR"), "/songs");
+        let dir = Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/songs"));
         let mut found = 0usize;
-        for ent in std::fs::read_dir(dir).expect("songs/") {
-            let ent = ent.unwrap();
-            let path = ent.path();
+        for path in collect_song_files(dir) {
             if path.extension().and_then(|s| s.to_str()) != Some("strudel") {
                 continue;
             }
@@ -1602,21 +1846,63 @@ $: s("hh*8").gain(0.3)
     }
 
     #[test]
+    fn parse_bundled_slot_hyphen_and_slash() {
+        assert_eq!(
+            parse_bundled_slot("house-01"),
+            Some(("house".into(), "01".into()))
+        );
+        assert_eq!(
+            parse_bundled_slot("house/01"),
+            Some(("house".into(), "01".into()))
+        );
+        assert_eq!(
+            parse_bundled_slot("songs/house/01.strudel"),
+            Some(("house".into(), "01".into()))
+        );
+        assert_eq!(
+            parse_bundled_slot("chill-pop/3"),
+            Some(("chill-pop".into(), "03".into()))
+        );
+        assert_eq!(
+            parse_bundled_slot("four-on-the-floor-01"),
+            Some(("four-on-the-floor".into(), "01".into()))
+        );
+        assert_eq!(parse_bundled_slot("visitor-dnb"), None);
+        assert_eq!(parse_bundled_slot("house"), None);
+        assert_eq!(parse_bundled_slot("../house/01"), None);
+    }
+
+    #[test]
     fn song_path_candidates_bare_name_prefers_user_then_songs_strudel() {
         let c = song_path_candidates("house-01").unwrap();
-        let songs_strudel = PathBuf::from("songs").join("house-01.strudel");
+        let slot = PathBuf::from("songs").join("house").join("01.strudel");
+        let legacy = PathBuf::from("songs").join("house-01.strudel");
         assert!(
-            c.iter().any(|p| p == &songs_strudel),
-            "expected songs/house-01.strudel in {c:?}"
+            c.iter().any(|p| p == &slot),
+            "expected songs/house/01.strudel in {c:?}"
+        );
+        assert!(
+            c.iter().any(|p| p == &legacy),
+            "expected legacy songs/house-01.strudel in {c:?}"
         );
         if let Ok(ud) = user_songs_dir() {
             assert_eq!(c[0], ud.join("house-01.strudel"), "{c:?}");
             assert_eq!(c[1], ud.join("house-01.txt"), "{c:?}");
-            assert_eq!(c[2], songs_strudel, "{c:?}");
+            assert_eq!(c[2], slot, "{c:?}");
         } else {
-            assert_eq!(c[0], songs_strudel, "{c:?}");
+            assert_eq!(c[0], slot, "{c:?}");
         }
         assert!(c.iter().any(|p| p == &PathBuf::from("house-01.strudel")));
+    }
+
+    #[test]
+    fn song_path_candidates_slash_slot() {
+        let c = song_path_candidates("house/01").unwrap();
+        let slot = PathBuf::from("songs").join("house").join("01.strudel");
+        assert!(
+            c.iter().any(|p| p == &slot),
+            "expected songs/house/01.strudel in {c:?}"
+        );
     }
 
     #[test]
@@ -1653,13 +1939,15 @@ $: s("hh*8").gain(0.3)
     #[test]
     fn song_path_candidates_bare_with_ext_tries_user_then_songs() {
         let c = song_path_candidates("house-01.strudel").unwrap();
-        let songs = PathBuf::from("songs").join("house-01.strudel");
+        let slot = PathBuf::from("songs").join("house").join("01.strudel");
+        let legacy = PathBuf::from("songs").join("house-01.strudel");
         if let Ok(ud) = user_songs_dir() {
             assert_eq!(c[0], ud.join("house-01.strudel"));
-            assert_eq!(c[1], songs);
+            assert_eq!(c[1], slot, "{c:?}");
         } else {
-            assert_eq!(c[0], songs);
+            assert_eq!(c[0], slot, "{c:?}");
         }
+        assert!(c.iter().any(|p| p == &legacy), "{c:?}");
         assert!(c.iter().any(|p| p == &PathBuf::from("house-01.strudel")));
     }
 
@@ -1696,14 +1984,15 @@ $: s("hh*8").gain(0.3)
     fn resolve_rejects_parent_dir() {
         assert!(resolve_song_path("../secret.strudel").is_err());
         assert!(song_path_candidates("songs/../../x").is_err());
+        assert!(parse_bundled_slot("songs/../../house/01").is_none());
     }
 
     #[test]
     fn resolve_bundled_house_01_by_bare_name() {
-        let bundled = Path::new(env!("CARGO_MANIFEST_DIR")).join("songs/house-01.strudel");
+        let bundled = Path::new(env!("CARGO_MANIFEST_DIR")).join("songs/house/01.strudel");
         assert!(bundled.is_file(), "{}", bundled.display());
-        let p = resolve_song_path(bundled.to_str().unwrap()).expect("house-01.strudel");
-        assert!(p.ends_with("house-01.strudel"), "{}", p.display());
+        let p = resolve_song_path(bundled.to_str().unwrap()).expect("house/01.strudel");
+        assert!(p.ends_with("01.strudel"), "{}", p.display());
         assert!(p.is_file());
     }
 

@@ -59,7 +59,7 @@ $: note("[0,4]").scale("<C3:minor C3:minor G3:phrygian C3:minor>")
 
 Keep square at **C2**, `bs:rm` at **C4**, and `plk:s5` degrees `~ 4 ~ <7 4>` as **`// hook`**. Do not retune `bs:rm` to C2. Do not rewrite stab 4/7.
 
-`songs/dnb-reese-01.strudel` is still a thin demo (break + sub + mid + stab). Apply the fence above, not the on-disk file. Full-range Reese with sub is `bs:dk`, not a swap for this mid glue — [strudel-sound-design](../strudel-sound-design/SKILL.md). Do not stack `bs:dk` on this split.
+`songs/dnb-reese/01.strudel` is still a thin demo (break + sub + mid + stab). Apply the fence above, not the on-disk file. Full-range Reese with sub is `bs:dk`, not a swap for this mid glue — [strudel-sound-design](../strudel-sound-design/SKILL.md). Do not stack `bs:dk` on this split.
 
 | Piece | Role |
 | --- | --- |
@@ -151,8 +151,8 @@ No `.compressor` on a `$:` — that writes the **mixer master** (last-write) and
 ## Try it in this app
 
 ```bash
-strudel-rs play songs/dnb-reese-01.strudel --seconds 12
-strudel-rs play songs/dnb-reese-01.strudel --headless --seconds 8
+strudel-rs play songs/dnb-reese/01.strudel --seconds 12
+strudel-rs play songs/dnb-reese/01.strudel --headless --seconds 8
 ```
 
 Play **solo**. Do not `dj` this file with a 124 house or 126 techno song.
@@ -180,7 +180,7 @@ Do not move `bs:rm` to octave 2. Do not replace the square with the sample. Do n
 - [ ] Hook `plk:s5` degrees `~ 4 ~ <7 4>` — do not rewrite 4/7
 - [ ] Break `*2`, drums gain above sub. Never `db`. Never `.fast(2)`
 - [ ] 4-bar phrase on lead / arp / chords / pad
-- [ ] Play **solo** at 174. `songs/dnb-reese-01.strudel` is still a thin demo; this fence is the new target
+- [ ] Play **solo** at 174. `songs/dnb-reese/01.strudel` is still a thin demo; this fence is the new target
 
 ## Do not
 

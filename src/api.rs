@@ -19,8 +19,8 @@ use crate::engine::{Command, Engine};
 use crate::mixer::{FillKind, MixAction, MixCommand, MixGrid, MixStatus};
 use crate::session::SessionKind;
 use crate::song::{
-    ensure_user_songs_dir, list_bundled_songs, list_user_library_songs, parse_song,
-    resolve_song_path, resolve_user_song_save_path, Song, Track, MAX_SONG_CONTENT_BYTES,
+    ensure_user_songs_dir, parse_song, resolve_song_path, resolve_user_song_save_path,
+    song_listing, Song, Track, MAX_SONG_CONTENT_BYTES,
 };
 use axum::extract::Query;
 
@@ -497,23 +497,44 @@ async fn load_song(
     Ok(StatusCode::ACCEPTED)
 }
 
+#[derive(Deserialize, Default)]
+pub struct ListSongsQuery {
+    pub genre: Option<String>,
+}
+
+#[derive(Serialize)]
+pub struct GenreInfo {
+    pub name: String,
+    pub count: usize,
+}
+
 #[derive(Serialize)]
 pub struct ListSongsRes {
     /// Basenames in `~/.config/strudel-rs/songs/` (MCP save target).
     pub user_library: Vec<String>,
-    /// Basenames in cwd `songs/` (demo bundle).
+    /// Slot refs (`house/01`) when `?genre=` is set; empty in the default listing.
     pub bundled: Vec<String>,
+    /// Bundled genre folders and counts.
+    pub genres: Vec<GenreInfo>,
     /// How to pass `path` to `/song/load` / `strudel_load_song`.
     pub load_hint: String,
 }
 
-/// List loadable song basenames (user library + bundled demos).
-async fn list_songs() -> Json<ListSongsRes> {
+/// List loadable songs (user library + bundled genres). `?genre=house` lists numbers.
+async fn list_songs(Query(q): Query<ListSongsQuery>) -> Json<ListSongsRes> {
+    let listing = song_listing(q.genre.as_deref());
     Json(ListSongsRes {
-        user_library: list_user_library_songs(),
-        bundled: list_bundled_songs(),
-        load_hint: "Use bare basename with strudel_load_song path= (e.g. visitor-dnb or house-01). Prefer user_library names for MCP-saved songs; do not prefix songs/."
-            .into(),
+        user_library: listing.user_library,
+        bundled: listing.bundled,
+        genres: listing
+            .genres
+            .into_iter()
+            .map(|g| GenreInfo {
+                name: g.name,
+                count: g.count,
+            })
+            .collect(),
+        load_hint: listing.load_hint.into(),
     })
 }
 
@@ -1800,6 +1821,8 @@ b: note("c3").s("sawtooth").gain(0.8)
     #[test]
     fn sanitize_path_ok() {
         assert!(sanitize_song_path("songs/house-01.strudel").is_ok());
+        assert!(sanitize_song_path("songs/house/01.strudel").is_ok());
+        assert!(sanitize_song_path("house/01").is_ok());
         assert!(sanitize_song_path("../secret.strudel").is_err());
         assert!(sanitize_song_path("..\\secret.strudel").is_err());
         assert!(sanitize_song_path("songs/../../etc/passwd").is_err());

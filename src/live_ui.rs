@@ -1532,7 +1532,7 @@ fn pane_lines(args: PaneArgs<'_>) -> Vec<String> {
                 render_ansi_ex(model, &spans, &header, false)
             } else {
                 format!(
-                    "[{}] (empty)\n────────────────────────────────────────\n{} load songs/….strudel\n",
+                    "[{}] (empty)\n────────────────────────────────────────\n/{} house 01\n",
                     deck_label,
                     deck_label.to_ascii_lowercase()
                 )

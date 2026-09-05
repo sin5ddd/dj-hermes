@@ -23,8 +23,8 @@ use crate::api::{deck_idx, default_api_base, snapshot, AppState, StatusInfo, DEF
 use crate::engine::Command;
 use crate::session::SessionKind;
 use crate::song::{
-    ensure_user_songs_dir, list_bundled_songs, list_user_library_songs, parse_song,
-    resolve_song_path, resolve_user_song_save_path, MAX_SONG_CONTENT_BYTES,
+    ensure_user_songs_dir, is_genre_slug, parse_song, resolve_song_path,
+    resolve_user_song_save_path, song_listing, MAX_SONG_CONTENT_BYTES,
 };
 
 const PROTOCOL_VERSION: &str = "2025-03-26";
@@ -299,13 +299,13 @@ fn tools_list(session: SessionKind) -> Value {
             },
             {
                 "name": "strudel_load_song",
-                "description": "Deck: load a song onto a deck (next bar). Prefer a BARE basename only (e.g. path=\"visitor-dnb\" or \"house-01\") — searches ~/.config/strudel-rs/songs/ first, then repo songs/. Optional .strudel. After strudel_save_song, load with the same basename (no songs/ prefix). Example: path=\"visitor-dnb\", deck=\"A\".",
+                "description": "Deck: load a song onto a deck (next bar). Bundled demos: path=\"house/01\" or legacy \"house-01\". User library: bare basename (visitor-dnb). Searches ~/.config/strudel-rs/songs/ first, then songs/<genre>/<nn>.strudel. After strudel_save_song, load with the same basename (no songs/ prefix). Example: path=\"house/01\", deck=\"A\".",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
                         "path": {
                             "type": "string",
-                            "description": "Bare name preferred: visitor-dnb, house-01 (not songs/visitor-dnb.strudel)"
+                            "description": "house/01, house-01, or user-library basename visitor-dnb"
                         },
                         "deck": { "type": "string", "description": "A or B" }
                     },
@@ -329,10 +329,15 @@ fn tools_list(session: SessionKind) -> Value {
             },
             {
                 "name": "strudel_list_songs",
-                "description": "Deck: list song basenames available to load. Returns user library (~/.config/strudel-rs/songs/) and bundled songs/ names. Use these bare names with strudel_load_song.",
+                "description": "Deck: list songs. Default returns genres (name + count) and user_library. Pass genre=\"house\" to list bundled slot refs (house/01) in bundled. Use those with strudel_load_song.",
                 "inputSchema": {
                     "type": "object",
-                    "properties": {}
+                    "properties": {
+                        "genre": {
+                            "type": "string",
+                            "description": "Optional genre folder (house, chill-pop). When set, bundled lists house/01 …"
+                        }
+                    }
                 }
             },
             {
@@ -610,7 +615,13 @@ fn tools_call_http(
                 json!({ "content": content, "deck": deck }),
             )
         }
-        "strudel_list_songs" => http_get(client, &format!("{base}/songs")),
+        "strudel_list_songs" => {
+            let url = match args.get("genre").and_then(|v| v.as_str()) {
+                Some(g) if is_genre_slug(g) => format!("{base}/songs?genre={g}"),
+                _ => format!("{base}/songs"),
+            };
+            http_get(client, &url)
+        }
         "strudel_save_song" => {
             let name = arg_str(args, "name")?;
             let mut body = Map::new();
@@ -729,7 +740,7 @@ fn tools_call_local(state: &AppState, name: &str, args: &Value) -> Result<Value,
         "strudel_set_bpm" => local_set_bpm(state, args),
         "strudel_load_song" => local_load_song(state, args),
         "strudel_apply_song" => local_apply_song(state, args),
-        "strudel_list_songs" => local_list_songs(),
+        "strudel_list_songs" => local_list_songs(args),
         "strudel_save_song" => local_save_song(state, args),
         "strudel_get_song" => local_get_song(state, args),
         "strudel_patch_track" => local_patch_track(state, args),
@@ -964,11 +975,19 @@ fn local_load_song(state: &AppState, args: &Value) -> Result<String, String> {
     Ok("ok (202)".into())
 }
 
-fn local_list_songs() -> Result<String, String> {
+fn local_list_songs(args: &Value) -> Result<String, String> {
+    let genre = args.get("genre").and_then(|v| v.as_str());
+    let listing = song_listing(genre);
+    let genres: Vec<Value> = listing
+        .genres
+        .into_iter()
+        .map(|g| json!({ "name": g.name, "count": g.count }))
+        .collect();
     let body = json!({
-        "user_library": list_user_library_songs(),
-        "bundled": list_bundled_songs(),
-        "load_hint": "Use bare basename with strudel_load_song path= (e.g. visitor-dnb or house-01). Prefer user_library names for MCP-saved songs; do not prefix songs/."
+        "user_library": listing.user_library,
+        "bundled": listing.bundled,
+        "genres": genres,
+        "load_hint": listing.load_hint,
     });
     serde_json::to_string(&body).map_err(|e| e.to_string())
 }
@@ -1229,9 +1248,8 @@ fn format_tool_local_error(err: &str, tool: &str) -> String {
     let mut out = format!("error: {err}");
     if lower.contains("song not found") {
         out.push_str(
-            "\nHint: use a bare basename for path (e.g. visitor-dnb or house-01), not songs/.... \
-User-library saves live under ~/.config/strudel-rs/songs/. Call strudel_list_songs to see names, \
-then strudel_load_song(path=<basename>, deck=A|B).",
+            "\nHint: bundled path is house/01 or legacy house-01; user-library is a basename (visitor-dnb). \
+Call strudel_list_songs (optional genre=house), then strudel_load_song(path=..., deck=A|B).",
         );
     } else {
         let looks_like_song_parse = (lower.contains("expected")
@@ -1273,9 +1291,8 @@ fn format_tool_http_error(base: &str, err: &str, tool: &str) -> String {
     let mut out = format!("error: {err}");
     if lower.contains("song not found") {
         out.push_str(
-            "\nHint: use a bare basename for path (e.g. visitor-dnb or house-01), not songs/.... \
-User-library saves live under ~/.config/strudel-rs/songs/. Call strudel_list_songs to see names, \
-then strudel_load_song(path=<basename>, deck=A|B).",
+            "\nHint: bundled path is house/01 or legacy house-01; user-library is a basename (visitor-dnb). \
+Call strudel_list_songs (optional genre=house), then strudel_load_song(path=..., deck=A|B).",
         );
     } else {
         let looks_like_song_parse = (lower.contains("expected")

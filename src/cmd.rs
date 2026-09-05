@@ -11,8 +11,9 @@ use crossbeam::channel::Sender;
 use crate::engine::{Command, Engine};
 use crate::session::SessionKind;
 use crate::song::{
-    ensure_user_songs_dir, parse_song, resolve_song_path, resolve_user_song_save_path, Song,
-    MAX_SONG_CONTENT_BYTES,
+    ensure_user_songs_dir, is_genre_slug, list_bundled_genres, list_bundled_slots,
+    looks_like_slot_index, normalize_slot_index, parse_song, resolve_song_path,
+    resolve_user_song_save_path, Song, MAX_SONG_CONTENT_BYTES,
 };
 
 /// Which path is loaded on deck A / B (for reload targeting).
@@ -24,13 +25,15 @@ pub fn new_deck_paths() -> DeckPaths {
 
 pub const HELP: &str = "\
 # local commands (live TUI: prefix with / )
-a|b load <file>     load song (bare name → songs/; .strudel/.txt optional)
+a|b <genre> <n>     load bundled slot (e.g. /a house 01 → songs/house/01.strudel)
+a|b load <file>     load song (bare name, house/01, or house-01)
 a|b reload          re-read last loaded file onto this deck (next bar)
 a|b save [name]     write current deck source to user library (no playback change)
 a|b mute <track>    mute track (next bar)
 a|b unmute <track>
 a|b gain <0..1>     fader (immediate)
 a|b head <bar>      cue song bar (1-based; applies next bar). alias: cue
+list [genre]        bundled genres, or slot numbers in one genre
 x [bars]            xfade to the other deck (default 4)
 a x [bars]          xfade to deck A
 b x [bars]          xfade to deck B
@@ -50,19 +53,21 @@ Esc                 dismiss suggest (or quit when prompt empty)
 
 # live TUI + Hermes
 bare text           send to Hermes (DJ assistant)
-/…                  local command (e.g. /bpm 128, /a load house-01, /viz)
+/…                  local command (e.g. /bpm 128, /a house 01, /viz)
 ";
 
 /// Help for `strudel-rs play` (one song on deck A; no mix / xfade / B).
 pub const HELP_PLAY: &str = "\
 # local commands (live TUI: prefix with / )
-load <file>         load song (bare name → songs/; alias of a load)
+<genre> <n>         load bundled slot (e.g. /house 01 → songs/house/01.strudel)
+load <file>         load song (bare name, house/01, or house-01; alias of a load)
 reload              re-read last loaded file (next bar)
 save [name]         write current source to user library (no playback change)
 mute <track>        mute track (next bar)
 unmute <track>
 gain <0..1>         fader (immediate)
 head <bar>          cue song bar (1-based; applies next bar). alias: cue
+list [genre]        bundled genres, or slot numbers in one genre
 a load|save|…       same verbs with an explicit deck A prefix
 bpm <n>             BPM from next bar
 hush                stop all (immediate)  [operator]
@@ -76,7 +81,7 @@ Esc                 dismiss suggest (or quit when prompt empty)
 
 # live TUI + Hermes
 bare text           send to Hermes (play assistant)
-/…                  local command (e.g. /bpm 128, /load house-01, /viz)
+/…                  local command (e.g. /bpm 128, /house 01, /load house/01, /viz)
 
 play is one song (deck A). mix / xfade / deck B: use `strudel-rs dj`.
 ";
@@ -111,6 +116,9 @@ fn preprocess_play_line(line: &str) -> Result<String, String> {
         return Err("mix / xfade は dj 専用です。play は1曲です。".into());
     }
     if PLAY_ALIAS_VERBS.contains(&head) {
+        return Ok(format!("a {line}"));
+    }
+    if args.len() >= 2 && is_genre_slug(head) && looks_like_slot_index(args[1]) {
         return Ok(format!("a {line}"));
     }
     Ok(line.to_string())
@@ -264,6 +272,7 @@ pub fn exec_in(
             };
         }
         "status" => return status(deck_paths, engine),
+        "list" => return list_songs_cmd(&args[1..]),
         "mix" => return exec_mix(&args, tx, engine),
         "x" | "xfade" => {
             let bars = args
@@ -282,13 +291,14 @@ pub fn exec_in(
     // Deck-prefixed: `a load path`, `b mute kick`, `a x 4`, …
     if let Some(deck) = parse_deck(args[0]) {
         if args.len() < 2 {
-            return ExecResult::msg("usage: a|b <load|mute|unmute|gain|head|x|save|reload> …");
+            return ExecResult::msg(
+                "usage: a|b <genre> <n> | a|b <load|mute|unmute|gain|head|x|save|reload> …",
+            );
         }
         let verb = args[1];
         match verb {
             "load" if args.len() >= 3 => {
-                // Allow paths with spaces: join rest.
-                let path = PathBuf::from(args[2..].join(" "));
+                let path = load_path_from_args(&args[2..]);
                 return load_song(deck, path, tx, deck_paths);
             }
             "reload" => return reload_song(deck, tx, deck_paths),
@@ -352,14 +362,74 @@ pub fn exec_in(
                 ));
             }
             other => {
+                if is_genre_slug(other) {
+                    if args.len() == 2 {
+                        return list_songs_cmd(&[other]);
+                    }
+                    if args.len() >= 3 {
+                        if let Some(slot) = slot_ref(other, args[2]) {
+                            return load_song(deck, PathBuf::from(slot), tx, deck_paths);
+                        }
+                        return ExecResult::msg(format!(
+                            "usage: a|b {other} <n>   (例: a {other} 01)"
+                        ));
+                    }
+                }
                 return ExecResult::msg(format!(
-                    "unknown verb '{other}' (try: load mute unmute gain head x save reload)"
+                    "unknown verb '{other}' (try: house 01, load, mute, unmute, gain, head, x, save, reload)"
                 ));
             }
         }
     }
 
     ExecResult::msg(format!("unknown: {} (try help)", args[0]))
+}
+
+fn slot_ref(genre: &str, idx: &str) -> Option<String> {
+    if !is_genre_slug(genre) {
+        return None;
+    }
+    let nn = normalize_slot_index(idx)?;
+    Some(format!("{genre}/{nn}"))
+}
+
+fn load_path_from_args(rest: &[&str]) -> PathBuf {
+    if rest.len() >= 2 {
+        if let Some(slot) = slot_ref(rest[0], rest[1]) {
+            return PathBuf::from(slot);
+        }
+    }
+    PathBuf::from(rest.join(" "))
+}
+
+fn list_songs_cmd(args: &[&str]) -> ExecResult {
+    if args.is_empty() {
+        let genres = list_bundled_genres();
+        if genres.is_empty() {
+            return ExecResult::msg(
+                "no bundled genres (cwd songs/<genre>/<nn>.strudel). try /a load <file>",
+            );
+        }
+        let mut lines: Vec<String> = vec!["genres:".into()];
+        for g in genres {
+            lines.push(format!("  {} ({})", g.name, g.count));
+        }
+        lines.push("load: /a <genre> <n>   (例: /a house 01)".into());
+        return ExecResult::msgs(lines);
+    }
+    let genre = args[0];
+    if !is_genre_slug(genre) {
+        return ExecResult::msg(format!("bad genre name: {genre}"));
+    }
+    let slots = list_bundled_slots(genre);
+    if slots.is_empty() {
+        return ExecResult::msg(format!("no slots in songs/{genre}/"));
+    }
+    ExecResult::msg(format!(
+        "{genre}: {}   load: /a {genre} {}",
+        slots.join(" "),
+        slots.first().map(|s| s.as_str()).unwrap_or("01")
+    ))
 }
 
 fn load_song(
@@ -709,6 +779,32 @@ mod tests {
         assert_eq!(
             classify_live_input("/status", false),
             LiveInput::LocalCommand("status".into())
+        );
+    }
+
+    #[test]
+    fn parses_a_house_slot_as_path() {
+        let (tx, _rx) = unbounded();
+        let paths = new_deck_paths();
+        let r = exec("a house 01", &tx, &paths, None);
+        assert!(!r.quit);
+        let m = &r.messages[0];
+        assert!(
+            m.contains("house/01") || m.contains("song not found") || m.contains("loaded"),
+            "{m}"
+        );
+    }
+
+    #[test]
+    fn play_house_slot_rewrites_to_deck_a() {
+        let (tx, _rx) = unbounded();
+        let paths = new_deck_paths();
+        let r = exec_in("house 01", &tx, &paths, None, SessionKind::Play);
+        assert!(!r.quit);
+        let m = &r.messages[0];
+        assert!(
+            m.contains("house/01") || m.contains("song not found") || m.contains("loaded"),
+            "{m}"
         );
     }
 

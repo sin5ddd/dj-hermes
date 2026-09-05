@@ -31,8 +31,8 @@ metadata:
 
 ```bash
 strudel-rs play --midi-list
-strudel-rs play songs/house-01.strudel --midi-port SEQTRAK
-strudel-rs play songs/house-01.strudel --midi-only --midi-port SEQTRAK
+strudel-rs play songs/house/01.strudel --midi-port SEQTRAK
+strudel-rs play songs/house/01.strudel --midi-only --midi-port SEQTRAK
 ```
 
 USB は class-compliant。Linux の BLE MIDI は、OS が ALSA シーケンサに出していれば `--midi-list` に並ぶ（アプリは GATT を話さない）。Windows の BLE MIDI は対象外。BLE のペアリングは `bluetoothctl` など OS 側。

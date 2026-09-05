@@ -618,7 +618,7 @@ $: note("0 0 3 0").scale("C2:minor")
 
 `.fm(4).fmh(1)` + `lpf(400)` already fills the mids. `.lpenv(3)` is the per-note filter sweep on that parked base (same env law as the 303 skill: `cutoff = base * 2^(lpenv * level)`). **Do not** put `.fm(8)` on bass (it breaks up). **Do not** add a square sub or `bs:rm` on another `$:` — that is a different mix ([strudel-genre-dnb-reese-mid-stab](../strudel-genre-dnb-reese-mid-stab/SKILL.md)).
 
-`songs/techno-duck-01.strudel` has another live FM bass (`.s("sine").fm(3).fmh(1.5).lpf(500)` at 126). That is this 2-op world, **not** a signed-off recipe here. Do not fold `.fmh(1.5)` into the integer-ratio rule above.
+`songs/techno-duck/01.strudel` has another live FM bass (`.s("sine").fm(3).fmh(1.5).lpf(500)` at 126). That is this 2-op world, **not** a signed-off recipe here. Do not fold `.fmh(1.5)` into the integer-ratio rule above.
 
 ## PCM one-shots (not live FM)
 
@@ -676,7 +676,7 @@ No `.compressor` (mixer master, last-write). No `.duckorbit`. No square sub. No 
 ```bash
 # Apply the inline recipe with strudel_apply_song.
 # Existing 124 pair:
-strudel-rs dj songs/house-01.strudel songs/four-on-the-floor-01.strudel
+strudel-rs dj songs/house/01.strudel songs/four-on-the-floor/01.strudel
 ```
 
 No device: `cargo test --test e2e house_01 -- --nocapture`.
@@ -963,7 +963,7 @@ $: note("0 ~ 0 ~").scale("C4:minor").s("pf:ff").gain(0.25)
 $: s("<fx:up ~ ~ ~>").gain(0.3)
 ```
 
-Apply the inline recipe with `strudel_apply_song`. `songs/house-01.strudel` is a live factory-PCM house floor.
+Apply the inline recipe with `strudel_apply_song`. `songs/house/01.strudel` is a live factory-PCM house floor.
 
 ### Dark Reese (different bed, same 124 clock)
 
@@ -1000,7 +1000,7 @@ floor + lead pair can `dj`. Do not add pad or `bs:dk` on this file.
 ```bash
 # Apply the inline factory-PCM recipes with strudel_apply_song.
 # Existing 124 pair:
-strudel-rs dj songs/house-01.strudel songs/four-on-the-floor-01.strudel
+strudel-rs dj songs/house/01.strudel songs/four-on-the-floor/01.strudel
 ```
 
 No device: `cargo test --test e2e house_01 -- --nocapture`.
