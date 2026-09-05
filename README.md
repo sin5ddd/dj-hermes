@@ -290,7 +290,7 @@ cargo run -- play songs/techno-duck-01.strudel
 cargo run -- play songs/house-01.strudel --seconds 45
 ```
 
-デモ曲は **短い `$:` ループ**（2–5 トラック）が既定。`<>` でサイクル差分を出し、演奏しながらコードを少しずつ書き換える想定（16 小節 `cat` の長尺アレンジではない）。Strudel 記法（`setcpm` / `$:` / `// @title`）なので REPL からのコピペ改造もしやすい。メタデータは [Strudel: Music metadata](https://strudel.cc/learn/metadata/) に合わせている。
+同梱 `songs/` はまだ薄い `$:` ループ（だいたい 3 トラック）。新規 apply と作曲 Skill の既定は **7–8 トラック・4 小節フレーズ**（`docs/profile/dj-hermes/skills/creative/strudel-composition`）。`<>` と `.scale("<…>")` でサイクル差分を出し、演奏しながら 1 本ずつ書き換える想定（16 小節 `cat` の長尺アレンジではない）。Strudel 記法（`setcpm` / `$:` / `// @title`）なので REPL からのコピペ改造もしやすい。メタデータは [Strudel: Music metadata](https://strudel.cc/learn/metadata/) に合わせている。
 
 **ドラムのミニ記法:** スペース=順、カンマ=同時、`@n`=時間ウェイト（elongate）。デモは原則 1 本の `$:`（例: `s("bd*4, [~ sd]*2, [~ hh]*4")`）。duck 付きキックだけは別トラックに残す。
 

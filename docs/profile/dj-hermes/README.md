@@ -24,16 +24,16 @@
 
 ## 同梱 Strudel skills
 
-**ライブ短いループ**向けの作曲ガイド。プロファイル配下へコピーして使う。
+**7–8 本 / 4 小節フレーズ**向けの作曲ガイド。プロファイル配下へコピーして使う。
 
 | スキル | 用途 |
 | --- | --- |
-| `strudel-composition` | 正本: 短いループ + mini + ライブ差分 save |
-| `strudel-data-format` | ファイル形式・メタデータ（2–5 トラック目安） |
+| `strudel-composition` | 正本: 7–8 本 + 4 小節フレーズ + mini + ライブ差分 |
+| `strudel-data-format` | ファイル形式・メタデータ（7–8 トラック目安） |
 | `strudel-sound-design` | 波形・エフェクト・音色（ライブで触るツマミ） |
 | `strudel-pcm-catalog` | rust-fm-synthe `part:slug`（INDEX 付き） |
 | `strudel-live-edit` | 自然言語 → 1 トラック / 1 メソッドの差分 |
-| `strudel-genre-*` | ジャンル別レシピ（16 小節 cat は書かない） |
+| `strudel-genre-*` | ジャンル別 8 スロット（16 小節 cat は書かない） |
 | その他 | `strudel-minor-scale-loop` / `strudel-mood-bright-dark` など |
 
 エージェントは `skills_list` / `skill_view` で必要なものだけ読む（progressive disclosure）。  
@@ -125,8 +125,8 @@ hermes --profile dj-hermes skills list --source local --enabled-only
 
 skills / SOUL / MCP は次で揃えている:
 
-- content = `setcpm(...)` + **短い** `$:` 行のみ（2–5 トラック目安。`stack` / `.cpm` 禁止）
-- 既定は 1 サイクル + `<>`。長尺 `cat` は非既定
+- content = `setcpm(...)` + **7–8 本**の `$:`（`stack` / `.cpm` 禁止）
+- 既定は 4 小節フレーズ（`.scale("<…>")` / 4 子の `<>`）。長尺 `cat` は非既定
 - ライブ編集はオンメモリ（get_song + edit_method / patch_track、または apply_song）
 - ディスク保存は明示時のみ `strudel_save_song`（演奏は変えない）
 - 未実装メソッド（`.lfo`）や未同梱 `cp` は例に出さない。スカラー `.add` / `.sub` / `.ply` は可

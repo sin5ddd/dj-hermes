@@ -1,7 +1,10 @@
 ---
 name: strudel-genre-minimal-techno
-description: "Use when writing Minimal Techno for strudel-rs."
-version: 3.0.0
+description: >-
+  Use when writing Minimal Techno for strudel-rs: 126 BPM, 7–8 sparse
+  tracks with many rests and low gain. Not a house [~ cp]*2 backbeat;
+  one cp every 4 bars is perc color only.
+version: 5.0.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -16,40 +19,71 @@ metadata:
 # strudel-rs × ミニマルテクノ
 
 ## Overview
-要素少なめ・反復・細かい変化。BPM 目安 124–130。音を足しすぎない。
 
-## コピー用フル例
+要素は反復、隙間は多い、gain は低め。この Skill のテンポは **126 BPM**（目安 124–130）。トラック数を削るのではなく、**7–8 本のまま `~` を残す**。
+
+## When
+
+- 依頼が **ミニマルテクノ**（4 つ打ち、隙間、細かい変化）のとき
+- 音を足しすぎず、ハウスの 2/4 クラップでもないとき
+- 4 小節に 1 回の `cp` は色付けで、バックビートではないとき
+
+## Pattern
 
 ```
 // @title visitor-minimal
 // @genre minimal-techno
 setcpm(126/4)
-// kick
-$: s("bd*4").gain(0.9)
-// hat
-$: s("hh*8").gain(0.22).hpf(9000)
-// perc
-$: s("~ cp ~ ~").gain(0.35)
+// drums
+$: s("bd*4, hh*8, <~ ~ ~ cp>").gain(0.7)
 // bass
-$: note("c2 ~ eb2 ~").s("sawtooth").lpf(350).gain(0.45)
+$: note("0 ~ 3 ~").scale("<C2:minor C2:minor C2:minor G2:phrygian>")
+  .s("sawtooth").lpf(320).gain(0.4)
+// lead
+$: note("~ ~ 7 ~").scale("<C4:minor C4:minor C4:minor G4:phrygian>")
+  .s("square").lpf(2000).gain(0.1)
+// hook
+$: note("~ 4 ~ ~").scale("<C4:minor C4:minor C4:minor G4:phrygian>")
+  .s("plk:ac").gain(0.12).cut(1)
+// arp
+$: s("<~ perc:tk ~ perc:st>").gain(0.12)
+// chords
+$: note("~ [0,2,4] ~ ~").scale("<C3:minor C3:minor C3:minor G3:phrygian>")
+  .s("triangle").lpf(1100).gain(0.14)
+// pad
+$: note("[0,4]").scale("<C3:minor C3:minor C3:minor G3:phrygian>")
+  .s("sine").lpf(600).orbit(2).gain(0.1)
+  .attack(0.12).release(0.4)
 ```
+
+同梱 `songs/minimal-techno-01.strudel` はまだ 3 本前後の薄いデモ。新規の apply はこのフェンスを正本にする。
+
+## Why
+
+キックは毎拍、ハットは 16 分、`cp` は 4 小節に 1 回だけ。`[~ cp]*2` にするとハウスのバックビートになる。
 
 ## レシピ
 
-1. キックは 4 つ打ち、他は隙間多め  
-2. 変化は gain / lpf のスカラー調整で  
-3. トラック数 3–5 本まで  
+1. キックは 4 つ打ち。スネアの 2/4 は置かない
+2. メロとコードは `~` を残す。gain は低め（リード 0.1 前後）
+3. 変化は 4 小節目の `cp` と `.scale` の 4 小節目（G phrygian）
+4. arp スロットは毎小節撃たない perc（`perc:tk` / `perc:st`）
+5. 本数は 7–8 のまま。3–5 本に削らない
 
 鳴らすのは `strudel_apply_song(content, deck)`（次小節、無書き込み）。`strudel_save_song` は残す指示のときだけ（演奏は変えない）。
 
 ## Pitfalls
 
-1. レイヤー過多 → ミニマルが崩れる  
-2. `stack` / `.cpm` → apply / save とも 400  
-3. メロディを盛りすぎる  
+1. `stack()` / `.cpm()` / `.lfo()` → apply / save とも 400
+2. ドラムを kick / hat / perc の 3 `$:` に分ける
+3. `in_bank=no` の `ld:ac` / `pf:al` / `dr:*` / `ps:*` → 無音
+4. `[~ cp]*2` を書く（4 小節に 1 回の `cp` とは別物）
+5. レイヤー過多やメロの埋めすぎで隙間が消える
 
 ## Checklist
 
-- [ ] `setcpm` + `$:`  
-- [ ] 要素が少ない  
-- [ ] `strudel_apply_song(content, deck)`（save は残す指示のときだけ）  
+- [ ] 7 本（// drums // bass // lead // hook // arp // chords // pad）
+- [ ] 4 小節フレーズ（`.scale("<…>")` が 4 個。arp は 4 子の `<>`）
+- [ ] ドラムは 1 本のカンマ層。`[~ cp]*2` は書いていない
+- [ ] 隙間と低 gain が残っている
+- [ ] `strudel_apply_song(content, deck)`（save は残す指示のときだけ）

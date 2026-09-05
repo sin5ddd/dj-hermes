@@ -3,7 +3,7 @@
 展示用 profile `dj-hermes` が使う **ローカル skills** です。  
 本家 Strudel REPL 記法は含みません。保存形式は `setcpm` + `$:` のみ。
 
-**思想**: 短いループを重ね、演奏しながら content を逐次書き換える（16 小節 `cat` は非既定）。  
+**思想**: 7–8 本の `$:` を 4 小節フレーズで重ね、演奏しながら 1 本ずつ書き換える（16 小節 `cat` は非既定）。  
 正本は `strudel-composition`。
 
 Hermes の公式バンドル skills とは別物で、`.no-bundled-skills` により公式カタログは入れません。
@@ -13,13 +13,13 @@ Hermes の公式バンドル skills とは別物で、`.no-bundled-skills` に�
 ```
 skills/
   creative/
-    strudel-composition/   # 正本（ライブ短いループ + mini）
+    strudel-composition/   # 正本（7–8 本 + 4 小節フレーズ + mini）
     strudel-live-edit/     # 自然言語 → 差分編集（メロディ/フィル/転調/明暗）
     strudel-dj-mix/        # A/B ミックス（strudel_mix 1 呼び）
     strudel-data-format/   # ファイル形式
     strudel-sound-design/  # 音色・FX・サンプル用法（bank / フルネーム）・役割レシピ
     strudel-pcm-catalog/   # rust-fm-synthe part:slug（INDEX 付き）
-    strudel-genre-*/       # ジャンル別・短いレシピ
+    strudel-genre-*/       # ジャンル別スロット（グリッド + 8 本例）
 ```
 
 各ディレクトリに `SKILL.md` が必要（agentskills.io / Hermes 互換）。

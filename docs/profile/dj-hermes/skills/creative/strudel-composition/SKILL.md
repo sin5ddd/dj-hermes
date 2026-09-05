@@ -1,7 +1,7 @@
 ---
 name: strudel-composition
-description: "Use when writing strudel-rs live patterns: short loops, mini-notation, strudel_apply_song (save only to persist)."
-version: 4.1.0
+description: "Use when writing a strudel-rs song: 7–8 $: tracks (drums, bass 1–2, three melody instruments, chords, pad), 4-bar phrases, strudel_apply_song (save only to persist)."
+version: 5.0.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -16,58 +16,130 @@ metadata:
       - strudel-live-edit
 ---
 
-# strudel-rs 作曲（Composition）— ライブ短いループ
+# strudel-rs 作曲（Composition）— 8 トラック / 4 小節フレーズ
 
 ## Overview
 
-strudel-rs の曲は **短いループを `$:` で重ね、演奏しながら少しずつ書き換える** のが本筋。
+strudel-rs の曲は **`$:` を重ねたループを、演奏しながら 1 本ずつ書き換える**。  
+**新規 apply / プリセット**は薄い 2–5 本では足りない。DSP に余裕がある前提で、**7–8 本・4 小節フレーズ**を既定にする。
 
 - 演奏形式: `setcpm` + **`$:` トラック**のみ（鳴らすのは `strudel_apply_song`）
 - mini-notation は文字列の中だけ（`s("...")` / `note("...")`）
-- **既定は 1 サイクル骨格 + `<>` で小差分**（2–5 トラック）
-- **16 小節 `cat` の長尺アレンジは既定にしない**（ライブ差分が重い）
-- **音色・サンプル**: ドラムは短い `bd`/`sd`/… + 任意 `.bank`。pad/lead/FX はフルネームまたはシンセ（→ **strudel-sound-design** / `samples/LAYOUT.md`）
+- **新規の既定: 7–8 本**（ドラム＋ベース 1～2＋メロディ楽器 3＋コード＋パッド）
+- **繰り返し周期の既定は 4 小節**（1 サイクル＝1 小節のまま。`.scale("<…>")` と 4 子以上の `<>` で周期を延ばす）
+- **16 小節 `cat` は既定にしない**（ライブ差分が重い）。プリセットの A/B は最大 8 引数
+- ジャンルのグリッド・フック次数は **strudel-genre-***。この Skill はスロットと長さ
+- **音色・サンプル**: ドラムは短い `bd`/`sd`/… + 任意 `.bank` または `part:slug`。pad/lead/FX はフルネーム・カタログ・シンセ（→ **strudel-sound-design** / **strudel-pcm-catalog**）
+
+| 場面 | 既定 |
+| --- | --- |
+| 新規曲・プリセット（`strudel_apply_song`） | 7–8 本、4 小節フレーズ |
+| 来場者の一言編集 | **1 トラック or 1 メソッド**（全文を作り直さない） |
+| 同梱 `songs/*.strudel` | まだ 3 本前後の薄いデモ。この Skill の例が新しい目標 |
+
+## スロット（`$:` 本数の正本）
+
+コメント名は短く固定する（`strudel_patch_track` / live-edit の対象名）。
+
+| # | コメント | 役割 |
+| --- | --- | --- |
+| 1 | `// drums` | キット 1 本。カンマ並列。kick/hat/snare を 3 `$:` に分けない |
+| 2 | `// bass` | フロア / サブ。PCM は `C4:…`、シンセは `C2:…` |
+| 3 | `// bass-mid` | 2 本目ベース（Reese ミッド、wobble など）。不要なら **置かない** |
+| 4 | `// lead` | 主メロ |
+| 5 | `// hook` | ジャンルの決めフレーズ（プラック、303、スタブ、EP） |
+| 6 | `// arp` | 対旋律 / アルペジオ / メロディック perc |
+| 7 | `// chords` | ブロック和音。`[0,2,4]` 等。`c3'maj` は root のみなので使わない |
+| 8 | `// pad` | 長い ADSR + room。orbit をリードと分ける |
+
+数え方:
+
+- ベース 1 本: drums + bass + lead + hook + arp + chords + pad = **7**。8 本目は `// perc`（毎小節撃たないワンショット）か対旋律
+- ベース 2 本: drums + bass + bass-mid + lead + hook + arp + chords + pad = **8**
+- **duck 例外**: キックだけ別 `$:`（`duckorbit`）。ハットは 2 本目。この 2 本でドラム枠。残り 6 = bass 1 + メロ 3 + chords + pad。2 本目ベースは足さない
+- 目標 **7–8 本**。9 本以上は既定にしない
+
+各ジャンルの中身（どの PCM / 波形をスロットに入れるか）は **strudel-genre-***。
+
+## フレーズ長
+
+1 サイクル = 1 小節（エンジン）。**繰り返し周期**を 4 小節にする。
+
+1. 和声: 既定 4 小節 `.scale("<Root:mode …>")`。次数パターンは固定
+2. メロ / ベース: `<>` の子を **4 個以上**（1 小節同じフレーズを既定にしない）
+3. ドラム: 1 小節骨格は可。4 小節目だけフィル `..., <~ ~ ~ [fill]>`
+4. 長い PCM FX: `<fx:up ~ ~ ~>`（4 小節に 1 回）
+5. `cat()`: プリセットで A/B を分けるときだけ、**最大 8 引数**
+
+禁止例（地味・短い）: `note("4 ~ ~ ~")` を毎小節、全メロが毎 16 分で同時、全部 `triangle`、コードとパッドが同じ次数・同じオクターブ。
 
 ## 正本テンプレ（そのまま content に）
 
+ベース 1 本 + perc で 8 本。ジャンル Skill はグリッドと PCM を差し替える。
+
 ```
-// @title live-basic
+// @title live-bed
 // @genre techno
 setcpm(128/4)
 
-// bass — 同じ骨格; <> がサイクルごとに末尾を変える
-$: note("0 2 0 3 0 <2 4> <4 2> <2 <3 6>>")
-  .scale("C2:minor")
-  .s("sawtooth").lpf(500).gain(0.7)
-  .attack(0.001).decay(0.06).sustain(0.15).release(0.04)
+// drums
+$: s("bd*4, [~ hh]*4, <~ ~ ~ [~@3 bd ~@4]>").gain(0.55)
 
-// drums — 1 本（* 密度, , 並列, <> で snare/oh）
-$: s("bd*4, [~ <sd oh>]*2, [~ hh]*4").gain(0.5)
+// bass
+$: note("0 0 2 <4 3 5 2>").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
+  .s("sawtooth").lpf(450).gain(0.45)
+  .attack(0.001).decay(0.08).sustain(0.2).release(0.05)
 
 // lead
-$: note("7 6 <4 9> <3 [4 2]>")
-  .scale("C2:minor")
-  .s("square").lpf(3200).gain(0.16)
+$: note("~ 7 6 <4 9 3 7>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
+  .s("square").lpf(2800).gain(0.16)
   .attack(0.001).decay(0.5).sustain(0.1).release(0.03)
 
-// chords — 並列次数 [6,8]
-$: note("0 2 4 [6,8] 0 2 4 [7,9]")
-  .scale("C4:minor")
-  .s("sawtooth").gain(0.35).bpf(1500)
+// hook
+$: note("4 ~ 7 <4 2 0 4>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
+  .s("triangle").lpf(2200).gain(0.18)
+
+// arp
+$: note("0 4 7 12  7 4 0 ~").scale("<C5:minor C5:minor G5:phrygian C5:minor>")
+  .s("triangle").lpf(3200).gain(0.12)
+
+// chords
+$: note("[0,2,4] ~ [0,2,4] ~").scale("<C3:minor C3:minor G3:phrygian C3:minor>")
+  .s("sawtooth").lpf(1400).gain(0.26)
+
+// pad
+$: note("[0,4]").scale("<C3:minor C3:minor G3:phrygian C3:minor>")
+  .s("sine").fm(1.2).fmh(1).fmdec(0.8).fmsus(0.4)
+  .room(0.3).orbit(2).gain(0.16)
+  .attack(0.08).decay(0.2).sustain(0.7).release(0.4)
+
+// perc — 4 小節に 1 回
+$: s("<~ ~ ~ perc:cm>").gain(0.2)
 ```
 
-もっと短い 2 トラック版:
+2 トラック版は **デモやデバッグ専用**。来場者の新規曲やプリセットには使わない。
 
 ```
-// @title demo
+// @title demo-thin
 setcpm(120/4)
 $: s("bd*4, [~ sd]*2, [~ hh]*4").gain(0.55)
 $: note("0 0 2 4").scale("C2:minor").s("sawtooth").lpf(450).gain(0.5)
 ```
 
+## 掛け合い・ミックス（地味さ対策）
+
+- メロ 3 本は **同時に全 16 分を埋めない**。片方が休符のとき他方が出る
+- 役割ごとに波形 / PCM を変える（全部 `triangle` 禁止）
+- pad は 5 度 `[0,4]`、chords は三和音 `[0,2,4]`。オクターブをずらす
+- コードは **3 音まで**、パッドは **2–3 音**。6 音スタック禁止（デッキ `MAX_VOICES` は 32）
+- サブ同士を重ねない（`bs:su` / `bs:hf` / `bs:dk` / `square`+低い lpf）
+- レジスタ: シンセサブは C2 帯。PCM フロアは `C4:` で native。リードは C4 以上
+- gain 目安: drums 0.50–0.70、bass 0.35–0.50、各メロ 0.12–0.22、chords 0.22–0.32、pad 0.14–0.26
+- 長い `ld:` / `pf:` / `dr:` / `ps:` の多くは `in_bank=no`。書ける長い PCM は **`ld:ss` と `pf:ff`**。他は `plk:` / `ep:` / 波形 / ライブ 2-op（→ strudel-pcm-catalog）
+
 ## ライブ編集ワークフロー（必須）
 
-1. 初回: 正本に近い **短い** content を `strudel_apply_song(content, deck)`（ディスクに書かない）
+1. 初回: 正本に近い **7–8 本** content を `strudel_apply_song(content, deck)`（ディスクに書かない）
 2. 来場者の要望: **`strudel_get_song(deck)`** → **1 トラック or 1 メソッド**だけ
    - パラメータ 1 個 → `strudel_edit_method`
    - 1 本の `$:` 差し替え/追加 → `strudel_patch_track`
@@ -82,14 +154,15 @@ $: note("0 0 2 4").scale("C2:minor").s("sawtooth").lpf(450).gain(0.5)
 | ベース動かして | 次数の末尾を `<>` で差し替え |
 | 暗い / 明るい | **モード梯子**（→ **strudel-mood-bright-dark**）。副次で lpf |
 | ブレイク / フィル | drums に `<>` / `.ply(2)` |
-| メロディ足して | lead `$:` + `@` |
+| メロディ足して | 空いている lead/hook/arp を埋める。既に 3 本あるときは 1 本を差し替え |
 | 転調 / 移調 | scale ルート or `.add`/`.sub` |
-| コード足して | chord の `$:` を 1 本追加 or `[6,8]` を変える |
-| 進行変えて | `.scale("<A2:minor D:dorian …>")` の中身を差し替え |
+| コード変えて | `// chords` の `[0,2,4]` または進行の `<>` |
+| パッド薄く | `// pad` の `.gain` / `.lpf` |
+| 進行変えて | `.scale("<A2:minor D:dorian …>")` の中身を差し替え（pitched 全部で揃える） |
 
 明暗の詳細は **strudel-mood-bright-dark**。
 
-**アンチパターン**: 毎回 8–16 引数の `cat(...)` を一から生成する。
+**アンチパターン**: 一言の要望で 8 本全部を `cat(...)` から生成し直す。
 
 ## Mini-notation（`$:` の文字列内だけ）
 
@@ -109,20 +182,20 @@ $: note("0 0 2 4").scale("C2:minor").s("sawtooth").lpf(450).gain(0.5)
 $: s("bd*4, [~ sd]*2, [~ hh]*4").gain(0.55)
 // 不均等グリッド
 $: s("[~@3 bd ~@4]").gain(0.8)
-// たまにフィル（1 サイクル骨格のまま）
-$: s("bd*4, [~ sd]*2, [~ hh]*4, <~ [~@3 bd ~@4]>").gain(0.55)
+// 4 小節目だけフィル（1 サイクル骨格のまま）
+$: s("bd*4, [~ sd]*2, [~ hh]*4, <~ ~ ~ [~@3 bd ~@4]>").gain(0.55)
 ```
 
 ## ドラム統合ルール
 
-1. **原則 1 トラック**: `// drums` + 1 本の `$:` `s(...)`  
-2. **定番骨格** → `bd*4, [~ sd]*2, [~ hh]*4`  
-3. **不均等** → `@`  
-4. **小節っぽい差分** → パターン内の `<>`（まずこれ）  
-5. **例外で分離** — `.duckorbit` 付きキックだけ別 `$:`  
-6. 本家 `stack(...)` は使わない  
-7. **パート名は短く**（`bd` `sd` `hh` `oh` `cp`）。キット差は **`.bank("tr808-hard")` 等**（ディスクは `{bank}_{part}`）。フルネームでリズムを埋めない  
-8. **FM カタログは `bd:hf` のような `part:slug`**（2〜3 字。→ strudel-pcm-catalog）。`kit:bd` は不可。同梱は `s("bd")` / `.n(0)`  
+1. **原則 1 トラック**: `// drums` + 1 本の `$:` `s(...)`
+2. **定番骨格** → `bd*4, [~ sd]*2, [~ hh]*4`（ハウス 2/4 は `[~ cp]*2`。テクノは clap なし）
+3. **不均等** → `@`
+4. **小節っぽい差分** → パターン内の `<>`（まずこれ）。プリセットは 4 小節フィル
+5. **例外で分離** — `.duckorbit` 付きキックだけ別 `$:`
+6. 本家 `stack(...)` は使わない
+7. **パート名は短く**（`bd` `sd` `hh` `oh` `cp`）。キット差は **`.bank("tr808-hard")` 等**（ディスクは `{bank}_{part}`）。フルネームでリズムを埋めない
+8. **FM カタログは `bd:hf` のような `part:slug`**（2〜3 字。→ strudel-pcm-catalog）。`kit:bd` は不可。同梱は `s("bd")` / `.n(0)`
 
 ユーザーキットがあるとき:
 
@@ -138,7 +211,7 @@ bank を付けないと同梱 `samples/bd/` 等が使われる。
 
 ```
 // C minor: 0=c 1=d 2=eb 3=f 4=g 5=ab 6=bb 7=c+oct
-$: note("0 2 0 3 0 <2 4> <4 2>").scale("C2:minor").s("sawtooth").lpf(600).gain(0.5)
+$: note("0 2 0 3 0 <2 4 5 3>").scale("C2:minor").s("sawtooth").lpf(600).gain(0.5)
 // head の n(...) も可（メソッド .n(1) サンプル index とは別）
 $: n("0 0 2 4").scale("C2:minor").s("sine").lpf(400).gain(0.55)
 // 和音は並列次数; 移調は .add/.sub（スカラーまたは mini。LFO は不可）
@@ -157,7 +230,7 @@ $: note("0 2 4").scale("C2:minor").add(2).s("sawtooth").lpf(500).gain(0.5)
 
 ### コード進行テク（`.scale("<…>")`）
 
-同じ次数パターンのまま、**サイクルごとにルート/モードを切り替える**。
+同じ次数パターンのまま、**サイクルごとにルート/モードを切り替える**。プリセットの 4 小節はこれを既定にする。
 
 ```
 // 4 サイクルで Am → Ddor → Gmix → Cmaj（次数 0 がルートを辿る）
@@ -171,18 +244,18 @@ $: note("[0,2,4] ~ [0,2,4] ~")
 
 ルール:
 
-- `<>` の **内側は空白区切り**の `Root:mode`（`:` はスケール名の一部）  
-- **1 引数 = 1 サイクル（1 bar）**。4 個なら 4 小節で一周  
-- 次数パターンは固定のまま、スケール側で進行を出す（ライブで `<>` の中身を差し替えやすい）  
-- オクターブ省略は root 4（`D:dorian` → D4）。ベース用は `A2:minor` のように明示  
-- 固定キーは従来どおり `.scale("C2:minor")`  
+- `<>` の **内側は空白区切り**の `Root:mode`（`:` はスケール名の一部）
+- **1 引数 = 1 サイクル（1 bar）**。4 個なら 4 小節で一周
+- 次数パターンは固定のまま、スケール側で進行を出す（ライブで `<>` の中身を差し替えやすい）
+- オクターブ省略は root 4（`D:dorian` → D4）。ベース用は `A2:minor` のように明示
+- 固定キーは従来どおり `.scale("C2:minor")`。プリセットでは進行を優先
 
 ルール（一般）:
 
-1. 似た変化 → **`<>` で差分**（長尺 `cat` より先）  
-2. 同一キー → 次数 + `.scale("RootOct:mode")`  
-3. **進行** → 次数固定 + `.scale("<Root:mode …>")`  
-4. ベースは **`C2:` / `A2:` のようにオクターブを付ける**  
+1. 似た変化 → **`<>` で差分**（長尺 `cat` より先）
+2. 同一キー → 次数 + `.scale("RootOct:mode")`
+3. **進行** → 次数固定 + `.scale("<Root:mode …>")`（プリセット既定は 4 個）
+4. シンセベースは **`C2:` / `A2:` のようにオクターブを付ける**。PCM ベースは **`C4:`**（native）
 
 ## チェーン
 
@@ -194,8 +267,8 @@ $: s("bd*4, hh*16").hpf(200).gain(0.45)
 不可: `.vib("<1 4>")`、`stack(...)`、`.cpm(120)`、**`.lfo(...)`**（未実装）、mini の **`bd(3,8)`**（ユークリッド未実装。`(` は unexpected char）。
 可: **`.scale("<…>")` 進行**、**`.lpf("<400 1200>")`** / **`.lpf(sine.rangex(500,4000))`** / **`.lpf(sine.range(200,2000).slow(4))`**、**`.add` / `.sub`**（スカラーまたは mini。LFO は不可）、**`.ply`**（整数スカラー）、**`.pan`**（詳細は sound-design）。
 
-同梱サンプル: `bd` `sd` `hh` `oh` `cp`（`samples/cp/00.wav`。ハウス 2/4 は `[~ cp]*2`。テクノキック前は clap を載せない）。  
-追加キット・pad/lead の置き方: **`samples/LAYOUT.md`** / 音色は **strudel-sound-design**。
+同梱サンプル: `bd` `sd` `hh` `oh` `cp`（`samples/cp/00.wav`。ハウス 2/4 は `[~ cp]*2`。テクノキック前は clap を載せない）。
+追加キット・pad/lead の置き方: **`samples/LAYOUT.md`** / 音色は **strudel-sound-design**。カタログ PCM は **strudel-pcm-catalog**（`in_bank=no` は書かない）。
 
 pad / lead / piano でユーザー WAV がある例:
 
@@ -209,41 +282,48 @@ $: note("0 2 4 0").scale("C3:minor").s("piano-acoustic_soft").gain(0.35)
 
 ## テンポ
 
-- `setcpm(30)` → BPM 120（30 cycles/min × 4 beats）  
-- `setcpm(120/4)` → 同じ  
-- 体感テンポ上げは mini の `*2`（バー全体に敷く）。メソッド `.fast(2)` はイベント開始を半分に潰すだけで次サイクルを取り直さない → フルバーが前半だけになる  
+- `setcpm(30)` → BPM 120（30 cycles/min × 4 beats）
+- `setcpm(120/4)` → 同じ
+- 体感テンポ上げは mini の `*2`（バー全体に敷く）。メソッド `.fast(2)` はイベント開始を半分に潰すだけで次サイクルを取り直さない → フルバーが前半だけになる
 
 ## `cat()` について
 
-- **曲ファイルでは可**: `s(cat("a", "b"))`（1 引数 = 1 小節）  
-- **既定では使わない**。短いループ + `<>` で足りる  
-- 来場者が「A メロと B メロをはっきり分けたい」など明確なときだけ  
-- 本家 JS の `arrange` / `stack` は不可  
+- **曲ファイルでは可**: `s(cat("a", "b"))`（1 引数 = 1 小節）
+- **既定では使わない**。4 小節は `.scale("<…>")` と `<>` で足りる
+- 来場者が「A メロと B メロをはっきり分けたい」など明確なときだけ。**最大 8 引数**
+- 本家 JS の `arrange` / `stack` は不可
 
 ## 禁止
 
-- 本家 JS: `stack(...)`、`.cpm()`、裸の `s("...")` 行（`$:` 無し）  
-- 理由なく kick/hat/snare を 3 トラックに分ける  
-- 未実装: `.lfo`  
-- テクノキック前グリッドにハウス `cp` を載せる（`[~ cp]*2` はハウス専用）  
-- 既定での 16 小節 `cat` 長尺  
-- mini 内の `kit:bd`（bank を左に書く形）。カタログは `bd:hf`（part:slug）  
+- 本家 JS: `stack(...)`、`.cpm()`、裸の `s("...")` 行（`$:` 無し）
+- 理由なく kick/hat/snare を 3 トラックに分ける
+- 未実装: `.lfo`
+- テクノキック前グリッドにハウス `cp` を載せる（`[~ cp]*2` はハウス専用）
+- 既定での 16 小節 `cat` 長尺
+- mini 内の `kit:bd`（bank を左に書く形）。カタログは `bd:hf`（part:slug）
+- 新規曲を 2–5 本の薄いループで出す（デバッグ専用の 2 本版を来場者に使わない）
+- `in_bank=no` の `ld:` / `pf:` / `dr:` / `ps:` を content に書く
+- コード 4 音以上、パッド 4 音以上の同時スタック
 
 ## Pitfalls
 
-1. チャットにコードだけ書いて終わりにしない → `strudel_apply_song`（save は残す指示のときだけ。save は演奏を変えない）  
-2. `stack(...).cpm(170)` を content に入れる → 400  
+1. チャットにコードだけ書いて終わりにしない → `strudel_apply_song`（save は残す指示のときだけ。save は演奏を変えない）
+2. `stack(...).cpm(170)` を content に入れる → 400
 3. `.vib("<1 4>")` など未対応メソッドへ `"<...>"` を渡す → パース失敗（`.lpf("<…>")` と `sine.rangex` は可）
-4. mini に `bd(3,8)` や `-` 休符（休符は `~` のみ。`(` は unexpected char）  
+4. mini に `bd(3,8)` や `-` 休符（休符は `~` のみ。`(` は unexpected char）
 5. 毎回フル曲を `strudel_save_song` で書き直して差分が巨大になる（save は演奏を変えない。鳴らすのは apply / patch / edit_method）
 6. ドラムをフルファイル名で書く → 読めない。短い part + `.bank`
-7. `{bank}-{part}.wav` とハイフン連結 → 正は `{bank}_{part}`  
+7. `{bank}-{part}.wav` とハイフン連結 → 正は `{bank}_{part}`
+8. 1 小節 1 音のフック（`4 ~ ~ ~`）を既定にする → 4 子の `<>` か 4 小節 scale
+9. 無い PCM キー（`ld:ac` など `in_bank=no`）→ 無音。`ld:ss` / `pf:ff` / `plk:` / `ep:` / 波形へ
 
 ## Checklist
 
-- [ ] `setcpm` + 2–5 本の `$:`（短いまま）  
-- [ ] ドラムは原則 1 本の短い `s("bd …")`（キットは `.bank`）  
-- [ ] ピッチは可能なら次数 + `.scale`  
-- [ ] pad/lead/piano はフルネーム WAV またはシンセ  
-- [ ] ライブ差分は get_song + edit_method / patch_track  
+- [ ] `setcpm` + **7–8 本**の `$:`（drums、bass 1–2、lead/hook/arp、chords、pad）
+- [ ] 4 小節フレーズ（`.scale("<…>")` 4 個 または `<>` 4 子）。1 小節同一繰り返しだけにしない
+- [ ] ドラムは原則 1 本の短い `s("bd …")`（キットは `.bank` / `part:slug`）。duck キックのみ分離
+- [ ] ピッチは可能なら次数 + `.scale`。PCM は `C4:`、シンセサブは `C2:`
+- [ ] メロ 3 本は掛け合い。コード 3 音まで。pad は別 orbit
+- [ ] pad/lead/piano はフルネーム WAV、カタログ `in_bank=yes`、またはシンセ
+- [ ] ライブ差分は get_song + edit_method / patch_track
 - [ ] 全文 apply は初回・大規模変更のみ。save は残す指示のときだけ

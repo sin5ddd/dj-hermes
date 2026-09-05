@@ -3,7 +3,7 @@ name: strudel-sound-design
 description: >-
   Use when designing synths, samples, banks, or effects for strudel-rs
   (live 2-op FM, factory PCM stems, not full Strudel REPL).
-version: 4.1.0
+version: 4.2.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -36,7 +36,7 @@ metadata:
 ## Overview
 
 この Skill は **strudel-rs**（Rust 自前 DSP）向け。WebAudio 版 Strudel REPL の全機能は持たない。  
-音源・メソッドは実装済みのものだけ。パターンの長さ・ライブ差分は **strudel-composition**（短いループが既定）。
+音源・メソッドは実装済みのものだけ。パターンの長さ・本数・ライブ差分は **strudel-composition**（新規は 7–8 本・4 小節フレーズ。ライブ差分は 1 トラック）。
 
 **サンプル配置の正本（disk）:** リポジトリ `samples/LAYOUT.md`（bank キー・フルネーム・gitignore）。
 
@@ -510,7 +510,7 @@ $: note("0 2 4 7").scale("C3:minor").s("sawtooth").lpf(900).orbit(2).gain(0.35)
 3. **同じ orbit で delay/room を複数トラックから書く** → last-write で上書き。役割ごとに orbit を分ける。
 4. **`c3'maj` で和音が鳴ると思わない** → root のみ。和音は `note("0 2 4")` / `[6,8]` 等で書く。
 5. **ZZFX / supersaw / 外部 wt** は使えない。波形・wt_sine/bright/organ・サンプルに寄せる（ユーザー `lead-supersaw_*` WAV があればフル名で可）。
-6. 音色のために 16 小節 `cat` を書かない → 短いループのままスカラーを触る。
+6. 音色のために 16 小節 `cat` を書かない → 4 小節フレーズのままスカラーを触る。
 7. **`kit:bd`**（bank が左）は不可。カタログは `bd:8b`。同梱は `s("bd")` / `.n(0)` / `.bank("kit")`。
 8. **ドラムをフルネームで埋める**（`s("tr808-hard_bd …")`）→ リズムが読めない。短い part + `.bank`。
 9. **bank のファイル名を `{bank}-{part}` にする** → 正は **`{bank}_{part}`**（アンダースコア）。
@@ -744,7 +744,7 @@ license). Drums stay the bundled folder keys `bd` / `cp` / `hh` / `sd` / `oh`.
 - You need the signed-off `.s(...)` / `.scale(...)` for a **batch 1** factory wav.
 - You need to know **why C4 plays native pitch**, **why FX have no `note()`**,
   **why `pf:ff` cannot brighten**, **why `bs:dk` ≠ `bs:rm`**.
-- You are **not** inventing a genre grid. Do not “improve” the beatmaker song.
+- You are **not** inventing a genre grid. Do not rewrite signed-off hook degrees. Extra tracks follow **strudel-composition**.
 
 ## Engine: `SAMPLE_ROOT_HZ` is C4
 
@@ -945,7 +945,9 @@ Old flat stems at `samples/<stem>.wav` are gone.
 No `.bank(...)` on these names. This batch did not add a `bd/` kit. User extras
 may still use a full stem (`pad-ambient_drone01`).
 
-## Playable songs (do not “improve”)
+## Playable songs (do not rewrite **signed-off degrees**)
+
+Track count follows **strudel-composition** (7–8 `$:`). Do not “improve” the signed-off hook degrees or drum grids below. Adding the missing lead/arp/chords/pad slots is the composition skill, not a rewrite of these stems.
 
 **Floor** = drums + `bs:hf` + `pf:ff` only. House bass is
 `0 0 4 0` (i and 5). Pad stays `0 ~ 0 ~`. FX is `<fx:up ~ ~ ~>` —

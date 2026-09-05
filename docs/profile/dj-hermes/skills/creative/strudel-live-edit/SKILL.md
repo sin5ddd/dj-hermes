@@ -1,7 +1,7 @@
 ---
 name: strudel-live-edit
 description: "Use when editing a playing strudel-rs song from natural language: add melody, drum fill, modulate/transpose, brighter/darker."
-version: 1.1.0
+version: 1.2.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -30,7 +30,7 @@ metadata:
    - メソッド 1 個（`.lpf` / `.gain` / `.add` / `.ply` / `.scale` 等）→ **`strudel_edit_method(deck, track, op, method, args?)`**
      - `op`: `set`（同名は末尾を置換、無ければ追加） / `add`（末尾に追加） / `remove`
    - 1 トラックのチェーン丸ごと差し替え・追加・削除 → **`strudel_patch_track(deck, track, op, code?, name?)`**
-   - 新規曲や大規模な再構成のみ → `strudel_apply_song(content, deck)`（ディスクに書かない）
+   - 新規曲や大規模な再構成のみ → `strudel_apply_song(content, deck)`（ディスクに書かない）。新規は **strudel-composition の 7–8 本**。一言の要望で 8 本全部を作り直さない
 4. バー境界で反映。チャットにコードだけ書いて終わりにしない  
 
 ### edit_method 例
@@ -50,12 +50,15 @@ strudel_edit_method(deck="A", track="hat", op="remove", method="gain")
 
 | 言い方の例 | 対象 | 操作の要約 |
 | --- | --- | --- |
-| メロディ足して / lead 欲しい | 新規 or `// lead` | 次数 + `.scale` + `@` で長め音 |
+| メロディ足して / lead 欲しい | 空いている `// lead` / `// hook` / `// arp`。既に 3 本あるときは 1 本を差し替え | 次数 + `.scale` + `@` で長め音。新規全文は composition の 8 スロット |
 | フィル入れて / ブレイク | `// drums` の `s(...)` | `<>` でフィル層 / `*` / `.ply(n)`。Mixer のディレイ/スイッチは **strudel-dj-mix** |
-| 転調 / キー上げ下げ | 全 `.scale` の **ルート** | ルート変更 or `.scale("<…>")` 進行 |
+| 転調 / キー上げ下げ | 全 `.scale` の **ルート** | ルート変更 or `.scale("<…>")` 進行（pitched 全部で揃える） |
 | 移調 / 半音上げ / 度数上げ | pitched の `$:` | **`.add(n)` / `.sub(n)`**（次数 or 半音） |
 | 明るく / 暗く | 全 `.scale` の **モード** | 明暗梯子を ±1 段（lpf は副次） |
 | ハット細かく | drums | `hh*8` 等（composition のライブ表と同じ） |
+| コード変えて | `// chords` | `[0,2,4]` または進行の `<>` |
+| パッド薄く / 厚く | `// pad` | `.gain` / `.lpf` / `.room`。orbit はリードと分けたまま |
+| フック変えて | `// hook` | ジャンル署名次数は消さない（house の `4 ~ 7 4 …` 等） |
 
 ---
 
@@ -65,14 +68,10 @@ strudel_edit_method(deck="A", track="hat", op="remove", method="gain")
 
 - 既存 pitched トラックの **Root:mode をコピー**（キーをバラバラにしない）  
 - 次数は **0 始まり**。長音は mini **`@`**（`a@2` = a が b の 2 倍の長さ）  
-- 1 本の `$:` を足すか、空いている lead を埋める  
+- 空いている `// lead` / `// hook` / `// arp` を埋める。既に 3 本あるときは 1 本だけ差し替え。新規全文は composition の 7–8 本  
 
 ```
-// @title live-melody
-setcpm(128/4)
-// drums
-$: s("bd*4, [~ sd]*2, [~ hh]*4").gain(0.5)
-// lead — 長めノート + 次数
+// lead — 長めノート + 次数（既存の Root:mode をコピー）
 $: note("0@2 2 4@3 ~ 7")
   .scale("C4:minor")
   .s("triangle").lpf(2800).gain(0.18)
@@ -197,7 +196,7 @@ $: note("0 2 4 0").scale("C2:phrygian").s("sawtooth").lpf(500).gain(0.6)
 | 長音 | mini `@` |
 | 明るく/暗く | モード梯子 ±1 |
 
-不可のまま: `stack(...)`、`.cpm()`、`.lfo(...)`（LFO は `lpf(sine.rangex(...))` 等を使う）、未同梱 `cp`。  
+不可のまま: `stack(...)`、`.cpm()`、`.lfo(...)`（LFO は `lpf(sine.rangex(...))` 等を使う）。`cp` は同梱。ハウス 2/4 専用。  
 可: mini パターン `.lpf("<…>")`、連続 LFO `.lpf(sine.rangex(...))`。
 
 ---

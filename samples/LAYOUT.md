@@ -206,5 +206,5 @@ samples/
 
 - rust-fm-synthe `part:slug` カタログ: `docs/profile/dj-hermes/skills/creative/strudel-pcm-catalog/SKILL.md`
 - 音色レシピ・役割分担: `docs/profile/dj-hermes/skills/creative/strudel-sound-design/SKILL.md`
-- ドラム統合・短いループ: `docs/profile/dj-hermes/skills/creative/strudel-composition/SKILL.md`
+- ドラム統合・7–8 本 / 4 小節フレーズ: `docs/profile/dj-hermes/skills/creative/strudel-composition/SKILL.md`
 - 同梱マッピング: `LICENSE.md`

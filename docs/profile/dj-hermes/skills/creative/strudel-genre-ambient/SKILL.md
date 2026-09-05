@@ -1,7 +1,10 @@
 ---
 name: strudel-genre-ambient
-description: "Use when writing Ambient for strudel-rs."
-version: 3.0.0
+description: >-
+  Use when writing ambient for strudel-rs: thin or no kick, pad as
+  primary, rest-heavy melody, low gain, around 70 BPM. Not chill
+  drums and not house clap.
+version: 5.0.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -16,39 +19,72 @@ metadata:
 # strudel-rs × アンビエント
 
 ## Overview
-ビート控えめ・パッド長め・低めの gain。BPM 目安 60–90 相当（遅め setcpm）。
 
-## コピー用フル例
+キックは薄い、または無し。パッドが主。メロは休符多め。gain は低め。
+BPM 目安 60–90。フェンスは **70**（`setcpm(70/4)`）。
+ハウスやチルより疎い。`songs/ambient-01.strudel` はまだ薄いデモ。目標はこのフェンスの 7 本。
+
+## When
+
+- 来場者がアンビエント、ドローン、空間、静かなパッドを求めるとき
+- キック前のテクノ、ハウスの clap、チルの 2/4 スネアではないとき
+- 新規 apply / プリセット（2–5 本では足りない）
+
+## Pattern
 
 ```
 // @title visitor-ambient
 // @genre ambient
 setcpm(70/4)
+// drums
+$: s("bd:lf ~ ~ ~").gain(0.18)
+// bass
+$: note("0 ~ ~ <0 0 ~ 0>").scale("<C4:minor C4:minor G4:dorian C4:minor>")
+  .s("bs:su").gain(0.28)
+// lead
+$: note("~ 7 ~ <9 7 4 11>").scale("<C4:minor C4:minor G4:dorian C4:minor>")
+  .s("plk:bl").gain(0.1).cut(1)
+// hook
+$: note("0@2 ~ 4@2 ~").scale("<C4:minor C4:minor G4:dorian C4:minor>")
+  .s("plk:am").gain(0.16).cut(1)
+// arp
+$: s("<~ perc:cm ~ perc:tg>").gain(0.1)
+// chords
+$: note("[0,2,4] ~ ~ ~").scale("<C3:minor C3:minor G3:dorian C3:minor>")
+  .s("triangle").lpf(800).gain(0.18)
+  .attack(0.2).release(0.8)
 // pad
-$: note("[c3,e3,g3] ~ [eb3,g3,bb3] ~").s("sawtooth").lpf(600).attack(0.2).release(0.8).gain(0.3).room(0.5)
-// soft bass
-$: note("c2 ~ ~ ~").s("sine").lpf(200).gain(0.35)
-// air
-$: s("hh*4").gain(0.08).hpf(10000)
+$: note("[0,4]").scale("<C4:minor C4:minor G4:dorian C4:minor>")
+  .s("pf:ff").gain(0.24)
+  .attack(0.3).decay(0.4).sustain(0.7).release(0.6).room(0.5).orbit(1)
 ```
+
+`pf:ff` は録音済みの 5 度（C+G）。`[0,2,4]` で鳴らさない。パッドは `[0,4]` の移調だけ。
 
 ## レシピ
 
-1. 長い attack/release  
-2. キックは無し or ごく薄い  
-3. room は薄〜中  
-
-鳴らすのは `strudel_apply_song(content, deck)`（次小節、無書き込み）。`strudel_save_song` は残す指示のときだけ（演奏は変えない）。
+- トラックは 7 本: `// drums` `// bass` `// lead` `// hook` `// arp` `// chords` `// pad`（任意で perc。このフェンスでは arp が perc）
+- ドラムは 1 本の `$:`。キック／スネア／ハットに分けない
+- ピッチトラックは 4 小節 `.scale("<C4:minor C4:minor G4:dorian C4:minor>")`（コードは C3、パッドは C4）
+- PCM は `C4:`。シンセサブは `C2:`。`bs:su` と `bs:hf` は重ねない
+- キックは `bd:lf` を 1 拍だけ、gain 0.18。無しでもよい
+- パッドが主。`pf:ff` は `[0,4]`。コードは `[0,2,4]` を 3 音まで
+- メロ（lead / hook）は休符多め、gain 0.10–0.16
+- `in_bank=no` の長い PCM は書かない。使えるのは `ld:ss` `pf:ff` `plk:*` `ep:*` `perc:*` `bs:*`、波形、`wt_*`、ライブ `.fm`
 
 ## Pitfalls
 
-1. 連打キックでアンビエントが崩れる  
-2. `stack` / `.cpm`  
-3. gain 過大  
-4. `note("c3'maj")` は root 単音（デッキは和音展開しない）。和音は `[c3,e3,g3]` または次数 `[0,2,4]`
+1. 連打キックでアンビエントが崩れる
+2. `stack` / `.cpm` / `.lfo`
+3. gain 過大
+4. `note("c3'maj")` は root 単音。和音は `[0,2,4]`
+5. `pf:ff` を `[0,2,4]` で鳴らす（中身は 5 度のまま三重になる）
+6. `bs:su` の上に `bs:hf` や別のサブを重ねる
+7. `songs/ambient-01.strudel` を正本だと思って 3 本のまま apply する
+8. 70 BPM を 126 テクノと DJ ペアにする（Transport は 1 つ）
 
 ## Checklist
 
-- [ ] ゆったり  
-- [ ] `setcpm` + `$:`  
-- [ ] `strudel_apply_song(content, deck)`（save は残す指示のときだけ）  
+- [ ] 7–8 本（drums / bass / lead / hook / arp / chords / pad。任意 perc）
+- [ ] 4 小節 `.scale("<…>")`。ドラムは 1 本
+- [ ] `strudel_apply_song(content, deck)`。save は残す指示のときだけ
