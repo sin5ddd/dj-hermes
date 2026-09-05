@@ -92,7 +92,7 @@ $: note("[0,4]").scale("<F4:lydian G4:mixolydian E4:phrygian A4:minor>")
   .room(0.3).orbit(2).gain(0.14)
 ```
 
-同梱 `songs/future-bass/01.strudel` は古い 4 つ打ちの薄いデモ。新規 apply はこのフェンス。ディスクのグリッドをコピーしない。
+同梱 `songs/future-bass/01.strudel` はこのフェンスと同じ。4 つ打ちグリッドをコピーしない。
 
 ## Why
 
@@ -143,7 +143,7 @@ PCM は `C4:`（`SAMPLE_ROOT_HZ` は C4。`bs:su` / `ld:ss` / `plk:mx` / `plk:fg
 5. `bs:su` の上に square サブ / `bs:hf` / `bs:dk` を重ねる
 6. `in_bank=no` の `ld:ac` / `pf:al` / `dr:*` / `ps:*` → 無音。長い PCM は `ld:ss` と `pf:ff`
 7. `note("c3'maj")` は root 単音。和音は `[0,4,9]`
-8. ディスクの `songs/future-bass/01.strudel`（4 つ打ち）を完成形としてコピーする
+8. 四つ打ちのハウス／プログレ曲を Future Bass としてコピーする
 9. 140 と 174 を `dj` する（共有時計。片方の BPM が捨てられる）
 10. 「アニソン」とだけ書いて `.scale` を省略する、または I–V–vi–IV を王道として書く
 

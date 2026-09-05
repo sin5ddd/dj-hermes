@@ -59,7 +59,7 @@ $: note("[0,4]").scale("<C3:minor C3:minor G3:phrygian C3:minor>")
 
 Keep square at **C2**, `bs:rm` at **C4**, and `plk:s5` degrees `~ 4 ~ <7 4>` as **`// hook`**. Do not retune `bs:rm` to C2. Do not rewrite stab 4/7.
 
-`songs/dnb-reese/01.strudel` is still a thin demo (break + sub + mid + stab). Apply the fence above, not the on-disk file. Full-range Reese with sub is `bs:dk`, not a swap for this mid glue — [strudel-sound-design](../strudel-sound-design/SKILL.md). Do not stack `bs:dk` on this split.
+`songs/dnb-reese/01.strudel` matches this fence. Full-range Reese with sub is `bs:dk`, not a swap for this mid glue — [strudel-sound-design](../strudel-sound-design/SKILL.md). Do not stack `bs:dk` on this split.
 
 | Piece | Role |
 | --- | --- |
@@ -157,7 +157,7 @@ strudel-rs play songs/dnb-reese/01.strudel --headless --seconds 8
 
 Play **solo**. Do not `dj` this file with a 124 house or 126 techno song.
 
-The on-disk song is still the thin demo. For a full bed, `strudel_apply_song` the Pattern fence.
+Load `songs/dnb-reese/01.strudel`, or `strudel_apply_song` the Pattern fence.
 
 No device: `cargo test --test e2e dnb_reese_01 -- --nocapture`.
 
@@ -180,7 +180,7 @@ Do not move `bs:rm` to octave 2. Do not replace the square with the sample. Do n
 - [ ] Hook `plk:s5` degrees `~ 4 ~ <7 4>` — do not rewrite 4/7
 - [ ] Break `*2`, drums gain above sub. Never `db`. Never `.fast(2)`
 - [ ] 4-bar phrase on lead / arp / chords / pad
-- [ ] Play **solo** at 174. `songs/dnb-reese/01.strudel` is still a thin demo; this fence is the new target
+- [ ] Play **solo** at 174. `songs/dnb-reese/01.strudel` matches this fence
 
 ## Do not
 
@@ -194,5 +194,5 @@ Do not move `bs:rm` to octave 2. Do not replace the square with the sample. Do n
 - Pair this file with 124 house or 126 techno (shared clock; the other tempo is discarded).
 - Write `in_bank=no` PCM (`ld:ac`, `pf:al`, `dr:*`, `ps:*`). Allowed long PCM: `ld:ss`, `pf:ff`.
 - Stack `bs:su` / `bs:dk` on this split. `bs:dk` is a different recipe.
-- Ship the 4-track on-disk demo as a new apply.
+- Ship a 4-track loop for a new apply.
 - `stack()` / `.cpm(174)` / `.lfo()` / `kit:bd`.

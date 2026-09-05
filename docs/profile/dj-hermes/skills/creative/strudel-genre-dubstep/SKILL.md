@@ -60,7 +60,7 @@ $: note("[0,4]").scale("<C3:minor C3:minor G3:phrygian C3:minor>")
   .attack(0.08).release(0.3)
 ```
 
-同梱 `songs/dubstep/01.strudel` はまだ 3 本前後の薄いデモ。新規の apply はこのフェンスを正本にする。
+同梱 `songs/dubstep/01.strudel` はこのフェンスと同じ。
 
 ## Why
 

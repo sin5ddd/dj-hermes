@@ -22,7 +22,7 @@ metadata:
 
 遅め〜中庸、柔らかいドラム、控えめメロ。BPM 目安 80–100。フェンスは **90**（`setcpm(90/4)`）。
 アンビエントよりドラムがある。チルポップほどコードを前面に出さない。
-`songs/chill/01.strudel` はまだ薄いデモ。目標はこのフェンスの 7 本。
+`songs/chill/01.strudel` はこのフェンスと同じ（7 本）。
 
 ## When
 
@@ -79,7 +79,7 @@ $: note("[0,4]").scale("<C3:minor C3:minor F3:dorian C3:minor>")
 3. `bs:su` を `bs:hf` の下に足す
 4. `note("c3'maj")` は root 単音。和音は `[0,2,4]`
 5. キック／スネア／ハットを 3 本の `$:` に分ける
-6. `songs/chill/01.strudel` を正本だと思って 3 本のまま apply する
+6. 新規 apply を 3 本のまま出す
 7. 90 BPM を 70 アンビエントや 100 チルポップと DJ ペアにする（Transport は 1 つ）
 
 ## Checklist

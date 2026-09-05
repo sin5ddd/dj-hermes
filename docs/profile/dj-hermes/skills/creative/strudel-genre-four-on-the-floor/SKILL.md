@@ -87,7 +87,7 @@ $: note("[0,4]").scale("<C3:minor C3:minor G3:phrygian C3:minor>")
   .attack(0.08).decay(0.2).sustain(0.7).release(0.4)
 ```
 
-`songs/four-on-the-floor/01.strudel` is still a thin demo (drums only). Apply the full-song fence, not the on-disk file.
+`songs/four-on-the-floor/01.strudel` matches the full-song fence.
 
 Bass is a synth sub at **C2** (`sawtooth` + `lpf(400)`). Do not stack another sub (`bs:su` / `bs:hf` / `bs:dk` / a second `square`+low lpf). PCM hook/arp stay at **C4/C5**. Chords `[0,2,4]`, pad `[0,4]`. Lead / hook / arp rest on different slots.
 
@@ -122,7 +122,7 @@ strudel-rs play songs/four-on-the-floor/01.strudel --seconds 12
 strudel-rs dj songs/house/01.strudel songs/four-on-the-floor/01.strudel
 ```
 
-The on-disk song is still the thin drum demo. For a full bed, `strudel_apply_song` the full-song fence.
+Load `songs/four-on-the-floor/01.strudel`, or `strudel_apply_song` the full-song fence.
 
 No audio device: `cargo test --test e2e four_on_the_floor -- --nocapture` renders through `Engine::process`.
 
@@ -142,13 +142,13 @@ Live TUI: `/a load four-on-the-floor-01` (or the `songs/` path). HTTP: `POST /so
 - [ ] New apply is **7 `$:`** (drums, bass, lead, hook, arp, chords, pad)
 - [ ] 4-bar phrase on pitched tracks; drums 1-bar + 4th-bar fill is OK
 - [ ] Synth bass at `C2:`. PCM at `C4:` / `C5:`. Chords `[0,2,4]`, pad `[0,4]`
-- [ ] `songs/four-on-the-floor/01.strudel` is still a thin demo; the full-song fence is the new target
+- [ ] `songs/four-on-the-floor/01.strudel` matches the full-song fence
 
 ## Do not
 
 - Call `bd*4, [~ cp]*2` techno — that is a house backbeat (see [strudel-genre-house](../strudel-genre-house/SKILL.md)).
 - Put `[~ cp]*2` on this kick-front grid. Techno: **no clap**.
-- Ship drums-only for a new apply. Do not treat `songs/four-on-the-floor/01.strudel` as the full bed.
+- Ship drums-only for a new apply.
 - Pair this file with a song at another `setcpm` (shared clock; the other tempo is discarded).
 - Write `in_bank=no` PCM (`ld:ac`, `pf:al`, `dr:*`, `ps:*`). Allowed long PCM: `ld:ss`, `pf:ff`.
 - Stack subs (`bs:su` / `bs:hf` / `bs:dk` / a second `square`+low lpf).

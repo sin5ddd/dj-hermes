@@ -64,7 +64,7 @@ $: note("[0,4]").scale("<C3:minor C3:minor G3:phrygian C3:minor>")
 
 Kick `$:` keeps `.duckorbit(2).duckattack(0.04).duckdepth(0.85)`. Hats have **no** `duckorbit`. FM bass and pad (and chords) sit on **orbit 2**. Bass degrees stay the old `0 0 2 <4 6>` shape, expanded to four `<>` children and wrapped in a 4-bar scale.
 
-`songs/techno-duck/01.strudel` is still a thin demo (kick, hats, bass, pad). Apply the fence above, not the on-disk file.
+`songs/techno-duck/01.strudel` matches this fence.
 
 | Piece | Role |
 | --- | --- |
@@ -113,7 +113,7 @@ strudel-rs play songs/techno-duck/01.strudel --headless --seconds 8
 strudel-rs dj songs/techno-duck/01.strudel songs/electro/01.strudel
 ```
 
-The on-disk song is still the thin demo. For a full bed, `strudel_apply_song` the Pattern fence.
+Load `songs/techno-duck/01.strudel`, or `strudel_apply_song` the Pattern fence.
 
 No device: `cargo test --test e2e techno_duck_01 -- --nocapture`.
 
@@ -143,7 +143,7 @@ Live TUI: `/a load techno-duck-01`. Then `/x 4` to crossfade toward B (equal-pow
 - [ ] Bass + pad (+ chords) on orbit 2. Synth bass at `C2:`
 - [ ] 4-bar `.scale("<…>")` on pitched tracks. Hats may stay 1-bar + 4th-bar fill
 - [ ] No clap. Pad `[0,4]` (old rising pad was `0 2 4 7`)
-- [ ] `songs/techno-duck/01.strudel` is still a thin demo; this fence is the new target
+- [ ] `songs/techno-duck/01.strudel` matches this fence
 
 ## Do not
 
@@ -154,6 +154,6 @@ Live TUI: `/a load techno-duck-01`. Then `/x 4` to crossfade toward B (equal-pow
 - Call `bd*4` + `[~ sd]*2` or `[~ cp]*2` techno — that is a house backbeat.
 - Add a second bass (`bs:su` / `bs:hf` / `bs:dk` / extra `square`+low lpf). No 9th track.
 - Write `in_bank=no` PCM (`ld:ac`, `pf:al`, `dr:*`, `ps:*`). Allowed long PCM: `ld:ss`, `pf:ff`.
-- Ship the 4-track on-disk demo as a new apply.
+- Ship a 4-track loop for a new apply.
 - Pair this file with a 174 BPM DnB song (shared clock; the other tempo is discarded).
 - `stack()` / `.cpm(126)` / `.lfo()` / `kit:bd`.

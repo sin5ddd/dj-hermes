@@ -59,7 +59,7 @@ $: note("[0,4]").scale("<C3:minor C3:minor G3:phrygian C3:minor>")
   .attack(0.04).decay(0.15).sustain(0.5).release(0.2)
 ```
 
-同梱 `songs/electro/01.strudel` はまだ 3 本前後の薄いデモ。新規の apply はこのフェンスを正本にする。
+同梱 `songs/electro/01.strudel` はこのフェンスと同じ。
 
 ## Why
 

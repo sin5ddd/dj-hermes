@@ -56,7 +56,7 @@ $: note("[0,4]").scale("<C3:minor C3:minor C3:minor G3:phrygian>")
   .attack(0.12).release(0.4)
 ```
 
-同梱 `songs/minimal-techno/01.strudel` はまだ 3 本前後の薄いデモ。新規の apply はこのフェンスを正本にする。
+同梱 `songs/minimal-techno/01.strudel` はこのフェンスと同じ。
 
 ## Why
 

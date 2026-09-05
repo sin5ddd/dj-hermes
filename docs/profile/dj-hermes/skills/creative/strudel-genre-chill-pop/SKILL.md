@@ -25,7 +25,7 @@ metadata:
 来場者が「チルポップ」と言ったら下表の **シティポップ下降** を書く。単語だけでは Western の I–V–vi–IV や EDM の I–I–IV–I に落ちる。アニソンの **王道進行** は [strudel-genre-future-bass](../strudel-genre-future-bass/SKILL.md) 側。
 
 チル（短調ダウンテンポ）よりコードが前面。ハウス clap は使わない。
-`songs/chill-pop/01.strudel` はまだ薄いデモ。目標はこのフェンスの 7 本。
+`songs/chill-pop/01.strudel` はこのフェンスと同じ（7 本）。
 
 ## When
 
@@ -122,7 +122,7 @@ $: note("[0,4]").scale("<F3:lydian E3:phrygian D3:dorian C3:major>")
 3. `note("c3'maj")` は root 単音。和音は `[0,2,6]`
 4. `ep:rs` に `.scale("C3:…")` を付ける（1 オクターブ下がる）
 5. ハウス `[~ cp]*2` を載せる
-6. `songs/chill-pop/01.strudel` を正本だと思って 3 本のまま apply する
+6. 新規 apply を 3 本のまま出す
 7. 100 BPM を 90 チルや 84 ローファイと DJ ペアにする（Transport は 1 つ）
 8. I–I–IV–I や王道 IV–V–iii–vi を既定にする（王道は future-bass）
 9. メロをアニソンの長い `@` にする。コードを add9 `[0,4,9]` にする

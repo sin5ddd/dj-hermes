@@ -29,7 +29,7 @@ metadata:
 - New apply is **7 `$:` tracks** (one bass under the 303, perc as arp). Play **solo** at 130 BPM.
 - You are **not** writing sidechain duck or putting `.compressor` on the bass.
 
-`songs/acid/01.strudel` is still a thin demo (drums + 303). A parked `.lpf` plus amp ADSR is only a starting point — this skill is the missing envelope piece, now as a 7-track bed.
+`songs/acid/01.strudel` is this 7-track bed. A parked `.lpf` plus amp ADSR is only a starting point — this skill is the missing envelope piece.
 
 ## Pattern
 
@@ -76,7 +76,7 @@ Keep the **exact** 303 note string, patterned `.lpf`, `.lpq(14)`, `.lpenv(3)`, l
 
 7 tracks is OK. Play solo, 130 BPM.
 
-`songs/acid/01.strudel` is still a thin demo. Apply the fence above, not the on-disk file.
+`songs/acid/01.strudel` matches this fence.
 
 | Piece | Role |
 | --- | --- |
@@ -136,7 +136,7 @@ strudel-rs play songs/acid/01.strudel --seconds 12
 strudel-rs play songs/acid/01.strudel --headless --seconds 8
 ```
 
-The on-disk song is still the thin demo. For a full bed, `strudel_apply_song` the Pattern fence.
+Load `songs/acid/01.strudel`, or `strudel_apply_song` the Pattern fence.
 
 No device: `cargo test --test e2e acid_01 -- --nocapture`.
 
@@ -170,7 +170,7 @@ Do not add a second 303 on lead or bass.
 - [ ] Exact 303 note string, lpf pattern, `lpq(14)`, `lpenv(3)`, lp ADSR, `cut(1)`, amp ADSR on hook
 - [ ] 303 scale stays `C2:minor`. Other pitched tracks use 4-bar `.scale("<…>")`
 - [ ] No second 303. No clap. Synth sub at `C2:`, not stacked with `bs:su`
-- [ ] Play **solo** at 130. `songs/acid/01.strudel` is still a thin demo; this fence is the new target
+- [ ] Play **solo** at 130. `songs/acid/01.strudel` matches this fence
 
 ## Do not
 
@@ -184,6 +184,6 @@ Do not add a second 303 on lead or bass.
 - `note("c3'min")` for a triad — suffix is root only; a chord is `note("[0,2,4]")` (and a 303 line should stay mono).
 - Put `.scale("<…>")` on the 303 hook line.
 - Write `in_bank=no` PCM (`ld:ac`, `pf:al`, `dr:*`, `ps:*`). Allowed long PCM: `ld:ss`, `pf:ff`.
-- Ship the 2-track on-disk demo as a new apply.
+- Ship a 2-track loop for a new apply.
 - Pair this file with a different `setcpm` (shared clock; the other tempo is discarded).
 - `stack()` / `.cpm(130)` / `.lfo()` / `kit:bd`.

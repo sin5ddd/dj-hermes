@@ -62,7 +62,7 @@ $: note("[0,4]").scale("<C3:minor C3:minor G3:phrygian C3:minor>")
 
 Keep the break `*2` (not `.fast(2)`). Drums `.gain(0.7)` stays **above** the sub (0.42). Square at **C2** is `// bass`; saw mid is `// bass-mid`. Never `db`.
 
-`songs/dnb/01.strudel` is still a thin demo (break + two Reese layers). Apply the fence above, not the on-disk file.
+`songs/dnb/01.strudel` matches this fence.
 
 Keep drums on **one** `$:` (comma layers). Do not use `stack()`.
 
@@ -101,7 +101,7 @@ strudel-rs play songs/dnb/01.strudel --seconds 12
 strudel-rs play songs/dnb/01.strudel --headless --seconds 8
 ```
 
-The on-disk song is still the thin demo. For a full bed, `strudel_apply_song` the Pattern fence. Play **solo** at 174.
+Load `songs/dnb/01.strudel`, or `strudel_apply_song` the Pattern fence. Play **solo** at 174.
 
 No audio device: `cargo test --test e2e dnb_01 -- --nocapture` renders through `Engine::process`.
 
@@ -131,7 +131,7 @@ Live TUI: `/a load dnb-01` (or the `songs/` path). HTTP: `POST /song/load` with 
 - [ ] Break `*2`, drums gain **above** sub. Never `db`. Never `.fast(2)`
 - [ ] Square `C2` + `lpf(120)` as bass; saw `C2` + `lpf(1000)` as bass-mid
 - [ ] 4-bar phrase on lead / hook / chords / pad. Melody call-and-response
-- [ ] Play **solo** at 174. `songs/dnb/01.strudel` is still a thin demo; this fence is the new target
+- [ ] Play **solo** at 174. `songs/dnb/01.strudel` matches this fence
 
 ## Do not
 
@@ -142,5 +142,5 @@ Live TUI: `/a load dnb-01` (or the `songs/` path). HTTP: `POST /song/load` with 
 - DJ-pair this file with 124 house or 126 techno (shared clock; the other tempo is discarded).
 - Write `in_bank=no` PCM (`ld:ac`, `pf:al`, `dr:*`, `ps:*`). Allowed long PCM: `ld:ss`, `pf:ff`.
 - Stack a third sub (`bs:su` / `bs:hf` / `bs:dk`) on the square+saw split.
-- Ship the 3-track on-disk demo as a new apply.
+- Ship a 3-track loop for a new apply.
 - `stack()` / `.cpm(174)` / `.lfo()` / `kit:bd`.
