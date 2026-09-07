@@ -44,17 +44,16 @@ $: note("0 3 0 <0 -1>").scale("C4:minor").s("bs:rm").gain(0.36)
 $: note("~ 4 ~ <7 4>").scale("C4:minor").s("plk:s5").gain(0.2).cut(1)
 // lead
 $: note("~ 11 7 <12 9 7 4>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
-  .s("square").lpf(2800).gain(0.12)
+  .s("ld:ss").gain(0.12).cut(1)
 // arp
 $: note("~ 0 7 12  7 0 ~ 4").scale("<C5:minor C5:minor G5:phrygian C5:minor>")
   .s("plk:dt").gain(0.12).cut(1)
 // chords
-$: note("[0,4] ~ ~ [0,4]").scale("<C3:minor C3:minor G3:phrygian C3:minor>")
-  .s("triangle").lpf(1400).gain(0.14)
+$: note("[0,4] ~ ~ [0,4]").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
+  .s("ep:mt").gain(0.14)
 // pad
-$: note("[0,4]").scale("<C3:minor C3:minor G3:phrygian C3:minor>")
-  .s("sine").fm(1.2).fmh(1).fmdec(0.8).fmsus(0.4)
-  .room(0.2).orbit(2).gain(0.12)
+$: note("0").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
+  .s("pf:ff").gain(0.12).room(0.2).orbit(2)
 ```
 
 Keep square at **C2**, `bs:rm` at **C4**, and `plk:s5` degrees `~ 4 ~ <7 4>` as **`// hook`**. Do not retune `bs:rm` to C2. Do not rewrite stab 4/7.
@@ -117,7 +116,7 @@ Moving by a fifth or an octave keeps a hollow fifth. It does **not** invent E (m
 
 `.cut(1)` puts the stab on cut group 1; `Deck::alloc_voice` drops earlier voices in that group. The one-shot must not overlap itself.
 
-Lead and arp take the 4-bar `.scale("<…>")` and rest on different slots from the hook. Do not fill all 16ths on every melody track at once. Chords and pad are `[0,4]` so they do not add a third on top of the hollow stab.
+Lead and arp take the 4-bar `.scale("<…>")` and rest on different slots from the hook. Do not fill all 16ths on every melody track at once. Chords are `ep:mt` `[0,4]`; pad is `pf:ff` `note("0")` so they do not add a third on top of the hollow stab.
 
 ## Why `*2`, not `.fast(2)`
 

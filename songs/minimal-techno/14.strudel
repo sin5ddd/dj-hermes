@@ -8,16 +8,15 @@ $: note("0 ~ 3 ~").scale("<E2:minor E2:minor E2:minor B2:phrygian>")
   .s("sawtooth").lpf(320).gain(0.4)
 // lead
 $: note("~ ~ 7 ~").scale("<E4:minor E4:minor E4:minor B4:phrygian>")
-  .s("square").lpf(2000).gain(0.1)
+  .s("plk:pk").gain(0.1).cut(1)
 // hook
 $: note("~ 4 ~ ~").scale("<E4:minor E4:minor E4:minor B4:phrygian>")
   .s("plk:ac").gain(0.12).cut(1)
 // arp
 $: s("<~ perc:tk ~ perc:st>").gain(0.12)
 // chords
-$: note("~ [0,2,4] ~ ~").scale("<E3:minor E3:minor E3:minor B3:phrygian>")
-  .s("triangle").lpf(1100).gain(0.14)
+$: note("~ [0,2,4] ~ ~").scale("<E4:minor E4:minor E4:minor B4:phrygian>")
+  .s("ep:mt").gain(0.14)
 // pad
-$: note("[0,4]").scale("<E3:minor E3:minor E3:minor B3:phrygian>")
-  .s("sine").lpf(600).orbit(2).gain(0.1)
-  .attack(0.12).release(0.4)
+$: note("0").scale("<E4:minor E4:minor E4:minor B4:phrygian>")
+  .s("pf:ff").orbit(2).gain(0.1).room(0.25)

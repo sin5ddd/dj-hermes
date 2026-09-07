@@ -4,8 +4,8 @@ setcpm(100/4)
 // drums
 $: s("bd ~ bd ~, [~ sd]*2, hh*8, <~ ~ ~ [bd sd bd sd]>").gain(0.5)
 // bass
-$: note("0 ~ 4 0  0 ~ <4 7 2 0>").scale("<Bb2:dorian Eb3:mixolydian Ab2:major F3:minor>")
-  .s("sine").lpf(250).gain(0.42)
+$: note("0 ~ 4 0  0 ~ <4 7 2 0>").scale("<Bb4:dorian Eb5:mixolydian Ab4:major F5:minor>")
+  .s("bs:su").gain(0.42)
 // lead
 $: note("~ 2 4 6  4 2 ~ <0 2 4 6>").scale("<Bb4:dorian Eb5:mixolydian Ab4:major F5:minor>")
   .s("plk:ps").gain(0.16).cut(1)
@@ -16,9 +16,8 @@ $: note("0 ~ 2 6  ~ 4 2 <6 4 2 0>").scale("<Bb4:dorian Eb5:mixolydian Ab4:major 
 $: note("0 2 4 6  4 2 0 ~").scale("<Bb5:dorian Eb6:mixolydian Ab5:major F6:minor>")
   .s("plk:ny").gain(0.12).cut(1)
 // chords
-$: note("[0,2,6] ~ [0,2,6] ~").scale("<Bb3:dorian Eb4:mixolydian Ab3:major F4:minor>")
-  .s("triangle").lpf(1400).gain(0.24).room(0.25).orbit(2)
+$: note("[0,2,6] ~ [0,2,6] ~").scale("<Bb4:dorian Eb5:mixolydian Ab4:major F5:minor>")
+  .s("ep:mt").gain(0.24).room(0.25).orbit(2)
 // pad
-$: note("[0,4]").scale("<Bb3:dorian Eb4:mixolydian Ab3:major F4:minor>")
-  .s("sawtooth").lpf(1100).gain(0.14)
-  .attack(0.08).release(0.3)
+$: note("0").scale("<Bb4:dorian Eb5:mixolydian Ab4:major F5:minor>")
+  .s("pf:ff").gain(0.14).room(0.3).orbit(2)

@@ -44,12 +44,11 @@ $: note("4 ~ 7 4  2 0 ~ -1").scale("<C4:minor C4:minor G4:dorian C4:minor>")
 $: note("0 4 7 4").scale("<C5:minor C5:minor G5:dorian C5:minor>")
   .s("plk:hd").gain(0.14).cut(1)
 // chords
-$: note("[0,2,4] ~ [0,2,4] ~").scale("<C3:minor C3:minor G3:dorian C3:minor>")
-  .s("triangle").lpf(1400).gain(0.26)
+$: note("[0,2,4] ~ [0,2,4] ~").scale("<C4:minor C4:minor G4:dorian C4:minor>")
+  .s("ep:ky").gain(0.26)
 // pad
-$: note("[0,4]").scale("<C3:minor C3:minor G3:dorian C3:minor>")
-  .s("sine").fm(1.2).fmh(1).fmdec(0.8).fmsus(0.4)
-  .room(0.3).orbit(2).gain(0.16)
+$: note("0").scale("<C4:minor C4:minor G4:dorian C4:minor>")
+  .s("pf:ff").gain(0.16).room(0.3).orbit(2)
 // perc
 $: s("<~ ~ ~ perc:cm>").gain(0.18)
 ```

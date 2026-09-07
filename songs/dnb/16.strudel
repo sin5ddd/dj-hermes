@@ -13,16 +13,15 @@ $: note("0 3 0 <0 -1 0 3>").scale("G2:minor")
   .attack(0.01).decay(0.4).release(0.3)
 // lead
 $: note("~ 7 ~ <9 7 4 11>").scale("<G4:minor G4:minor D5:phrygian G4:minor>")
-  .s("square").lpf(2600).gain(0.14)
+  .s("ld:ss").gain(0.14).cut(1)
 // hook
 $: note("~ 4 ~ <7 4 4 7>").scale("<G4:minor G4:minor D5:phrygian G4:minor>")
   .s("plk:dt").gain(0.16).cut(1)
 // arp
 $: s("<~ perc:st ~ perc:tm>").gain(0.16)
 // chords
-$: note("[0,4] ~ [0,4] ~").scale("<G3:minor G3:minor D4:phrygian G3:minor>")
-  .s("triangle").lpf(1500).gain(0.16)
+$: note("[0,4] ~ [0,4] ~").scale("<G4:minor G4:minor D5:phrygian G4:minor>")
+  .s("ep:mt").gain(0.16)
 // pad
-$: note("[0,4]").scale("<G3:minor G3:minor D4:phrygian G3:minor>")
-  .s("sine").fm(1.2).fmh(1).fmdec(0.8).fmsus(0.4)
-  .room(0.22).orbit(2).gain(0.12)
+$: note("0").scale("<G4:minor G4:minor D5:phrygian G4:minor>")
+  .s("pf:ff").gain(0.12).room(0.22).orbit(2)

@@ -20,9 +20,8 @@ $: note("~ 4 ~ <7 4 4 7>").scale("<E4:minor E4:minor B4:phrygian E4:minor>")
 // arp
 $: s("<~ perc:tm ~ perc:st>").gain(0.18)
 // chords
-$: note("[0,2,4] ~ ~ ~").scale("<E3:minor E3:minor B3:phrygian E3:minor>")
-  .s("triangle").lpf(1100).gain(0.18).orbit(2)
+$: note("[0,2,4] ~ ~ ~").scale("<E4:minor E4:minor B4:phrygian E4:minor>")
+  .s("ep:ky").gain(0.18).orbit(2)
 // pad
-$: note("[0,4]").scale("<E3:minor E3:minor B3:phrygian E3:minor>")
-  .s("sawtooth").lpf(900).orbit(2).gain(0.28)
-  .attack(0.05).decay(0.2).sustain(0.6).release(0.2)
+$: note("0").scale("<E4:minor E4:minor B4:phrygian E4:minor>")
+  .s("pf:ff").orbit(2).gain(0.22).room(0.25)

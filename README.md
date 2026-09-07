@@ -266,7 +266,7 @@ hermes --profile dj-hermes mcp test strudel
 | ファイル | 内容 | テンポ |
 | --- | --- | --- |
 | `songs/house/01.strudel` | ハウス clap 2/4 + `plk:lp` | 124 BPM |
-| `songs/four-on-the-floor/01.strudel` | kick+offbeat hats + sine/triangle（サンプル不要でも鳴る） | 124 BPM |
+| `songs/four-on-the-floor/01.strudel` | kick+offbeat hats + synth bass + PCM lead/chords/pad | 124 BPM |
 
 ```bash
 cargo run -- play songs/house/01.strudel

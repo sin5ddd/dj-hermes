@@ -64,14 +64,14 @@ House 2/4 is **`[~ cp]*2`** (bundled clap), not `[~ sd]*2`, and not stacked with
 // @genre techno
 setcpm(124/4)
 // drums
-$: s("bd*4, [~ hh]*4, <~ ~ ~ [bd sd bd sd]>").gain(0.62)
+$: s("bd*4, [~ hh]*4, <~ ~ ~ [~@3 bd ~@4]>").gain(0.62)
 // bass
 $: note("0 0 2 <4 0 3 0>").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
   .s("sawtooth").lpf(400).gain(0.44)
   .attack(0.001).decay(0.08).sustain(0.2).release(0.05)
 // lead
 $: note("~ 7 6 <4 9 3 7>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
-  .s("square").lpf(2800).gain(0.15)
+  .s("ld:ss").gain(0.15).cut(1)
 // hook
 $: note("~ 4 ~ <7 4 4 7>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
   .s("plk:s5").gain(0.18).cut(1)
@@ -79,17 +79,16 @@ $: note("~ 4 ~ <7 4 4 7>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
 $: note("0 3 0 7  3 0 5 ~").scale("<C5:minor C5:minor G5:phrygian C5:minor>")
   .s("plk:ac").gain(0.12).cut(1)
 // chords
-$: note("[0,2,4] ~ [0,2,4] ~").scale("<C3:minor C3:minor G3:phrygian C3:minor>")
-  .s("triangle").lpf(1200).gain(0.22)
+$: note("[0,2,4] ~ [0,2,4] ~").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
+  .s("ep:ky").gain(0.22)
 // pad
-$: note("[0,4]").scale("<C3:minor C3:minor G3:phrygian C3:minor>")
-  .s("sawtooth").lpf(800).orbit(2).gain(0.16)
-  .attack(0.08).decay(0.2).sustain(0.7).release(0.4)
+$: note("0").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
+  .s("pf:ff").gain(0.16).room(0.3).orbit(2)
 ```
 
 `songs/four-on-the-floor/01.strudel` matches the full-song fence.
 
-Bass is a synth sub at **C2** (`sawtooth` + `lpf(400)`). Do not stack another sub (`bs:su` / `bs:hf` / `bs:dk` / a second `square`+low lpf). PCM hook/arp stay at **C4/C5**. Chords `[0,2,4]`, pad `[0,4]`. Lead / hook / arp rest on different slots.
+Bass is a synth sub at **C2** (`sawtooth` + `lpf(400)`). Do not stack another sub (`bs:su` / `bs:hf` / `bs:dk` / a second `square`+low lpf). PCM lead/hook/arp/chords/pad stay at **C4/C5**. Chords `ep:ky` `[0,2,4]`, pad `pf:ff` `note("0")`. Lead / hook / arp rest on different slots.
 
 ## Why it sounds that way
 
@@ -106,7 +105,7 @@ Kicks on every quarter are the dance pulse. Offbeat hats fill the eighths. There
 
 `bd*4` is four copies of one atom. `[~ hh]` is rest-then-hat in a quarter-bar; `*4` tiles it four times.
 
-The full-song drums add `<~ ~ ~ [bd sd bd sd]>`: bars 1–3 stay the pulse; bar 4 is a fill. That is still kick-front techno, not a house clap.
+The full-song drums add `<~ ~ ~ [~@3 bd ~@4]>`: bars 1–3 stay the pulse; bar 4 is a kick fill. That is still kick-front techno, not a house clap. A later variant may use `[bd sd bd sd]` as a fill — still not a 2/4 backbeat.
 
 **House** (`bd*4, [~ cp]*2, [~ hh]*4`) adds claps at 0.25 and 0.75. That is a backbeat, not techno four-on-the-floor. See [strudel-genre-house](../strudel-genre-house/SKILL.md). Do not stack `sd` on those hits.
 
@@ -141,7 +140,7 @@ Live TUI: `/a load four-on-the-floor-01` (or the `songs/` path). HTTP: `POST /so
 - [ ] Pulse identity remains `bd*4, [~ hh]*4` (no clap)
 - [ ] New apply is **7 `$:`** (drums, bass, lead, hook, arp, chords, pad)
 - [ ] 4-bar phrase on pitched tracks; drums 1-bar + 4th-bar fill is OK
-- [ ] Synth bass at `C2:`. PCM at `C4:` / `C5:`. Chords `[0,2,4]`, pad `[0,4]`
+- [ ] Synth bass at `C2:`. PCM at `C4:` / `C5:`. Chords `ep:ky` `[0,2,4]`, pad `pf:ff` `note("0")`
 - [ ] `songs/four-on-the-floor/01.strudel` matches the full-song fence
 
 ## Do not

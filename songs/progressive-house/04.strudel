@@ -14,11 +14,10 @@ $: note("~ 7 4 <9 7 4 2>").scale("<E4:minor E4:minor A4:dorian E4:minor>")
   .s("plk:hb").gain(0.18).cut(1)
 // arp
 $: note("0 2 4 7  4 2 0 ~").scale("<E5:minor E5:minor A5:dorian E5:minor>")
-  .s("triangle").lpf(2800).gain(0.12)
+  .s("plk:hd").gain(0.12).cut(1)
 // chords
-$: note("[0,2,4] ~ [0,2,4] ~").scale("<E3:minor E3:minor A3:dorian E3:minor>")
-  .s("sawtooth").lpf(1200).gain(0.24)
-  .attack(0.04).release(0.25)
+$: note("[0,2,4] ~ [0,2,4] ~").scale("<E4:minor E4:minor A4:dorian E4:minor>")
+  .s("ep:ky").gain(0.24)
 // pad
-$: note("[0,4]").scale("<E3:minor E3:minor A3:dorian E3:minor>")
-  .s("sawtooth").lpf(900).attack(0.1).release(0.4).gain(0.18).room(0.4).orbit(2)
+$: note("0").scale("<E4:minor E4:minor A4:dorian E4:minor>")
+  .s("pf:ff").gain(0.18).room(0.4).orbit(2)

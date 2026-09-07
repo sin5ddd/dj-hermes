@@ -51,12 +51,11 @@ $: note("4 ~ 7 4  2 0 ~ -1").scale("<C4:minor C4:minor G4:dorian C4:minor>")
 $: note("~ 0 4 7  ~ 4 0 2").scale("<C5:minor C5:minor G5:dorian C5:minor>")
   .s("plk:hd").gain(0.14).cut(1)
 // chords
-$: note("[0,2,4] ~ [0,2,4] ~").scale("<C3:minor C3:minor G3:dorian C3:minor>")
-  .s("triangle").lpf(1400).gain(0.24)
+$: note("[0,2,4] ~ [0,2,4] ~").scale("<C4:minor C4:minor G4:dorian C4:minor>")
+  .s("ep:ky").gain(0.22)
 // pad
-$: note("[0,4]").scale("<C3:minor C3:minor G3:dorian C3:minor>")
-  .s("sine").fm(1.2).fmh(1).fmdec(0.8).fmsus(0.4)
-  .room(0.3).orbit(2).gain(0.16)
+$: note("0").scale("<C4:minor C4:minor G4:dorian C4:minor>")
+  .s("pf:ff").gain(0.16).room(0.3).orbit(2)
 ```
 
 This fence is the new target (7 tracks: one bass, so perc is not required). Do not “improve” the hook degrees `4 ~ 7 4  2 0 ~ -1` or the clap grid `[~ cp]*2`. Do not add `bs:su`.
@@ -76,7 +75,8 @@ This fence is the new target (7 tracks: one bass, so perc is not required). Do n
 | `.scale("<C4:minor C4:minor G4:dorian C4:minor>")` | 4-bar phrase on pitched tracks |
 | `.s("plk:lp")` | `samples/plk/lp.wav` (`part:slug`) |
 | `.cut(1)` | Steal the previous one-shot (~0.4 s must not overlap itself) |
-| chords `[0,2,4]` / pad `[0,4]` | Triad vs fifth. Pad on orbit 2 |
+| chords `[0,2,4]` on `ep:ky` | PCM triad at **C4**. Do not use `triangle` |
+| pad `pf:ff` `note("0")` | Baked fifth. Do not write `[0,4]`. Orbit 2 |
 | no `.compressor` / no `.duckorbit` | Compressor is mixer last-write. No duck in this recipe |
 
 ## Why `[~ cp]*2`, not `[~ sd]*2`
@@ -127,11 +127,11 @@ That is G–C–G–Eb–C–Bb (5–1–5–b3–1–b7). Do not rewrite it.
 
 Eight atoms = eighths. At 124 BPM an eighth is ~0.242 s. The pluck one-shot is ~0.4 s, so a new note starts before the previous wav ends. `.cut(1)` puts the hook on cut group 1; `Deck::alloc_voice` drops earlier voices in that group (`deck.rs`). Without it the tails stack. Lead and arp also use `.cut(1)` so their one-shots do not overlap themselves.
 
-Pitched tracks share `.scale("<C4:minor C4:minor G4:dorian C4:minor>")` (bass/lead/hook at C4, arp at C5, chords/pad at C3). The degree string stays fixed; bar 3 is G dorian. Do not drop the `<>` back to a 1-bar `.scale("C4:minor")` for a new apply.
+Pitched tracks share `.scale("<C4:minor C4:minor G4:dorian C4:minor>")` (bass/lead/hook/chords/pad at C4, arp at C5). The degree string stays fixed; bar 3 is G dorian. Do not drop the `<>` back to a 1-bar `.scale("C4:minor")` for a new apply.
 
 Lead / hook / arp are call-and-response (rests on different eighths). Do not fill all 16ths on every melody track at once.
 
-**Chord suffixes:** `note("c3'maj")` still plays the **root only** (`deck.rs` does not call `expand_chord`). This song uses degrees, not suffixes. Chords are `[0,2,4]` (max 3 notes). Pad is `[0,4]`.
+**Chord suffixes:** `note("c3'maj")` still plays the **root only** (`deck.rs` does not call `expand_chord`). This song uses degrees, not suffixes. Chords are `[0,2,4]` on `ep:ky` (max 3 notes). Pad is `pf:ff` `note("0")` (baked fifth).
 
 ## Why 124, not techno
 
@@ -172,7 +172,7 @@ Do not add `[~ sd]*2`. Do not drop the clap onto the techno skill song. Do not a
 - [ ] `setcpm(124/4)` + **7 `$:`** (drums, bass, lead, hook, arp, chords, pad). 7 is OK; do not add perc or `bs:su` to make 8
 - [ ] 4-bar phrase on pitched tracks (`.scale("<C4:minor C4:minor G4:dorian C4:minor>")` and octave variants)
 - [ ] Clap grid `[~ cp]*2`. Hook degrees `4 ~ 7 4  2 0 ~ -1`. Do not rewrite either
-- [ ] PCM pitched at `C4:`. One bass (`bs:hf`). Chords `[0,2,4]`, pad `[0,4]`
+- [ ] PCM pitched at `C4:`. One bass (`bs:hf`). Chords `ep:ky` `[0,2,4]`, pad `pf:ff` `note("0")`
 - [ ] `songs/house/01.strudel` matches this fence
 
 ## Do not

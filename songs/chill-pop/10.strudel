@@ -4,8 +4,8 @@ setcpm(100/4)
 // drums
 $: s("bd ~ bd ~, [~ sd]*2, hh*8, <~ ~ ~ [bd sd bd sd]>").gain(0.5)
 // bass
-$: note("0 ~ 4 0  0 ~ <4 7 2 0>").scale("<E3:lydian Eb3:phrygian C#3:dorian B2:major>")
-  .s("sine").lpf(250).gain(0.42)
+$: note("0 ~ 4 0  0 ~ <4 7 2 0>").scale("<E5:lydian Eb5:phrygian C#5:dorian B4:major>")
+  .s("bs:su").gain(0.42)
 // lead
 $: note("~ 2 4 6  4 2 ~ <0 2 4 6>").scale("<E5:lydian Eb5:phrygian C#5:dorian B4:major>")
   .s("plk:ps").gain(0.16).cut(1)
@@ -16,9 +16,8 @@ $: note("0 ~ 2 6  ~ 4 2 <6 4 2 0>").scale("<E5:lydian Eb5:phrygian C#5:dorian B4
 $: note("0 2 4 6  4 2 0 ~").scale("<E6:lydian Eb6:phrygian C#6:dorian B5:major>")
   .s("plk:ny").gain(0.12).cut(1)
 // chords
-$: note("[0,2,6] ~ [0,2,6] ~").scale("<E4:lydian Eb4:phrygian C#4:dorian B3:major>")
-  .s("triangle").lpf(1400).gain(0.24).room(0.25).orbit(2)
+$: note("[0,2,6] ~ [0,2,6] ~").scale("<E5:lydian Eb5:phrygian C#5:dorian B4:major>")
+  .s("ep:mt").gain(0.24).room(0.25).orbit(2)
 // pad
-$: note("[0,4]").scale("<E4:lydian Eb4:phrygian C#4:dorian B3:major>")
-  .s("sawtooth").lpf(1100).gain(0.14)
-  .attack(0.08).release(0.3)
+$: note("0").scale("<E5:lydian Eb5:phrygian C#5:dorian B4:major>")
+  .s("pf:ff").gain(0.14).room(0.3).orbit(2)

@@ -43,7 +43,7 @@ $: note("0 ~ 2 ~ 0 <3 4 2 0>").scale("<C4:minor C4:minor F4:dorian C4:minor>")
   .s("bs:hf").gain(0.4)
 // lead
 $: note("~ 4 ~ 7 ~ <6 9 7 4>").scale("<C4:minor C4:minor F4:dorian C4:minor>")
-  .s("triangle").lpf(1800).gain(0.16)
+  .s("plk:ps").gain(0.16).cut(1)
 // hook
 $: note("0@2 4 7@2 ~").scale("<C4:minor C4:minor F4:dorian C4:minor>")
   .s("plk:am").gain(0.18).cut(1)
@@ -51,13 +51,11 @@ $: note("0@2 4 7@2 ~").scale("<C4:minor C4:minor F4:dorian C4:minor>")
 $: note("~ 7 12 7  4 0 ~ 2").scale("<C5:minor C5:minor F5:dorian C5:minor>")
   .s("plk:hp").gain(0.12).cut(1)
 // chords
-$: note("[0,2,4] ~ [0,2,4] ~").scale("<C3:minor C3:minor F3:dorian C3:minor>")
-  .s("triangle").lpf(1200).gain(0.22).room(0.3).orbit(2)
-  .attack(0.04).release(0.3)
+$: note("[0,2,4] ~ [0,2,4] ~").scale("<C4:minor C4:minor F4:dorian C4:minor>")
+  .s("ep:rs").gain(0.22).room(0.3).orbit(2)
 // pad
-$: note("[0,4]").scale("<C3:minor C3:minor F3:dorian C3:minor>")
-  .s("wt_organ").lpf(900).gain(0.16).room(0.35).orbit(2)
-  .attack(0.12).release(0.5)
+$: note("0").scale("<C4:minor C4:minor F4:dorian C4:minor>")
+  .s("pf:ff").gain(0.16).room(0.35).orbit(2)
 ```
 
 `bs:hf` のみ。`bs:su` は重ねない。
@@ -66,9 +64,10 @@ $: note("[0,4]").scale("<C3:minor C3:minor F3:dorian C3:minor>")
 
 - トラックは 7 本: `// drums` `// bass` `// lead` `// hook` `// arp` `// chords` `// pad`（任意で perc）
 - ドラムは 1 本の `$:`。キック／スネア／ハットに分けない。キックは間引き、ハットは `[~ hh]*4`
-- ピッチトラックは 4 小節 `.scale("<C4:minor C4:minor F4:dorian C4:minor>")`（コード・パッドは C3、arp は C5）
-- PCM は `C4:`。シンセサブは `C2:`。フロアは `bs:hf` だけ（サブ同士を重ねない）
-- コードは `[0,2,4]` を 3 音まで。パッドは `[0,4]`（`wt_organ`）
+- ピッチトラックは 4 小節 `.scale("<C4:minor C4:minor F4:dorian C4:minor>")`（PCM は C4、arp は C5）
+- PCM は `C4:`。フロアは `bs:hf` だけ（サブ同士を重ねない）
+- コードは `ep:rs` の `[0,2,4]` を 3 音まで。パッドは `pf:ff` の `note("0")`
+- メロ／コード／パッドに `triangle` / `sine` / `wt_organ` を使わない
 - メロは掛け合い。gain 0.12–0.18。プラックに `.cut(1)`
 - `in_bank=no` の長い PCM は書かない。使えるのは `ld:ss` `pf:ff` `plk:*` `ep:*` `perc:*` `bs:*`、波形、`wt_*`、ライブ `.fm`
 

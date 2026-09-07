@@ -15,10 +15,8 @@ $: note("0@2 ~ 4@2 ~").scale("<G4:minor G4:minor D5:dorian G4:minor>")
 // arp
 $: s("<~ perc:cm ~ perc:tg>").gain(0.1)
 // chords
-$: note("[0,2,4] ~ ~ ~").scale("<G3:minor G3:minor D4:dorian G3:minor>")
-  .s("triangle").lpf(800).gain(0.18)
-  .attack(0.2).release(0.8)
+$: note("[0,2,4] ~ ~ ~").scale("<G4:minor G4:minor D5:dorian G4:minor>")
+  .s("ep:mt").gain(0.18)
 // pad
-$: note("[0,4]").scale("<G4:minor G4:minor D5:dorian G4:minor>")
-  .s("pf:ff").gain(0.24)
-  .attack(0.3).decay(0.4).sustain(0.7).release(0.6).room(0.5).orbit(1)
+$: note("0").scale("<G4:minor G4:minor D5:dorian G4:minor>")
+  .s("pf:ff").gain(0.24).room(0.5).orbit(1)

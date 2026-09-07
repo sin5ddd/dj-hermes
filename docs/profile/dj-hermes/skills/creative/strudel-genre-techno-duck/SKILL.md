@@ -54,12 +54,11 @@ $: note("~ 4 ~ <7 4 4 7>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
 // arp
 $: s("<~ perc:tm ~ perc:st>").gain(0.18)
 // chords
-$: note("[0,2,4] ~ ~ ~").scale("<C3:minor C3:minor G3:phrygian C3:minor>")
-  .s("triangle").lpf(1100).gain(0.18).orbit(2)
+$: note("[0,2,4] ~ ~ ~").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
+  .s("ep:ky").gain(0.18).orbit(2)
 // pad
-$: note("[0,4]").scale("<C3:minor C3:minor G3:phrygian C3:minor>")
-  .s("sawtooth").lpf(900).orbit(2).gain(0.28)
-  .attack(0.05).decay(0.2).sustain(0.6).release(0.2)
+$: note("0").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
+  .s("pf:ff").orbit(2).gain(0.22).room(0.25)
 ```
 
 Kick `$:` keeps `.duckorbit(2).duckattack(0.04).duckdepth(0.85)`. Hats have **no** `duckorbit`. FM bass and pad (and chords) sit on **orbit 2**. Bass degrees stay the old `0 0 2 <4 6>` shape, expanded to four `<>` children and wrapped in a 4-bar scale.
@@ -75,7 +74,7 @@ Kick `$:` keeps `.duckorbit(2).duckattack(0.04).duckdepth(0.85)`. Hats have **no
 | bass, chords, **and** pad `.orbit(2)` | Those layers get the duck. Unducked FM bass under ~500 Hz is the failure mode. |
 | `s("[~ hh]*4, <~ ~ ~ hh*8>")` | Techno offbeat hats + 4th-bar fill. **No** clap. **No** `[~ sd]*2` — that is a house backbeat. |
 | bass `0 0 2 <4 6 2 0>` | Same contour as `0 0 2 <4 6>`; 4-bar `<>` |
-| pad `[0,4]` | Two-note pad (fifth). Older fence used degrees `0 2 4 7` as a rising pad line |
+| pad `pf:ff` `note("0")` | Baked fifth on orbit 2. Older fence used degrees `0 2 4 7` as a rising pad line |
 | no `.compressor(...)` | Pattern method is **mixer master**, last-write (`engine.rs`) |
 
 ## Why it sounds that way
@@ -93,7 +92,7 @@ Kick stays on orbit 1 (default) so it does not duck itself.
 
 Hats stay on a **separate** `$:` with no `duckorbit`. If hats shared the kick line, each hat onset would retrigger `DuckState` and the pump would chatter.
 
-**Pad used to be four degrees.** The older fence was `note("0 2 4 7").scale("C3:minor")` — a rising C–Eb–G–C line on one `$:`. Composition v5 wants a two-note pad versus a triad on chords, so the pad is now `[0,4]` (C–G) and chords take `[0,2,4]`. The duck still hits the pad because it remains `.orbit(2)`.
+**Pad used to be four degrees.** The older fence was `note("0 2 4 7").scale("C3:minor")` — a rising C–Eb–G–C line on one `$:`. The pad is now `pf:ff` `note("0")` (baked fifth) and chords take `ep:ky` `[0,2,4]`. The duck still hits the pad because it remains `.orbit(2)`.
 
 **Techno grid, not house.** The dance pulse here is `bd*4` plus `[~ hh]*4` (kick in front, hats on the offbeats). `[~ sd]*2` puts snares on 2 and 4 — a **house** backbeat. `[~ cp]*2` is also house. Use those only when the request is house.
 
@@ -142,7 +141,7 @@ Live TUI: `/a load techno-duck-01`. Then `/x 4` to crossfade toward B (equal-pow
 - [ ] Kick has `duckorbit(2)` `duckattack(0.04)` `duckdepth(0.85)`; hats do **not**
 - [ ] Bass + pad (+ chords) on orbit 2. Synth bass at `C2:`
 - [ ] 4-bar `.scale("<…>")` on pitched tracks. Hats may stay 1-bar + 4th-bar fill
-- [ ] No clap. Pad `[0,4]` (old rising pad was `0 2 4 7`)
+- [ ] No clap. Pad `pf:ff` `note("0")` (old rising pad was `0 2 4 7`)
 - [ ] `songs/techno-duck/01.strudel` matches this fence
 
 ## Do not

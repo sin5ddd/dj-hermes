@@ -19,9 +19,7 @@ $: note("0 4 ~ 7  4 ~ 9 4").scale("<Ab4:major Eb5:mixolydian F5:minor C#5:lydian
   .s("plk:fg").gain(0.14).cut(1)
 // chords
 $: note("[0,4,9] ~ [0,4,9] ~").scale("<Ab4:major Eb5:mixolydian F5:minor C#5:lydian>")
-  .s("sawtooth").lpf(1800).gain(0.22).orbit(2)
-  .attack(0.02).decay(0.2).sustain(0.4).release(0.15)
+  .s("plk:ss").gain(0.2).orbit(2)
 // pad
-$: note("[0,4]").scale("<Ab4:major Eb5:mixolydian F5:minor C#5:lydian>")
-  .s("sine").fm(1.2).fmh(1).fmdec(0.8).fmsus(0.4)
-  .room(0.3).orbit(2).gain(0.14)
+$: note("0").scale("<Ab4:major Eb5:mixolydian F5:minor C#5:lydian>")
+  .s("pf:ff").gain(0.14).room(0.3).orbit(2)

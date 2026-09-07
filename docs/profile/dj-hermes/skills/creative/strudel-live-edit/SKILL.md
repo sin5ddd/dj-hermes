@@ -74,8 +74,7 @@ strudel_edit_method(deck="A", track="hat", op="remove", method="gain")
 // lead — 長めノート + 次数（既存の Root:mode をコピー）
 $: note("0@2 2 4@3 ~ 7")
   .scale("C4:minor")
-  .s("triangle").lpf(2800).gain(0.18)
-  .attack(0.01).decay(0.4).sustain(0.2).release(0.08)
+  .s("plk:ps").gain(0.18).cut(1)
 ```
 
 ベースが `C2:minor` なら lead も **同じ mode**、オクターブだけ `C4:` などにする。

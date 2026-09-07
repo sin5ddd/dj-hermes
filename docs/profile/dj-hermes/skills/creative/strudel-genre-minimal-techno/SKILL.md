@@ -41,19 +41,18 @@ $: note("0 ~ 3 ~").scale("<C2:minor C2:minor C2:minor G2:phrygian>")
   .s("sawtooth").lpf(320).gain(0.4)
 // lead
 $: note("~ ~ 7 ~").scale("<C4:minor C4:minor C4:minor G4:phrygian>")
-  .s("square").lpf(2000).gain(0.1)
+  .s("plk:pk").gain(0.1).cut(1)
 // hook
 $: note("~ 4 ~ ~").scale("<C4:minor C4:minor C4:minor G4:phrygian>")
   .s("plk:ac").gain(0.12).cut(1)
 // arp
 $: s("<~ perc:tk ~ perc:st>").gain(0.12)
 // chords
-$: note("~ [0,2,4] ~ ~").scale("<C3:minor C3:minor C3:minor G3:phrygian>")
-  .s("triangle").lpf(1100).gain(0.14)
+$: note("~ [0,2,4] ~ ~").scale("<C4:minor C4:minor C4:minor G4:phrygian>")
+  .s("ep:mt").gain(0.14)
 // pad
-$: note("[0,4]").scale("<C3:minor C3:minor C3:minor G3:phrygian>")
-  .s("sine").lpf(600).orbit(2).gain(0.1)
-  .attack(0.12).release(0.4)
+$: note("0").scale("<C4:minor C4:minor C4:minor G4:phrygian>")
+  .s("pf:ff").orbit(2).gain(0.1).room(0.25)
 ```
 
 同梱 `songs/minimal-techno/01.strudel` はこのフェンスと同じ。

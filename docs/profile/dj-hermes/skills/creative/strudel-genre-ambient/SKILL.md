@@ -50,16 +50,14 @@ $: note("0@2 ~ 4@2 ~").scale("<C4:minor C4:minor G4:dorian C4:minor>")
 // arp
 $: s("<~ perc:cm ~ perc:tg>").gain(0.1)
 // chords
-$: note("[0,2,4] ~ ~ ~").scale("<C3:minor C3:minor G3:dorian C3:minor>")
-  .s("triangle").lpf(800).gain(0.18)
-  .attack(0.2).release(0.8)
+$: note("[0,2,4] ~ ~ ~").scale("<C4:minor C4:minor G4:dorian C4:minor>")
+  .s("ep:mt").gain(0.18)
 // pad
-$: note("[0,4]").scale("<C4:minor C4:minor G4:dorian C4:minor>")
-  .s("pf:ff").gain(0.24)
-  .attack(0.3).decay(0.4).sustain(0.7).release(0.6).room(0.5).orbit(1)
+$: note("0").scale("<C4:minor C4:minor G4:dorian C4:minor>")
+  .s("pf:ff").gain(0.24).room(0.5).orbit(1)
 ```
 
-`pf:ff` は録音済みの 5 度（C+G）。`[0,2,4]` で鳴らさない。パッドは `[0,4]` の移調だけ。
+`pf:ff` は録音済みの 5 度（C+G）。`[0,2,4]` でも `[0,4]` でも鳴らさない。パッドは `note("0")` の移調だけ。コードは `ep:mt`。
 
 ## レシピ
 
@@ -68,7 +66,7 @@ $: note("[0,4]").scale("<C4:minor C4:minor G4:dorian C4:minor>")
 - ピッチトラックは 4 小節 `.scale("<C4:minor C4:minor G4:dorian C4:minor>")`（コードは C3、パッドは C4）
 - PCM は `C4:`。シンセサブは `C2:`。`bs:su` と `bs:hf` は重ねない
 - キックは `bd:lf` を 1 拍だけ、gain 0.18。無しでもよい
-- パッドが主。`pf:ff` は `[0,4]`。コードは `[0,2,4]` を 3 音まで
+- パッドが主。`pf:ff` は `note("0")`。コードは `ep:mt` の `[0,2,4]` を 3 音まで
 - メロ（lead / hook）は休符多め、gain 0.10–0.16
 - `in_bank=no` の長い PCM は書かない。使えるのは `ld:ss` `pf:ff` `plk:*` `ep:*` `perc:*` `bs:*`、波形、`wt_*`、ライブ `.fm`
 

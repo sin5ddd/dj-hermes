@@ -4,7 +4,7 @@ description: >-
   Use when writing chill-pop for strudel-rs: Japanese city pop
   (IV–iii–ii–I 下降, maj7, Rhodes), 95–110 BPM. Not EDM I–I–IV–I,
   not 王道進行, not downtempo chill, not house [~ cp]*2.
-version: 6.0.0
+version: 6.1.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -36,7 +36,7 @@ metadata:
 
 ## 進行（Hermes は名前で書く）
 
-親キー C。次数は固定、`.scale("<…>")` の 4 子が 1 コード／小節。pitched 全部で同じ進行（オクターブだけトラックで変える）。シンセベースは `C2:` 帯、PCM（`ep:rs` / `plk:*`）は `C4:` 帯。
+親キー C。次数は固定、`.scale("<…>")` の 4 子が 1 コード／小節。pitched 全部で同じ進行（オクターブだけトラックで変える）。PCM（`bs:su` / `ep:*` / `plk:*` / `pf:ff`）は `C4:` 帯。
 
 | 名前 | 度数 | C 親キー | `.scale`（C4 帯の例） |
 | --- | --- | --- | --- |
@@ -58,9 +58,9 @@ metadata:
 setcpm(100/4)
 // drums
 $: s("bd ~ bd ~, [~ sd]*2, hh*8, <~ ~ ~ [bd sd bd sd]>").gain(0.5)
-// bass — synth C2; 下降 IV–iii–ii–I
-$: note("0 ~ 4 0  0 ~ <4 7 2 0>").scale("<F2:lydian E2:phrygian D2:dorian C2:major>")
-  .s("sine").lpf(250).gain(0.42)
+// bass — PCM sub (C3 recording → write C4)
+$: note("0 ~ 4 0  0 ~ <4 7 2 0>").scale("<F4:lydian E4:phrygian D4:dorian C4:major>")
+  .s("bs:su").gain(0.42)
 // lead — stepwise, 7th color, off-beat entry
 $: note("~ 2 4 6  4 2 ~ <0 2 4 6>").scale("<F4:lydian E4:phrygian D4:dorian C4:major>")
   .s("plk:ps").gain(0.16).cut(1)
@@ -70,22 +70,21 @@ $: note("0 ~ 2 6  ~ 4 2 <6 4 2 0>").scale("<F4:lydian E4:phrygian D4:dorian C4:m
 // arp — nylon, includes 7th
 $: note("0 2 4 6  4 2 0 ~").scale("<F5:lydian E5:phrygian D5:dorian C5:major>")
   .s("plk:ny").gain(0.12).cut(1)
-// chords — maj7 / m7 (root, 3rd, 7th)
-$: note("[0,2,6] ~ [0,2,6] ~").scale("<F3:lydian E3:phrygian D3:dorian C3:major>")
-  .s("triangle").lpf(1400).gain(0.24).room(0.25).orbit(2)
-// pad
-$: note("[0,4]").scale("<F3:lydian E3:phrygian D3:dorian C3:major>")
-  .s("sawtooth").lpf(1100).gain(0.14)
-  .attack(0.08).release(0.3)
+// chords — maj7 / m7 (root, 3rd, 7th); muted EP, not triangle
+$: note("[0,2,6] ~ [0,2,6] ~").scale("<F4:lydian E4:phrygian D4:dorian C4:major>")
+  .s("ep:mt").gain(0.24).room(0.25).orbit(2)
+// pad — pf:ff is already a fifth; do not write [0,4]
+$: note("0").scale("<F4:lydian E4:phrygian D4:dorian C4:major>")
+  .s("pf:ff").gain(0.14).room(0.3).orbit(2)
 ```
 
-`ep:rs` は C3 録音。native にするには `.scale("C4:…")` 帯（このフェンスは F4 始まり）。重なりがひどいとき以外は `.cut` 不要。
+`ep:rs` / `ep:mt` / `bs:su` / `pf:ff` は C3 録音。native にするには `.scale("C4:…")` 帯（このフェンスは F4 始まり）。コードはポリフォニックなので `.cut` しない。
 
 ## Why
 
 **シティポップ下降。** Fmaj7–Em7–Dm7–Cmaj7。ルートが 1 度ずつ下がる。I–I–IV–I（旧フェンス）は EDM の明るいループで、日本のシティポップではない。
 
-**maj7 `[0,2,6]`。** 次数 6 が 7 度。三和音 `[0,2,4]` だけだとポップ一般になって 7th の色が消える。Future Bass の add9 `[0,4,9]` にはしない。パッドは 5 度 `[0,4]` のまま（コードと帯域を分ける）。
+**maj7 `[0,2,6]`。** 次数 6 が 7 度。三和音 `[0,2,4]` だけだとポップ一般になって 7th の色が消える。Future Bass の add9 `[0,4,9]` にはしない。コードは `ep:mt`（フックの `ep:rs` と被らない）。パッドは `pf:ff` の次数 `0`（録音が 5 度。`[0,4]` で重ねない）。
 
 **メロ。** 順次進行（2–4–6）、裏から入る `~`、7 度を色にする。アニソンの `4@2 7 9@2` のような長い伸ばしと跳躍は Future Bass 側。
 
@@ -98,10 +97,11 @@ $: note("[0,4]").scale("<F3:lydian E3:phrygian D3:dorian C3:major>")
 - トラックは 7 本: `// drums` `// bass` `// lead` `// hook` `// arp` `// chords` `// pad`（任意で perc）
 - ドラムは 1 本の `$:`。キック／スネア／ハットに分けない。ハウス `cp` は載せない
 - 進行は **シティポップ下降**（来場者が循環／ツーファイブと名前を出したら差し替え）
-- ピッチトラックは 4 小節 `.scale("<F:lydian E:phrygian D:dorian C:major>")`（ベースはシンセなので C2 帯、コード・パッドは C3、PCM メロは C4、arp は C5）
-- PCM は `C4:`。シンセサブは `C2:`。`bs:su` と `bs:hf` は重ねない
-- コードは `[0,2,6]` を 3 音まで。パッドは `[0,4]`
+- ピッチトラックは 4 小節 `.scale("<F:lydian E:phrygian D:dorian C:major>")`（PCM は C4 帯、arp は C5）
+- PCM は `C4:`。`bs:su` と `bs:hf` は重ねない
+- コードは `[0,2,6]` を `ep:mt` で 3 音まで。パッドは `pf:ff` の `note("0")`
 - フックは `ep:rs`（C4 帯）。リード `plk:ps` と arp `plk:ny` に `.cut(1)`
+- メロ／コード／パッドに `triangle` / `sine` / `sawtooth` を使わない
 - `in_bank=no` の長い PCM は書かない。使えるのは `ld:ss` `pf:ff` `plk:*` `ep:*` `perc:*` `bs:*`、波形、`wt_*`、ライブ `.fm`
 
 鳴らすのは `strudel_apply_song(content, deck)`（次小節、無書き込み）。`strudel_save_song` は残す指示のときだけ。
@@ -110,8 +110,8 @@ $: note("[0,4]").scale("<F3:lydian E3:phrygian D3:dorian C3:major>")
 
 | 目的 | 変更 |
 | --- | --- |
-| ウェストコースト循環 | 全 pitched の `.scale` を I–VI–II–V（ベース `<C2:major A2:mixolydian D2:mixolydian G2:mixolydian>`、メロは C4 帯） |
-| ツーファイブ | 全 pitched の `.scale` を ii–V–I–vi（ベース `<D2:dorian G2:mixolydian C2:major A2:minor>`） |
+| ウェストコースト循環 | 全 pitched の `.scale` を I–VI–II–V（C4 帯。arp は C5） |
+| ツーファイブ | 全 pitched の `.scale` を ii–V–I–vi（C4 帯。arp は C5） |
 | ベースを動かして | bass の次数末尾 `<>` だけ（全文作り直さない） |
 | もっと明るい | 梯子で major → lydian（全 pitched の mode を同期。下降の IV は既に lydian） |
 
@@ -127,11 +127,12 @@ $: note("[0,4]").scale("<F3:lydian E3:phrygian D3:dorian C3:major>")
 8. I–I–IV–I や王道 IV–V–iii–vi を既定にする（王道は future-bass）
 9. メロをアニソンの長い `@` にする。コードを add9 `[0,4,9]` にする
 10. 「チルポップ」とだけ書いて `.scale` を省略する
+11. コード／パッド／メロを `triangle` / `sine` / `sawtooth` にする
 
 ## Checklist
 
 - [ ] 7–8 本（drums / bass / lead / hook / arp / chords / pad。任意 perc）
 - [ ] 4 小節 **シティポップ下降** `<F:lydian E:phrygian D:dorian C:major>`（循環／ツーファイブは名前付き差し替え）
-- [ ] chords `[0,2,6]`。lead は順次＋次数 6。`ep:rs` は C4 帯
+- [ ] chords `[0,2,6]` は `ep:mt`。lead は順次＋次数 6。`ep:rs` / `bs:su` / `pf:ff` は C4 帯。pad は `note("0")`
 - [ ] ドラムは 1 本。ハウス `cp` なし
 - [ ] `strudel_apply_song(content, deck)`。save は残す指示のときだけ

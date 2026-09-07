@@ -45,19 +45,18 @@ $: note("0 3 0 <0 -1 0 3>").scale("C2:minor")
   .attack(0.01).decay(0.4).release(0.3)
 // lead
 $: note("~ 7 ~ <9 7 4 11>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
-  .s("square").lpf(2600).gain(0.14)
+  .s("ld:ss").gain(0.14).cut(1)
 // hook
 $: note("~ 4 ~ <7 4 4 7>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
   .s("plk:dt").gain(0.16).cut(1)
 // arp
 $: s("<~ perc:st ~ perc:tm>").gain(0.16)
 // chords
-$: note("[0,4] ~ [0,4] ~").scale("<C3:minor C3:minor G3:phrygian C3:minor>")
-  .s("triangle").lpf(1500).gain(0.16)
+$: note("[0,4] ~ [0,4] ~").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
+  .s("ep:mt").gain(0.16)
 // pad
-$: note("[0,4]").scale("<C3:minor C3:minor G3:phrygian C3:minor>")
-  .s("sine").fm(1.2).fmh(1).fmdec(0.8).fmsus(0.4)
-  .room(0.22).orbit(2).gain(0.12)
+$: note("0").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
+  .s("pf:ff").gain(0.12).room(0.22).orbit(2)
 ```
 
 Keep the break `*2` (not `.fast(2)`). Drums `.gain(0.7)` stays **above** the sub (0.42). Square at **C2** is `// bass`; saw mid is `// bass-mid`. Never `db`.
@@ -75,7 +74,7 @@ Keep drums on **one** `$:` (comma layers). Do not use `stack()`.
 | saw + `lpf(1000)` + `C2:minor` | `// bass-mid` — mid Reese (keep **800–1200**) |
 | `bd` / `sd` / `hh` / `oh` | Bundled samples only (`samples/`). Never `db` |
 | lead / hook 4-bar scale | Melody call-and-response. Hook is `plk:dt`, not `plk:s5` (that is the other DnB skill) |
-| chords / pad `[0,4]` | Two-note blocks so the Reese keeps the mid. Pad on orbit 2 |
+| chords `ep:mt` / pad `pf:ff` | Hollow-ish blocks so the Reese keeps the mid. Pad is `note("0")` on orbit 2 |
 
 ## Why it sounds that way
 

@@ -29,27 +29,26 @@ $: note("0 0 2 <4 3 5 2>").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
   .s("sawtooth").lpf(450).gain(0.45)
 // lead
 $: note("~ 7 6 <4 9 3 7>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
-  .s("square").lpf(2800).gain(0.16)
+  .s("ld:ss").gain(0.16).cut(1)
 // hook
 $: note("4 ~ 7 <4 2 0 4>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
-  .s("triangle").lpf(2200).gain(0.18)
+  .s("plk:lp").gain(0.18).cut(1)
 // arp
 $: note("0 4 7 12  7 4 0 ~").scale("<C5:minor C5:minor G5:phrygian C5:minor>")
-  .s("triangle").lpf(3200).gain(0.12)
+  .s("plk:hd").gain(0.12).cut(1)
 // chords
-$: note("[0,2,4] ~ [0,2,4] ~").scale("<C3:minor C3:minor G3:phrygian C3:minor>")
-  .s("sawtooth").lpf(1400).gain(0.26)
+$: note("[0,2,4] ~ [0,2,4] ~").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
+  .s("ep:ky").gain(0.26)
 // pad
-$: note("[0,4]").scale("<C3:minor C3:minor G3:phrygian C3:minor>")
-  .s("sine").fm(1.2).fmh(1).fmdec(0.8).fmsus(0.4)
-  .room(0.3).orbit(2).gain(0.16)
+$: note("0").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
+  .s("pf:ff").gain(0.16).room(0.3).orbit(2)
 ```
 
 Rules:
 - Use `setcpm(N)` or `setcpm(BPM/4)` (1 cycle = 1 bar of 4 beats → engine BPM = N*4).
 - Each track is one line starting with `$:` (or a label comment then `$:`).
 - Prefer **one** drum `$:` with mini commas (`bd*4, [~ sd]*2, [~ hh]*4`). Use **short** part names (`bd`/`sd`/`hh`/`oh`); kit character via **`.bank("tr808-hard")`** when user kit files exist (`{bank}_{part}` on disk). Split only for duckorbit on kick.
-- Pad / lead / piano / FX user samples: **full sound names** (e.g. `pad-ambient_drone01`, `lead-supersaw_4oct`, `piano-acoustic_soft`, `piano-electric_rhodes`) — no `.bank`. If missing, fall back to `wt_organ` / `square` / `triangle` / noise (piano-like feel needs a sample).
+- Pad / lead / piano / FX: catalog PCM (`plk:` / `ep:` / `ld:ss` / `pf:ff`) or user **full sound names** (e.g. `pad-ambient_drone01`, `piano-electric_rhodes`) — no `.bank`. Do not fall back to `triangle` / `sine` for melody, chords, or pad.
 - Prefer degree + `.scale("RootOct:mode")` for pitched lines (e.g. `C2:minor`; degree `-1` is one scale step below root).
 - Chord progressions: keep degrees fixed and cycle scales — `.scale("<A2:minor D:dorian G:mixolydian C:major>")` (one scale per bar).
 - Live edits: change **one** thing via get_song + edit_method/patch_track (hat density, degrees, lpf, gain, scale mode, `.add`/`.ply`). Keep the rest. Use **strudel-live-edit** for melody / fill / modulate / brighter-darker recipes.

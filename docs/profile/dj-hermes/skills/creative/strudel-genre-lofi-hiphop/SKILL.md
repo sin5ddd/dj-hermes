@@ -51,12 +51,11 @@ $: note("[0,2,4] ~ [0,3,5] ~").scale("<C4:minor C4:minor F4:dorian C4:minor>")
 $: note("~ 0 4 7  ~ 4 0 2").scale("<C5:minor C5:minor F5:dorian C5:minor>")
   .s("plk:ny").gain(0.12).cut(1)
 // chords
-$: note("[0,2,4] ~ [0,2,4] ~").scale("<C3:minor C3:minor F3:dorian C3:minor>")
-  .s("triangle").lpf(1100).gain(0.2).room(0.3).orbit(1)
+$: note("[0,2,4] ~ [0,2,4] ~").scale("<C4:minor C4:minor F4:dorian C4:minor>")
+  .s("ep:mt").gain(0.2).room(0.3).orbit(1)
 // pad
-$: note("[0,4]").scale("<C3:minor C3:minor F3:dorian C3:minor>")
-  .s("triangle").lpf(800).gain(0.14)
-  .attack(0.15).release(0.5).room(0.35).orbit(1)
+$: note("0").scale("<C4:minor C4:minor F4:dorian C4:minor>")
+  .s("pf:ff").gain(0.14).room(0.35).orbit(1)
 ```
 
 ハウス `[~ cp]*2` は使わない。ハットは `[~ hh]*4` のまま（`hh*8` にしない）。
@@ -68,7 +67,8 @@ $: note("[0,4]").scale("<C3:minor C3:minor F3:dorian C3:minor>")
 - ピッチトラックは 4 小節 `.scale("<C4:minor C4:minor F4:dorian C4:minor>")`（コード・パッドは C3、arp は C5）
 - PCM は `C4:`。シンセサブは `C2:`。フロアは `bs:su` だけ（`bs:hf` と重ねない）
 - フックは `ep:rs`（C3 録音 → native は C4 スケール）。リードは `plk:lf`
-- コードは `[0,2,4]` を 3 音まで。パッドは `[0,4]`
+- コードは `ep:mt` の `[0,2,4]` を 3 音まで。パッドは `pf:ff` の `note("0")`
+- メロ／コード／パッドに `triangle` / `sine` を使わない
 - `in_bank=no` の長い PCM は書かない。使えるのは `ld:ss` `pf:ff` `plk:*` `ep:*` `perc:*` `bs:*`、波形、`wt_*`、ライブ `.fm`
 
 ## Pitfalls

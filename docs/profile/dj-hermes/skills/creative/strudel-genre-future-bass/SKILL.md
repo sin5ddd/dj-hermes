@@ -84,12 +84,10 @@ $: note("0 4 ~ 7  4 ~ 9 4").scale("<F4:lydian G4:mixolydian E4:phrygian A4:minor
   .s("plk:fg").gain(0.14).cut(1)
 // chords — open add9, ducked
 $: note("[0,4,9] ~ [0,4,9] ~").scale("<F4:lydian G4:mixolydian E4:phrygian A4:minor>")
-  .s("sawtooth").lpf(1800).gain(0.22).orbit(2)
-  .attack(0.02).decay(0.2).sustain(0.4).release(0.15)
+  .s("plk:ss").gain(0.2).orbit(2)
 // pad
-$: note("[0,4]").scale("<F4:lydian G4:mixolydian E4:phrygian A4:minor>")
-  .s("sine").fm(1.2).fmh(1).fmdec(0.8).fmsus(0.4)
-  .room(0.3).orbit(2).gain(0.14)
+$: note("0").scale("<F4:lydian G4:mixolydian E4:phrygian A4:minor>")
+  .s("pf:ff").gain(0.14).room(0.3).orbit(2)
 ```
 
 同梱 `songs/future-bass/01.strudel` はこのフェンスと同じ。4 つ打ちグリッドをコピーしない。
@@ -102,7 +100,7 @@ $: note("[0,4]").scale("<F4:lydian G4:mixolydian E4:phrygian A4:minor>")
 
 **長いリード。** lead は `@` で伸ばす。16 分で埋めない。和声は上表。次数は固定、`.scale("<…>")` が 4 小節。
 
-**add9 `[0,4,9]`。** Future Bass ドロップの開いたボイシング（根音・5 度・9 度）。三和音 `[0,2,4]` に戻さない。パッドは 5 度 `[0,4]` のまま（コードと帯域を分ける）。
+**add9 `[0,4,9]`。** Future Bass ドロップの開いたボイシング（根音・5 度・9 度）。三和音 `[0,2,4]` に戻さない。コードは短いスーパーソー `plk:ss`。パッドは `pf:ff` の `note("0")`（録音が 5 度。`[0,4]` で重ねない）。
 
 **ヴォーカルチョップ。** このエンジンに歌サンプルは無い。短い `plk:fg` / `plk:ss` を arp に置く。無いキーを invent しない。
 

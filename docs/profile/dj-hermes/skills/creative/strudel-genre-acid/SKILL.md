@@ -60,16 +60,15 @@ $: note("0 0 3 0  7 3 2 0  4 4 3 0  -1 3 0 <2 5>")
   .release(0.04)
 // lead
 $: note("~ 7 ~ <9 7 4 12>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
-  .s("square").lpf(2400).gain(0.12)
+  .s("plk:ac").gain(0.12).cut(1)
 // arp
 $: s("<~ perc:mh ~ perc:tm>").gain(0.14)
 // chords
-$: note("[0,4] ~ ~ [0,4]").scale("<C3:minor C3:minor G3:phrygian C3:minor>")
-  .s("triangle").lpf(900).gain(0.16)
+$: note("[0,4] ~ ~ [0,4]").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
+  .s("ep:mt").gain(0.16)
 // pad
-$: note("[0,4]").scale("<C3:minor C3:minor G3:phrygian C3:minor>")
-  .s("wt_organ").lpf(700).room(0.25).orbit(2).gain(0.12)
-  .attack(0.1).release(0.4)
+$: note("0").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
+  .s("pf:ff").gain(0.12).room(0.25).orbit(2)
 ```
 
 Keep the **exact** 303 note string, patterned `.lpf`, `.lpq(14)`, `.lpenv(3)`, lp attack/decay/sustain, `.cut(1)`, and amp ADSR on `// hook`. Do not add a second 303. The 303 stays on fixed `.scale("C2:minor")` — the patterned lpf is already 16ths; do not put `.scale("<…>")` on that line. Other pitched tracks may use the 4-bar scale.

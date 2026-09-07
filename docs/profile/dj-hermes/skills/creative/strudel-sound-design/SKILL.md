@@ -197,10 +197,10 @@ $: s("fx-riser_short01")
 
 | 役割 | サンプルがあるとき | 無いとき（同梱のみ） |
 | --- | --- | --- |
-| **Pad** | `pad-ambient_*` 等フル名 + 長め ADSR / room | `wt_organ` / `sawtooth` + 長い attack/release + room |
-| **Bass** | 短い hit ならフル名。持続はシンセでも可 | `sine`+FM または `sawtooth`+lpf、`C2:` |
-| **Lead** | `lead-*` フル名 | `square` / `triangle` / `wt_bright` + 低 gain |
-| **Piano / EP** | `piano-acoustic_*` / `piano-electric_*` フル名 + `note`+`.scale` | 代替弱め: `triangle`/`wt_sine` + 短 attack・中 release（本物のピアノ感はサンプル推奨） |
+| **Pad** | `pad-ambient_*` 等フル名 + 長め ADSR / room | `pf:ff` `note("0")` at `C4:`（録音が 5 度。`[0,4]` で重ねない） |
+| **Bass** | 短い hit ならフル名。持続はシンセでも可 | PCM `bs:hf` / `bs:su` at `C4:`、または `sawtooth`+lpf のシンセサブ `C2:` |
+| **Lead** | `lead-*` フル名 | `ld:ss` / `plk:*` at `C4:`。`triangle` にしない |
+| **Piano / EP** | `piano-acoustic_*` / `piano-electric_*` フル名 + `note`+`.scale` | `ep:rs` / `ep:ky` / `ep:mt` at `C4:` |
 | **FX** | `fx-*` / `atmo-*` フル名 | `white`/`pink` + 短 ADSR + hpf |
 | **Drums** | 短い part + `.bank("…")` | `bd` `sd` `hh` `oh` `cp` |
 
