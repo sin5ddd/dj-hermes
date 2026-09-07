@@ -2,10 +2,10 @@
 // @genre chill-pop
 setcpm(100/4)
 // drums
-$: s("bd ~ bd ~, [~ sd]*2, hh*8, <~ ~ ~ [bd sd bd sd]>").gain(0.5)
+$: s("bd:dc ~ bd:dc ~, [~ sd:br]*2, hh*8, <~ ~ ~ [bd:dc sd:br bd:dc sd:br]>").gain(0.5)
 // bass
 $: note("0 ~ 4 0  0 ~ <4 7 2 0>").scale("<F4:major D5:mixolydian G4:mixolydian C5:mixolydian>")
-  .s("bs:su").gain(0.42)
+  .s("bs:ht").gain(0.42)
 // lead
 $: note("~ 2 4 6  4 2 ~ <0 2 4 6>").scale("<F4:major D5:mixolydian G4:mixolydian C5:mixolydian>")
   .s("plk:ps").gain(0.16).cut(1)

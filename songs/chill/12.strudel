@@ -2,7 +2,7 @@
 // @genre chill
 setcpm(90/4)
 // drums
-$: s("bd:hf ~ ~ bd:hf ~ ~ sd ~, [~ hh]*4, perc:sk, <~ ~ ~ oh>").gain(0.42)
+$: s("bd:lf ~ ~ bd:lf ~ ~ sd ~, [~ hh]*4, perc:sk, <~ ~ ~ oh>").gain(0.42)
 // bass
 $: note("0 ~ 2 ~ 0 <3 4 2 0>").scale("<D4:minor D4:minor G4:dorian D4:minor>")
   .s("bs:hf").gain(0.4)

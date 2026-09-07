@@ -2,13 +2,13 @@
 // @genre progressive-house
 setcpm(128/4)
 // drums
-$: s("bd*4, [~ cp]*2, hh*16, <~ ~ ~ oh>").gain(0.58)
+$: s("bd*4, [~ cp:rm]*2, hh*16, <~ ~ ~ oh>").gain(0.58)
 // bass
 $: note("0 0 4 <0 2 4 0>").scale("<A4:minor A4:minor D5:dorian A4:minor>")
   .s("bs:hf").gain(0.42)
 // lead
 $: note("4@2 7 9@3 ~").scale("<A4:minor A4:minor D5:dorian A4:minor>")
-  .s("ld:ss").gain(0.16).cut(1)
+  .s("ld:tg").gain(0.16).cut(1)
 // hook
 $: note("~ 7 4 <9 7 4 2>").scale("<A4:minor A4:minor D5:dorian A4:minor>")
   .s("plk:hb").gain(0.18).cut(1)
@@ -19,5 +19,5 @@ $: note("0 2 4 7  4 2 0 ~").scale("<A5:minor A5:minor D6:dorian A5:minor>")
 $: note("[0,2,4] ~ [0,2,4] ~").scale("<A4:minor A4:minor D5:dorian A4:minor>")
   .s("ep:ky").gain(0.24)
 // pad
-$: note("0").scale("<A4:minor A4:minor D5:dorian A4:minor>")
-  .s("pf:ff").gain(0.18).room(0.4).orbit(2)
+$: note("<0 ~ ~ ~>").scale("<A4:minor A4:minor D5:dorian A4:minor>")
+  .s("pf:ju").cut(1).gain(0.18).room(0.4).orbit(2)

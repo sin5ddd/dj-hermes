@@ -2,9 +2,9 @@
 // @genre future-bass
 setcpm(140/4)
 // kick
-$: s("bd ~ bd ~").gain(0.85).duckorbit(2).duckattack(0.05).duckdepth(0.8)
+$: s("bd:8t ~ bd:8t ~").gain(0.85).duckorbit(2).duckattack(0.05).duckdepth(0.8)
 // hats
-$: s("~ ~ sd ~, hh*8, <~ ~ ~ [hh*16]>").gain(0.42)
+$: s("~ ~ sd:tr ~, hh:ch*8, <~ ~ ~ [hh:ch*16]>").gain(0.42)
 // bass
 $: note("0 ~ 0 <0 4 0 2>").scale("<Ab5:minor E5:lydian F#5:mixolydian B4:major>")
   .s("bs:su").gain(0.4).orbit(2)

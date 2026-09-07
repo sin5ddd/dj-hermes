@@ -2,23 +2,22 @@
 // @genre electro
 setcpm(126/4)
 // drums
-$: s("bd*4, ~ sd ~ sd, hh*8, <~ ~ ~ [bd sd bd sd]>").gain(0.62)
+$: s("bd:ez*4, ~ sd ~ sd, hh:ch*8, <~ ~ ~ [bd:ez sd bd:ez sd]>").gain(0.62)
 // bass
-$: note("0 ~ 0 <3 0 0 5>").scale("<F2:minor F2:minor C3:phrygian F2:minor>")
-  .s("square").lpf(500).gain(0.46)
-  .attack(0.001).decay(0.08).sustain(0.15).release(0.04)
+$: note("0 ~ 0 <3 0 0 5>").scale("<F4:minor F4:minor C5:phrygian F4:minor>")
+  .s("bs:dq").gain(0.46)
 // lead
 $: note("~ 7 4 <9 7 12 7>").scale("<F4:minor F4:minor C5:phrygian F4:minor>")
-  .s("ld:ss").gain(0.14).cut(1)
+  .s("ld:pu").gain(0.14).cut(1)
 // hook
 $: note("12 ~ 7 <12 15 12 7>").scale("<F4:minor F4:minor C5:phrygian F4:minor>")
-  .s("square").penv(12).pattack(0.001).pdecay(0.08).lpf(2400).gain(0.16)
+  .s("ld:zp").cut(1).gain(0.16)
 // arp
 $: note("~ 0 3 7  3 0 ~ 5").scale("<F5:minor F5:minor C6:phrygian F5:minor>")
   .s("plk:cv").gain(0.14).cut(1)
 // chords
 $: note("[0,2,4] ~ [0,2,4] ~").scale("<F4:minor F4:minor C5:phrygian F4:minor>")
-  .s("plk:sp").gain(0.18)
+  .s("plk:sf").gain(0.18)
 // pad
-$: note("0").scale("<F4:minor F4:minor C5:phrygian F4:minor>")
-  .s("pf:ff").gain(0.14).room(0.25).orbit(2)
+$: note("<0 ~ ~ ~>").scale("<F4:minor F4:minor C5:phrygian F4:minor>")
+  .s("pf:pu").cut(1).gain(0.14).room(0.25).orbit(2)

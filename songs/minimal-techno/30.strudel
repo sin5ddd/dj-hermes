@@ -2,16 +2,16 @@
 // @genre minimal-techno
 setcpm(126/4)
 // drums
-$: s("bd*4, hh*8, <~ ~ ~ cp>").gain(0.7)
+$: s("bd:tc*4, hh:tt*8, <~ ~ ~ cp>").gain(0.7)
 // bass
 $: note("0 ~ 3 ~").scale("<B2:minor B2:minor B2:minor F#3:phrygian>")
   .s("sawtooth").lpf(320).gain(0.4)
 // lead
 $: note("~ ~ 7 ~").scale("<B4:minor B4:minor B4:minor F#5:phrygian>")
-  .s("plk:pk").gain(0.1).cut(1)
+  .s("plk:ac").gain(0.1).cut(1)
 // hook
 $: note("~ 4 ~ ~").scale("<B4:minor B4:minor B4:minor F#5:phrygian>")
-  .s("plk:ac").gain(0.12).cut(1)
+  .s("plk:pk").gain(0.12).cut(1)
 // arp
 $: s("<~ perc:tk ~ perc:st>").gain(0.12)
 // chords

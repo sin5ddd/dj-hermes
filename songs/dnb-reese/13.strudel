@@ -2,7 +2,7 @@
 // @genre drum and bass
 setcpm(174/4)
 // drums
-$: s("[bd <~ sd> ~ sd ~ <bd ~> <bd sd> <bd ~>, hh*8, [~@5 oh ~@2]]*2").gain(0.7).lpf(4000)
+$: s("[bd:dn <~ sd:dn> ~ sd:dn ~ <bd:dn ~> <bd:dn sd:dn> <bd:dn ~>, hh:dn*8, [~@5 oh:dn ~@2]]*2").gain(0.7).lpf(4000)
 // bass
 $: note("0 3 0 <0 -1>").scale("Eb2:minor").s("square").lpf(120).gain(0.42)
 // bass-mid
@@ -11,13 +11,13 @@ $: note("0 3 0 <0 -1>").scale("Eb4:minor").s("bs:rm").gain(0.36)
 $: note("~ 4 ~ <7 4>").scale("Eb4:minor").s("plk:s5").gain(0.2).cut(1)
 // lead
 $: note("~ 11 7 <12 9 7 4>").scale("<Eb4:minor Eb4:minor Bb4:phrygian Eb4:minor>")
-  .s("ld:ss").gain(0.12).cut(1)
+  .s("ld:ds").gain(0.12).cut(1)
 // arp
 $: note("~ 0 7 12  7 0 ~ 4").scale("<Eb5:minor Eb5:minor Bb5:phrygian Eb5:minor>")
-  .s("plk:dt").gain(0.12).cut(1)
+  .s("plk:nn").gain(0.12).cut(1)
 // chords
 $: note("[0,4] ~ ~ [0,4]").scale("<Eb4:minor Eb4:minor Bb4:phrygian Eb4:minor>")
-  .s("ep:mt").gain(0.14)
+  .s("plk:sf").gain(0.14)
 // pad
-$: note("0").scale("<Eb4:minor Eb4:minor Bb4:phrygian Eb4:minor>")
-  .s("pf:ff").gain(0.12).room(0.2).orbit(2)
+$: note("<0 ~ ~ ~>").scale("<Eb4:minor Eb4:minor Bb4:phrygian Eb4:minor>")
+  .s("pf:fo").cut(1).gain(0.12).room(0.2).orbit(2)

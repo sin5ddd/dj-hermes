@@ -2,17 +2,16 @@
 // @genre techno
 setcpm(124/4)
 // drums
-$: s("bd*4, [~ hh]*4, <~ ~ ~ [bd sd bd sd]>").gain(0.62)
+$: s("bd:9p*4, [~ hh]*4, <~ ~ ~ [bd:9p sd bd:9p sd]>").gain(0.62)
 // bass
-$: note("0 0 2 <4 0 3 0>").scale("<B2:minor B2:minor F#3:phrygian B2:minor>")
-  .s("sawtooth").lpf(400).gain(0.44)
-  .attack(0.001).decay(0.08).sustain(0.2).release(0.05)
+$: note("0 0 2 <4 0 3 0>").scale("<B4:minor B4:minor F#5:phrygian B4:minor>")
+  .s("bs:ht").gain(0.44)
 // lead
 $: note("~ 7 6 <4 9 3 7>").scale("<B4:minor B4:minor F#5:phrygian B4:minor>")
-  .s("ld:ss").gain(0.15).cut(1)
+  .s("ld:si").gain(0.15).cut(1)
 // hook
 $: note("~ 4 ~ <7 4 4 7>").scale("<B4:minor B4:minor F#5:phrygian B4:minor>")
-  .s("plk:s5").gain(0.18).cut(1)
+  .s("plk:pk").gain(0.18).cut(1)
 // arp
 $: note("0 3 0 7  3 0 5 ~").scale("<B5:minor B5:minor F#6:phrygian B5:minor>")
   .s("plk:ac").gain(0.12).cut(1)
@@ -20,5 +19,5 @@ $: note("0 3 0 7  3 0 5 ~").scale("<B5:minor B5:minor F#6:phrygian B5:minor>")
 $: note("[0,2,4] ~ [0,2,4] ~").scale("<B4:minor B4:minor F#5:phrygian B4:minor>")
   .s("ep:ky").gain(0.22)
 // pad
-$: note("0").scale("<B4:minor B4:minor F#5:phrygian B4:minor>")
-  .s("pf:ff").gain(0.16).room(0.3).orbit(2)
+$: note("<0 ~ ~ ~>").scale("<B4:minor B4:minor F#5:phrygian B4:minor>")
+  .s("pf:cs").cut(1).gain(0.16).room(0.3).orbit(2)

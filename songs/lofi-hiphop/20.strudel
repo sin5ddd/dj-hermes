@@ -2,7 +2,7 @@
 // @genre lofi-hiphop
 setcpm(84/4)
 // drums
-$: s("bd:lf ~ ~ sd, [~ hh]*4, perc:cb, <~ ~ ~ [bd:lf sd bd:lf sd]>").gain(0.44)
+$: s("bd:lf ~ ~ sd, [~ hh:dk]*4, perc:cb, <~ ~ ~ [bd:lf sd bd:lf sd]>").gain(0.44)
 // bass
 $: note("0 ~ 2 <0 0 3 2>").scale("<B4:minor B4:minor E5:dorian B4:minor>")
   .s("bs:su").gain(0.38)
@@ -20,5 +20,5 @@ $: note("~ 0 4 7  ~ 4 0 2").scale("<B5:minor B5:minor E6:dorian B5:minor>")
 $: note("[0,2,4] ~ [0,2,4] ~").scale("<B4:minor B4:minor E5:dorian B4:minor>")
   .s("ep:mt").gain(0.2).room(0.3).orbit(1)
 // pad
-$: note("0").scale("<B4:minor B4:minor E5:dorian B4:minor>")
-  .s("pf:ff").gain(0.14).room(0.35).orbit(1)
+$: note("<0 ~ ~ ~>").scale("<B4:minor B4:minor E5:dorian B4:minor>")
+  .s("dr:th").cut(1).gain(0.14).room(0.35).orbit(1)

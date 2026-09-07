@@ -2,9 +2,9 @@
 // @genre future-bass
 setcpm(140/4)
 // kick
-$: s("bd ~ bd ~").gain(0.85).duckorbit(2).duckattack(0.05).duckdepth(0.8)
+$: s("bd:8t ~ bd:8t ~").gain(0.85).duckorbit(2).duckattack(0.05).duckdepth(0.8)
 // hats
-$: s("~ ~ sd ~, hh*8, <~ ~ ~ [hh*16]>").gain(0.42)
+$: s("~ ~ sd:tr ~, hh:ch*8, <~ ~ ~ [hh:ch*16]>").gain(0.42)
 // bass
 $: note("0 ~ 0 <0 4 0 2>").scale("<D5:lydian E5:mixolydian C#5:phrygian F#5:minor>")
   .s("bs:su").gain(0.4).orbit(2)
@@ -21,5 +21,5 @@ $: note("0 4 ~ 7  4 ~ 9 4").scale("<D5:lydian E5:mixolydian C#5:phrygian F#5:min
 $: note("[0,4,9] ~ [0,4,9] ~").scale("<D5:lydian E5:mixolydian C#5:phrygian F#5:minor>")
   .s("plk:ss").gain(0.2).orbit(2)
 // pad
-$: note("0").scale("<D5:lydian E5:mixolydian C#5:phrygian F#5:minor>")
-  .s("pf:ff").gain(0.14).room(0.3).orbit(2)
+$: note("<0 ~ ~ ~>").scale("<D5:lydian E5:mixolydian C#5:phrygian F#5:minor>")
+  .s("pf:sp").cut(1).gain(0.14).room(0.3).orbit(2)

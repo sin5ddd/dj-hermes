@@ -2,14 +2,14 @@
 // @genre dubstep
 setcpm(140/4)
 // drums
-$: s("bd ~ ~ ~ bd ~ sd ~, hh*8, <~ ~ ~ [bd sd bd sd]>").gain(0.72)
+$: s("bd:ng ~ ~ ~ bd:ng ~ sd:ng ~, hh:dk*8, <~ ~ ~ [bd:ng sd:ng bd:ng sd:ng]>").gain(0.72)
 // bass
-$: note("0 0 3 <0 0 3 -1>").scale("<E2:minor E2:minor B2:phrygian E2:minor>")
-  .s("sawtooth").lpf(sine.rangex(80, 600)).lpq(6).gain(0.5)
+$: note("0 0 3 <0 0 3 -1>").scale("<E4:minor E4:minor B4:phrygian E4:minor>")
+  .s("bs:wb").gain(0.5)
 // lead
-$: note("~ 7 ~ <10 7 3 7>").scale("<E3:minor E3:minor B3:phrygian E3:minor>")
-  .s("sawtooth").fm(4).fmh(1).fmdec(0.25).fmsus(0.2)
-  .lpf(800).gain(0.16)
+$: note("~ 7 ~ <10 7 3 7>").scale("<E4:minor E4:minor B4:phrygian E4:minor>")
+  .s("ld:dp")
+  .cut(1).gain(0.16)
 // hook
 $: note("~ 4 ~ <7 4 4 7>").scale("<E4:minor E4:minor B4:phrygian E4:minor>")
   .s("plk:s5").gain(0.18).cut(1)

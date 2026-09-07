@@ -4,16 +4,16 @@ setcpm(140/4)
 // kick
 $: s("bd ~ bd ~").gain(0.85).duckorbit(2).duckattack(0.05).duckdepth(0.8)
 // hats
-$: s("~ ~ sd ~, hh*8, <~ ~ ~ [hh*16]>").gain(0.42)
+$: s("~ ~ sd:tr ~, hh*8, <~ ~ ~ [hh*16]>").gain(0.42)
 // bass
 $: note("0 ~ 0 <0 4 0 2>").scale("<B4:major F#5:mixolydian Ab5:minor E5:lydian>")
   .s("bs:su").gain(0.4).orbit(2)
 // lead
 $: note("4@2 7 9@2  7 4 <2 0> ~").scale("<B4:major F#5:mixolydian Ab5:minor E5:lydian>")
-  .s("ld:ss").gain(0.16).cut(1)
+  .s("ld:mx").gain(0.16).cut(1)
 // hook
 $: note("~ 11 ~ 12  ~ 9 ~ <11 12>").scale("<B4:major F#5:mixolydian Ab5:minor E5:lydian>")
-  .s("plk:mx").gain(0.18).cut(1)
+  .s("plk:bl").gain(0.18).cut(1)
 // arp
 $: note("0 4 ~ 7  4 ~ 9 4").scale("<B4:major F#5:mixolydian Ab5:minor E5:lydian>")
   .s("plk:fg").gain(0.14).cut(1)

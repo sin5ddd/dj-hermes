@@ -2,7 +2,7 @@
 // @genre house
 setcpm(124/4)
 // drums
-$: s("bd:hf*4, [~ cp]*2, hh:hs*8, <~ ~ ~ [~@3 bd:hf ~@4]>").gain(0.58)
+$: s("bd:hf*4, [~ cp:rm]*2, hh:hs*8, <~ ~ ~ [~@3 bd:hf ~@4]>").gain(0.58)
 // bass
 $: note("0 0 4 <0 2 4 0>").scale("<F4:minor F4:minor C5:dorian F4:minor>")
   .s("bs:hf").gain(0.42)

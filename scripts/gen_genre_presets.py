@@ -3,6 +3,7 @@
 
 Holds out catalog families (clockwork / glass-garden / night-market / tide-lantern).
 01 keeps e2e titles; 02–30 transpose and apply named skill variants.
+Pitched `.s()` cycles the genre timbre palette (not a copy of the fence sounds).
 """
 from __future__ import annotations
 
@@ -434,6 +435,530 @@ $: note("0").scale("<C4:minor C4:minor F4:dorian C4:minor>")
 '''
 
 
+# Timbre palettes from strudel-genre-* (alts first; fence sound last if listed).
+# n==1 uses index 0 unless the slot is locked (e2e / genre core).
+PALETTES: dict[str, dict[str, list]] = {
+    "house": {
+        "drums": [
+            {"bd:hf": "bd:dc"},
+            {"hh:hs": "hh:cl"},
+            {"cp": "cp:rm"},
+            {"bd:hf": "bd:dc", "hh:hs": "hh:cl"},
+            {"cp": "cp:gt"},
+            {"hh:hs": "hh:cl", "cp": "cp:rm"},
+        ],
+        "bass": ["bs:ht", "bs:sw", "bs:hf"],
+        "lead": ["ld:hu", "ld:sw", "ld:us", "wt_organ", "ld:ss"],
+        "hook": ["plk:hb", "plk:ep", "plk:lp"],
+        "arp": ["plk:aj", "plk:hb", "plk:hd"],
+        "chords": ["ep:wr", "plk:sm", "ep:ky"],
+        "pad": ["pf:ju", "pf:mn", "pf:cs", "pf:fo", "pf:ff"],
+    },
+    "four-on-the-floor": {
+        "drums": [
+            {"bd": "bd:tc"},
+            {"bd": "bd:9p"},
+            {"hh": "hh:dk"},
+            {"bd": "bd:tc", "hh": "hh:dk"},
+        ],
+        "bass": ["square", "bs:ht"],
+        "lead": ["ld:pu", "ld:sw", "ld:si"],
+        "hook": ["plk:ac", "plk:pk"],
+        "arp": ["plk:pk", "plk:ac"],
+        "chords": ["plk:sf", "ep:ky"],
+        "pad": ["pf:pu", "pf:cs", "pf:or", "pf:ff"],
+    },
+    "techno-duck": {
+        "drums": [
+            {"bd": "bd:tc"},
+            {"bd": "bd:9p"},
+            {"hh": "hh:cl"},
+            {"bd": "bd:tc", "hh": "hh:cl"},
+        ],
+        "bass": ["sawtooth", "bs:ht"],
+        "lead": ["ld:pu", "plk:pk", "wt_bright", "ld:sw"],
+        "hook": ["plk:pk", "plk:ac"],
+        "arp": ["perc:ti", "perc:st", "perc:tm"],
+        "chords": ["plk:sf", "ep:ky"],
+        "pad": ["pf:pu", "pf:cs", "pf:or", "pf:ff"],
+    },
+    "acid": {
+        "drums": [
+            {"bd": "bd:tc"},
+            {"bd": "bd:9p"},
+            {"hh": "hh:cl"},
+        ],
+        "bass": ["bs:su"],
+        "lead": ["plk:pk", "plk:ac"],
+        "arp": ["perc:tm", "perc:mh"],
+        "chords": ["plk:sf", "ep:mt"],
+        "pad": ["pf:pu", "dr:pd", "pf:ff"],
+    },
+    "dnb": {
+        "drums": [
+            {"bd": "bd:dn", "sd": "sd:dn", "hh": "hh:dn", "oh": "oh:dn"},
+            {"bd": "bd:jg", "sd": "sd:jg"},
+            {"hh": "hh:dn"},
+        ],
+        "lead": ["ld:ds", "plk:nn", "ld:dp"],
+        "hook": ["plk:nn", "plk:dt"],
+        "arp": ["perc:tm", "perc:st"],
+        "chords": ["plk:s5", "ep:mt"],
+        "pad": ["pf:fo", "dr:rd", "pf:ff"],
+    },
+    "dnb-reese": {
+        "drums": [
+            {"bd": "bd:dn", "sd": "sd:dn", "hh": "hh:dn", "oh": "oh:dn"},
+            {"bd": "bd:jg", "sd": "sd:jg"},
+            {"hh": "hh:dn"},
+        ],
+        "lead": ["ld:ds", "plk:nn", "ld:dp"],
+        "arp": ["plk:nn", "plk:dt"],
+        "chords": ["plk:sf", "ep:mt"],
+        "pad": ["pf:fo", "dr:rd", "pf:ff"],
+    },
+    "future-bass": {
+        "drums": [
+            {"bd": "bd:8t"},
+            {"sd": "sd:tr"},
+            {"hh": "hh:ch"},
+            {"bd": "bd:8t", "sd": "sd:tr", "hh": "hh:ch"},
+        ],
+        "lead": ["ld:st", "ld:mx", "square", "ld:ss"],
+        "hook": ["plk:ch", "plk:bl", "plk:mb", "plk:mx"],
+        "arp": ["plk:fc", "plk:fg"],
+        "chords": ["plk:sm", "plk:ss"],
+        "pad": ["ps:mx", "ps:gb", "pf:sp", "pf:ga", "pf:ff"],
+    },
+    "chill-pop": {
+        "drums": [
+            {"bd": "bd:dc"},
+            {"bd": "bd:lf"},
+            {"sd": "sd:pp"},
+            {"sd": "sd:br"},
+            {"bd": "bd:dc", "sd": "sd:br"},
+        ],
+        "bass": ["bs:ht", "bs:su"],
+        "lead": ["ld:ny", "plk:gm", "plk:ps"],
+        "hook": ["ep:wr", "ep:rh", "ep:rs"],
+        "arp": ["plk:hp", "plk:kt", "plk:ny"],
+        "chords": ["ep:ky", "plk:ep", "ep:mt"],
+        "pad": ["pf:iv", "pf:ln", "pf:cl", "pf:wa", "pf:ff"],
+    },
+    "chill": {
+        "drums": [
+            {"sd": "sd:br"},
+            {"bd:hf": "bd:lf"},
+        ],
+        "lead": ["ld:ny", "plk:am", "plk:ps"],
+        "hook": ["ep:rs", "plk:am"],
+        "arp": ["plk:kl", "plk:hp"],
+        "chords": ["ep:mt", "ep:rs"],
+        "pad": ["pf:cl", "pf:ln", "dr:fg", "pf:ff"],
+    },
+    "ambient": {
+        "lead": ["ld:et", "ld:fl", "plk:bl", "ld:si"],
+        "hook": ["ld:cr", "plk:am"],
+        "arp": ["perc:tg", "perc:cm"],
+        "chords": ["ld:fp", "ep:mt"],
+        "pad": ["dr:ad", "dr:fg", "pf:cl", "pf:wa", "ps:sh", "dr:uw", "pf:ff"],
+    },
+    "dubstep": {
+        "drums": [
+            {"bd": "bd:ng"},
+            {"sd": "sd:ng"},
+            {"hh": "hh:dk"},
+            {"bd": "bd:ng", "sd": "sd:ng", "hh": "hh:dk"},
+        ],
+        "bass": ["bs:wb"],
+        "lead": ["ld:gr", "ld:wb", "ld:dp"],
+        "hook": ["plk:nn", "plk:s5"],
+        "arp": ["plk:dt"],
+        "chords": ["plk:sf", "ep:mt"],
+        "pad": ["dr:rd", "pf:fo", "pf:ff"],
+    },
+    "electro": {
+        "drums": [
+            {"bd": "bd:ez"},
+            {"bd": "bd:9p"},
+            {"sd": "sd:rm"},
+            {"hh": "hh:ch"},
+            {"bd": "bd:ez", "hh": "hh:ch"},
+        ],
+        "bass": ["bs:dq"],
+        "lead": ["ld:pu", "ld:ch", "ld:dp", "ld:lz"],
+        "hook": ["ld:zp", "ld:lz"],
+        "arp": ["plk:cv"],
+        "chords": ["plk:sf", "plk:s5"],
+        "pad": ["pf:pu", "ld:hf", "pf:ff"],
+    },
+    "lofi-hiphop": {
+        "drums": [
+            {"sd": "sd:br"},
+            {"hh": "hh:dk"},
+            {"sd": "sd:br", "hh": "hh:dk"},
+        ],
+        "lead": ["ld:ny", "plk:lf"],
+        "hook": ["ep:wr", "ep:rs"],
+        "arp": ["plk:lf", "plk:ny"],
+        "chords": ["ep:mt"],
+        "pad": ["pf:cl", "dr:th", "pf:ff"],
+    },
+    "minimal-techno": {
+        "drums": [
+            {"bd": "bd:tc"},
+            {"hh": "hh:tt"},
+            {"bd": "bd:tc", "hh": "hh:tt"},
+        ],
+        "bass": ["bs:ht", "sawtooth"],
+        "lead": ["plk:pk", "plk:ac"],
+        "hook": ["plk:ac", "plk:pk"],
+        "arp": ["perc:st", "perc:tk"],
+        "chords": ["plk:sf", "ep:mt"],
+        "pad": ["pf:pu", "pf:cs", "pf:ff"],
+    },
+    "progressive-house": {
+        "drums": [
+            {"bd": "bd:hf"},
+            {"cp": "cp:rm"},
+            {"hh": "hh:hs"},
+            {"bd": "bd:hf", "cp": "cp:rm"},
+        ],
+        "bass": ["bs:ht", "bs:sw", "bs:hf"],
+        "lead": ["ld:an", "ld:tg", "ld:us", "ld:ss"],
+        "hook": ["plk:tg", "plk:ss", "plk:hb"],
+        "arp": ["plk:aj", "plk:hd"],
+        "chords": ["ep:wr", "plk:sm", "ep:ky"],
+        "pad": ["pf:hz", "pf:wm", "pf:ju", "ld:fp", "pf:ff"],
+    },
+}
+
+# Slots that stay on the fence sound for every n (genre core).
+IDENTITY_ALWAYS = {
+    "dnb": {"bass", "bass-mid"},
+    "dnb-reese": {"bass", "bass-mid", "hook"},
+    "acid": {"hook"},
+    "future-bass": {"bass"},
+    "chill": {"bass"},
+    "lofi-hiphop": {"bass"},
+}
+
+# Extra 01 locks for e2e / empty-bank energy / showcase FM.
+LOCKED_01 = {
+    "house": {"drums", "hook"},
+    "four-on-the-floor": {"drums", "bass"},
+    "dnb": {"bass", "bass-mid"},
+    "dnb-reese": {"bass", "bass-mid", "hook"},
+    "acid": {"hook", "bass"},
+    "techno-duck": {"bass"},
+    "electro": {"bass"},
+    "dubstep": {"bass"},
+}
+
+WAVEFORMS = {"sawtooth", "square", "sine", "triangle", "wt_organ", "wt_bright", "wt_sine"}
+KIT_ATOMS = {"bd", "sd", "hh", "oh", "cp"}
+LONG_PLK = {"plk:fp", "plk:sp"}
+PCM_PARTS = {"plk", "ep", "ld", "pf", "ps", "dr", "bs"}
+STRIP_SYNTH = [
+    "fmatt",
+    "fmdec",
+    "fmsus",
+    "fmh",
+    "fm",
+    "pattack",
+    "pdecay",
+    "penv",
+    "lpattack",
+    "lpdecay",
+    "lpsustain",
+    "lpenv",
+    "lpf",
+    "lpq",
+]
+STRIP_ADSR = ["attack", "decay", "sustain", "release"]
+PITCHED_SLOTS = {"bass", "bass-mid", "lead", "hook", "arp", "chords", "pad"}
+TRACK_HEADER = re.compile(r"^// ([a-z][a-z0-9-]*)\n", re.M)
+DOT_S = re.compile(r'\.s\("([^"]+)"\)')
+INDEX_CALL = re.compile(r"`([a-z]{2,4}:[a-z0-9]{1,3})`")
+
+_INDEX_KEYS: set[str] | None = None
+
+
+def index_keys() -> set[str]:
+    global _INDEX_KEYS
+    if _INDEX_KEYS is None:
+        path = (
+            ROOT
+            / "docs/profile/dj-hermes/skills/creative/strudel-pcm-catalog/INDEX.md"
+        )
+        _INDEX_KEYS = set(INDEX_CALL.findall(path.read_text(encoding="utf-8")))
+    return _INDEX_KEYS
+
+
+def is_long(sound: str) -> bool:
+    if sound in LONG_PLK:
+        return True
+    if sound == "pf:ff":
+        return False
+    return sound.startswith(("ld:", "dr:", "pf:", "ps:"))
+
+
+def is_pcm_key(sound: str) -> bool:
+    if ":" not in sound:
+        return False
+    return sound.split(":", 1)[0] in PCM_PARTS
+
+
+def map_tracks(text: str, fn) -> str:
+    matches = list(TRACK_HEADER.finditer(text))
+    if not matches:
+        return text
+    parts = [text[: matches[0].start()]]
+    for i, m in enumerate(matches):
+        end = matches[i + 1].start() if i + 1 < len(matches) else len(text)
+        name = m.group(1)
+        parts.append(fn(name, text[m.start() : end]))
+    return "".join(parts)
+
+
+def dot_s(chunk: str) -> str | None:
+    m = DOT_S.search(chunk)
+    return m.group(1) if m else None
+
+
+def set_dot_s(chunk: str, new: str) -> str:
+    if DOT_S.search(chunk):
+        return DOT_S.sub(f'.s("{new}")', chunk, count=1)
+    return chunk
+
+
+def replace_atom(inner: str, old: str, new: str) -> str:
+    if old == new:
+        return inner
+    pat = re.compile(rf"(?<![:\w]){re.escape(old)}(?![:\w])")
+    return pat.sub(new, inner)
+
+
+def strip_method(body: str, name: str) -> str:
+    needle = f".{name}("
+    out: list[str] = []
+    i = 0
+    while True:
+        j = body.find(needle, i)
+        if j < 0:
+            out.append(body[i:])
+            break
+        out.append(body[i:j])
+        k = j + len(needle)
+        depth = 1
+        while k < len(body) and depth:
+            ch = body[k]
+            if ch == "(":
+                depth += 1
+            elif ch == ")":
+                depth -= 1
+            k += 1
+        i = k
+    return "".join(out)
+
+
+def strip_methods(body: str, names: list[str]) -> str:
+    for name in sorted(names, key=len, reverse=True):
+        body = strip_method(body, name)
+    body = re.sub(r"\n[ \t]*\n", "\n", body)
+    return body
+
+
+def inject_after_s(body: str, snippet: str) -> str:
+    return re.sub(
+        r'\.s\("[^"]+"\)', lambda m: m.group(0) + snippet, body, count=1
+    )
+
+
+def ensure_cut1(body: str) -> str:
+    if ".cut(" in body:
+        return body
+    if ".gain(" in body:
+        return body.replace(".gain(", ".cut(1).gain(", 1)
+    return body.rstrip() + ".cut(1)\n"
+
+
+def octave_swap(body: str, src: int, dst: int) -> str:
+    return re.sub(rf"([A-G](?:#|b)?){src}:", rf"\g<1>{dst}:", body)
+
+
+def bump_scale_oct(body: str, min_oct: int = 4) -> str:
+    def repl(m: re.Match[str]) -> str:
+        name, oct_s, mode = m.group(1), int(m.group(2)), m.group(3)
+        if oct_s < min_oct:
+            oct_s = min_oct
+        return f"{name}{oct_s}:{mode}"
+
+    return SCALE_TOKEN.sub(repl, body)
+
+
+def maybe_thin_note(body: str, sound: str, slot: str) -> str:
+    if not is_long(sound):
+        return body
+    m = re.search(r'note\("([^"]*)"\)', body)
+    if not m:
+        return body
+    inner = m.group(1)
+    if "<" in inner:
+        return body
+    if slot == "pad" and inner.strip() == "0":
+        new = "<0 ~ ~ ~>"
+    elif slot == "chords":
+        new = f"<[{inner}] ~ ~ ~>"
+    else:
+        return body
+    return body.replace(f'note("{inner}")', f'note("{new}")', 1)
+
+
+def apply_drum_map(chunk: str, mapping: dict[str, str]) -> str:
+    def repl(m: re.Match[str]) -> str:
+        inner = m.group(1)
+        for old in sorted(mapping, key=len, reverse=True):
+            inner = replace_atom(inner, old, mapping[old])
+        return f's("{inner}")'
+
+    return re.sub(r's\("([^"]*)"\)', repl, chunk, count=1)
+
+
+def set_perc_pair(chunk: str, a: str, b: str) -> str:
+    def repl(m: re.Match[str]) -> str:
+        inner = m.group(1)
+        parts = re.split(r"(perc:[a-z0-9]+)", inner)
+        news = [a, b]
+        n = 0
+        out: list[str] = []
+        for p in parts:
+            if p.startswith("perc:"):
+                out.append(news[n % 2])
+                n += 1
+            else:
+                out.append(p)
+        return f'$: s("{"".join(out)}")'
+
+    return re.sub(r'\$: s\("([^"]+)"\)', repl, chunk, count=1)
+
+
+def is_perc_track(chunk: str) -> bool:
+    return "note(" not in chunk and re.search(r"\$: s\(", chunk) is not None
+
+
+def pick_unique(picks: list[str], n: int, used: set[str]) -> str | None:
+    if not picks:
+        return None
+    start = (n - 1) % len(picks)
+    for i in range(len(picks)):
+        cand = picks[(start + i) % len(picks)]
+        if cand not in used:
+            return cand
+    return None
+
+
+def apply_bass_sound(chunk: str, new: str) -> str:
+    old = dot_s(chunk)
+    if old == new:
+        return chunk
+    chunk = set_dot_s(chunk, new)
+    new_pcm = is_pcm_key(new)
+    old_pcm = bool(old) and is_pcm_key(old)
+    had_fm = ".fm(" in chunk or ".fmh(" in chunk
+    if new_pcm:
+        chunk = strip_methods(chunk, STRIP_SYNTH + STRIP_ADSR)
+        chunk = octave_swap(chunk, 2, 4)
+        chunk = bump_scale_oct(chunk, 4)
+    elif old_pcm and not new_pcm:
+        chunk = octave_swap(chunk, 4, 2)
+        if ".lpf(" not in chunk:
+            chunk = inject_after_s(chunk, ".lpf(400)")
+    elif had_fm and new != "sine":
+        chunk = strip_methods(chunk, ["fmatt", "fmdec", "fmsus", "fmh", "fm"])
+    return chunk
+
+
+def apply_pitched_sound(chunk: str, new: str, slot: str) -> str:
+    old = dot_s(chunk)
+    if old != new:
+        chunk = set_dot_s(chunk, new)
+        if is_pcm_key(new) or new.startswith("wt_"):
+            chunk = strip_methods(chunk, STRIP_SYNTH)
+        if is_pcm_key(new):
+            chunk = bump_scale_oct(chunk, 4)
+        if new == "square" and ".lpf(" not in chunk:
+            chunk = inject_after_s(chunk, ".lpf(3200)")
+    if slot != "chords" and (
+        is_long(new) or new.startswith(("plk:", "ld:"))
+    ):
+        chunk = ensure_cut1(chunk)
+    if slot in {"pad", "chords"}:
+        chunk = maybe_thin_note(chunk, new, slot)
+    return chunk
+
+
+def apply_palette(genre: str, text: str, n: int) -> str:
+    pal = PALETTES.get(genre)
+    if not pal:
+        return text
+    locked = set(IDENTITY_ALWAYS.get(genre, set()))
+    if n == 1:
+        locked |= LOCKED_01.get(genre, set())
+    used: set[str] = set()
+
+    def apply_one(name: str, chunk: str) -> str:
+        slot = "drums" if name in {"kick", "hats"} else name
+        if name in locked or slot in locked:
+            cur = dot_s(chunk)
+            if cur:
+                used.add(cur)
+            return chunk
+        picks = pal.get(slot)
+        if not picks:
+            return chunk
+        if slot == "drums" and isinstance(picks[0], dict):
+            mapping = picks[(n - 1) % len(picks)]
+            return apply_drum_map(chunk, mapping)
+        str_picks = [p for p in picks if isinstance(p, str)]
+        if is_perc_track(chunk):
+            perc_picks = [p for p in str_picks if p.startswith("perc:")]
+            a = pick_unique(perc_picks, n, used)
+            if not a:
+                return chunk
+            used.add(a)
+            b = pick_unique(perc_picks, n + 1, used) or a
+            used.add(b)
+            return set_perc_pair(chunk, a, b)
+        pitched = [p for p in str_picks if not p.startswith("perc:")]
+        new = pick_unique(pitched, n, used)
+        if not new:
+            return chunk
+        used.add(new)
+        if name == "bass":
+            return apply_bass_sound(chunk, new)
+        return apply_pitched_sound(chunk, new, name)
+
+    return map_tracks(text, apply_one)
+
+
+def check_palette_keys() -> None:
+    keys = index_keys()
+    for genre, pal in PALETTES.items():
+        for slot, picks in pal.items():
+            for item in picks:
+                vals: list[str]
+                if isinstance(item, dict):
+                    vals = list(item.values())
+                else:
+                    vals = [item]
+                for v in vals:
+                    if v in WAVEFORMS or v in KIT_ATOMS:
+                        continue
+                    if v not in keys:
+                        raise SystemExit(f"palette {genre}/{slot}: unknown {v}")
+
+
 def pc_name(pc: int) -> str:
     return PC_NAMES[pc % 12]
 
@@ -593,6 +1118,26 @@ def validate(path: Path, text: str) -> None:
             raise SystemExit(f"{path}: forbidden {bad}")
     if re.search(r"\bdb\b", text):
         raise SystemExit(f"{path}: sample db is silent")
+    keys = index_keys()
+    for sound in DOT_S.findall(text):
+        if sound in WAVEFORMS or sound in KIT_ATOMS:
+            continue
+        if ":" in sound and sound not in keys:
+            raise SystemExit(f"{path}: unknown .s({sound})")
+    pitched: dict[str, str] = {}
+
+    def collect(name: str, chunk: str) -> str:
+        if name in PITCHED_SLOTS and "note(" in chunk:
+            sound = dot_s(chunk)
+            if sound:
+                if sound in pitched:
+                    raise SystemExit(
+                        f"{path}: pitched .s({sound}) on {pitched[sound]} and {name}"
+                    )
+                pitched[sound] = name
+        return chunk
+
+    map_tracks(text, collect)
 
 
 def slot_spec(n: int) -> tuple[int, int]:
@@ -607,6 +1152,7 @@ def render(genre: str, n: int) -> str:
         variant = 0
         semis = 0
     text = apply_variant(genre, text, variant)
+    text = apply_palette(genre, text, n)
     text = transpose_text(text, semis)
     if n == 1 and genre in TITLE_01:
         title = TITLE_01[genre]
@@ -624,6 +1170,7 @@ def main() -> None:
     ap.add_argument("--genre", action="append", default=[])
     args = ap.parse_args()
     genres = args.genre or sorted(FENCES)
+    check_palette_keys()
     written = 0
     for genre in genres:
         if genre in HOLD:

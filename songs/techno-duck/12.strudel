@@ -2,23 +2,22 @@
 // @genre techno
 setcpm(126/4)
 // kick
-$: s("bd*4").gain(0.9).duckorbit(2).duckattack(0.04).duckdepth(0.95)
+$: s("bd:tc*4").gain(0.9).duckorbit(2).duckattack(0.04).duckdepth(0.95)
 // hats
-$: s("[~ hh]*4, <~ ~ ~ hh*8>").gain(0.38)
+$: s("[~ hh:cl]*4, <~ ~ ~ hh:cl*8>").gain(0.38)
 // bass
-$: note("0 0 2 <4 6 2 0>").scale("<D2:minor D2:minor A2:phrygian D2:minor>")
-  .s("sine").fm(3).fmh(1.5).lpf(500).gain(0.52)
-  .attack(0.005).decay(0.1).sustain(0.3).release(0.08)
+$: note("0 0 2 <4 6 2 0>").scale("<D4:minor D4:minor A4:phrygian D4:minor>")
+  .s("bs:ht").gain(0.52)
   .orbit(2)
 // lead
 $: note("~ 7 4 <9 7 4 2>").scale("<D4:minor D4:minor A4:phrygian D4:minor>")
-  .s("sine").fm(3).fmh(2).fmatt(0.01).fmdec(0.3).fmsus(0.25)
-  .lpf(1800).lpenv(2).gain(0.16)
+  .s("ld:sw")
+  .cut(1).gain(0.16)
 // hook
 $: note("~ 4 ~ <7 4 4 7>").scale("<D4:minor D4:minor A4:phrygian D4:minor>")
-  .s("plk:s5").gain(0.16).cut(1)
+  .s("plk:ac").gain(0.16).cut(1)
 // arp
-$: s("<~ perc:tm ~ perc:st>").gain(0.18)
+$: s("<~ perc:tm ~ perc:ti>").gain(0.18)
 // chords
 $: note("[0,2,4] ~ ~ ~").scale("<D4:minor D4:minor A4:phrygian D4:minor>")
   .s("ep:ky").gain(0.18).orbit(2)

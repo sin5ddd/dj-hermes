@@ -2,7 +2,7 @@
 // @genre future-bass
 setcpm(140/4)
 // kick
-$: s("bd ~ bd ~").gain(0.85).duckorbit(2).duckattack(0.05).duckdepth(0.8)
+$: s("bd:8t ~ bd:8t ~").gain(0.85).duckorbit(2).duckattack(0.05).duckdepth(0.8)
 // hats
 $: s("~ ~ sd ~, hh*8, <~ ~ ~ [hh*16]>").gain(0.42)
 // bass
@@ -10,16 +10,16 @@ $: note("0 ~ 0 <0 4 0 2>").scale("<F4:major C5:mixolydian D5:minor Bb4:lydian>")
   .s("bs:su").gain(0.4).orbit(2)
 // lead
 $: note("4@2 7 9@2  7 4 <2 0> ~").scale("<F4:major C5:mixolydian D5:minor Bb4:lydian>")
-  .s("ld:ss").gain(0.16).cut(1)
+  .s("ld:st").gain(0.16).cut(1)
 // hook
 $: note("~ 11 ~ 12  ~ 9 ~ <11 12>").scale("<F4:major C5:mixolydian D5:minor Bb4:lydian>")
-  .s("plk:mx").gain(0.18).cut(1)
+  .s("plk:ch").gain(0.18).cut(1)
 // arp
 $: note("0 4 ~ 7  4 ~ 9 4").scale("<F4:major C5:mixolydian D5:minor Bb4:lydian>")
-  .s("plk:fg").gain(0.14).cut(1)
+  .s("plk:fc").gain(0.14).cut(1)
 // chords
 $: note("[0,4,9] ~ [0,4,9] ~").scale("<F4:major C5:mixolydian D5:minor Bb4:lydian>")
-  .s("plk:ss").gain(0.2).orbit(2)
+  .s("plk:sm").gain(0.2).orbit(2)
 // pad
 $: note("0").scale("<F4:major C5:mixolydian D5:minor Bb4:lydian>")
   .s("pf:ff").gain(0.14).room(0.3).orbit(2)

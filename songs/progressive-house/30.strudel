@@ -2,13 +2,13 @@
 // @genre progressive-house
 setcpm(128/4)
 // drums
-$: s("bd*4, [~ cp]*2, hh*8, <~ ~ ~ oh>").gain(0.58)
+$: s("bd*4, [~ cp:rm]*2, hh*8, <~ ~ ~ oh>").gain(0.58)
 // bass
 $: note("0 0 4 <0 2 4 0>").scale("<B4:minor B4:minor E5:dorian B4:minor>")
   .s("bs:hf").gain(0.42)
 // lead
 $: note("4@2 7 9@3 ~").scale("<B4:minor B4:minor E5:dorian B4:minor>")
-  .s("ld:ss").gain(0.16).cut(1)
+  .s("ld:tg").gain(0.16).cut(1)
 // hook
 $: note("~ 7 4 <9 7 4 2>").scale("<B4:minor B4:minor E5:dorian B4:minor>")
   .s("plk:hb").gain(0.18).cut(1)

@@ -2,22 +2,22 @@
 // @genre chill-pop
 setcpm(100/4)
 // drums
-$: s("bd ~ bd ~, [~ sd]*2, hh*8, <~ ~ ~ [bd sd bd sd]>").gain(0.5)
+$: s("bd:lf ~ bd:lf ~, [~ sd]*2, hh*8, <~ ~ ~ [bd:lf sd bd:lf sd]>").gain(0.5)
 // bass
 $: note("0 ~ 4 0  0 ~ <4 7 2 0>").scale("<G4:lydian F#4:phrygian E4:dorian D4:major>")
   .s("bs:su").gain(0.42)
 // lead
 $: note("~ 2 4 6  4 2 ~ <0 2 4 6>").scale("<G4:lydian F#4:phrygian E4:dorian D4:major>")
-  .s("plk:ps").gain(0.16).cut(1)
+  .s("plk:gm").gain(0.16).cut(1)
 // hook
 $: note("0 ~ 2 6  ~ 4 2 <6 4 2 0>").scale("<G4:lydian F#4:phrygian E4:dorian D4:major>")
-  .s("ep:rs").gain(0.22)
+  .s("ep:rh").gain(0.22)
 // arp
 $: note("0 2 4 6  4 2 0 ~").scale("<G5:lydian F#5:phrygian E5:dorian D5:major>")
-  .s("plk:ny").gain(0.12).cut(1)
+  .s("plk:kt").gain(0.12).cut(1)
 // chords
 $: note("[0,2,6] ~ [0,2,6] ~").scale("<G4:lydian F#4:phrygian E4:dorian D4:major>")
-  .s("ep:mt").gain(0.24).room(0.25).orbit(2)
+  .s("plk:ep").gain(0.24).room(0.25).orbit(2)
 // pad
-$: note("0").scale("<G4:lydian F#4:phrygian E4:dorian D4:major>")
-  .s("pf:ff").gain(0.14).room(0.3).orbit(2)
+$: note("<0 ~ ~ ~>").scale("<G4:lydian F#4:phrygian E4:dorian D4:major>")
+  .s("pf:ln").cut(1).gain(0.14).room(0.3).orbit(2)
