@@ -139,7 +139,7 @@ Live TUI: `/a load dnb-01` (or the `songs/` path). HTTP: `POST /song/load` with 
 - Bank-less `cp` or `db`.
 - `.fast(2)` when you want the break to fill the bar.
 - DJ-pair this file with 124 house or 126 techno (shared clock; the other tempo is discarded).
-- Write `in_bank=no` PCM (`ld:ac`, `pf:al`, `dr:*`, `ps:*`). Allowed long PCM: `ld:ss`, `pf:ff`.
+- 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`、約 8–17 秒）を毎小節撃たない。このレシピの既定は `ld:ss` と `pf:ff`。
 - Stack a third sub (`bs:su` / `bs:hf` / `bs:dk`) on the square+saw split.
 - Ship a 3-track loop for a new apply.
 - `stack()` / `.cpm(174)` / `.lfo()` / `kit:bd`.

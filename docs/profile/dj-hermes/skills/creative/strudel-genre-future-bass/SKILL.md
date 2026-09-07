@@ -139,7 +139,7 @@ PCM は `C4:`（`SAMPLE_ROOT_HZ` は C4。`bs:su` / `ld:ss` / `plk:mx` / `plk:fg
 3. ハットへ `duckorbit`（16 分が env を retrigger）
 4. wobble `.lpf(sine.rangex(…))` をこの床の主役にする（それは dubstep Skill）
 5. `bs:su` の上に square サブ / `bs:hf` / `bs:dk` を重ねる
-6. `in_bank=no` の `ld:ac` / `pf:al` / `dr:*` / `ps:*` → 無音。長い PCM は `ld:ss` と `pf:ff`
+6. 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`）を毎小節撃たない。このレシピの既定は `ld:ss` と `pf:ff`
 7. `note("c3'maj")` は root 単音。和音は `[0,4,9]`
 8. 四つ打ちのハウス／プログレ曲を Future Bass としてコピーする
 9. 140 と 174 を `dj` する（共有時計。片方の BPM が捨てられる）

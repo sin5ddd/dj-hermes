@@ -191,7 +191,7 @@ Do not move `bs:rm` to octave 2. Do not replace the square with the sample. Do n
 - Add house `cp` / `[~ cp]*2` on this grid.
 - Put `.compressor` on a track.
 - Pair this file with 124 house or 126 techno (shared clock; the other tempo is discarded).
-- Write `in_bank=no` PCM (`ld:ac`, `pf:al`, `dr:*`, `ps:*`). Allowed long PCM: `ld:ss`, `pf:ff`.
+- 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`、約 8–17 秒）を毎小節撃たない。このレシピの既定は `ld:ss` と `pf:ff`。
 - Stack `bs:su` / `bs:dk` on this split. `bs:dk` is a different recipe.
 - Ship a 4-track loop for a new apply.
 - `stack()` / `.cpm(174)` / `.lfo()` / `kit:bd`.

@@ -182,7 +182,7 @@ Do not add a second 303 on lead or bass.
 - Rely on `.lprelease` — it does not run.
 - `note("c3'min")` for a triad — suffix is root only; a chord is `note("[0,2,4]")` (and a 303 line should stay mono).
 - Put `.scale("<…>")` on the 303 hook line.
-- Write `in_bank=no` PCM (`ld:ac`, `pf:al`, `dr:*`, `ps:*`). Allowed long PCM: `ld:ss`, `pf:ff`.
+- 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`、約 8–17 秒）を毎小節撃たない。このレシピの既定は `ld:ss` と `pf:ff`。
 - Ship a 2-track loop for a new apply.
 - Pair this file with a different `setcpm` (shared clock; the other tempo is discarded).
 - `stack()` / `.cpm(130)` / `.lfo()` / `kit:bd`.

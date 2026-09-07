@@ -68,7 +68,7 @@ $: note("0").scale("<C4:minor C4:minor G4:dorian C4:minor>")
 - キックは `bd:lf` を 1 拍だけ、gain 0.18。無しでもよい
 - パッドが主。`pf:ff` は `note("0")`。コードは `ep:mt` の `[0,2,4]` を 3 音まで
 - メロ（lead / hook）は休符多め、gain 0.10–0.16
-- `in_bank=no` の長い PCM は書かない。使えるのは `ld:ss` `pf:ff` `plk:*` `ep:*` `perc:*` `bs:*`、波形、`wt_*`、ライブ `.fm`
+- 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`）は毎小節撃たない。`plk:*` / `ep:*` / `perc:*` / `bs:*`、波形、`wt_*`、ライブ `.fm` も使える
 
 ## Pitfalls
 

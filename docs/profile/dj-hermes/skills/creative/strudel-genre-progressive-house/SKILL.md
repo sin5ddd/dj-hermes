@@ -76,7 +76,7 @@ $: note("0").scale("<C4:minor C4:minor F4:dorian C4:minor>")
 
 1. `stack()` / `.cpm()` / `.lfo()` → apply / save とも 400
 2. ドラムを kick / clap / hat の 3 `$:` に分ける
-3. `in_bank=no` の `ld:ac` / `pf:al` / `dr:*` / `ps:*` → 無音。長いリードは `ld:ss`
+3. 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`）を毎小節撃たない。長いリードの既定は `ld:ss`
 4. `bs:hf` を `C2:` で書く（PCM フロアは `C4:`）
 5. `note("c3'maj")` は root 単音。和音は `[0,2,4]`
 6. テンポを DnB 域にする。`sd` を 2/4 のクラップに代用する

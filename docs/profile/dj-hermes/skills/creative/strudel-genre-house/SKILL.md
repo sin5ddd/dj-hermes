@@ -70,7 +70,7 @@ This fence is the new target (7 tracks: one bass, so perc is not required). Do n
 | `[~ hh:hs]*4` | Closed hat on each **and** |
 | `<~ ~ ~ [~@3 bd:hf ~@4]>` | 4th-bar fill; drums may stay 1-bar + fill |
 | `bs:hf` + `C4:minor` | PCM floor. Pitched PCM uses **C4**. One bass only — do not stack `bs:su` |
-| `ld:ss` | Bundled supersaw lead (`in_bank=yes`). Long PCM other than `ld:ss` / `pf:ff` is out |
+| `ld:ss` | スーパーソーリード。このレシピの既定。長い PCM は毎小節撃たない |
 | `note("4 ~ 7 4  2 0 ~ -1")` | Hook eighths: G–rest–**C**–G–Eb–C–**rest**–Bb. Do not rewrite |
 | `.scale("<C4:minor C4:minor G4:dorian C4:minor>")` | 4-bar phrase on pitched tracks |
 | `.s("plk:lp")` | `samples/plk/lp.wav` (`part:slug`) |
@@ -182,7 +182,7 @@ Do not add `[~ sd]*2`. Do not drop the clap onto the techno skill song. Do not a
 - Use `.scale("C3:minor")` with this wav — it plays in the bass register.
 - Write `lead-fm-pluck` or `lead-fm_pluck` — the key is `plk:lp`.
 - Use `plk:s5` / `bs:rm` here. Do not add `bs:su`.
-- Write `in_bank=no` PCM (`ld:ac`, `pf:al`, `dr:*`, `ps:*`). Allowed long PCM: `ld:ss`, `pf:ff`.
+- 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`、約 8–17 秒）を毎小節撃たない。このレシピの既定は `ld:ss` と `pf:ff`。
 - Ship a 2-track loop for a new apply.
 - `note("c3'maj")` when you want a chord — suffix is root only.
 - Put `.compressor` on a track. Do not add `.duckorbit`.

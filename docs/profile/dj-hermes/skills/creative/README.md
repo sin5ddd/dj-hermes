@@ -185,4 +185,4 @@ Headless hosts without an audio device: `cargo test --test e2e` renders through 
 1. New directory `docs/profile/dj-hermes/skills/creative/strudel-<name>/SKILL.md` (genre recipes: `strudel-genre-<name>`). Hermes YAML: `name`, `description` starting with “Use when”, `version`, `author`, `license`, `metadata.hermes` (`tags`, `related_skills`).
 2. Include: when, the exact `$:` pattern (**7–8 tracks** per strudel-composition), **why it sounds that way** (cite mini/scale/mixer/duck behavior), and a play/dj command.
 3. Point at an existing `songs/<genre>/01.strudel` if one exists. Every `songs/**/*.strudel` is parsed by `tests/e2e.rs`.
-4. Fence only syntax this parser accepts (`setcpm` + `$:`. No `stack()` / `.cpm()`). No `in_bank=no` PCM keys.
+4. Fence only syntax this parser accepts (`setcpm` + `$:`. No `stack()` / `.cpm()`). Do not write INDEX `in_bank=no` keys. Long `ld:` / `dr:` / `pf:` / `ps:` exist; do not fire them every bar.

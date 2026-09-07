@@ -77,7 +77,7 @@ $: note("0").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
 
 1. `stack()` / `.cpm()` / `.lfo()` → apply / save とも 400
 2. ドラムを kick / snare / hat の 3 `$:` に分ける
-3. `in_bank=no` の `ld:ac` / `pf:al` / `dr:*` / `ps:*` → 無音。`ld:ss` / `plk:*` / 波形 / `wt_*` を使う
+3. 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`）を毎小節撃たない。`ld:ss` / `plk:*` / 波形 / `wt_*` を使う
 4. アンビエント寄りの長い release
 5. square サブの上に `bs:su` を重ねる
 

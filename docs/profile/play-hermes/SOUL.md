@@ -51,7 +51,7 @@ Rules:
 - Use `setcpm(N)` or `setcpm(BPM/4)` (1 cycle = 1 bar of 4 beats → engine BPM = N*4).
 - Each track is one line starting with `$:` (or a label comment then `$:`).
 - Prefer **one** drum `$:` with mini commas (`bd*4, [~ sd]*2, [~ hh]*4`). Use **short** part names (`bd`/`sd`/`hh`/`oh`); kit character via **`.bank("tr808-hard")`** when user kit files exist (`{bank}_{part}` on disk). Split only for duckorbit on kick.
-- Pad / lead / piano / FX: catalog PCM (`plk:` / `ep:` / `ld:ss` / `pf:ff`) or user **full sound names** (e.g. `pad-ambient_drone01`, `piano-electric_rhodes`) — no `.bank`. Do not fall back to `triangle` / `sine` for melody, chords, or pad.
+- Pad / lead / piano / FX: catalog PCM (`plk:` / `ep:` / `ld:` / `pf:` / `dr:` / `ps:`) or user **full sound names** (e.g. `pad-ambient_drone01`, `piano-electric_rhodes`) — no `.bank`. Do not fall back to `triangle` / `sine` for melody, chords, or pad. Long PCM is about 8–17 s; do not fire it every bar.
 - Prefer degree + `.scale("RootOct:mode")` for pitched lines (e.g. `C2:minor`; degree `-1` is one scale step below root).
 - Chord progressions: keep degrees fixed and cycle scales — `.scale("<A2:minor D:dorian G:mixolydian C:major>")` (one scale per bar).
 - Live edits: change **one** thing via get_song + edit_method/patch_track (hat density, degrees, lpf, gain, scale mode, `.add`/`.ply`). Keep the rest. Use **strudel-live-edit** for melody / fill / modulate / brighter-darker recipes.

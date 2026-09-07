@@ -2,9 +2,9 @@
 
 strudel-rs の呼び出しは `s("<part>:<slug>")`。音程楽器は `note(...).scale("C4:…").s("<part>:<slug>")`。
 
-`in_bank=yes` は `samples/<part>/<slug>.wav` があるキー。`in_bank=no` は **未作成**（これから足す長尺。ファイルがまだ無いので曲には書かない）。
+`in_bank=yes` は `samples/<part>/<slug>.wav` があるキー。`in_bank=no` は未作成（ファイルが無いので曲には書かない）。現行カタログのキーはすべて `yes`（`dr` / `ld` / `pf` / `ps` の長尺を含む）。
 
-同梱の長尺は `ld:ss` と `pf:ff`（ほか `plk:fp` / `plk:sp` も約 8.2 秒）。同梱キットの `bd/00.wav` などは `s("bd")`（整数 index）。カタログ slug ではない。
+長尺は `dr` / `pf` / `ps` が約 16–17 秒、`ld` と `plk:fp` / `plk:sp` が約 8.2 秒。毎小節撃たない。同梱キットの `bd/00.wav` などは `s("bd")`（整数 index）。カタログ slug ではない。
 
 ## `bd`
 
@@ -72,56 +72,56 @@ strudel-rs の呼び出しは `s("<part>:<slug>")`。音程楽器は `note(...).
 
 | call | in_bank | id | name | description | note | dur |
 | --- | --- | --- | --- | --- | --- | --- |
-| `dr:ab` | no | `dr-abyss` | abyss rumble | 深淵のランブル。0.5正弦に薄いパルスの砂。 | 24 | 16.7 |
-| `dr:ad` | no | `dr-ambient-dark` | dark ambient pad | 暗いアンビエントパッド。ゆっくりしたLFO。サブを残したまま空気を足す。 | 36 | 16.9 |
-| `dr:bd` | no | `dr-brass-distant` | distant brass drone | 遠い金管。ミュートしたブラスの床。LPで遠さ。 | 33 | 16.7 |
-| `dr:bp` | no | `dr-brass-pad` | low brass pad | 低いブラスパッド。リップのFMがすぐ落ち着き、長い胴が残る。 | 36 | 16.5 |
-| `dr:ct` | no | `dr-cathedral` | cathedral low | 聖堂の低いドローバー。1+2+3+0.5。ミッドドローン（C3）。 | 48 | 16.6 |
-| `dr:cd` | no | `dr-choir-dark` | dark choir drone | より暗いクワイア。短3度を薄く足す。ミッドドローン寄り。 | 33 | 16.7 |
-| `dr:cl` | no | `dr-choir-low` | low choir drone | 低いクワイア寄りの重ねサイン。デチューンした加算。暗いホール。 | 36 | 16.5 |
-| `dr:dy` | no | `dr-dystopia` | dystopian hum | ディストピアのハム。ソーとパルスの低い都市音。 | 31 | 16.5 |
-| `dr:en` | no | `dr-engine` | engine rumble | エンジンの回転うなり。遅いLFOでピッチがわずかに揺れる。 | 28 | 16.5 |
-| `dr:fh` | no | `dr-fifth-hollow` | hollow fifth drone | 中空5度の低ドローン。C+Gだけ。長3度なし。 | 36 | 16.4 |
-| `dr:fb` | no | `dr-fm-bell-low` | low metallic fm | 低い金属FM。ベルというより遠いゴングの床。薄い高域ベルではない。 | 36 | 16.5 |
-| `dr:fe` | no | `dr-fm-evolve` | evolving fm drone | 指数がゆっくり開くFMドローン。16秒かけて倍音が育つ。 | 33 | 16.7 |
-| `dr:fi` | no | `dr-fm-index` | slow index fm | 並列モジュレータの遅い指数スイープ。暗い金属の粒がゆっくり増える。 | 36 | 16.5 |
-| `dr:fg` | no | `dr-fog` | fog pad | 霧のパッド。カットオフが低く、輪郭が溶ける。 | 36 | 17.0 |
-| `dr:fl` | no | `dr-formant-low` | low formant drone | 低いフォルマント。アブサインの母音がゆっくり動く。 | 36 | 16.5 |
-| `dr:gc` | no | `dr-ghost-choir` | ghost choir | 幽霊クワイア。ミッド（C3）の薄い重ねサイン。サブは0.5で残す。 | 48 | 16.9 |
-| `dr:hr` | no | `dr-horror` | horror drone | ホラーの不協和。1.07 / 2.13 のうなり。低い床は残す。 | 28 | 16.8 |
-| `dr:hg` | no | `dr-hum-grid` | grid hum | 50/60 Hzの電源グリッド。固定周波数＋ノートのサブ。 | 36 | 16.4 |
-| `dr:ic` | no | `dr-ice-cave` | ice cave drone | 氷穴のミッドドローン。冷たい倍音を薄く。サブは0.5で残す。 | 48 | 16.8 |
-| `dr:ih` | no | `dr-impact-hold` | impact into hold | ピッチ落下のインパクトからそのまま床になる。ワンショットで消えない。 | 26 | 16.6 |
-| `dr:id` | no | `dr-industrial` | industrial drone | 工場の低いハム。パルスとソー、フィードバックの砂。 | 31 | 16.4 |
-| `dr:mb` | no | `dr-metal-bed` | metallic bed | 金属ベッド。共有モジュレータのリンが長く残る。低いキャリア。 | 36 | 16.5 |
-| `dr:md` | no | `dr-metal-distant` | distant metallic drone | 遠い金属のうなり。非整数比。LPで手前に出さない。 | 36 | 16.6 |
-| `dr:mn` | no | `dr-minor-dark` | dark minor drone | 暗い短3度寄り（6:5）。シネマのマイナー床。長三和音は使わない。 | 31 | 16.6 |
-| `dr:nb` | no | `dr-noisy-bp` | noisy bandpass rumble | 高FBの砂を低いBPでランブルにする。カットオフは80 Hz付近。サブ隣接を残す。 | 28 | 16.4 |
-| `dr:os` | no | `dr-octave-stack` | octave stack drone | オクターブ重ねの重いベッド。0.5 / 1 / 2。ミッドは薄く。 | 28 | 16.5 |
-| `dr:pd` | no | `dr-pad-dark` | dark pad drone | 暗いパッドドローン。ソーの芯に正弦のサブ。 | 36 | 16.6 |
-| `dr:pf` | no | `dr-pulse-fifth` | pulse fifth rumble | パルスの5度ランブル。中空で攻撃的な低域。 | 33 | 16.4 |
-| `dr:pr` | no | `dr-pulse-rumble` | pulse rumble | パルスの低うなり。矩形の胴をLPで丸める。 | 28 | 16.3 |
-| `dr:rc` | no | `dr-reactor` | reactor hum | 原子炉のハム。非整数比の低いうなり＋サブ。 | 31 | 16.6 |
-| `dr:rd` | no | `dr-reese-dark` | dark reese drone | 暗いReeseスタック。デチューンソーのサブ〜ミッド。長いホールド。 | 31 | 16.6 |
-| `dr:rw` | no | `dr-reese-wide` | wide reese drone | 広めの暗いReese。左右に広がるデチューン。サブは残す。 | 33 | 16.5 |
-| `dr:rh` | no | `dr-reverse-hold` | reverse into hold | リバース風に開いてからホールド。アタックは短め（スモーク用）でフィルタがゆっくり開く。 | 31 | 17.0 |
-| `dr:rs` | no | `dr-riser-slow` | slow riser drone | 遅いライザーがドローンになる。ピッチは少しだけ上がって止まる。 | 28 | 17.2 |
-| `dr:ri` | no | `dr-ritual` | ritual drone | 儀式の低い重ね。5度と短3度。暗いホール。 | 28 | 16.8 |
-| `dr:rm` | no | `dr-rumble` | low rumble | パルスの低ランブル。地面が揺れるような胴。LPでハイを抑える。 | 26 | 16.4 |
-| `dr:sm` | no | `dr-saw-minor` | saw minor stack | ソーの短3度スタック。暗いコード床。長3度なし。 | 31 | 16.6 |
-| `dr:sh` | no | `dr-scifi-hum` | sci-fi hum | SFの電源ハム。固定60 Hz層＋ノートのサブ。 | 36 | 16.5 |
-| `dr:sc` | no | `dr-score-hold` | scored trailer hold | スコア／トレーラーのホールド。スーパーソー低域＋正弦サブ。ミッド（C3）。 | 48 | 17.2 |
-| `dr:ss` | no | `dr-sine-sub` | sine sub bed | シネマティックな正弦サブベッド。20–40 Hzの胴を長くホールド。レイヤーの床。 | 24 | 16.4 |
-| `dr:st` | no | `dr-storm` | storm rumble | 嵐のランブル。高FBノイズをLPで遠雷にする。サブ正弦が芯。 | 24 | 16.8 |
-| `dr:so` | no | `dr-sub-octave` | sub octave bed | サブと1オクターブ上の正弦スタック。空洞のない重い床。 | 24 | 16.5 |
-| `dr:sl` | no | `dr-supersaw-low` | low supersaw drone | 低いスーパーソードローン。トレーラーの厚いパッド床。LPでサブを残す。 | 36 | 16.8 |
-| `dr:th` | no | `dr-tape-hum` | tape machine hum | テープ／機械のハム。わずかなデチューンと低いランブル。 | 28 | 16.4 |
-| `dr:tb` | no | `dr-thunder-bed` | thunder bed | 雷のベッド。サブ正弦＋高FBの遠雷ノイズ。ワンショットではない。 | 24 | 16.8 |
-| `dr:tl` | no | `dr-trailer-bloom` | trailer bloom drone | 短いインパクトが開いてドローンになる。トレーラーヒット→ホールド。 | 24 | 16.8 |
-| `dr:uw` | no | `dr-underwater` | underwater drone | 水中の低いうなり。LPが狭く、ゆっくり揺れる。 | 24 | 16.6 |
-| `dr:vd` | no | `dr-void` | void drone | 虚空。極端に暗いLP。ほぼサブだけの長い無。 | 24 | 17.0 |
-| `dr:wf` | no | `dr-warfare` | warfare bed | 戦争映画の床。遠いブラスとサブのランブル。 | 31 | 16.7 |
-| `dr:ws` | no | `dr-wobble-slow` | slow wobble drone | ごく遅いウォブル。0.15 HzのLFO。ベースワンショットではない。 | 33 | 16.6 |
+| `dr:ab` | yes | `dr-abyss` | abyss rumble | 深淵のランブル。0.5正弦に薄いパルスの砂。 | 24 | 16.7 |
+| `dr:ad` | yes | `dr-ambient-dark` | dark ambient pad | 暗いアンビエントパッド。ゆっくりしたLFO。サブを残したまま空気を足す。 | 36 | 16.9 |
+| `dr:bd` | yes | `dr-brass-distant` | distant brass drone | 遠い金管。ミュートしたブラスの床。LPで遠さ。 | 33 | 16.7 |
+| `dr:bp` | yes | `dr-brass-pad` | low brass pad | 低いブラスパッド。リップのFMがすぐ落ち着き、長い胴が残る。 | 36 | 16.5 |
+| `dr:ct` | yes | `dr-cathedral` | cathedral low | 聖堂の低いドローバー。1+2+3+0.5。ミッドドローン（C3）。 | 48 | 16.6 |
+| `dr:cd` | yes | `dr-choir-dark` | dark choir drone | より暗いクワイア。短3度を薄く足す。ミッドドローン寄り。 | 33 | 16.7 |
+| `dr:cl` | yes | `dr-choir-low` | low choir drone | 低いクワイア寄りの重ねサイン。デチューンした加算。暗いホール。 | 36 | 16.5 |
+| `dr:dy` | yes | `dr-dystopia` | dystopian hum | ディストピアのハム。ソーとパルスの低い都市音。 | 31 | 16.5 |
+| `dr:en` | yes | `dr-engine` | engine rumble | エンジンの回転うなり。遅いLFOでピッチがわずかに揺れる。 | 28 | 16.5 |
+| `dr:fh` | yes | `dr-fifth-hollow` | hollow fifth drone | 中空5度の低ドローン。C+Gだけ。長3度なし。 | 36 | 16.4 |
+| `dr:fb` | yes | `dr-fm-bell-low` | low metallic fm | 低い金属FM。ベルというより遠いゴングの床。薄い高域ベルではない。 | 36 | 16.5 |
+| `dr:fe` | yes | `dr-fm-evolve` | evolving fm drone | 指数がゆっくり開くFMドローン。16秒かけて倍音が育つ。 | 33 | 16.7 |
+| `dr:fi` | yes | `dr-fm-index` | slow index fm | 並列モジュレータの遅い指数スイープ。暗い金属の粒がゆっくり増える。 | 36 | 16.5 |
+| `dr:fg` | yes | `dr-fog` | fog pad | 霧のパッド。カットオフが低く、輪郭が溶ける。 | 36 | 17.0 |
+| `dr:fl` | yes | `dr-formant-low` | low formant drone | 低いフォルマント。アブサインの母音がゆっくり動く。 | 36 | 16.5 |
+| `dr:gc` | yes | `dr-ghost-choir` | ghost choir | 幽霊クワイア。ミッド（C3）の薄い重ねサイン。サブは0.5で残す。 | 48 | 16.9 |
+| `dr:hr` | yes | `dr-horror` | horror drone | ホラーの不協和。1.07 / 2.13 のうなり。低い床は残す。 | 28 | 16.8 |
+| `dr:hg` | yes | `dr-hum-grid` | grid hum | 50/60 Hzの電源グリッド。固定周波数＋ノートのサブ。 | 36 | 16.4 |
+| `dr:ic` | yes | `dr-ice-cave` | ice cave drone | 氷穴のミッドドローン。冷たい倍音を薄く。サブは0.5で残す。 | 48 | 16.8 |
+| `dr:ih` | yes | `dr-impact-hold` | impact into hold | ピッチ落下のインパクトからそのまま床になる。ワンショットで消えない。 | 26 | 16.6 |
+| `dr:id` | yes | `dr-industrial` | industrial drone | 工場の低いハム。パルスとソー、フィードバックの砂。 | 31 | 16.4 |
+| `dr:mb` | yes | `dr-metal-bed` | metallic bed | 金属ベッド。共有モジュレータのリンが長く残る。低いキャリア。 | 36 | 16.5 |
+| `dr:md` | yes | `dr-metal-distant` | distant metallic drone | 遠い金属のうなり。非整数比。LPで手前に出さない。 | 36 | 16.6 |
+| `dr:mn` | yes | `dr-minor-dark` | dark minor drone | 暗い短3度寄り（6:5）。シネマのマイナー床。長三和音は使わない。 | 31 | 16.6 |
+| `dr:nb` | yes | `dr-noisy-bp` | noisy bandpass rumble | 高FBの砂を低いBPでランブルにする。カットオフは80 Hz付近。サブ隣接を残す。 | 28 | 16.4 |
+| `dr:os` | yes | `dr-octave-stack` | octave stack drone | オクターブ重ねの重いベッド。0.5 / 1 / 2。ミッドは薄く。 | 28 | 16.5 |
+| `dr:pd` | yes | `dr-pad-dark` | dark pad drone | 暗いパッドドローン。ソーの芯に正弦のサブ。 | 36 | 16.6 |
+| `dr:pf` | yes | `dr-pulse-fifth` | pulse fifth rumble | パルスの5度ランブル。中空で攻撃的な低域。 | 33 | 16.4 |
+| `dr:pr` | yes | `dr-pulse-rumble` | pulse rumble | パルスの低うなり。矩形の胴をLPで丸める。 | 28 | 16.3 |
+| `dr:rc` | yes | `dr-reactor` | reactor hum | 原子炉のハム。非整数比の低いうなり＋サブ。 | 31 | 16.6 |
+| `dr:rd` | yes | `dr-reese-dark` | dark reese drone | 暗いReeseスタック。デチューンソーのサブ〜ミッド。長いホールド。 | 31 | 16.6 |
+| `dr:rw` | yes | `dr-reese-wide` | wide reese drone | 広めの暗いReese。左右に広がるデチューン。サブは残す。 | 33 | 16.5 |
+| `dr:rh` | yes | `dr-reverse-hold` | reverse into hold | リバース風に開いてからホールド。アタックは短め（スモーク用）でフィルタがゆっくり開く。 | 31 | 17.0 |
+| `dr:rs` | yes | `dr-riser-slow` | slow riser drone | 遅いライザーがドローンになる。ピッチは少しだけ上がって止まる。 | 28 | 17.2 |
+| `dr:ri` | yes | `dr-ritual` | ritual drone | 儀式の低い重ね。5度と短3度。暗いホール。 | 28 | 16.8 |
+| `dr:rm` | yes | `dr-rumble` | low rumble | パルスの低ランブル。地面が揺れるような胴。LPでハイを抑える。 | 26 | 16.4 |
+| `dr:sm` | yes | `dr-saw-minor` | saw minor stack | ソーの短3度スタック。暗いコード床。長3度なし。 | 31 | 16.6 |
+| `dr:sh` | yes | `dr-scifi-hum` | sci-fi hum | SFの電源ハム。固定60 Hz層＋ノートのサブ。 | 36 | 16.5 |
+| `dr:sc` | yes | `dr-score-hold` | scored trailer hold | スコア／トレーラーのホールド。スーパーソー低域＋正弦サブ。ミッド（C3）。 | 48 | 17.2 |
+| `dr:ss` | yes | `dr-sine-sub` | sine sub bed | シネマティックな正弦サブベッド。20–40 Hzの胴を長くホールド。レイヤーの床。 | 24 | 16.4 |
+| `dr:st` | yes | `dr-storm` | storm rumble | 嵐のランブル。高FBノイズをLPで遠雷にする。サブ正弦が芯。 | 24 | 16.8 |
+| `dr:so` | yes | `dr-sub-octave` | sub octave bed | サブと1オクターブ上の正弦スタック。空洞のない重い床。 | 24 | 16.5 |
+| `dr:sl` | yes | `dr-supersaw-low` | low supersaw drone | 低いスーパーソードローン。トレーラーの厚いパッド床。LPでサブを残す。 | 36 | 16.8 |
+| `dr:th` | yes | `dr-tape-hum` | tape machine hum | テープ／機械のハム。わずかなデチューンと低いランブル。 | 28 | 16.4 |
+| `dr:tb` | yes | `dr-thunder-bed` | thunder bed | 雷のベッド。サブ正弦＋高FBの遠雷ノイズ。ワンショットではない。 | 24 | 16.8 |
+| `dr:tl` | yes | `dr-trailer-bloom` | trailer bloom drone | 短いインパクトが開いてドローンになる。トレーラーヒット→ホールド。 | 24 | 16.8 |
+| `dr:uw` | yes | `dr-underwater` | underwater drone | 水中の低いうなり。LPが狭く、ゆっくり揺れる。 | 24 | 16.6 |
+| `dr:vd` | yes | `dr-void` | void drone | 虚空。極端に暗いLP。ほぼサブだけの長い無。 | 24 | 17.0 |
+| `dr:wf` | yes | `dr-warfare` | warfare bed | 戦争映画の床。遠いブラスとサブのランブル。 | 31 | 16.7 |
+| `dr:ws` | yes | `dr-wobble-slow` | slow wobble drone | ごく遅いウォブル。0.15 HzのLFO。ベースワンショットではない。 | 33 | 16.6 |
 
 ## `ep`
 
@@ -210,56 +210,56 @@ strudel-rs の呼び出しは `s("<part>:<slug>")`。音程楽器は `note(...).
 
 | call | in_bank | id | name | description | note | dur |
 | --- | --- | --- | --- | --- | --- | --- |
-| `ld:ac` | no | `ld-acid` | ld-acid | 303風のジェスチャ。ソー＋LP＋レゾ＋カットオフエンベ。完全な303ではない。 | 48 | 8.2 |
-| `ld:an` | no | `ld-anthem` | ld-anthem | アンセムソー。太い単ソー＋オクターブ。フェスティバルEDMのロングノート。 | 48 | 8.2 |
-| `ld:ap` | no | `ld-arp-pluck` | ld-arp-pluck | アルペジオ向きの短いプラック。明るい減衰。C4。 | 60 | 8.2 |
-| `ld:bl` | no | `ld-bell-pluck` | ld-bell-pluck | ベルプラック。非整数比のトリプルキャリア。C4寄りの高いワンショット。 | 60 | 8.2 |
-| `ld:br` | no | `ld-brass` | ld-brass | ブラス寄りのFMスタブ。アタックに高比、すぐ落ち着く。 | 48 | 8.2 |
-| `ld:ch` | no | `ld-chip` | ld-chip | チップチューンのパルスリード。細い矩形。C4。 | 60 | 8.2 |
-| `ld:cr` | no | `ld-choir` | ld-choir | クワイア寄りの重ねサイン。デチューンした加算。パッド兼リード。 | 48 | 8.2 |
-| `ld:cn` | no | `ld-cinematic` | ld-cinematic | 長いシネマティックリード。ゆっくり開くフィルタとLFO。後で切って使う。 | 48 | 8.2 |
-| `ld:cy` | no | `ld-crystal` | ld-crystal | クリスタルのキラキラリード。高い部分音。C4。 | 60 | 8.2 |
-| `ld:dp` | no | `ld-dist-pulse` | ld-dist-pulse | 歪んだパルスリード。高FBで砂状。HPでサブを切る。 | 48 | 8.2 |
-| `ld:ds` | no | `ld-dnb-stab` | ld-dnb-stab | タイトなDnBスタブ。ミッドBP、短い減衰。Amen隣接のメロディワンショット。 | 48 | 8.2 |
-| `ld:dr` | no | `ld-drop-pluck` | ld-drop-pluck | ドロッププラック。短いピッチ落下＋LPエンベ。ビルド後のワンショット。 | 48 | 8.2 |
-| `ld:et` | no | `ld-ethereal` | ld-ethereal | 空気感のあるパッドリード。遅いアタック、HP。ソフトなロングノート。 | 48 | 8.2 |
-| `ld:fp` | no | `ld-fifth-pad` | ld-fifth-pad | 5度パッドリード。持続するC+Gに薄い倍音。コードの下地。 | 48 | 8.2 |
-| `ld:fl` | no | `ld-flute` | ld-flute | フルート寄り。遅いアタックのサイン＋薄い息。HPで胴を薄く。 | 48 | 8.2 |
-| `ld:fm` | no | `ld-fm-pluck` | ld-fm-pluck | 短いシリアルFMプラック。C3基音。リードバンク用（既存のlead-fm-pluckとは別パッチ）。 | 48 | 8.2 |
-| `ld:fo` | no | `ld-formant` | ld-formant | フォルマント寄りのアブサインリード。BPで口の形。 | 48 | 8.2 |
-| `ld:fc` | no | `ld-frenchcore` | ld-frenchcore | フレンチコアのスクリームリード。HP/BP、羊毛サブなし。攻撃的ミッドハイ。 | 60 | 8.2 |
-| `ld:gb` | no | `ld-gabber` | ld-gabber | ガバリード。歪んだパルスのミッド。短めのホールド、会場のメロディ。 | 48 | 8.2 |
-| `ld:gl` | no | `ld-glass` | ld-glass | ガラス／クリスタルリード。高い非整数比。C4。尾は少し長め。 | 60 | 8.2 |
-| `ld:gr` | no | `ld-growl` | ld-growl | ミッドのグロウルリード。BP＋フィードバック。キック／ベースのサブは奪わない。 | 48 | 8.2 |
-| `ld:hs` | no | `ld-half-sine` | ld-half-sine | ハーフサインの柔らかい三角波寄りリード。丸いメロディ。 | 48 | 8.2 |
-| `ld:hd` | no | `ld-hardstyle` | ld-hardstyle | ハードスタイルのスクリーチ寄り。HP、高いモジュレータ。C4。 | 60 | 8.2 |
-| `ld:hp` | no | `ld-harpsi` | ld-harpsi | ハープシコード寄り。明るいプラック、速い減衰、高い部分音。 | 48 | 8.2 |
-| `ld:hf` | no | `ld-hollow-fifth` | ld-hollow-fifth | 中空5度リード。CとG（比1と1.5）だけ。長3度（5:4）は出さない。少し長い尾。 | 48 | 8.2 |
-| `ld:hv` | no | `ld-hoover` | ld-hoover | フーバー／アルファレーン寄り。デチューンソー＋アブサイン。ミッドのうねり。 | 48 | 8.2 |
-| `ld:hu` | no | `ld-house-pluck` | ld-house-pluck | ドライなハウスプラック。短いLPエンベ、素のソー＋薄いFM。キックを奪わない。 | 48 | 8.2 |
-| `ld:in` | no | `ld-industrial` | ld-industrial | インダストリアルリード。パルス＋高FB。HPで羊毛のようなサブを切る。 | 48 | 8.2 |
-| `ld:lz` | no | `ld-laser` | ld-laser | レーザーリード。高い開始ピッチからノートへ着地。C4。 | 60 | 8.2 |
-| `ld:ml` | no | `ld-mallet` | ld-mallet | マレット／木琴寄り。ハーフサインの胴と短い減衰。メロディワンショット。 | 48 | 8.2 |
-| `ld:mt` | no | `ld-metallic` | ld-metallic | 金属FMリード。インハーモニック比＋固定周波数のリン。攻撃的ミッド。 | 48 | 8.2 |
-| `ld:mx` | no | `ld-music-box` | ld-music-box | オルゴール。高いベル＋短い減衰。C4ワンショット。 | 60 | 8.2 |
-| `ld:nb` | no | `ld-noisy-bp` | ld-noisy-bp | ノイズ寄りのBPリード。高FBの砂をバンドパスで音符にする。 | 48 | 8.2 |
-| `ld:ny` | no | `ld-nylon` | ld-nylon | ミュートしたナイロン寄りのプラック。ハーフサイン＋低いLP。柔らかいメロディ用。 | 48 | 8.2 |
-| `ld:oc` | no | `ld-octave` | ld-octave | オクターブスタック。比1と2のソー／サイン。シンプルな厚いリード。 | 48 | 8.2 |
-| `ld:or` | no | `ld-organ` | ld-organ | オルガン寄り。並列オペ（ドローバー風 1+2+3）。加算＋薄いFB。 | 48 | 8.2 |
-| `ld:pc` | no | `ld-perc` | ld-perc | パーカッション寄りのリード。クリックアタック＋短いトーン。HPでサブを切る。 | 60 | 8.2 |
-| `ld:pu` | no | `ld-pulse` | ld-pulse | スクエア／パルスリード。奇数倍音。ハウスやテクノのメロディ。 | 48 | 8.2 |
-| `ld:rd` | no | `ld-reed` | ld-reed | リード／クラリネット寄り。奇数倍音のパルス＋サイン。 | 48 | 8.2 |
-| `ld:rv` | no | `ld-reverse` | ld-reverse | リバース風。遅いアタック＋上昇ピッチエンベ。スイープ兼ノート。 | 48 | 8.2 |
-| `ld:sw` | no | `ld-saw-pluck` | ld-saw-pluck | ドライな単ソーのプラック。飾りなし。ハウス／テクノの基本。 | 48 | 8.2 |
-| `ld:si` | no | `ld-sine` | ld-sine | クリーンなサインリード。薄いビブラート。メロディの芯。 | 48 | 8.2 |
+| `ld:ac` | yes | `ld-acid` | ld-acid | 303風のジェスチャ。ソー＋LP＋レゾ＋カットオフエンベ。完全な303ではない。 | 48 | 8.2 |
+| `ld:an` | yes | `ld-anthem` | ld-anthem | アンセムソー。太い単ソー＋オクターブ。フェスティバルEDMのロングノート。 | 48 | 8.2 |
+| `ld:ap` | yes | `ld-arp-pluck` | ld-arp-pluck | アルペジオ向きの短いプラック。明るい減衰。C4。 | 60 | 8.2 |
+| `ld:bl` | yes | `ld-bell-pluck` | ld-bell-pluck | ベルプラック。非整数比のトリプルキャリア。C4寄りの高いワンショット。 | 60 | 8.2 |
+| `ld:br` | yes | `ld-brass` | ld-brass | ブラス寄りのFMスタブ。アタックに高比、すぐ落ち着く。 | 48 | 8.2 |
+| `ld:ch` | yes | `ld-chip` | ld-chip | チップチューンのパルスリード。細い矩形。C4。 | 60 | 8.2 |
+| `ld:cr` | yes | `ld-choir` | ld-choir | クワイア寄りの重ねサイン。デチューンした加算。パッド兼リード。 | 48 | 8.2 |
+| `ld:cn` | yes | `ld-cinematic` | ld-cinematic | 長いシネマティックリード。ゆっくり開くフィルタとLFO。後で切って使う。 | 48 | 8.2 |
+| `ld:cy` | yes | `ld-crystal` | ld-crystal | クリスタルのキラキラリード。高い部分音。C4。 | 60 | 8.2 |
+| `ld:dp` | yes | `ld-dist-pulse` | ld-dist-pulse | 歪んだパルスリード。高FBで砂状。HPでサブを切る。 | 48 | 8.2 |
+| `ld:ds` | yes | `ld-dnb-stab` | ld-dnb-stab | タイトなDnBスタブ。ミッドBP、短い減衰。Amen隣接のメロディワンショット。 | 48 | 8.2 |
+| `ld:dr` | yes | `ld-drop-pluck` | ld-drop-pluck | ドロッププラック。短いピッチ落下＋LPエンベ。ビルド後のワンショット。 | 48 | 8.2 |
+| `ld:et` | yes | `ld-ethereal` | ld-ethereal | 空気感のあるパッドリード。遅いアタック、HP。ソフトなロングノート。 | 48 | 8.2 |
+| `ld:fp` | yes | `ld-fifth-pad` | ld-fifth-pad | 5度パッドリード。持続するC+Gに薄い倍音。コードの下地。 | 48 | 8.2 |
+| `ld:fl` | yes | `ld-flute` | ld-flute | フルート寄り。遅いアタックのサイン＋薄い息。HPで胴を薄く。 | 48 | 8.2 |
+| `ld:fm` | yes | `ld-fm-pluck` | ld-fm-pluck | 短いシリアルFMプラック。C3基音。リードバンク用（既存のlead-fm-pluckとは別パッチ）。 | 48 | 8.2 |
+| `ld:fo` | yes | `ld-formant` | ld-formant | フォルマント寄りのアブサインリード。BPで口の形。 | 48 | 8.2 |
+| `ld:fc` | yes | `ld-frenchcore` | ld-frenchcore | フレンチコアのスクリームリード。HP/BP、羊毛サブなし。攻撃的ミッドハイ。 | 60 | 8.2 |
+| `ld:gb` | yes | `ld-gabber` | ld-gabber | ガバリード。歪んだパルスのミッド。短めのホールド、会場のメロディ。 | 48 | 8.2 |
+| `ld:gl` | yes | `ld-glass` | ld-glass | ガラス／クリスタルリード。高い非整数比。C4。尾は少し長め。 | 60 | 8.2 |
+| `ld:gr` | yes | `ld-growl` | ld-growl | ミッドのグロウルリード。BP＋フィードバック。キック／ベースのサブは奪わない。 | 48 | 8.2 |
+| `ld:hs` | yes | `ld-half-sine` | ld-half-sine | ハーフサインの柔らかい三角波寄りリード。丸いメロディ。 | 48 | 8.2 |
+| `ld:hd` | yes | `ld-hardstyle` | ld-hardstyle | ハードスタイルのスクリーチ寄り。HP、高いモジュレータ。C4。 | 60 | 8.2 |
+| `ld:hp` | yes | `ld-harpsi` | ld-harpsi | ハープシコード寄り。明るいプラック、速い減衰、高い部分音。 | 48 | 8.2 |
+| `ld:hf` | yes | `ld-hollow-fifth` | ld-hollow-fifth | 中空5度リード。CとG（比1と1.5）だけ。長3度（5:4）は出さない。少し長い尾。 | 48 | 8.2 |
+| `ld:hv` | yes | `ld-hoover` | ld-hoover | フーバー／アルファレーン寄り。デチューンソー＋アブサイン。ミッドのうねり。 | 48 | 8.2 |
+| `ld:hu` | yes | `ld-house-pluck` | ld-house-pluck | ドライなハウスプラック。短いLPエンベ、素のソー＋薄いFM。キックを奪わない。 | 48 | 8.2 |
+| `ld:in` | yes | `ld-industrial` | ld-industrial | インダストリアルリード。パルス＋高FB。HPで羊毛のようなサブを切る。 | 48 | 8.2 |
+| `ld:lz` | yes | `ld-laser` | ld-laser | レーザーリード。高い開始ピッチからノートへ着地。C4。 | 60 | 8.2 |
+| `ld:ml` | yes | `ld-mallet` | ld-mallet | マレット／木琴寄り。ハーフサインの胴と短い減衰。メロディワンショット。 | 48 | 8.2 |
+| `ld:mt` | yes | `ld-metallic` | ld-metallic | 金属FMリード。インハーモニック比＋固定周波数のリン。攻撃的ミッド。 | 48 | 8.2 |
+| `ld:mx` | yes | `ld-music-box` | ld-music-box | オルゴール。高いベル＋短い減衰。C4ワンショット。 | 60 | 8.2 |
+| `ld:nb` | yes | `ld-noisy-bp` | ld-noisy-bp | ノイズ寄りのBPリード。高FBの砂をバンドパスで音符にする。 | 48 | 8.2 |
+| `ld:ny` | yes | `ld-nylon` | ld-nylon | ミュートしたナイロン寄りのプラック。ハーフサイン＋低いLP。柔らかいメロディ用。 | 48 | 8.2 |
+| `ld:oc` | yes | `ld-octave` | ld-octave | オクターブスタック。比1と2のソー／サイン。シンプルな厚いリード。 | 48 | 8.2 |
+| `ld:or` | yes | `ld-organ` | ld-organ | オルガン寄り。並列オペ（ドローバー風 1+2+3）。加算＋薄いFB。 | 48 | 8.2 |
+| `ld:pc` | yes | `ld-perc` | ld-perc | パーカッション寄りのリード。クリックアタック＋短いトーン。HPでサブを切る。 | 60 | 8.2 |
+| `ld:pu` | yes | `ld-pulse` | ld-pulse | スクエア／パルスリード。奇数倍音。ハウスやテクノのメロディ。 | 48 | 8.2 |
+| `ld:rd` | yes | `ld-reed` | ld-reed | リード／クラリネット寄り。奇数倍音のパルス＋サイン。 | 48 | 8.2 |
+| `ld:rv` | yes | `ld-reverse` | ld-reverse | リバース風。遅いアタック＋上昇ピッチエンベ。スイープ兼ノート。 | 48 | 8.2 |
+| `ld:sw` | yes | `ld-saw-pluck` | ld-saw-pluck | ドライな単ソーのプラック。飾りなし。ハウス／テクノの基本。 | 48 | 8.2 |
+| `ld:si` | yes | `ld-sine` | ld-sine | クリーンなサインリード。薄いビブラート。メロディの芯。 | 48 | 8.2 |
 | `ld:ss` | yes | `ld-supersaw` | ld-supersaw | クラシックなトランス／EDMスーパーソーリード。長め。HPでサブを抑える。 | 48 | 8.2 |
-| `ld:st` | no | `ld-supersaw-stab` | ld-supersaw-stab | 広いスーパーソースタブ。短いアンプ、厚みはユニゾン。トランス／EDMのコードヒット。 | 48 | 8.2 |
-| `ld:sf` | no | `ld-sync-fm` | ld-sync-fm | シンク風FM。高い比のモジュレータでオシレータシンクっぽい倍音。 | 48 | 8.2 |
-| `ld:tg` | no | `ld-trance-gate` | ld-trance-gate | トランスのゲート風。アンプLFOは無いのでフィルタADSRで開閉する。 | 48 | 8.2 |
-| `ld:us` | no | `ld-unison-saw` | ld-unison-saw | ユニゾンソー（デチューン控え）。スーパーソーより締まったリード。 | 48 | 8.2 |
-| `ld:vw` | no | `ld-vowel` | ld-vowel | 母音FM。非整数モジュレータでアー／オー。BPが口。 | 48 | 8.2 |
-| `ld:wb` | no | `ld-wobble` | ld-wobble | ミッドウォブル。ピッチLFO＋フィルタエンベ。ニューロ寄りの音符。 | 48 | 8.2 |
-| `ld:zp` | no | `ld-zap` | ld-zap | ザップリード。下向きピッチでもノートとして使える。フィル兼メロディ。 | 48 | 8.2 |
+| `ld:st` | yes | `ld-supersaw-stab` | ld-supersaw-stab | 広いスーパーソースタブ。短いアンプ、厚みはユニゾン。トランス／EDMのコードヒット。 | 48 | 8.2 |
+| `ld:sf` | yes | `ld-sync-fm` | ld-sync-fm | シンク風FM。高い比のモジュレータでオシレータシンクっぽい倍音。 | 48 | 8.2 |
+| `ld:tg` | yes | `ld-trance-gate` | ld-trance-gate | トランスのゲート風。アンプLFOは無いのでフィルタADSRで開閉する。 | 48 | 8.2 |
+| `ld:us` | yes | `ld-unison-saw` | ld-unison-saw | ユニゾンソー（デチューン控え）。スーパーソーより締まったリード。 | 48 | 8.2 |
+| `ld:vw` | yes | `ld-vowel` | ld-vowel | 母音FM。非整数モジュレータでアー／オー。BPが口。 | 48 | 8.2 |
+| `ld:wb` | yes | `ld-wobble` | ld-wobble | ミッドウォブル。ピッチLFO＋フィルタエンベ。ニューロ寄りの音符。 | 48 | 8.2 |
+| `ld:zp` | yes | `ld-zap` | ld-zap | ザップリード。下向きピッチでもノートとして使える。フィル兼メロディ。 | 48 | 8.2 |
 
 ## `oh`
 
@@ -313,36 +313,36 @@ strudel-rs の呼び出しは `s("<part>:<slug>")`。音程楽器は `note(...).
 
 | call | in_bank | id | name | description | note | dur |
 | --- | --- | --- | --- | --- | --- | --- |
-| `pf:al` | no | `pf-alpine` | alpine pad | 高山の澄んだ5度。明るいが軽い。 | 67 | 16.5 |
-| `pf:br` | no | `pf-breeze` | breeze pad | そよ風。パルスの薄い息＋サイン。HP。 | 64 | 16.6 |
-| `pf:ca` | no | `pf-choir-air` | choir air pad | 柔らかいクワイアの空気。加算サイン、HP。泥は入れない。 | 60 | 16.7 |
-| `pf:cw` | no | `pf-chorus-wide` | wide chorus pad | 広いコーラスパッド。デチューンしたサインの重ね。午前の空気。 | 60 | 16.4 |
-| `pf:cs` | no | `pf-clear-saw` | clear saw pad | 澄んだソーパッド。HPで低域を切り、午前のアナログ。 | 60 | 16.5 |
-| `pf:cl` | no | `pf-cloud` | soft cloud pad | 柔らかい雲。ハーフサインの層。湿った空気、泥なし。 | 60 | 16.9 |
-| `pf:dn` | no | `pf-dawn` | dawn bloom pad | 夜明けのブルーム。フィルタがゆっくり開く。メジャー寄り。 | 55 | 17.0 |
-| `pf:fo` | no | `pf-fifth-open` | open fifth pad | 開いた5度パッド（C+G）。長3度なし。C3でもHPで150 Hz以上。 | 48 | 16.5 |
-| `pf:fl` | no | `pf-flute-pad` | flute pad | フルートパッド。遅い息＋サイン。HPで胴なし。C5。 | 72 | 16.8 |
-| `pf:ga` | no | `pf-glass-air` | glass air pad | ガラスの空気。薄い非整数比。ベルワンショットではない。 | 67 | 16.9 |
-| `pf:hl` | no | `pf-halo` | halo choir pad | ハローのクワイア空気。広いデチューン、HP。 | 60 | 17.0 |
-| `pf:ha` | no | `pf-harp-air` | harp air pad | ハープの空気。アタックは少し立つが16秒ホールド。 | 67 | 16.7 |
-| `pf:hz` | no | `pf-horizon` | horizon pad | 地平線。広い5度＋9度。C3の開いた配置。 | 48 | 16.7 |
-| `pf:iv` | no | `pf-ivory` | ivory pad | 象牙／柔らかい鍵盤のパッド。倍音は薄い。ホールド。 | 64 | 16.5 |
-| `pf:ju` | no | `pf-juno-air` | juno air pad | Juno風の広いが軽いパッド。ソー＋サイン、HPで胴を切る。 | 60 | 16.6 |
-| `pf:ln` | no | `pf-linen` | linen pad | リネンの質感。アブサインの薄いフォルマント。爽やか。 | 60 | 16.7 |
-| `pf:ly` | no | `pf-lydian-sky` | lydian sky pad | リディアン（#4=11/8）の空。明るいが軽い。 | 60 | 16.8 |
-| `pf:ms` | no | `pf-major-soft` | soft major pad | 柔らかい長三和音パッド（C–E–G）。開いた配置。 | 60 | 16.4 |
-| `pf:md` | no | `pf-meadow` | meadow pad | 草原。長3度＋5度の柔らかい加算。朝。 | 64 | 16.4 |
-| `pf:mn` | no | `pf-morning` | morning chorus pad | 朝のアナログコーラスパッド。軽いスーパーソー＋HP。低域はドローンに任せる。 | 60 | 16.5 |
-| `pf:ni` | no | `pf-ninth-open` | open ninth pad | 開いた9度（根音＋9度＋5度）。ワイドだがサブなし。 | 48 | 16.6 |
-| `pf:oc` | no | `pf-octave-light` | light octave pad | 軽いオクターブ重ね（1+2）。サブの0.5は使わない。 | 60 | 16.3 |
-| `pf:or` | no | `pf-organ-light` | light organ pad | 軽いオルガン（1・2・3・4）。ドローバーだがHPで床なし。 | 55 | 16.4 |
-| `pf:pu` | no | `pf-pulse-air` | pulse air pad | 中空のパルス空気。スクエアの隙間、HP。 | 55 | 16.6 |
-| `pf:rs` | no | `pf-reed-soft` | soft reed pad | 柔らかいリード／リード管。パルス芯＋サイン。HP。 | 60 | 16.6 |
-| `pf:sk` | no | `pf-silk` | silk sine pad | 絹のサインパッド。ごく薄いコーラス。澄んでいる。 | 67 | 16.8 |
-| `pf:so` | no | `pf-sky-open` | open sky pad | 開いた空。オクターブ＋5度の高い配置。 | 64 | 16.5 |
-| `pf:sp` | no | `pf-spring` | spring pad | 春。リディアン寄り＋空気。明るく開く。 | 64 | 16.8 |
-| `pf:wa` | no | `pf-water-air` | water air pad | 水の空気。遅いLFO、薄いモジュレーション。泥なし。 | 60 | 17.1 |
-| `pf:wm` | no | `pf-wide-major` | wide major pad | 開いた長三和音（根音＋10度＋12度）。泥のないワイド。 | 48 | 16.6 |
+| `pf:al` | yes | `pf-alpine` | alpine pad | 高山の澄んだ5度。明るいが軽い。 | 67 | 16.5 |
+| `pf:br` | yes | `pf-breeze` | breeze pad | そよ風。パルスの薄い息＋サイン。HP。 | 64 | 16.6 |
+| `pf:ca` | yes | `pf-choir-air` | choir air pad | 柔らかいクワイアの空気。加算サイン、HP。泥は入れない。 | 60 | 16.7 |
+| `pf:cw` | yes | `pf-chorus-wide` | wide chorus pad | 広いコーラスパッド。デチューンしたサインの重ね。午前の空気。 | 60 | 16.4 |
+| `pf:cs` | yes | `pf-clear-saw` | clear saw pad | 澄んだソーパッド。HPで低域を切り、午前のアナログ。 | 60 | 16.5 |
+| `pf:cl` | yes | `pf-cloud` | soft cloud pad | 柔らかい雲。ハーフサインの層。湿った空気、泥なし。 | 60 | 16.9 |
+| `pf:dn` | yes | `pf-dawn` | dawn bloom pad | 夜明けのブルーム。フィルタがゆっくり開く。メジャー寄り。 | 55 | 17.0 |
+| `pf:fo` | yes | `pf-fifth-open` | open fifth pad | 開いた5度パッド（C+G）。長3度なし。C3でもHPで150 Hz以上。 | 48 | 16.5 |
+| `pf:fl` | yes | `pf-flute-pad` | flute pad | フルートパッド。遅い息＋サイン。HPで胴なし。C5。 | 72 | 16.8 |
+| `pf:ga` | yes | `pf-glass-air` | glass air pad | ガラスの空気。薄い非整数比。ベルワンショットではない。 | 67 | 16.9 |
+| `pf:hl` | yes | `pf-halo` | halo choir pad | ハローのクワイア空気。広いデチューン、HP。 | 60 | 17.0 |
+| `pf:ha` | yes | `pf-harp-air` | harp air pad | ハープの空気。アタックは少し立つが16秒ホールド。 | 67 | 16.7 |
+| `pf:hz` | yes | `pf-horizon` | horizon pad | 地平線。広い5度＋9度。C3の開いた配置。 | 48 | 16.7 |
+| `pf:iv` | yes | `pf-ivory` | ivory pad | 象牙／柔らかい鍵盤のパッド。倍音は薄い。ホールド。 | 64 | 16.5 |
+| `pf:ju` | yes | `pf-juno-air` | juno air pad | Juno風の広いが軽いパッド。ソー＋サイン、HPで胴を切る。 | 60 | 16.6 |
+| `pf:ln` | yes | `pf-linen` | linen pad | リネンの質感。アブサインの薄いフォルマント。爽やか。 | 60 | 16.7 |
+| `pf:ly` | yes | `pf-lydian-sky` | lydian sky pad | リディアン（#4=11/8）の空。明るいが軽い。 | 60 | 16.8 |
+| `pf:ms` | yes | `pf-major-soft` | soft major pad | 柔らかい長三和音パッド（C–E–G）。開いた配置。 | 60 | 16.4 |
+| `pf:md` | yes | `pf-meadow` | meadow pad | 草原。長3度＋5度の柔らかい加算。朝。 | 64 | 16.4 |
+| `pf:mn` | yes | `pf-morning` | morning chorus pad | 朝のアナログコーラスパッド。軽いスーパーソー＋HP。低域はドローンに任せる。 | 60 | 16.5 |
+| `pf:ni` | yes | `pf-ninth-open` | open ninth pad | 開いた9度（根音＋9度＋5度）。ワイドだがサブなし。 | 48 | 16.6 |
+| `pf:oc` | yes | `pf-octave-light` | light octave pad | 軽いオクターブ重ね（1+2）。サブの0.5は使わない。 | 60 | 16.3 |
+| `pf:or` | yes | `pf-organ-light` | light organ pad | 軽いオルガン（1・2・3・4）。ドローバーだがHPで床なし。 | 55 | 16.4 |
+| `pf:pu` | yes | `pf-pulse-air` | pulse air pad | 中空のパルス空気。スクエアの隙間、HP。 | 55 | 16.6 |
+| `pf:rs` | yes | `pf-reed-soft` | soft reed pad | 柔らかいリード／リード管。パルス芯＋サイン。HP。 | 60 | 16.6 |
+| `pf:sk` | yes | `pf-silk` | silk sine pad | 絹のサインパッド。ごく薄いコーラス。澄んでいる。 | 67 | 16.8 |
+| `pf:so` | yes | `pf-sky-open` | open sky pad | 開いた空。オクターブ＋5度の高い配置。 | 64 | 16.5 |
+| `pf:sp` | yes | `pf-spring` | spring pad | 春。リディアン寄り＋空気。明るく開く。 | 64 | 16.8 |
+| `pf:wa` | yes | `pf-water-air` | water air pad | 水の空気。遅いLFO、薄いモジュレーション。泥なし。 | 60 | 17.1 |
+| `pf:wm` | yes | `pf-wide-major` | wide major pad | 開いた長三和音（根音＋10度＋12度）。泥のないワイド。 | 48 | 16.6 |
 | `pf:ff` | yes | `pad-fm_fifth` | fifth pad | C3 hollow C+G pad (~8 s). Write C4:…. Cannot invent a third. | 48 | 8.2 |
 
 ## `plk`
@@ -390,36 +390,36 @@ strudel-rs の呼び出しは `s("<part>:<slug>")`。音程楽器は `note(...).
 
 | call | in_bank | id | name | description | note | dur |
 | --- | --- | --- | --- | --- | --- | --- |
-| `ps:au` | no | `ps-aurora` | aurora pad | オーロラ。ゆっくり色が変わるFMの輝き。 | 64 | 17.2 |
-| `ps:ba` | no | `ps-bell-air` | bell air pad | ベルの空気。金属というより光。ホールド。 | 72 | 16.6 |
-| `ps:bh` | no | `ps-bell-hold` | held bell pad | ベルのホールド。アタックは立つがサステインで16秒残る。 | 72 | 16.8 |
-| `ps:ce` | no | `ps-celesta` | celesta pad | チェレスタパッド。鍵盤ベルを伸ばしたホールド。 | 72 | 16.5 |
-| `ps:cs` | no | `ps-celestial` | celestial pad | 天のパッド。クワイア＋高い輝き。 | 64 | 17.0 |
-| `ps:cp` | no | `ps-chime-pad` | chime pad | チャイムパッド。金属の高い層をホールド。 | 72 | 16.8 |
-| `ps:ch` | no | `ps-chorus-shine` | chorus shine pad | 遅いコーラスの輝き。キラキラが横に広がる。 | 64 | 16.7 |
-| `ps:cr` | no | `ps-crystal` | crystal pad | クリスタルパッド。高い部分音。ホールド（ワンショットベルではない）。 | 72 | 16.6 |
-| `ps:cc` | no | `ps-crystal-choir` | crystal choir pad | クリスタルクワイア。サイン重ね＋高い部分音。 | 67 | 16.9 |
-| `ps:dm` | no | `ps-diamond` | diamond pad | ダイヤモンド。硬い高次、明るいホールド。 | 72 | 16.5 |
-| `ps:fs` | no | `ps-fm-sparkle` | evolving fm sparkle | ゆっくり指数が開くFMスパークル。キラキラが育つ。 | 67 | 17.2 |
-| `ps:fr` | no | `ps-frost` | frost pad | 霜。冷たい高域の層。キラキラは控えめ。 | 69 | 16.8 |
-| `ps:gb` | no | `ps-glass-bell` | glass bell pad | ガラスベルのパッド。高い非整数比を持続。 | 72 | 16.9 |
-| `ps:gl` | no | `ps-glisten` | glisten pad | きらめき。高域がゆっくり呼吸する。 | 69 | 16.9 |
-| `ps:gt` | no | `ps-glitter` | glitter pad | グリッター。高次倍音の粉。パッドとして残る。 | 72 | 16.6 |
-| `ps:gp` | no | `ps-glock-pad` | glock pad | グロッケンパッド。鉄琴の輝きを伸ばす。 | 72 | 16.5 |
-| `ps:hs` | no | `ps-halo-shine` | halo shine pad | ハローの輝き。広いデチューン＋高次。 | 64 | 16.8 |
-| `ps:hp` | no | `ps-high-partials` | high partials pad | 高次奇数倍音（1・3・5・7）。キラキラの骨格。 | 60 | 16.4 |
-| `ps:ic` | no | `ps-ice-choir` | ice choir pad | 氷のクワイア。冷たい重ねサイン＋輝き。 | 67 | 17.0 |
-| `ps:is` | no | `ps-ice-shine` | ice shine pad | 氷の輝き。冷たい高域。ホールド。 | 72 | 16.7 |
-| `ps:ih` | no | `ps-inharmonic` | inharmonic sparkle | 非整数比のスパークル。金属だがパッドとして残る。 | 67 | 16.8 |
-| `ps:mx` | no | `ps-music-box` | music box pad | オルゴールパッド。高いベル層をホールド（減衰しきらない）。 | 72 | 16.5 |
-| `ps:pr` | no | `ps-prism` | prism pad | プリズム。スペクトルがゆっくり割れる。 | 67 | 17.1 |
-| `ps:qz` | no | `ps-quartz` | quartz pad | 石英。硬い透明感。高い部分音のホールド。 | 69 | 16.7 |
-| `ps:sh` | no | `ps-shimmer` | shimmer pad | シマー。高い部分音がゆっくり揺れる。キラキラのホールド。 | 67 | 16.9 |
-| `ps:sf` | no | `ps-shine-fifth` | shine fifth pad | 輝く5度。開いたC+Gに高い粉。 | 60 | 16.6 |
-| `ps:sv` | no | `ps-silver` | silver pad | 銀。冷たい金属の層。キラキラ控えめのホールド。 | 67 | 16.7 |
-| `ps:se` | no | `ps-spark-evolve` | evolving spark pad | 火花がゆっくり育つ。モジュレーションスイープ。 | 67 | 17.2 |
-| `ps:sl` | no | `ps-starlight` | starlight pad | 星明かり。高い非整数比がゆっくり動く。 | 69 | 17.0 |
-| `ps:tw` | no | `ps-twinkle` | twinkle pad | トゥインクル。星のまたたきをホールド（ワンショットではない）。 | 72 | 16.6 |
+| `ps:au` | yes | `ps-aurora` | aurora pad | オーロラ。ゆっくり色が変わるFMの輝き。 | 64 | 17.2 |
+| `ps:ba` | yes | `ps-bell-air` | bell air pad | ベルの空気。金属というより光。ホールド。 | 72 | 16.6 |
+| `ps:bh` | yes | `ps-bell-hold` | held bell pad | ベルのホールド。アタックは立つがサステインで16秒残る。 | 72 | 16.8 |
+| `ps:ce` | yes | `ps-celesta` | celesta pad | チェレスタパッド。鍵盤ベルを伸ばしたホールド。 | 72 | 16.5 |
+| `ps:cs` | yes | `ps-celestial` | celestial pad | 天のパッド。クワイア＋高い輝き。 | 64 | 17.0 |
+| `ps:cp` | yes | `ps-chime-pad` | chime pad | チャイムパッド。金属の高い層をホールド。 | 72 | 16.8 |
+| `ps:ch` | yes | `ps-chorus-shine` | chorus shine pad | 遅いコーラスの輝き。キラキラが横に広がる。 | 64 | 16.7 |
+| `ps:cr` | yes | `ps-crystal` | crystal pad | クリスタルパッド。高い部分音。ホールド（ワンショットベルではない）。 | 72 | 16.6 |
+| `ps:cc` | yes | `ps-crystal-choir` | crystal choir pad | クリスタルクワイア。サイン重ね＋高い部分音。 | 67 | 16.9 |
+| `ps:dm` | yes | `ps-diamond` | diamond pad | ダイヤモンド。硬い高次、明るいホールド。 | 72 | 16.5 |
+| `ps:fs` | yes | `ps-fm-sparkle` | evolving fm sparkle | ゆっくり指数が開くFMスパークル。キラキラが育つ。 | 67 | 17.2 |
+| `ps:fr` | yes | `ps-frost` | frost pad | 霜。冷たい高域の層。キラキラは控えめ。 | 69 | 16.8 |
+| `ps:gb` | yes | `ps-glass-bell` | glass bell pad | ガラスベルのパッド。高い非整数比を持続。 | 72 | 16.9 |
+| `ps:gl` | yes | `ps-glisten` | glisten pad | きらめき。高域がゆっくり呼吸する。 | 69 | 16.9 |
+| `ps:gt` | yes | `ps-glitter` | glitter pad | グリッター。高次倍音の粉。パッドとして残る。 | 72 | 16.6 |
+| `ps:gp` | yes | `ps-glock-pad` | glock pad | グロッケンパッド。鉄琴の輝きを伸ばす。 | 72 | 16.5 |
+| `ps:hs` | yes | `ps-halo-shine` | halo shine pad | ハローの輝き。広いデチューン＋高次。 | 64 | 16.8 |
+| `ps:hp` | yes | `ps-high-partials` | high partials pad | 高次奇数倍音（1・3・5・7）。キラキラの骨格。 | 60 | 16.4 |
+| `ps:ic` | yes | `ps-ice-choir` | ice choir pad | 氷のクワイア。冷たい重ねサイン＋輝き。 | 67 | 17.0 |
+| `ps:is` | yes | `ps-ice-shine` | ice shine pad | 氷の輝き。冷たい高域。ホールド。 | 72 | 16.7 |
+| `ps:ih` | yes | `ps-inharmonic` | inharmonic sparkle | 非整数比のスパークル。金属だがパッドとして残る。 | 67 | 16.8 |
+| `ps:mx` | yes | `ps-music-box` | music box pad | オルゴールパッド。高いベル層をホールド（減衰しきらない）。 | 72 | 16.5 |
+| `ps:pr` | yes | `ps-prism` | prism pad | プリズム。スペクトルがゆっくり割れる。 | 67 | 17.1 |
+| `ps:qz` | yes | `ps-quartz` | quartz pad | 石英。硬い透明感。高い部分音のホールド。 | 69 | 16.7 |
+| `ps:sh` | yes | `ps-shimmer` | shimmer pad | シマー。高い部分音がゆっくり揺れる。キラキラのホールド。 | 67 | 16.9 |
+| `ps:sf` | yes | `ps-shine-fifth` | shine fifth pad | 輝く5度。開いたC+Gに高い粉。 | 60 | 16.6 |
+| `ps:sv` | yes | `ps-silver` | silver pad | 銀。冷たい金属の層。キラキラ控えめのホールド。 | 67 | 16.7 |
+| `ps:se` | yes | `ps-spark-evolve` | evolving spark pad | 火花がゆっくり育つ。モジュレーションスイープ。 | 67 | 17.2 |
+| `ps:sl` | yes | `ps-starlight` | starlight pad | 星明かり。高い非整数比がゆっくり動く。 | 69 | 17.0 |
+| `ps:tw` | yes | `ps-twinkle` | twinkle pad | トゥインクル。星のまたたきをホールド（ワンショットではない）。 | 72 | 16.6 |
 
 ## `sd`
 

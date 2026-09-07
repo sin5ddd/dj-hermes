@@ -3,7 +3,7 @@ name: strudel-pcm-catalog
 description: >-
   Use when choosing a rust-fm-synthe PCM one-shot for strudel-rs
   (bd:8b, hh:cl, bs:ht, and other part:slug keys). Not for live 2-op .fm.
-version: 1.0.0
+version: 1.1.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -28,9 +28,10 @@ metadata:
 ## When to Use
 
 - キック／スネア／ハット／ベース／プラック／EP／短い FX を **PCM のキャラ付き**で選びたい時
+- 長尺のドローン／リード／パッド（`dr:` / `ld:` / `pf:` / `ps:`）をワンショットで置きたい時
 - `s("bd*4")` のまま音色だけ変えたい時（`bd:hf` など）
 
-Don't use for: ライブ 2-op `.fm`（→ strudel-sound-design）、記法そのもの（→ composition）。長尺 `ld:` / `dr:` / `pf:` / `ps:` のほとんどは INDEX の `in_bank=no`（未作成）。例外の同梱は `ld:ss` と `pf:ff`。`plk:fp` / `plk:sp` も約 8.2 秒。
+Don't use for: ライブ 2-op `.fm`（→ strudel-sound-design）、記法そのもの（→ composition）。長尺は毎小節撃たない（`dr` / `pf` / `ps` は約 16–17 秒、`ld` と `plk:fp` / `plk:sp` は約 8.2 秒）。
 
 ## 呼び出し
 
@@ -119,8 +120,6 @@ Apply the inline recipe with `strudel_apply_song`. `songs/house/01.strudel` uses
 | `plk:dt` | DnB タイト |
 | `ep:ky` | 同梱 EP ワンショット（ライブ lead ではない） |
 | `ep:rs` | 柔らかい Rhodes |
-| `pf:ff` | 同梱 fifth pad（約 8.2 秒） |
-| `ld:ss` | 同梱 supersaw（約 8.2 秒） |
 
 ### FX `fx:`（`note()` なし）
 
@@ -131,7 +130,21 @@ Apply the inline recipe with `strudel_apply_song`. `songs/house/01.strudel` uses
 | `id` | DnB インパクト |
 | `sd` | サブドロップ |
 
-長尺 `ld:` / `dr:` / `pf:` / `ps:` の残りは INDEX の `in_bank=no`（未作成。`samples/` にファイルが無い）。曲には書かない。無いキーは無音（演奏は継続）。`ld:ss` と `pf:ff` は同梱済み。`plk:fp` / `plk:sp` も約 8.2 秒なので毎小節撃たない。
+### ドローン `dr:` / リード `ld:` / パッド `pf:` `ps:`
+
+約 8–17 秒。`s("<dr:ss ~ ~ ~>")` のように `<>` で間引く。詳細は INDEX。
+
+| call | 向き |
+| --- | --- |
+| `dr:ss` | 正弦サブの床 |
+| `dr:fh` | 中空5度の低ドローン |
+| `ld:ss` | スーパーソー |
+| `ld:hf` | 中空5度リード |
+| `pf:ff` | fifth pad（約 8.2 秒） |
+| `pf:fo` | 開いた5度（約 16 秒） |
+| `ps:hp` | 奇数倍音のキラキラ |
+
+無いキーは無音（演奏は継続）。`plk:fp` / `plk:sp` も約 8.2 秒なので毎小節撃たない。
 
 ## Rules
 

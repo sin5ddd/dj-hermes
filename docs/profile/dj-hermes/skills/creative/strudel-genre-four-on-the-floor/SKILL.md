@@ -149,7 +149,7 @@ Live TUI: `/a load four-on-the-floor-01` (or the `songs/` path). HTTP: `POST /so
 - Put `[~ cp]*2` on this kick-front grid. Techno: **no clap**.
 - Ship drums-only for a new apply.
 - Pair this file with a song at another `setcpm` (shared clock; the other tempo is discarded).
-- Write `in_bank=no` PCM (`ld:ac`, `pf:al`, `dr:*`, `ps:*`). Allowed long PCM: `ld:ss`, `pf:ff`.
+- 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`、約 8–17 秒）を毎小節撃たない。このレシピの既定は `ld:ss` と `pf:ff`。
 - Stack subs (`bs:su` / `bs:hf` / `bs:dk` / a second `square`+low lpf).
 - `stack("bd*4", …)` or `.cpm(124)` or `.lfo()` — not song format.
 - `kit:bd` — bank does not go on the left. Catalog one-shots use `bd:hf` (see strudel-pcm-catalog). Default kit remains `s("bd")`.

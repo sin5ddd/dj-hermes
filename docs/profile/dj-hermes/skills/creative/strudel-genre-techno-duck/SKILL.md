@@ -98,7 +98,7 @@ Hats stay on a **separate** `$:` with no `duckorbit`. If hats shared the kick li
 
 **`.compressor` on a `$:` is not a track insert.** `deck.rs` stashes `pending_compressor`; `engine.rs` does last-write-wins onto `mixer.set_compressor`. The kick, hats, and both decks go through it after faders and EQ. A bass-line `.compressor("-18:3:6:.003:.12")` therefore **squashes the kick**. Omit it for this recipe. If you want master glue, add `.compressor(...)` as the last method on a late `$:` and know it is the master bus, not that track.
 
-Lead uses live 2-op FM (`sine` + `.fm` / `.lpenv`) — not `in_bank=no` PCM. Arp is sparse perc (`perc:tm` / `perc:st`), not a second bass. Do not add `bs:su`.
+Lead uses live 2-op FM (`sine` + `.fm` / `.lpenv`) — not a long catalog PCM on every bar. Arp is sparse perc (`perc:tm` / `perc:st`), not a second bass. Do not add `bs:su`.
 
 Both decks share one `Transport`. This file is 126 BPM — pair it with `songs/electro/01.strudel` (also `setcpm(126/4)`). Do **not** pair it with 70 BPM ambient or the 174 DnB skill.
 
@@ -152,7 +152,7 @@ Live TUI: `/a load techno-duck-01`. Then `/x 4` to crossfade toward B (equal-pow
 - `.compressor(...)` on the bass “to control the low end”.
 - Call `bd*4` + `[~ sd]*2` or `[~ cp]*2` techno — that is a house backbeat.
 - Add a second bass (`bs:su` / `bs:hf` / `bs:dk` / extra `square`+low lpf). No 9th track.
-- Write `in_bank=no` PCM (`ld:ac`, `pf:al`, `dr:*`, `ps:*`). Allowed long PCM: `ld:ss`, `pf:ff`.
+- 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`、約 8–17 秒）を毎小節撃たない。このレシピの既定は `ld:ss` と `pf:ff`。
 - Ship a 4-track loop for a new apply.
 - Pair this file with a 174 BPM DnB song (shared clock; the other tempo is discarded).
 - `stack()` / `.cpm(126)` / `.lfo()` / `kit:bd`.

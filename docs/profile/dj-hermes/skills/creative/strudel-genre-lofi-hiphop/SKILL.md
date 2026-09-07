@@ -69,7 +69,7 @@ $: note("0").scale("<C4:minor C4:minor F4:dorian C4:minor>")
 - フックは `ep:rs`（C3 録音 → native は C4 スケール）。リードは `plk:lf`
 - コードは `ep:mt` の `[0,2,4]` を 3 音まで。パッドは `pf:ff` の `note("0")`
 - メロ／コード／パッドに `triangle` / `sine` を使わない
-- `in_bank=no` の長い PCM は書かない。使えるのは `ld:ss` `pf:ff` `plk:*` `ep:*` `perc:*` `bs:*`、波形、`wt_*`、ライブ `.fm`
+- 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`）は毎小節撃たない。`plk:*` / `ep:*` / `perc:*` / `bs:*`、波形、`wt_*`、ライブ `.fm` も使える
 
 ## Pitfalls
 

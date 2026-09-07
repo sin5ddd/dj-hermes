@@ -102,7 +102,7 @@ $: note("0").scale("<F4:lydian E4:phrygian D4:dorian C4:major>")
 - コードは `[0,2,6]` を `ep:mt` で 3 音まで。パッドは `pf:ff` の `note("0")`
 - フックは `ep:rs`（C4 帯）。リード `plk:ps` と arp `plk:ny` に `.cut(1)`
 - メロ／コード／パッドに `triangle` / `sine` / `sawtooth` を使わない
-- `in_bank=no` の長い PCM は書かない。使えるのは `ld:ss` `pf:ff` `plk:*` `ep:*` `perc:*` `bs:*`、波形、`wt_*`、ライブ `.fm`
+- 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`）は毎小節撃たない。`plk:*` / `ep:*` / `perc:*` / `bs:*`、波形、`wt_*`、ライブ `.fm` も使える
 
 鳴らすのは `strudel_apply_song(content, deck)`（次小節、無書き込み）。`strudel_save_song` は残す指示のときだけ。
 

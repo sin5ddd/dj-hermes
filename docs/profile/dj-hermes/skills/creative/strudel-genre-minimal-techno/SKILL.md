@@ -75,7 +75,7 @@ $: note("0").scale("<C4:minor C4:minor C4:minor G4:phrygian>")
 
 1. `stack()` / `.cpm()` / `.lfo()` → apply / save とも 400
 2. ドラムを kick / hat / perc の 3 `$:` に分ける
-3. `in_bank=no` の `ld:ac` / `pf:al` / `dr:*` / `ps:*` → 無音
+3. 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`）を毎小節撃たない
 4. `[~ cp]*2` を書く（4 小節に 1 回の `cp` とは別物）
 5. レイヤー過多やメロの埋めすぎで隙間が消える
 

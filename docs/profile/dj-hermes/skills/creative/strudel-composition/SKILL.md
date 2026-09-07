@@ -29,7 +29,7 @@ strudel-rs の曲は **`$:` を重ねたループを、演奏しながら 1 本�
 - **繰り返し周期の既定は 4 小節**（1 サイクル＝1 小節のまま。`.scale("<…>")` と 4 子以上の `<>` で周期を延ばす）
 - **16 小節 `cat` は既定にしない**（ライブ差分が重い）。プリセットの A/B は最大 8 引数
 - ジャンルのグリッド・フック次数は **strudel-genre-***。この Skill はスロットと長さ
-- **音色・サンプル**: ドラムは短い `bd`/`sd`/… + 任意 `.bank` または `part:slug`。**メロ／コード／パッドはカタログ PCM**（`plk:` / `ep:` / `ld:ss` / `pf:ff`）。波形はサブ・303・Reese・wobble・zap などジャンルの芯だけ（→ **strudel-sound-design** / **strudel-pcm-catalog**）
+- **音色・サンプル**: ドラムは短い `bd`/`sd`/… + 任意 `.bank` または `part:slug`。**メロ／コード／パッドはカタログ PCM**（`plk:` / `ep:` / `ld:` / `pf:` / `dr:` / `ps:`）。波形はサブ・303・Reese・wobble・zap などジャンルの芯だけ（→ **strudel-sound-design** / **strudel-pcm-catalog**）
 
 | 場面 | 既定 |
 | --- | --- |
@@ -132,7 +132,7 @@ $: note("0 0 2 4").scale("C2:minor").s("sawtooth").lpf(450).gain(0.5)
 - サブ同士を重ねない（`bs:su` / `bs:hf` / `bs:dk` / `square`+低い lpf）
 - レジスタ: シンセサブは C2 帯。PCM フロアは `C4:` で native。リードは C4 以上
 - gain 目安: drums 0.50–0.70、bass 0.35–0.50、各メロ 0.12–0.22、chords 0.22–0.32、pad 0.14–0.26
-- 長い `ld:` / `pf:` / `dr:` / `ps:` の多くは `in_bank=no`。書ける長い PCM は **`ld:ss` と `pf:ff`**。他は `plk:` / `ep:` / 波形 / ライブ 2-op（→ strudel-pcm-catalog）
+- 長い `ld:` / `pf:` / `dr:` / `ps:`（約 8–17 秒）は毎小節撃たない。`s("<ld:ss ~ ~ ~>")` のように `<>` で間引く。slug の意味は strudel-pcm-catalog の INDEX
 
 ## ライブ編集ワークフロー（必須）
 
@@ -265,7 +265,7 @@ $: s("bd*4, hh*16").hpf(200).gain(0.45)
 可: **`.scale("<…>")` 進行**、**`.lpf("<400 1200>")`** / **`.lpf(sine.rangex(500,4000))`** / **`.lpf(sine.range(200,2000).slow(4))`**、**`.add` / `.sub`**（スカラーまたは mini。LFO は不可）、**`.ply`**（整数スカラー）、**`.pan`**（詳細は sound-design）。
 
 同梱サンプル: `bd` `sd` `hh` `oh` `cp`（`samples/cp/00.wav`。ハウス 2/4 は `[~ cp]*2`。テクノキック前は clap を載せない）。
-追加キット・pad/lead の置き方: **`samples/LAYOUT.md`** / 音色は **strudel-sound-design**。カタログ PCM は **strudel-pcm-catalog**（`in_bank=no` は書かない）。
+追加キット・pad/lead の置き方: **`samples/LAYOUT.md`** / 音色は **strudel-sound-design**。カタログ PCM は **strudel-pcm-catalog**（INDEX の `in_bank=no` は書かない。現行キーはすべて `yes`）。
 
 pad / lead / piano でユーザー WAV がある例:
 
@@ -275,7 +275,7 @@ $: note("7 6 <4 9>").scale("C4:minor").s("lead-supersaw_4oct").lpf(2800).gain(0.
 $: note("0 2 4 0").scale("C3:minor").s("piano-acoustic_soft").gain(0.35)
 ```
 
-（ユーザー WAV が無ければカタログ `ep:rs` / `ld:ss` / `pf:ff` / `plk:*`。メロ／コード／パッドを `triangle` に戻さない。ピアノ感はサンプル。）
+（ユーザー WAV が無ければカタログ `ep:rs` / `ld:*` / `pf:*` / `plk:*` / `dr:*` / `ps:*`。メロ／コード／パッドを `triangle` に戻さない。ピアノ感はサンプル。）
 
 ## テンポ
 
@@ -299,7 +299,7 @@ $: note("0 2 4 0").scale("C3:minor").s("piano-acoustic_soft").gain(0.35)
 - 既定での 16 小節 `cat` 長尺
 - mini 内の `kit:bd`（bank を左に書く形）。カタログは `bd:hf`（part:slug）
 - 新規曲を 2–5 本の薄いループで出す（デバッグ専用の 2 本版を来場者に使わない）
-- `in_bank=no` の `ld:` / `pf:` / `dr:` / `ps:` を content に書く
+- 長い PCM（`ld:` / `pf:` / `dr:` / `ps:`）を毎小節撃つ。INDEX の `in_bank=no` を content に書く
 - メロ／コード／パッドを `triangle` / `sine` / `sawtooth` にする（サブ・303・Reese・wobble・zap はジャンル Skill）
 - コード 4 音以上、`pf:ff` を `[0,2,4]` で重ねる
 
@@ -313,7 +313,7 @@ $: note("0 2 4 0").scale("C3:minor").s("piano-acoustic_soft").gain(0.35)
 6. ドラムをフルファイル名で書く → 読めない。短い part + `.bank`
 7. `{bank}-{part}.wav` とハイフン連結 → 正は `{bank}_{part}`
 8. 1 小節 1 音のフック（`4 ~ ~ ~`）を既定にする → 4 子の `<>` か 4 小節 scale
-9. 無い PCM キー（`ld:ac` など `in_bank=no`）→ 無音。`ld:ss` / `pf:ff` / `plk:` / `ep:` / 波形へ
+9. 無い PCM キー → 無音。slug は INDEX で確認。長い PCM は毎小節撃たない
 
 ## Checklist
 
@@ -322,6 +322,6 @@ $: note("0 2 4 0").scale("C3:minor").s("piano-acoustic_soft").gain(0.35)
 - [ ] ドラムは原則 1 本の短い `s("bd …")`（キットは `.bank` / `part:slug`）。duck キックのみ分離
 - [ ] ピッチは可能なら次数 + `.scale`。PCM は `C4:`、シンセサブは `C2:`
 - [ ] メロ 3 本は掛け合い。コード 3 音まで（`ep:*`）。pad は `pf:ff` `note("0")` で別 orbit
-- [ ] メロ／コード／パッドはカタログ `in_bank=yes`（`plk:` / `ep:` / `ld:ss` / `pf:ff`）。ユーザー WAV があればフルネーム
+- [ ] メロ／コード／パッドはカタログ `in_bank=yes`（`plk:` / `ep:` / `ld:` / `pf:` / `dr:` / `ps:`）。ユーザー WAV があればフルネーム
 - [ ] ライブ差分は get_song + edit_method / patch_track
 - [ ] 全文 apply は初回・大規模変更のみ。save は残す指示のときだけ
