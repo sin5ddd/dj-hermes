@@ -4,7 +4,7 @@ description: >-
   Use when writing Future Bass for strudel-rs: 140 BPM half-time 2-step
   (dubstep/DnB grid), kawaii bells/supersaw, J-pop 王道進行 (IV–V–iii–vi)
   or 小室進行 (vi–IV–V–I). Not four-on-the-floor. Default is Kawaii Future Bass.
-version: 6.1.0
+version: 6.2.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -90,7 +90,21 @@ $: note("0").scale("<F4:lydian G4:mixolydian E4:phrygian A4:minor>")
   .s("pf:ff").gain(0.14).room(0.3).orbit(2)
 ```
 
-同梱 `songs/future-bass/01.strudel` はこのフェンスと同じ。4 つ打ちグリッドをコピーしない。
+同梱 `songs/future-bass/01.strudel` はこのフェンスと同じ（2 ステップと王道）。新規 apply の `.s()` は下のパレットから選ぶ。
+
+## 音色パレット（新規 apply はここから選ぶ）
+
+Pattern はグリッド・次数・スロットの見本。新規曲は下表からスロットごとに 1 つ選び、このフェンスの `.s()` を毎回コピーしない。同一曲の pitched 2 本に同じ `.s()` を使わない。slug の意味は strudel-pcm-catalog の INDEX。長尺（`ld:` / `dr:` / `pf:` / `ps:`、`plk:fp` / `plk:sp`）は `.cut(1)` か `s("<x ~ ~ ~>")`。wobble を主役にしない。
+
+| スロット | 芯 | 代替 | 禁止 |
+| --- | --- | --- | --- |
+| drums | 2 ステップ（`bd ~ bd ~` + 拍 3 の `sd`） | `bd:8t`、`sd:tr`、`hh:ch` | `bd*4`、`[~ cp]*2` |
+| bass | `bs:su` at `C4:` | （サブは 1 本） | `bs:hf` / square サブを重ねる、`bs:wb` 主役 |
+| lead | 長いノート | `ld:ss`、`ld:st`、`ld:mx`、`.s("square").lpf(3200)` | 303、`ld:gr` |
+| hook | kawaii | `plk:mx`、`plk:ch`、`plk:bl`、`plk:mb` | wobble、`plk:dt` |
+| arp | チョップ代用 | `plk:fg`、`plk:fc` | ボーカル WAV を invent |
+| chords | `[0,4,9]` | `plk:ss`、`plk:sm` | `[0,2,4]` に戻す |
+| pad | | `ps:mx`、`ps:gb`、`pf:sp`、`pf:ga`、`pf:ff`+`note("0")` | `dr:hr`、gabber |
 
 ## Why
 
@@ -139,11 +153,12 @@ PCM は `C4:`（`SAMPLE_ROOT_HZ` は C4。`bs:su` / `ld:ss` / `plk:mx` / `plk:fg
 3. ハットへ `duckorbit`（16 分が env を retrigger）
 4. wobble `.lpf(sine.rangex(…))` をこの床の主役にする（それは dubstep Skill）
 5. `bs:su` の上に square サブ / `bs:hf` / `bs:dk` を重ねる
-6. 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`）を毎小節撃たない。このレシピの既定は `ld:ss` と `pf:ff`
+6. 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`）を毎小節撃たない
 7. `note("c3'maj")` は root 単音。和音は `[0,4,9]`
 8. 四つ打ちのハウス／プログレ曲を Future Bass としてコピーする
 9. 140 と 174 を `dj` する（共有時計。片方の BPM が捨てられる）
 10. 「アニソン」とだけ書いて `.scale` を省略する、または I–V–vi–IV を王道として書く
+11. 新規 apply でフェンスの `.s()` を全コピーする。pad を毎回 `pf:ff` にする
 
 ## Checklist
 
@@ -152,4 +167,5 @@ PCM は `C4:`（`SAMPLE_ROOT_HZ` は C4。`bs:su` / `ld:ss` / `plk:mx` / `plk:fg
 - [ ] 上物が長い lead + kawaii（ベル、ガラス）。暗い wobble 床ではない
 - [ ] chords `[0,4,9]`。進行は **王道** `<F4:lydian G4:mixolydian E4:phrygian A4:minor>`（小室／カノンは名前付き差し替え）
 - [ ] `bs:su` は `C4:`、orbit 2、サブ 1 本。ハットに duckorbit なし
+- [ ] `.s()` は音色パレット（ベル／ガラス／スーパーソーを役割で変える）
 - [ ] `strudel_apply_song(content, deck)`（save は残す指示のときだけ）

@@ -5,7 +5,7 @@ description: >-
   filter envelope (lpenv), high resonance, saw or square, monophonic
   16ths as the hook. Not a parked lpf plus amp ADSR, and not sidechain
   ducking. 7 $: tracks, 4-bar phrase on non-303 parts, play solo at 130.
-version: 5.0.0
+version: 5.1.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -75,7 +75,21 @@ Keep the **exact** 303 note string, patterned `.lpf`, `.lpq(14)`, `.lpenv(3)`, l
 
 7 tracks is OK. Play solo, 130 BPM.
 
-`songs/acid/01.strudel` matches this fence.
+`songs/acid/01.strudel` matches this fence (303 line and techno grid). New apply picks non-303 `.s()` from the palette below.
+
+## Timbre palette (pick per new apply)
+
+The Pattern fence is one example of grid, degrees, and slots. Keep the **303 on `// hook`**. For a **new** apply, pick **one** sound per other slot. Do not copy the fence `.s()` every time. Do not add a second 303 on lead or bass. Slug meanings: strudel-pcm-catalog INDEX. Long one-shots (`ld:` / `dr:` / `pf:` / `ps:`, `plk:fp` / `plk:sp`) need `.cut(1)` or `s("<x ~ ~ ~>")`.
+
+| Slot | Keep | Pick one | Forbidden |
+| --- | --- | --- | --- |
+| drums | `bd*4` + `[~ hh]*4` (no clap) | `bd:tc` / `bd:9p` | `[~ cp]*2`, `[~ sd]*2` unless labelled house |
+| bass | sine sub **or** `bs:su` (one only) at `C2:` / `C4:` | `sine`+`lpf(180)`, `bs:su` | second 303, stacked subs |
+| hook | 303: `sawtooth` or `square` + `lpenv` / `lpq` + the note string | waveform swap only (Variations) | a second 303, `ld:ac` as a second acid |
+| lead | not a 303 | `plk:ac`, `plk:pk`; `ld:ac` only with `<>` and **no** `lpenv` | `plk:mx`, kawaii bells |
+| arp | sparse perc | `perc:mh`, `perc:tm` | a second 303 |
+| chords | `[0,4]` | `ep:mt`, `plk:sf` | `triangle` |
+| pad | | `pf:pu`, `dr:pd` with `<>`, `pf:ff`+`note("0")` | `ps:mx`, house Rhodes |
 
 | Piece | Role |
 | --- | --- |
@@ -169,7 +183,8 @@ Do not add a second 303 on lead or bass.
 - [ ] Exact 303 note string, lpf pattern, `lpq(14)`, `lpenv(3)`, lp ADSR, `cut(1)`, amp ADSR on hook
 - [ ] 303 scale stays `C2:minor`. Other pitched tracks use 4-bar `.scale("<…>")`
 - [ ] No second 303. No clap. Synth sub at `C2:`, not stacked with `bs:su`
-- [ ] Play **solo** at 130. `songs/acid/01.strudel` matches this fence
+- [ ] Non-303 `.s()` from the Timbre palette. No second 303
+- [ ] Play **solo** at 130. `songs/acid/01.strudel` matches this fence’s 303 line and grid
 
 ## Do not
 
@@ -182,7 +197,8 @@ Do not add a second 303 on lead or bass.
 - Rely on `.lprelease` — it does not run.
 - `note("c3'min")` for a triad — suffix is root only; a chord is `note("[0,2,4]")` (and a 303 line should stay mono).
 - Put `.scale("<…>")` on the 303 hook line.
-- 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`、約 8–17 秒）を毎小節撃たない。このレシピの既定は `ld:ss` と `pf:ff`。
+- Copy the fence `.s()` on every new apply for non-303 slots.
+- 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`、約 8–17 秒）を毎小節撃たない。
 - Ship a 2-track loop for a new apply.
 - Pair this file with a different `setcpm` (shared clock; the other tempo is discarded).
 - `stack()` / `.cpm(130)` / `.lfo()` / `kit:bd`.

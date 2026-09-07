@@ -5,7 +5,7 @@ description: >-
   mid Reese sample and hollow-fifth stab: 174 BPM, square C2 sub,
   bs:rm at C4:minor, plk:s5 degrees 4/7 as the hook. Not saw-Reese.
   8 $: tracks. Do not DJ-pair with 124 house.
-version: 5.0.0
+version: 5.1.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -58,7 +58,22 @@ $: note("0").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
 
 Keep square at **C2**, `bs:rm` at **C4**, and `plk:s5` degrees `~ 4 ~ <7 4>` as **`// hook`**. Do not retune `bs:rm` to C2. Do not rewrite stab 4/7.
 
-`songs/dnb-reese/01.strudel` matches this fence. Full-range Reese with sub is `bs:dk`, not a swap for this mid glue — [strudel-sound-design](../strudel-sound-design/SKILL.md). Do not stack `bs:dk` on this split.
+`songs/dnb-reese/01.strudel` matches this fence (split and stab degrees). New apply picks lead / arp / chords / pad from the palette below.
+
+## Timbre palette (pick per new apply)
+
+Keep **square `C2` + `bs:rm` at `C4:` + hook `plk:s5` degrees `~ 4 ~ <7 4>`**. For a **new** apply, pick **one** sound per other slot. Do not copy the fence lead/pad `.s()` every time. Do not reuse the same `.s()` on two pitched tracks (the split already uses two different sounds). Slug meanings: strudel-pcm-catalog INDEX. Long one-shots (`ld:` / `dr:` / `pf:` / `ps:`, `plk:fp` / `plk:sp`) need `.cut(1)` or `s("<x ~ ~ ~>")`.
+
+| Slot | Keep | Pick one | Forbidden |
+| --- | --- | --- | --- |
+| drums | break `*2` | `bd:dn` / `bd:jg`, `sd:dn`, `hh:dn`, `oh:dn` | `db`, house `cp`, `bd*4` |
+| bass | `square`+`lpf(120)` at `C2:` | (identity) | replacing the square with `bs:rm` |
+| bass-mid | `bs:rm` at `C4:` | (identity) | `C2:` on `bs:rm`, mixing saw-Reese |
+| hook | `plk:s5` degrees `4` / `7` | (identity) | rewriting 4/7, `plk:s3` |
+| lead | | `ld:ds`, `plk:nn`, `ld:dp` | `ld:ss` on every song, `plk:mx` |
+| arp | | `plk:dt`, `plk:nn`, `perc:st` | a third Reese |
+| chords | `[0,4]` | `ep:mt`, `plk:sf` | a major third on the hollow stab |
+| pad | | `pf:fo`, `dr:rd` with `<>`, `pf:ff`+`note("0")` | music box, Rhodes |
 
 | Piece | Role |
 | --- | --- |
@@ -178,8 +193,8 @@ Do not move `bs:rm` to octave 2. Do not replace the square with the sample. Do n
 - [ ] Square `C2` + `lpf(120)` as bass; `bs:rm` at **`C4:minor`** as bass-mid
 - [ ] Hook `plk:s5` degrees `~ 4 ~ <7 4>` — do not rewrite 4/7
 - [ ] Break `*2`, drums gain above sub. Never `db`. Never `.fast(2)`
-- [ ] 4-bar phrase on lead / arp / chords / pad
-- [ ] Play **solo** at 174. `songs/dnb-reese/01.strudel` matches this fence
+- [ ] 4-bar phrase on lead / arp / chords / pad. Lead/pad `.s()` from the Timbre palette
+- [ ] Play **solo** at 174. `songs/dnb-reese/01.strudel` matches this fence’s split and stab degrees
 
 ## Do not
 
@@ -191,7 +206,8 @@ Do not move `bs:rm` to octave 2. Do not replace the square with the sample. Do n
 - Add house `cp` / `[~ cp]*2` on this grid.
 - Put `.compressor` on a track.
 - Pair this file with 124 house or 126 techno (shared clock; the other tempo is discarded).
-- 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`、約 8–17 秒）を毎小節撃たない。このレシピの既定は `ld:ss` と `pf:ff`。
+- Copy the fence lead/pad `.s()` on every new apply.
+- 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`、約 8–17 秒）を毎小節撃たない。
 - Stack `bs:su` / `bs:dk` on this split. `bs:dk` is a different recipe.
 - Ship a 4-track loop for a new apply.
 - `stack()` / `.cpm(174)` / `.lfo()` / `kit:bd`.

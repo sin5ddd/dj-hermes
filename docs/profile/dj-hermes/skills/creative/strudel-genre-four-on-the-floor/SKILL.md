@@ -4,7 +4,7 @@ description: >-
   Use when writing a techno four-on-the-floor loop in strudel-rs
   (kick on every beat, hats on the offbeats, kick in front).
   7–8 $: tracks, 4-bar phrase, no clap.
-version: 5.0.0
+version: 5.1.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -86,9 +86,23 @@ $: note("0").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
   .s("pf:ff").gain(0.16).room(0.3).orbit(2)
 ```
 
-`songs/four-on-the-floor/01.strudel` matches the full-song fence.
+`songs/four-on-the-floor/01.strudel` matches the full-song fence (pulse and degrees). New apply picks `.s()` from the palette below.
 
-Bass is a synth sub at **C2** (`sawtooth` + `lpf(400)`). Do not stack another sub (`bs:su` / `bs:hf` / `bs:dk` / a second `square`+low lpf). PCM lead/hook/arp/chords/pad stay at **C4/C5**. Chords `ep:ky` `[0,2,4]`, pad `pf:ff` `note("0")`. Lead / hook / arp rest on different slots.
+## Timbre palette (pick per new apply)
+
+The Pattern fence is one example of grid, degrees, and slots. For a **new** apply, pick **one** sound per slot from the table. Do not copy the fence `.s()` every time. Do not reuse the same `.s()` on two pitched tracks in one song. Slug meanings: strudel-pcm-catalog INDEX. Long one-shots (`ld:` / `dr:` / `pf:` / `ps:`, `plk:fp` / `plk:sp`) need `.cut(1)` or `s("<x ~ ~ ~>")`.
+
+| Slot | Keep | Pick one | Forbidden |
+| --- | --- | --- | --- |
+| drums | `bd*4, [~ hh]*4` (no clap) | `bd:tc` / `bd:9p`, `hh:dk` | `[~ cp]*2`, `bd:gb` / `hs` |
+| bass | `sawtooth`+`lpf(400)` at `C2:` | `square`+low lpf (one track only), `bs:ht` at `C4:` | stacked `bs:su` / `bs:hf` / `bs:dk` |
+| lead | | `ld:pu`, `ld:sw`, `ld:si` | `ld:ss` on every song, `ld:mx` |
+| hook | | `plk:ac`, `plk:pk` | `plk:s5` as the default (DnB stab), Rhodes |
+| arp | | `plk:ac`, `plk:pk`, `perc:st` | 16s pad every bar |
+| chords | `[0,2,4]` | `ep:ky`, `plk:sf` | `triangle`; `ep:rs` |
+| pad | | `pf:pu`, `pf:cs`, `pf:or`, `pf:ff`+`note("0")` | `dr:hr`, music box, Rhodes |
+
+Bass is a synth sub at **C2** (`sawtooth` + `lpf(400)`), or a palette PCM bass at **C4:**. Do not stack another sub (`bs:su` / `bs:hf` / `bs:dk` / a second `square`+low lpf). PCM lead/hook/arp/chords/pad stay at **C4/C5**. Chords max 3 notes. Pad from the palette (`pf:ff` uses `note("0")`). Lead / hook / arp rest on different slots.
 
 ## Why it sounds that way
 
@@ -140,8 +154,9 @@ Live TUI: `/a load four-on-the-floor-01` (or the `songs/` path). HTTP: `POST /so
 - [ ] Pulse identity remains `bd*4, [~ hh]*4` (no clap)
 - [ ] New apply is **7 `$:`** (drums, bass, lead, hook, arp, chords, pad)
 - [ ] 4-bar phrase on pitched tracks; drums 1-bar + 4th-bar fill is OK
-- [ ] Synth bass at `C2:`. PCM at `C4:` / `C5:`. Chords `ep:ky` `[0,2,4]`, pad `pf:ff` `note("0")`
-- [ ] `songs/four-on-the-floor/01.strudel` matches the full-song fence
+- [ ] Synth bass at `C2:` (or palette PCM at `C4:`). Chords max 3 notes. Pad from the palette
+- [ ] New apply `.s()` from the Timbre palette (not a copy of the fence sounds)
+- [ ] `songs/four-on-the-floor/01.strudel` matches the full-song pulse and degrees
 
 ## Do not
 
@@ -149,7 +164,8 @@ Live TUI: `/a load four-on-the-floor-01` (or the `songs/` path). HTTP: `POST /so
 - Put `[~ cp]*2` on this kick-front grid. Techno: **no clap**.
 - Ship drums-only for a new apply.
 - Pair this file with a song at another `setcpm` (shared clock; the other tempo is discarded).
-- 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`、約 8–17 秒）を毎小節撃たない。このレシピの既定は `ld:ss` と `pf:ff`。
+- Copy the fence `.s()` on every new apply — pick from the Timbre palette.
+- 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`、約 8–17 秒）を毎小節撃たない。
 - Stack subs (`bs:su` / `bs:hf` / `bs:dk` / a second `square`+low lpf).
 - `stack("bd*4", …)` or `.cpm(124)` or `.lfo()` — not song format.
 - `kit:bd` — bank does not go on the left. Catalog one-shots use `bd:hf` (see strudel-pcm-catalog). Default kit remains `s("bd")`.

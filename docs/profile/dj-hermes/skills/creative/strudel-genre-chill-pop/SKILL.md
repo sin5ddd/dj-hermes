@@ -4,7 +4,7 @@ description: >-
   Use when writing chill-pop for strudel-rs: Japanese city pop
   (IV–iii–ii–I 下降, maj7, Rhodes), 95–110 BPM. Not EDM I–I–IV–I,
   not 王道進行, not downtempo chill, not house [~ cp]*2.
-version: 6.1.0
+version: 6.2.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -80,6 +80,20 @@ $: note("0").scale("<F4:lydian E4:phrygian D4:dorian C4:major>")
 
 `ep:rs` / `ep:mt` / `bs:su` / `pf:ff` は C3 録音。native にするには `.scale("C4:…")` 帯（このフェンスは F4 始まり）。コードはポリフォニックなので `.cut` しない。
 
+## 音色パレット（新規 apply はここから選ぶ）
+
+Pattern はグリッド・次数・スロットの見本。新規曲は下表からスロットごとに 1 つ選び、このフェンスの `.s()` を毎回コピーしない。同一曲の pitched 2 本に同じ `.s()` を使わない。slug の意味は strudel-pcm-catalog の INDEX。長尺（`ld:` / `dr:` / `pf:` / `ps:`、`plk:fp` / `plk:sp`）は `.cut(1)` か `s("<x ~ ~ ~>")`。シティポップ下降と maj7 `[0,2,6]` は残す。
+
+| スロット | 芯 | 代替 | 禁止 |
+| --- | --- | --- | --- |
+| drums | キック 1 と 3、スネア 2/4 | `bd:dc` / `bd:lf`、`sd:pp` / `sd:br` | `[~ cp]*2`、`bd:gb`、`hh*8` のハウス化 |
+| bass | サブ 1 本 | `bs:su`、`bs:ht`（重ねない） | `bs:hf` 重ね、`bs:wb` |
+| lead | 順次＋次数 6 | `plk:ps`、`ld:ny`、`plk:gm` | `ld:ss` アンセム、長い `@` アニソン |
+| hook | Rhodes | `ep:rs`、`ep:wr`、`ep:rh` | `plk:ss`、303 |
+| arp | ナイロン／爪 | `plk:ny`、`plk:hp`、`plk:kt` | `plk:dt` |
+| chords | `[0,2,6]` | `ep:mt`、`ep:ky`、`plk:ep` | `[0,4,9]`、`triangle` |
+| pad | | `pf:iv`、`pf:ln`、`pf:cl`、`pf:wa`、`pf:ff`+`note("0")` | `ld:ss`、gabber、`dr:hr`、王道進行 |
+
 ## Why
 
 **シティポップ下降。** Fmaj7–Em7–Dm7–Cmaj7。ルートが 1 度ずつ下がる。I–I–IV–I（旧フェンス）は EDM の明るいループで、日本のシティポップではない。
@@ -99,7 +113,7 @@ $: note("0").scale("<F4:lydian E4:phrygian D4:dorian C4:major>")
 - 進行は **シティポップ下降**（来場者が循環／ツーファイブと名前を出したら差し替え）
 - ピッチトラックは 4 小節 `.scale("<F:lydian E:phrygian D:dorian C:major>")`（PCM は C4 帯、arp は C5）
 - PCM は `C4:`。`bs:su` と `bs:hf` は重ねない
-- コードは `[0,2,6]` を `ep:mt` で 3 音まで。パッドは `pf:ff` の `note("0")`
+- コードは `[0,2,6]` を 3 音まで。パッドは音色パレット（`pf:ff` なら `note("0")`）
 - フックは `ep:rs`（C4 帯）。リード `plk:ps` と arp `plk:ny` に `.cut(1)`
 - メロ／コード／パッドに `triangle` / `sine` / `sawtooth` を使わない
 - 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`）は毎小節撃たない。`plk:*` / `ep:*` / `perc:*` / `bs:*`、波形、`wt_*`、ライブ `.fm` も使える
@@ -128,11 +142,12 @@ $: note("0").scale("<F4:lydian E4:phrygian D4:dorian C4:major>")
 9. メロをアニソンの長い `@` にする。コードを add9 `[0,4,9]` にする
 10. 「チルポップ」とだけ書いて `.scale` を省略する
 11. コード／パッド／メロを `triangle` / `sine` / `sawtooth` にする
+12. 新規 apply でフェンスの `.s()` を全コピーする。`ld:ss` や `plk:ss` を載せる
 
 ## Checklist
 
 - [ ] 7–8 本（drums / bass / lead / hook / arp / chords / pad。任意 perc）
 - [ ] 4 小節 **シティポップ下降** `<F:lydian E:phrygian D:dorian C:major>`（循環／ツーファイブは名前付き差し替え）
-- [ ] chords `[0,2,6]` は `ep:mt`。lead は順次＋次数 6。`ep:rs` / `bs:su` / `pf:ff` は C4 帯。pad は `note("0")`
-- [ ] ドラムは 1 本。ハウス `cp` なし
+- [ ] chords `[0,2,6]`。lead は順次＋次数 6。PCM は C4 帯。pad はパレット（`pf:ff` なら `note("0")`）
+- [ ] ドラムは 1 本。ハウス `cp` なし。`.s()` は音色パレット
 - [ ] `strudel_apply_song(content, deck)`。save は残す指示のときだけ

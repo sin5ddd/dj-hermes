@@ -3,7 +3,7 @@ name: strudel-genre-lofi-hiphop
 description: >-
   Use when writing lo-fi hip hop for strudel-rs: 75–90 BPM, dusty
   bd:lf, keys, slow hats. Not house [~ cp]*2.
-version: 5.0.0
+version: 5.1.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -60,6 +60,21 @@ $: note("0").scale("<C4:minor C4:minor F4:dorian C4:minor>")
 
 ハウス `[~ cp]*2` は使わない。ハットは `[~ hh]*4` のまま（`hh*8` にしない）。
 
+## 音色パレット（新規 apply はここから選ぶ）
+
+Pattern はグリッド・次数・スロットの見本。新規曲は下表からスロットごとに 1 つ選び、このフェンスの `.s()` を毎回コピーしない。同一曲の pitched 2 本に同じ `.s()` を使わない。slug の意味は strudel-pcm-catalog の INDEX。長尺（`ld:` / `dr:` / `pf:` / `ps:`、`plk:fp` / `plk:sp`）は `.cut(1)` か `s("<x ~ ~ ~>")`。
+
+| スロット | 芯 | 代替 | 禁止 |
+| --- | --- | --- | --- |
+| drums | `bd:lf` + 遅い `[~ hh]*4` | `sd:br`、`hh:dk` | `hh*8`、`[~ cp]*2` |
+| bass | `bs:su` 1 本 | （重ねない） | `bs:hf` 重ね、wobble |
+| lead | ダスト | `plk:lf`、`ld:ny` | `ld:ss`、スーパーソー |
+| hook | キー | `ep:rs`、`ep:wr` | 303、`plk:ss` |
+| arp | | `plk:ny`、`plk:lf` | `plk:dt` |
+| chords | `[0,2,4]` | `ep:mt` | `triangle` |
+| pad | | `pf:cl`、`dr:th` を `<>`、`pf:ff`+`note("0")` | gabber、`ld:an` |
+| perc（任意） | | `fx:ck` を 4 小節に 1 | 毎小節のクラックル |
+
 ## レシピ
 
 - トラックは 7 本: `// drums` `// bass` `// lead` `// hook` `// arp` `// chords` `// pad`（任意で perc）
@@ -67,7 +82,7 @@ $: note("0").scale("<C4:minor C4:minor F4:dorian C4:minor>")
 - ピッチトラックは 4 小節 `.scale("<C4:minor C4:minor F4:dorian C4:minor>")`（コード・パッドは C3、arp は C5）
 - PCM は `C4:`。シンセサブは `C2:`。フロアは `bs:su` だけ（`bs:hf` と重ねない）
 - フックは `ep:rs`（C3 録音 → native は C4 スケール）。リードは `plk:lf`
-- コードは `ep:mt` の `[0,2,4]` を 3 音まで。パッドは `pf:ff` の `note("0")`
+- コードは 3 音まで。パッドは音色パレット（`pf:ff` なら `note("0")`）
 - メロ／コード／パッドに `triangle` / `sine` を使わない
 - 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`）は毎小節撃たない。`plk:*` / `ep:*` / `perc:*` / `bs:*`、波形、`wt_*`、ライブ `.fm` も使える
 
@@ -80,9 +95,10 @@ $: note("0").scale("<C4:minor C4:minor F4:dorian C4:minor>")
 5. `ep:rs` / `plk:lf` に `.scale("C3:…")` を付ける（1 オクターブ下がる）
 6. 新規 apply を 3 本のまま出す
 7. 84 BPM を 124 ハウスと DJ ペアにする（Transport は 1 つ）
+8. 新規 apply でフェンスの `.s()` を全コピーする。スーパーソーや 303 を載せる
 
 ## Checklist
 
 - [ ] 7–8 本（drums / bass / lead / hook / arp / chords / pad。任意 perc）
-- [ ] 4 小節 `.scale("<…>")`。ドラムは 1 本
+- [ ] 4 小節 `.scale("<…>")`。ドラムは 1 本。`.s()` は音色パレット
 - [ ] `strudel_apply_song(content, deck)`。save は残す指示のときだけ

@@ -87,13 +87,13 @@ Per-bar changes of key/mode: `.scale("<A2:minor D:dorian G:mixolydian C:major>")
 
 ## Timbre and genre
 
-Genre in this repo is mostly **tempo + drum grid + register + filter**, not a hidden style engine.
+Genre in this repo is mostly **tempo + drum grid + register + filter**, not a hidden style engine. New applies pick `.s()` from each [genre skill](#skills-in-this-tree)’s timbre palette — do not copy the Pattern fence’s sounds every time.
 
 | Knob | Typical use |
 | --- | --- |
 | `setcpm` | House ~120–128, techno ~126–130, DnB ~170+, ambient can sit on a shared DJ BPM |
 | Drum string | Four-on-the-floor vs 2-step vs break |
-| `.s(...)` | `bd`/`sd`/`hh`/`oh`/`cp` samples; factory FM wavs (`plk:lp`, `plk:s5`/`plk:s3`, `bs:hf`, `bs:dk`, `pf:ff`, `ld:ss`, `fx:up`/`fx:nr`/`fx:id`/`fx:sd`); `sawtooth`/`square`/`sine`/`triangle` + live `.fm`; `wt_organ` / `wt_bright` |
+| `.s(...)` | Genre palette first (catalog `part:slug`, long `ld:`/`dr:`/`pf:`/`ps:` thinned with `<>`). Waveforms / `wt_*` / live `.fm` only where the genre skill marks them as core. Factory examples: `plk:lp`, `bs:hf`, `pf:ff`, `ld:ss` |
 | `.lpf` / `.lpq` | Dark bass vs acid (high Q) vs open hats |
 | ADSR | Pluck vs pad |
 | `.room` / `.delay` | Space (orbit-shared FX, ids 1–4 per deck) |
@@ -183,6 +183,6 @@ Headless hosts without an audio device: `cargo test --test e2e` renders through 
 ## Adding a skill
 
 1. New directory `docs/profile/dj-hermes/skills/creative/strudel-<name>/SKILL.md` (genre recipes: `strudel-genre-<name>`). Hermes YAML: `name`, `description` starting with “Use when”, `version`, `author`, `license`, `metadata.hermes` (`tags`, `related_skills`).
-2. Include: when, the exact `$:` pattern (**7–8 tracks** per strudel-composition), **why it sounds that way** (cite mini/scale/mixer/duck behavior), and a play/dj command.
+2. Include: when, the exact `$:` pattern (**7–8 tracks** per strudel-composition), a **timbre palette** (slot / keep / pick one / forbidden), **why it sounds that way** (cite mini/scale/mixer/duck behavior), and a play/dj command.
 3. Point at an existing `songs/<genre>/01.strudel` if one exists. Every `songs/**/*.strudel` is parsed by `tests/e2e.rs`.
 4. Fence only syntax this parser accepts (`setcpm` + `$:`. No `stack()` / `.cpm()`). Do not write INDEX `in_bank=no` keys. Long `ld:` / `dr:` / `pf:` / `ps:` exist; do not fire them every bar.

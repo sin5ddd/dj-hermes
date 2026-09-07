@@ -4,7 +4,7 @@ description: >-
   Use when writing Electro for strudel-rs: 126 BPM, mechanical
   four-on-the-floor, short square bass, zap hook. Not house clap-front
   and not sparse minimal-techno.
-version: 5.0.0
+version: 5.1.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -57,7 +57,23 @@ $: note("0").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
   .s("pf:ff").gain(0.14).room(0.25).orbit(2)
 ```
 
-同梱 `songs/electro/01.strudel` はこのフェンスと同じ。
+同梱 `songs/electro/01.strudel` はこのフェンスと同じ（グリッドと次数）。新規 apply の `.s()` は下のパレットから選ぶ。**ベースとフックの両方を `square` にしない。**
+
+## 音色パレット（新規 apply はここから選ぶ）
+
+Pattern はグリッド・次数・スロットの見本。新規曲は下表からスロットごとに 1 つ選び、このフェンスの `.s()` を毎回コピーしない。同一曲の pitched 2 本に同じ `.s()` を使わない。slug の意味は strudel-pcm-catalog の INDEX。長尺（`ld:` / `dr:` / `pf:` / `ps:`、`plk:fp` / `plk:sp`）は `.cut(1)` か `s("<x ~ ~ ~>")`。
+
+短い square ベースは **1 役だけ**。フックの zap は `ld:zp` 側へ。`square`+`penv` はベースが square でないときだけ。
+
+| スロット | 芯 | 代替 | 禁止 |
+| --- | --- | --- | --- |
+| drums | 機械的 4 つ打ち + 2/4 `sd` | `bd:ez` / `bd:9p`、`sd:rm`、`hh:ch` | `[~ cp]*2`、`bd:gb` |
+| bass | 短い `square`+`lpf(500)` at `C2:` | `bs:dq` at `C4:`（square と同時に使わない） | `bs:su` 重ね、長い pad をベースに |
+| lead | | `ld:pu`、`ld:ch`、`ld:dp`、`ld:lz` | `ld:ss` 固定、`ep:rs` |
+| hook | zap 1 役 | `ld:zp`、`ld:lz`、`perc:zp`。`square`+`penv` は bass が square でないとき | bass と同じ `square`、`plk:mx` |
+| arp | | `plk:cv`、`perc:zp` | ナイロン `plk:ny` |
+| chords | | `plk:sf`、`plk:s5`、`plk:sp` を `<>` | `ep:rs`、`triangle` |
+| pad | | `pf:pu`、`ld:hf` を `<>`、`pf:ff`+`note("0")` | `pf:al`、オルゴール、Rhodes |
 
 ## Why
 
@@ -66,8 +82,8 @@ $: note("0").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
 ## レシピ
 
 1. キック / スネア / ハットはカンマで 1 本
-2. ベースは C2 の square（シンセサブ）。ADSR を短くする
-3. フックは square + `penv` の短い zap。長い release は使わない
+2. ベースは短い square（シンセサブ）**または**パレットの別キー 1 つ。ADSR を短くする
+3. フックは zap（`ld:zp` 等）。`square`+`penv` はベースが square でないときだけ。長い release は使わない
 4. ピッチトラックは 4 小節 `.scale("<C:minor C:minor G:phrygian C:minor>")`（オクターブは帯域に合わせる）
 5. ハットは乾いたまま（長い room をドラムに載せない）
 
@@ -77,9 +93,10 @@ $: note("0").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
 
 1. `stack()` / `.cpm()` / `.lfo()` → apply / save とも 400
 2. ドラムを kick / snare / hat の 3 `$:` に分ける
-3. 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`）を毎小節撃たない。`ld:ss` / `plk:*` / 波形 / `wt_*` を使う
+3. 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`）を毎小節撃たない
 4. アンビエント寄りの長い release
 5. square サブの上に `bs:su` を重ねる
+6. ベースとフックの両方を `square` にする。新規 apply でフェンスの `.s()` を全コピーする
 
 ## Checklist
 
@@ -87,4 +104,5 @@ $: note("0").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
 - [ ] 4 小節フレーズ（`.scale("<…>")` が 4 個）
 - [ ] ドラムは 1 本のカンマ層
 - [ ] 機械的な 4 つ打ち + 2/4 スネア（クラップ先行にしない）
+- [ ] `.s()` は音色パレット。bass と hook が両方 `square` ではない
 - [ ] `strudel_apply_song(content, deck)`（save は残す指示のときだけ）

@@ -1,7 +1,7 @@
 ---
 name: strudel-composition
 description: "Use when writing a strudel-rs song: 7–8 $: tracks (drums, bass 1–2, three melody instruments, chords, pad), 4-bar phrases, strudel_apply_song (save only to persist)."
-version: 5.1.0
+version: 5.2.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -28,8 +28,8 @@ strudel-rs の曲は **`$:` を重ねたループを、演奏しながら 1 本�
 - **新規の既定: 7–8 本**（ドラム＋ベース 1～2＋メロディ楽器 3＋コード＋パッド）
 - **繰り返し周期の既定は 4 小節**（1 サイクル＝1 小節のまま。`.scale("<…>")` と 4 子以上の `<>` で周期を延ばす）
 - **16 小節 `cat` は既定にしない**（ライブ差分が重い）。プリセットの A/B は最大 8 引数
-- ジャンルのグリッド・フック次数は **strudel-genre-***。この Skill はスロットと長さ
-- **音色・サンプル**: ドラムは短い `bd`/`sd`/… + 任意 `.bank` または `part:slug`。**メロ／コード／パッドはカタログ PCM**（`plk:` / `ep:` / `ld:` / `pf:` / `dr:` / `ps:`）。波形はサブ・303・Reese・wobble・zap などジャンルの芯だけ（→ **strudel-sound-design** / **strudel-pcm-catalog**）
+- ジャンルのグリッド・フック次数は **strudel-genre-*** の Pattern。**音色は同 Skill のパレット**からスロットごとに選ぶ（フェンスの `.s()` を毎回コピーしない）
+- **音色・サンプル**: ドラムは短い `bd`/`sd`/… + 任意 `.bank` または `part:slug`。メロ／コード／パッドはカタログ PCM（`plk:` / `ep:` / `ld:` / `pf:` / `dr:` / `ps:`）か、ジャンルパレットが許した波形 / `wt_*` / ライブ `.fm`。波形をメロ／コード／パッドの既定にしない（サブ・303・Reese・wobble・zap はジャンルが芯と書いたスロットだけ。→ **strudel-sound-design** / **strudel-pcm-catalog**）
 
 | 場面 | 既定 |
 | --- | --- |
@@ -50,7 +50,7 @@ strudel-rs の曲は **`$:` を重ねたループを、演奏しながら 1 本�
 | 5 | `// hook` | ジャンルの決めフレーズ（プラック、303、スタブ、EP） |
 | 6 | `// arp` | 対旋律 / アルペジオ / メロディック perc |
 | 7 | `// chords` | ブロック和音。`ep:*` で `[0,2,4]` 等。`c3'maj` は root のみなので使わない |
-| 8 | `// pad` | `pf:ff` なら次数 `0`（録音が 5 度）。orbit をリードと分ける |
+| 8 | `// pad` | ジャンルパレットの pad。`pf:ff` なら次数 `0`（録音が 5 度）。orbit をリードと分ける |
 
 数え方:
 
@@ -59,7 +59,7 @@ strudel-rs の曲は **`$:` を重ねたループを、演奏しながら 1 本�
 - **duck 例外**: キックだけ別 `$:`（`duckorbit`）。ハットは 2 本目。この 2 本でドラム枠。残り 6 = bass 1 + メロ 3 + chords + pad。2 本目ベースは足さない
 - 目標 **7–8 本**。9 本以上は既定にしない
 
-各ジャンルの中身（どの PCM / 波形をスロットに入れるか）は **strudel-genre-***。
+各ジャンルのグリッドは Pattern、音色は **音色パレット**（**strudel-genre-***）。
 
 ## フレーズ長
 
@@ -75,7 +75,7 @@ strudel-rs の曲は **`$:` を重ねたループを、演奏しながら 1 本�
 
 ## 正本テンプレ（そのまま content に）
 
-ベース 1 本 + perc で 8 本。ジャンル Skill はグリッドと PCM を差し替える。
+ベース 1 本 + perc で 8 本。下の `.s()` は見本。新規 apply はジャンル Skill のパレットから差し替える。
 
 ```
 // @title live-bed
@@ -125,14 +125,16 @@ $: note("0 0 2 4").scale("C2:minor").s("sawtooth").lpf(450).gain(0.5)
 
 ## 掛け合い・ミックス（地味さ対策）
 
+- 新規 apply は対象 **strudel-genre-*** の **音色パレット** からスロットごとに選ぶ。Pattern フェンスの `.s()` を全文コピーしない
+- 同一曲の pitched 2 本に同じ `.s()` を使わない。例外は DnB Reese（square サブ + saw ミッド）だけ
 - メロ 3 本は **同時に全 16 分を埋めない**。片方が休符のとき他方が出る
-- 役割ごとに PCM を変える（メロ／コード／パッドを全部 `triangle` にしない）
-- chords は `ep:*` の三和音 `[0,2,4]`。pad は `pf:ff` なら次数 `0`（`[0,4]` で重ねない）
+- 役割ごとに PCM を変える（メロ／コード／パッドを全部 `triangle` にしない。全部 `pf:ff` / `ld:ss` にもしない）
+- chords はジャンル表の和音（多くは `ep:*` の `[0,2,4]`、チルポップは `[0,2,6]`）。pad はパレットの pad 列。`pf:ff` なら次数 `0`（`[0,4]` で重ねない）
 - コードは **3 音まで**。`pf:ff` を `[0,2,4]` で鳴らさない。6 音スタック禁止（デッキ `MAX_VOICES` は 32）
 - サブ同士を重ねない（`bs:su` / `bs:hf` / `bs:dk` / `square`+低い lpf）
 - レジスタ: シンセサブは C2 帯。PCM フロアは `C4:` で native。リードは C4 以上
 - gain 目安: drums 0.50–0.70、bass 0.35–0.50、各メロ 0.12–0.22、chords 0.22–0.32、pad 0.14–0.26
-- 長い `ld:` / `pf:` / `dr:` / `ps:`（約 8–17 秒）は毎小節撃たない。`s("<ld:ss ~ ~ ~>")` のように `<>` で間引く。slug の意味は strudel-pcm-catalog の INDEX
+- 長い `ld:` / `pf:` / `dr:` / `ps:`（約 8–17 秒）は毎小節撃たない。`s("<ld:ss ~ ~ ~>")` のように `<>` で間引く。slug の意味は strudel-pcm-catalog の INDEX。ジャンル外の長尺はパレットの禁止列
 
 ## ライブ編集ワークフロー（必須）
 
@@ -300,8 +302,10 @@ $: note("0 2 4 0").scale("C3:minor").s("piano-acoustic_soft").gain(0.35)
 - mini 内の `kit:bd`（bank を左に書く形）。カタログは `bd:hf`（part:slug）
 - 新規曲を 2–5 本の薄いループで出す（デバッグ専用の 2 本版を来場者に使わない）
 - 長い PCM（`ld:` / `pf:` / `dr:` / `ps:`）を毎小節撃つ。INDEX の `in_bank=no` を content に書く
-- メロ／コード／パッドを `triangle` / `sine` / `sawtooth` にする（サブ・303・Reese・wobble・zap はジャンル Skill）
+- メロ／コード／パッドを `triangle` / `sine` / `sawtooth` にする（ジャンル Skill が芯と書いたスロットだけ例外：サブ・303・Reese・wobble・zap）
+- ジャンルパレットの禁止キー、INDEX に無いキー
 - コード 4 音以上、`pf:ff` を `[0,2,4]` で重ねる
+- 新規曲でフェンスの `.s()` を毎回同じ組合せにする
 
 ## Pitfalls
 
@@ -314,6 +318,8 @@ $: note("0 2 4 0").scale("C3:minor").s("piano-acoustic_soft").gain(0.35)
 7. `{bank}-{part}.wav` とハイフン連結 → 正は `{bank}_{part}`
 8. 1 小節 1 音のフック（`4 ~ ~ ~`）を既定にする → 4 子の `<>` か 4 小節 scale
 9. 無い PCM キー → 無音。slug は INDEX で確認。長い PCM は毎小節撃たない
+10. 新規 apply でジャンルフェンスの `.s()` を全コピーする（パレットから選ぶ）
+11. 同一曲の lead と hook が同じ `.s()`（Reese 分割以外）
 
 ## Checklist
 
@@ -321,7 +327,8 @@ $: note("0 2 4 0").scale("C3:minor").s("piano-acoustic_soft").gain(0.35)
 - [ ] 4 小節フレーズ（`.scale("<…>")` 4 個 または `<>` 4 子）。1 小節同一繰り返しだけにしない
 - [ ] ドラムは原則 1 本の短い `s("bd …")`（キットは `.bank` / `part:slug`）。duck キックのみ分離
 - [ ] ピッチは可能なら次数 + `.scale`。PCM は `C4:`、シンセサブは `C2:`
-- [ ] メロ 3 本は掛け合い。コード 3 音まで（`ep:*`）。pad は `pf:ff` `note("0")` で別 orbit
-- [ ] メロ／コード／パッドはカタログ `in_bank=yes`（`plk:` / `ep:` / `ld:` / `pf:` / `dr:` / `ps:`）。ユーザー WAV があればフルネーム
+- [ ] メロ 3 本は掛け合い。コード 3 音まで。pad はジャンルパレット（`pf:ff` なら `note("0")`）で別 orbit
+- [ ] 音色はジャンルの **音色パレット**。同一曲で pitched の `.s()` を重複させない（Reese 分割以外）
+- [ ] メロ／コード／パッドはカタログ `in_bank=yes` またはパレットが許した波形 / `wt_*` / `.fm`。ユーザー WAV があればフルネーム
 - [ ] ライブ差分は get_song + edit_method / patch_track
 - [ ] 全文 apply は初回・大規模変更のみ。save は残す指示のときだけ

@@ -4,7 +4,7 @@ description: >-
   Use when writing a Drum and Bass loop in strudel-rs: 174 BPM, break in
   front of the sub, split Reese (square sub + saw mid as bass + bass-mid).
   Never use sample db. 8 $: tracks, play solo at 174.
-version: 5.0.0
+version: 5.1.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -61,7 +61,22 @@ $: note("0").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
 
 Keep the break `*2` (not `.fast(2)`). Drums `.gain(0.7)` stays **above** the sub (0.42). Square at **C2** is `// bass`; saw mid is `// bass-mid`. Never `db`.
 
-`songs/dnb/01.strudel` matches this fence.
+`songs/dnb/01.strudel` matches this fence (break and Reese split). New apply picks non-Reese `.s()` from the palette below.
+
+## Timbre palette (pick per new apply)
+
+The Pattern fence is one example of grid, degrees, and slots. Keep the **Reese split** (`square` sub + `sawtooth` mid, same degrees). For a **new** apply, pick **one** sound per other slot. Do not copy the fence `.s()` every time. Do not reuse the same `.s()` on two pitched tracks except this Reese split. Slug meanings: strudel-pcm-catalog INDEX. Long one-shots (`ld:` / `dr:` / `pf:` / `ps:`, `plk:fp` / `plk:sp`) need `.cut(1)` or `s("<x ~ ~ ~>")`.
+
+| Slot | Keep | Pick one | Forbidden |
+| --- | --- | --- | --- |
+| drums | break `*2` (not `bd*4`) | `bd:dn` / `bd:jg`, `sd:dn` / `sd:jg`, `hh:dn`, `oh:dn` | `db`, house `cp`, `bd*4` |
+| bass | `square`+`lpf(120)` at `C2:` | (identity) | replacing the square with a sample |
+| bass-mid | `sawtooth`+`lpf(1000)` at `C2:` | (identity; sampled mid is the other DnB skill) | mixing `bs:rm` into this saw recipe |
+| lead | | `ld:ds`, `plk:nn`, `ld:dp` | `ld:ss` on every song, `plk:mx` |
+| hook | | `plk:dt`, `plk:nn` | `plk:s5` (other DnB skill), Rhodes |
+| arp | sparse perc | `perc:st`, `perc:tm` | a third mid oscillator |
+| chords | `[0,4]` | `plk:s5`, `ep:mt` | `triangle`, maj7 city-pop |
+| pad | | `pf:fo`, `dr:rd` with `<>`, `pf:ff`+`note("0")` | music box, Rhodes, `ps:mx` |
 
 Keep drums on **one** `$:` (comma layers). Do not use `stack()`.
 
@@ -130,7 +145,8 @@ Live TUI: `/a load dnb-01` (or the `songs/` path). HTTP: `POST /song/load` with 
 - [ ] Break `*2`, drums gain **above** sub. Never `db`. Never `.fast(2)`
 - [ ] Square `C2` + `lpf(120)` as bass; saw `C2` + `lpf(1000)` as bass-mid
 - [ ] 4-bar phrase on lead / hook / chords / pad. Melody call-and-response
-- [ ] Play **solo** at 174. `songs/dnb/01.strudel` matches this fence
+- [ ] Non-Reese `.s()` from the Timbre palette (`ld:ss` is not the only lead)
+- [ ] Play **solo** at 174. `songs/dnb/01.strudel` matches this fence’s break and Reese split
 
 ## Do not
 
@@ -139,7 +155,8 @@ Live TUI: `/a load dnb-01` (or the `songs/` path). HTTP: `POST /song/load` with 
 - Bank-less `cp` or `db`.
 - `.fast(2)` when you want the break to fill the bar.
 - DJ-pair this file with 124 house or 126 techno (shared clock; the other tempo is discarded).
-- 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`、約 8–17 秒）を毎小節撃たない。このレシピの既定は `ld:ss` と `pf:ff`。
+- Copy the fence `.s()` on every new apply for lead / hook / pad.
+- 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`、約 8–17 秒）を毎小節撃たない。
 - Stack a third sub (`bs:su` / `bs:hf` / `bs:dk`) on the square+saw split.
 - Ship a 3-track loop for a new apply.
 - `stack()` / `.cpm(174)` / `.lfo()` / `kit:bd`.

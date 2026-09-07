@@ -4,7 +4,7 @@ description: >-
   Use when writing Minimal Techno for strudel-rs: 126 BPM, 7–8 sparse
   tracks with many rests and low gain. Not a house [~ cp]*2 backbeat;
   one cp every 4 bars is perc color only.
-version: 5.0.0
+version: 5.1.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -55,7 +55,21 @@ $: note("0").scale("<C4:minor C4:minor C4:minor G4:phrygian>")
   .s("pf:ff").orbit(2).gain(0.1).room(0.25)
 ```
 
-同梱 `songs/minimal-techno/01.strudel` はこのフェンスと同じ。
+同梱 `songs/minimal-techno/01.strudel` はこのフェンスと同じ（隙間とグリッド）。新規 apply の `.s()` は下のパレットから選ぶ。
+
+## 音色パレット（新規 apply はここから選ぶ）
+
+Pattern はグリッド・次数・スロットの見本。新規曲は下表からスロットごとに 1 つ選び、このフェンスの `.s()` を毎回コピーしない。同一曲の pitched 2 本に同じ `.s()` を使わない。slug の意味は strudel-pcm-catalog の INDEX。長尺（`ld:` / `dr:` / `pf:` / `ps:`、`plk:fp` / `plk:sp`）は `.cut(1)` か `s("<x ~ ~ ~>")`。隙間と低 gain は残す。
+
+| スロット | 芯 | 代替 | 禁止 |
+| --- | --- | --- | --- |
+| drums | `bd*4` + `hh*8`、4 小節に 1 `cp` | `bd:tc`、`hh:tt` | `[~ cp]*2`、`bd:gb` |
+| bass | 低い短いノート | `sawtooth`+`lpf(320)`、`bs:ht` at `C4:` | `bs:su` 重ね、wobble |
+| lead | 休符多め | `plk:pk`、`plk:ac` | `ld:ss` アンセム、`ld:an` |
+| hook | 休符多め | `plk:ac`、`plk:pk` | Rhodes、`plk:mx` |
+| arp | perc クリック | `perc:tk`、`perc:st` | 16 分埋め |
+| chords | 疎な `[0,2,4]` | `ep:mt`、`plk:sf` | `triangle`、スーパーソー |
+| pad | 薄い | `pf:pu`、`pf:cs`（低 gain）、`pf:ff`+`note("0")` | `ps:gt`、gabber |
 
 ## Why
 
@@ -78,11 +92,12 @@ $: note("0").scale("<C4:minor C4:minor C4:minor G4:phrygian>")
 3. 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`）を毎小節撃たない
 4. `[~ cp]*2` を書く（4 小節に 1 回の `cp` とは別物）
 5. レイヤー過多やメロの埋めすぎで隙間が消える
+6. 新規 apply でフェンスの `.s()` を全コピーする。スーパーソーや Rhodes を載せる
 
 ## Checklist
 
 - [ ] 7 本（// drums // bass // lead // hook // arp // chords // pad）
 - [ ] 4 小節フレーズ（`.scale("<…>")` が 4 個。arp は 4 子の `<>`）
 - [ ] ドラムは 1 本のカンマ層。`[~ cp]*2` は書いていない
-- [ ] 隙間と低 gain が残っている
+- [ ] 隙間と低 gain が残っている。`.s()` は音色パレット
 - [ ] `strudel_apply_song(content, deck)`（save は残す指示のときだけ）

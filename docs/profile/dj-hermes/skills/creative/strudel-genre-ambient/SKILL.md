@@ -4,7 +4,7 @@ description: >-
   Use when writing ambient for strudel-rs: thin or no kick, pad as
   primary, rest-heavy melody, low gain, around 70 BPM. Not chill
   drums and not house clap.
-version: 5.0.0
+version: 5.1.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -59,6 +59,20 @@ $: note("0").scale("<C4:minor C4:minor G4:dorian C4:minor>")
 
 `pf:ff` は録音済みの 5 度（C+G）。`[0,2,4]` でも `[0,4]` でも鳴らさない。パッドは `note("0")` の移調だけ。コードは `ep:mt`。
 
+## 音色パレット（新規 apply はここから選ぶ）
+
+Pattern はグリッド・次数・スロットの見本。新規曲は下表からスロットごとに 1 つ選び、このフェンスの `.s()` を毎回コピーしない。同一曲の pitched 2 本に同じ `.s()` を使わない。slug の意味は strudel-pcm-catalog の INDEX。長尺はパッド役で `<>`（gain 低）。キック連打にしない。
+
+| スロット | 芯 | 代替 | 禁止 |
+| --- | --- | --- | --- |
+| drums | `bd:lf` 1 打または無し | `bd:lf`、無し | `bd*4`、house clap、zap |
+| bass | 疎なサブ 1 本 | `bs:su` | `bs:hf` 重ね、wobble |
+| lead | 休符多め | `ld:et`、`ld:fl`、`plk:bl`、`ld:si` | `ld:ss` アンセム、`ld:zp` |
+| hook | 長いノート | `plk:am`、`ld:cr` | gabber、`plk:ss` |
+| arp | perc 疎 | `perc:cm`、`perc:tg` | 16 分埋め |
+| chords | 疎 | `ep:mt`、薄い `ld:fp` を `<>` | `triangle`、`[0,2,4]` 連打 |
+| pad | **主** | `dr:ad`、`dr:fg`、`pf:cl`、`pf:wa`、`ps:sh`、`dr:uw`（`<>`） | スーパーソー、`bd*4` の上に載せるだけ |
+
 ## レシピ
 
 - トラックは 7 本: `// drums` `// bass` `// lead` `// hook` `// arp` `// chords` `// pad`（任意で perc。このフェンスでは arp が perc）
@@ -66,7 +80,7 @@ $: note("0").scale("<C4:minor C4:minor G4:dorian C4:minor>")
 - ピッチトラックは 4 小節 `.scale("<C4:minor C4:minor G4:dorian C4:minor>")`（コードは C3、パッドは C4）
 - PCM は `C4:`。シンセサブは `C2:`。`bs:su` と `bs:hf` は重ねない
 - キックは `bd:lf` を 1 拍だけ、gain 0.18。無しでもよい
-- パッドが主。`pf:ff` は `note("0")`。コードは `ep:mt` の `[0,2,4]` を 3 音まで
+- パッドが主。音色パレットの pad（`pf:ff` なら `note("0")`）。コードは 3 音まで
 - メロ（lead / hook）は休符多め、gain 0.10–0.16
 - 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`）は毎小節撃たない。`plk:*` / `ep:*` / `perc:*` / `bs:*`、波形、`wt_*`、ライブ `.fm` も使える
 
@@ -80,9 +94,10 @@ $: note("0").scale("<C4:minor C4:minor G4:dorian C4:minor>")
 6. `bs:su` の上に `bs:hf` や別のサブを重ねる
 7. 新規 apply を 3 本のまま出す
 8. 70 BPM を 126 テクノと DJ ペアにする（Transport は 1 つ）
+9. 新規 apply でフェンスの `.s()` を全コピーする。パッド以外をスーパーソーや zap にする
 
 ## Checklist
 
 - [ ] 7–8 本（drums / bass / lead / hook / arp / chords / pad。任意 perc）
-- [ ] 4 小節 `.scale("<…>")`。ドラムは 1 本
+- [ ] 4 小節 `.scale("<…>")`。ドラムは 1 本。pad が主。`.s()` は音色パレット
 - [ ] `strudel_apply_song(content, deck)`。save は残す指示のときだけ

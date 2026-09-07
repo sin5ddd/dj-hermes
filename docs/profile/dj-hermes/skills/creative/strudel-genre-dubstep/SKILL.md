@@ -4,7 +4,7 @@ description: >-
   Use when writing Dubstep for strudel-rs: 140 BPM half-time drums,
   wobble bass via .lpf(sine.rangex(...)). No second sub under the
   wobble. Not four-on-the-floor and not .lfo().
-version: 5.0.0
+version: 5.1.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -59,7 +59,23 @@ $: note("0").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
   .s("pf:ff").gain(0.12).room(0.25).orbit(2)
 ```
 
-同梱 `songs/dubstep/01.strudel` はこのフェンスと同じ。
+同梱 `songs/dubstep/01.strudel` はこのフェンスと同じ（ハーフタイムと wobble）。新規 apply の `.s()` は下のパレットから選ぶ。**ベースとリードの両方を `sawtooth` にしない。**
+
+## 音色パレット（新規 apply はここから選ぶ）
+
+Pattern はグリッド・次数・スロットの見本。新規曲は下表からスロットごとに 1 つ選び、このフェンスの `.s()` を毎回コピーしない。同一曲の pitched 2 本に同じ `.s()` を使わない。slug の意味は strudel-pcm-catalog の INDEX。長尺（`ld:` / `dr:` / `pf:` / `ps:`、`plk:fp` / `plk:sp`）は `.cut(1)` か `s("<x ~ ~ ~>")`。
+
+wobble は **1 本**（`sawtooth`+`.lpf(sine.rangex(80, 600))` または `bs:wb`）。その下に `bs:su` は置かない。
+
+| スロット | 芯 | 代替 | 禁止 |
+| --- | --- | --- | --- |
+| drums | ハーフタイム（`bd*4` ではない） | `bd:ng`、`sd:ng`、`hh:dk` | house clap、`bd*4` |
+| bass | wobble 1 本 | `sawtooth`+`.lpf(sine.rangex(80, 600))`、`bs:wb` | `bs:su` 重ね、2 本目ベース |
+| lead | bass と同じ `sawtooth` にしない | `ld:gr`、`ld:wb`、`ld:dp` | bass と同じ `sawtooth`、`plk:mx` |
+| hook | | `plk:s5`、`plk:nn` | Rhodes、kawaii ベル |
+| arp | | `plk:dt` | オルゴール |
+| chords | `[0,4]` | `ep:mt`、`plk:sf` | `triangle`、maj7 |
+| pad | | `dr:rd` / `pf:fo` を `<>`、`pf:ff`+`note("0")` | `ps:mx`、`ep:rs` |
 
 ## Why
 
@@ -82,11 +98,12 @@ $: note("0").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
 3. 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`）を毎小節撃たない
 4. wobble の下に `bs:su` を重ねる（低域が二重になる）
 5. ハイハットだらけで低域が埋もれる。`bd*4` にして 4 つ打ち化する
+6. ベースとリードの両方を `sawtooth` にする。kawaii ベルや Rhodes を載せる
 
 ## Checklist
 
 - [ ] 7 本（// drums // bass // lead // hook // arp // chords // pad）。bass-mid は置かない
 - [ ] 4 小節フレーズ（`.scale("<…>")` が 4 個）
 - [ ] ドラムは 1 本。ハーフタイム（`bd*4` ではない）
-- [ ] wobble は `.lpf(sine.rangex(...))`。サブは 1 本
+- [ ] wobble は `.lpf(sine.rangex(...))` または `bs:wb`。サブは 1 本。lead は別の `.s()`
 - [ ] `strudel_apply_song(content, deck)`（save は残す指示のときだけ）

@@ -5,7 +5,7 @@ description: >-
   ([~ cp]*2), not a snare and not stacked with sd, plus the C-minor
   FM pluck at C4:minor as the hook. 7–8 $: tracks, 4-bar phrase.
   Not kick-front techno.
-version: 5.0.0
+version: 5.1.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -60,7 +60,21 @@ $: note("0").scale("<C4:minor C4:minor G4:dorian C4:minor>")
 
 This fence is the new target (7 tracks: one bass, so perc is not required). Do not “improve” the hook degrees `4 ~ 7 4  2 0 ~ -1` or the clap grid `[~ cp]*2`. Do not add `bs:su`.
 
-`songs/house/01.strudel` matches this fence.
+`songs/house/01.strudel` matches this fence (grid and hook degrees). New apply picks `.s()` from the palette below.
+
+## Timbre palette (pick per new apply)
+
+The Pattern fence is one example of grid, degrees, and slots. For a **new** apply, pick **one** sound per slot from the table. Do not copy the fence `.s()` every time. Do not reuse the same `.s()` on two pitched tracks in one song. Slug meanings: strudel-pcm-catalog INDEX. Long one-shots (`ld:` / `dr:` / `pf:` / `ps:`, `plk:fp` / `plk:sp`) need `.cut(1)` or `s("<x ~ ~ ~>")`.
+
+| Slot | Keep | Pick one | Forbidden |
+| --- | --- | --- | --- |
+| drums | `bd:hf` + `[~ cp]*2` + `hh:hs` | `bd:dc`; `cp:rm` / `cp:gt`; `hh:cl` | `bd:gb` / `fc` / `hs`; `[~ sd]*2`; kick-only techno |
+| bass | `bs:hf` at `C4:` | `bs:ht`, `bs:sw` | stacked `bs:su`, `bs:dk`, `bs:wb` |
+| lead | (not fixed) | `ld:hu`, `ld:sw`, `ld:us`, `wt_organ`, `ld:ss`+`.cut(1)` | `ld:gb` / `hd` / `gr` / `wb` |
+| hook | degrees `4 ~ 7 4  2 0 ~ -1` | `plk:lp`, `plk:hb`, `plk:ep` | `plk:s5`, `plk:dt`, 303 `lpenv` |
+| arp | | `plk:hd`, `plk:aj`, `plk:hb` | a 16s pad every bar |
+| chords | `[0,2,4]` | `ep:ky`, `ep:wr`, `plk:sm` | `triangle`; `pf:ff` as a triad |
+| pad | | `pf:ju`, `pf:mn`, `pf:cs`, `pf:fo`, `pf:ff`+`note("0")` | `dr:hr` / `wf`, `ps:mx` |
 
 | Piece | Role |
 | --- | --- |
@@ -172,8 +186,9 @@ Do not add `[~ sd]*2`. Do not drop the clap onto the techno skill song. Do not a
 - [ ] `setcpm(124/4)` + **7 `$:`** (drums, bass, lead, hook, arp, chords, pad). 7 is OK; do not add perc or `bs:su` to make 8
 - [ ] 4-bar phrase on pitched tracks (`.scale("<C4:minor C4:minor G4:dorian C4:minor>")` and octave variants)
 - [ ] Clap grid `[~ cp]*2`. Hook degrees `4 ~ 7 4  2 0 ~ -1`. Do not rewrite either
-- [ ] PCM pitched at `C4:`. One bass (`bs:hf`). Chords `ep:ky` `[0,2,4]`, pad `pf:ff` `note("0")`
-- [ ] `songs/house/01.strudel` matches this fence
+- [ ] PCM pitched at `C4:`. One bass (no stacked sub). Chords max 3 notes. Pad from the palette (`pf:ff` uses `note("0")`)
+- [ ] New apply `.s()` from the Timbre palette (not a copy of the fence sounds)
+- [ ] `songs/house/01.strudel` matches this fence’s grid and hook degrees
 
 ## Do not
 
@@ -182,7 +197,9 @@ Do not add `[~ sd]*2`. Do not drop the clap onto the techno skill song. Do not a
 - Use `.scale("C3:minor")` with this wav — it plays in the bass register.
 - Write `lead-fm-pluck` or `lead-fm_pluck` — the key is `plk:lp`.
 - Use `plk:s5` / `bs:rm` here. Do not add `bs:su`.
-- 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`、約 8–17 秒）を毎小節撃たない。このレシピの既定は `ld:ss` と `pf:ff`。
+- Copy the fence `.s()` on every new apply — pick from the Timbre palette.
+- Reuse the same `.s()` on two pitched tracks.
+- 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`、約 8–17 秒）を毎小節撃たない。
 - Ship a 2-track loop for a new apply.
 - `note("c3'maj")` when you want a chord — suffix is root only.
 - Put `.compressor` on a track. Do not add `.duckorbit`.
