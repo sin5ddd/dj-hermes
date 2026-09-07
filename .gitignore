@@ -50,5 +50,8 @@ __pycache__/
 /out/
 /recordings/
 
+# LUFS factory runs (WAV + generated reports)
+eval/lufs/runs/
+
 # Sample kits (bundled + synthesist drops) are tracked via Git LFS — see .gitattributes.
 # Do not ignore samples/**/*.wav.

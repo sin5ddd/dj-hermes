@@ -15,6 +15,9 @@ use crossterm::terminal::{
 };
 use crossterm::{cursor, execute, terminal, QueueableCommand};
 use strudel_rs::api::{self, AppState, DEFAULT_API_PORT};
+use strudel_rs::bounce::{
+    bounce_song, write_wav_i16_stereo, DEFAULT_MEASURE_BARS, DEFAULT_WARMUP_BARS, RENDER_SR,
+};
 use strudel_rs::cmd::{new_deck_paths, DeckPaths};
 use strudel_rs::engine::{Command, Engine};
 use strudel_rs::highlight::{
@@ -54,6 +57,12 @@ fn main() {
                 std::process::exit(1);
             }
         }
+        "render" => {
+            if let Err(e) = cmd_render(&args) {
+                eprintln!("strudel-rs render: {e}");
+                std::process::exit(1);
+            }
+        }
         "help" | "-h" | "--help" => print_usage(),
         other => {
             eprintln!("unknown command: {other}");
@@ -73,6 +82,7 @@ Usage:
                  [--midi] [--midi-only] [--midi-port NAME|INDEX] [--midi-list]
   strudel-rs dj [SONG_A] [SONG_B] [--port N] [--no-api] [--text]
   strudel-rs play --repl [SONG_A] [SONG_B]   (same 2-deck live UI as dj; compatibility)
+  strudel-rs render SONG --out PATH [--bars N] [--warmup-bars N] [--samples-dir DIR]
   strudel-rs mcp
 
   SONG          song path or bare name (default dir: songs/; .strudel/.txt optional)
@@ -89,6 +99,9 @@ Usage:
   --midi-only   like --midi, but skip the built-in synth (SEQTRAK exhibit)
   --midi-port   port index or name substring (USB SEQTRAK; Linux BLE if ALSA listed)
   --midi-list   print MIDI outputs and exit (same list as --midi-port)
+
+  render        offline bounce to 16-bit stereo WAV (no device, no API). Default
+                1 warmup bar + 16 measure bars at 48 kHz. For LUFS factory gate.
 
   --port N      HTTP API port (default {DEFAULT_API_PORT}; env STRUDEL_API_PORT)
   --no-api      do not start HTTP API
@@ -117,6 +130,7 @@ Examples:
   cargo run -- play songs/house/01.strudel --midi-only --midi-port SEQTRAK
   cargo run -- play songs/house/01.strudel --headless --seconds 8 --midi-port \"TouchOSC Bridge\"
   cargo run -- dj songs/house/01.strudel songs/four-on-the-floor/01.strudel
+  cargo run -- render songs/house/01.strudel --out out/house.wav
   cargo run -- dj                          # empty decks; load from »
   # then:  暗くして   or   /house 01   or   /a house 01   or   /x 4
   # API: curl http://127.0.0.1:{DEFAULT_API_PORT}/status
@@ -1033,6 +1047,124 @@ fn run_highlight_loop(
     result
 }
 
+#[derive(Debug)]
+struct RenderOpts {
+    song: String,
+    out: PathBuf,
+    bars: usize,
+    warmup_bars: usize,
+    samples_dir: Option<PathBuf>,
+}
+
+fn parse_render_args(args: &[String]) -> Result<RenderOpts, String> {
+    let mut song: Option<String> = None;
+    let mut out: Option<PathBuf> = None;
+    let mut bars = DEFAULT_MEASURE_BARS;
+    let mut warmup_bars = DEFAULT_WARMUP_BARS;
+    let mut samples_dir: Option<PathBuf> = None;
+    let mut i = 0;
+    while i < args.len() {
+        match args[i].as_str() {
+            "--out" => {
+                i += 1;
+                let p = args
+                    .get(i)
+                    .ok_or_else(|| "--out needs a path".to_string())?;
+                out = Some(PathBuf::from(p));
+            }
+            "--bars" => {
+                i += 1;
+                let s = args
+                    .get(i)
+                    .ok_or_else(|| "--bars needs a number".to_string())?;
+                let n: usize = s.parse().map_err(|_| format!("bad --bars value: {s}"))?;
+                if n == 0 {
+                    return Err("--bars must be >= 1".into());
+                }
+                bars = n;
+            }
+            "--warmup-bars" => {
+                i += 1;
+                let s = args
+                    .get(i)
+                    .ok_or_else(|| "--warmup-bars needs a number".to_string())?;
+                let n: usize = s
+                    .parse()
+                    .map_err(|_| format!("bad --warmup-bars value: {s}"))?;
+                warmup_bars = n;
+            }
+            "--samples-dir" => {
+                i += 1;
+                let p = args
+                    .get(i)
+                    .ok_or_else(|| "--samples-dir needs a path".to_string())?;
+                samples_dir = Some(PathBuf::from(p));
+            }
+            "-h" | "--help" => {
+                return Err(
+                    "usage: strudel-rs render SONG --out PATH [--bars N] [--warmup-bars N] [--samples-dir DIR]"
+                        .into(),
+                );
+            }
+            flag if flag.starts_with('-') => {
+                return Err(format!("unknown render flag: {flag}"));
+            }
+            other => {
+                if song.is_some() {
+                    return Err(format!("unexpected extra argument: {other}"));
+                }
+                song = Some(other.to_string());
+            }
+        }
+        i += 1;
+    }
+    let song = song.ok_or_else(|| "render needs a song path".to_string())?;
+    let out = out.ok_or_else(|| "render needs --out PATH".to_string())?;
+    Ok(RenderOpts {
+        song,
+        out,
+        bars,
+        warmup_bars,
+        samples_dir,
+    })
+}
+
+fn cmd_render(args: &[String]) -> Result<(), String> {
+    if args.iter().any(|a| a == "-h" || a == "--help") {
+        eprintln!(
+            "usage: strudel-rs render SONG --out PATH [--bars N] [--warmup-bars N] [--samples-dir DIR]"
+        );
+        return Ok(());
+    }
+    let opts = parse_render_args(args)?;
+    let song_path = resolve_song_path(&opts.song)?;
+    let text = std::fs::read_to_string(&song_path)
+        .map_err(|e| format!("read {}: {e}", song_path.display()))?;
+    let song = parse_song(&text, song_path.to_string_lossy().as_ref())?;
+    let samples_dir = match &opts.samples_dir {
+        Some(p) => {
+            if !p.is_dir() {
+                return Err(format!("samples dir not found: {}", p.display()));
+            }
+            p.clone()
+        }
+        None => resolve_samples_dir(Some(&song_path))?,
+    };
+    let bank = SampleBank::load_dir(&samples_dir, RENDER_SR);
+    let bounce = bounce_song(song, &bank, RENDER_SR, opts.warmup_bars, opts.bars)?;
+    write_wav_i16_stereo(&opts.out, bounce.sample_rate, &bounce.samples)?;
+    eprintln!(
+        "wrote {}  ({:.1} BPM, {} bars after {} warmup, peak={:.3}, {} Hz)",
+        opts.out.display(),
+        bounce.bpm,
+        bounce.bars,
+        bounce.warmup_bars,
+        bounce.peak_abs(),
+        bounce.sample_rate
+    );
+    Ok(())
+}
+
 fn resolve_samples_dir(song_path: Option<&Path>) -> Result<PathBuf, String> {
     let mut candidates = vec![PathBuf::from("samples")];
     if let Some(song_path) = song_path {
@@ -1110,5 +1242,31 @@ mod tests {
         let err =
             parse_live_session_args(&s(&["a.strudel", "b.strudel", "c.strudel"])).unwrap_err();
         assert!(err.contains("too many"));
+    }
+
+    #[test]
+    fn render_args_need_song_and_out() {
+        let err = parse_render_args(&s(&[])).unwrap_err();
+        assert!(err.contains("song"), "{err}");
+        let err = parse_render_args(&s(&["songs/house/01.strudel"])).unwrap_err();
+        assert!(err.contains("--out"), "{err}");
+    }
+
+    #[test]
+    fn render_args_ok() {
+        let opts = parse_render_args(&s(&[
+            "songs/house/01.strudel",
+            "--out",
+            "out/house.wav",
+            "--bars",
+            "4",
+            "--warmup-bars",
+            "1",
+        ]))
+        .unwrap();
+        assert_eq!(opts.song, "songs/house/01.strudel");
+        assert_eq!(opts.out, PathBuf::from("out/house.wav"));
+        assert_eq!(opts.bars, 4);
+        assert_eq!(opts.warmup_bars, 1);
     }
 }
