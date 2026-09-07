@@ -19,7 +19,7 @@ strudel-rs の呼び出しは `s("<part>:<slug>")`。音程楽器は `note(...).
 | `bd:dc` | yes | `bd-disco-dry` | disco dry | ファンキー／ディスコのドライキック。ブーム無し、短いアタック。生ドラム寄り。 | 36 | 0.38 |
 | `bd:dn` | yes | `bd-dnb-tight` | dnb tight | Amen隣接のタイトなDnBキック。短くミッドが出る。ブレイクの芯。 | 41 | 0.32 |
 | `bd:ez` | yes | `bd-electro-zap` | electro zap | 短いエレクトロのザップキック。レーザー気味のピッチ落下。フィル向き。 | 48 | 0.28 |
-| `bd:fn` | yes | `bd-fm-noise` | fm noise | 実験的なFMノイズキック。高フィードバックの砂状だが、ピッチ落下でキックとして使える。 | 36 | 0.5 |
+| `bd:fn` | yes | `bd-fm-noise` | fm noise | 実験的なノイズキック。砂状のボディだが、ピッチ落下でキックとして使える。 | 36 | 0.5 |
 | `bd:fc` | yes | `bd-frenchcore` | frenchcore | フレンチコア／ハードコア。攻撃的なミッドとクリック。サブは削って裂けるように。 | 45 | 0.3 |
 | `bd:gb` | yes | `bd-gabber-stomp` | gabber stomp | ガバ／インダストリアルのストンプ。歪んだミッドと短い踏み込み。 | 40 | 0.36 |
 | `bd:hs` | yes | `bd-hardstyle` | hardstyle | ハードスタイルのピッチ感あるキック。逆再生っぽいスイープとミッドのパンチ。 | 46 | 0.4 |
@@ -72,7 +72,7 @@ strudel-rs の呼び出しは `s("<part>:<slug>")`。音程楽器は `note(...).
 
 | call | in_bank | id | name | description | note | dur |
 | --- | --- | --- | --- | --- | --- | --- |
-| `dr:ab` | yes | `dr-abyss` | abyss rumble | 深淵のランブル。0.5正弦に薄いパルスの砂。 | 24 | 16.7 |
+| `dr:ab` | yes | `dr-abyss` | abyss rumble | 深淵のランブル。0.5正弦に薄いノイズの砂。 | 24 | 16.7 |
 | `dr:ad` | yes | `dr-ambient-dark` | dark ambient pad | 暗いアンビエントパッド。ゆっくりしたLFO。サブを残したまま空気を足す。 | 36 | 16.9 |
 | `dr:bd` | yes | `dr-brass-distant` | distant brass drone | 遠い金管。ミュートしたブラスの床。LPで遠さ。 | 33 | 16.7 |
 | `dr:bp` | yes | `dr-brass-pad` | low brass pad | 低いブラスパッド。リップのFMがすぐ落ち着き、長い胴が残る。 | 36 | 16.5 |
@@ -92,11 +92,11 @@ strudel-rs の呼び出しは `s("<part>:<slug>")`。音程楽器は `note(...).
 | `dr:hg` | yes | `dr-hum-grid` | grid hum | 50/60 Hzの電源グリッド。固定周波数＋ノートのサブ。 | 36 | 16.4 |
 | `dr:ic` | yes | `dr-ice-cave` | ice cave drone | 氷穴のミッドドローン。冷たい倍音を薄く。サブは0.5で残す。 | 48 | 16.8 |
 | `dr:ih` | yes | `dr-impact-hold` | impact into hold | ピッチ落下のインパクトからそのまま床になる。ワンショットで消えない。 | 26 | 16.6 |
-| `dr:id` | yes | `dr-industrial` | industrial drone | 工場の低いハム。パルスとソー、フィードバックの砂。 | 31 | 16.4 |
+| `dr:id` | yes | `dr-industrial` | industrial drone | 工場の低いハム。パルスとソー、ノイズの砂。 | 31 | 16.4 |
 | `dr:mb` | yes | `dr-metal-bed` | metallic bed | 金属ベッド。共有モジュレータのリンが長く残る。低いキャリア。 | 36 | 16.5 |
 | `dr:md` | yes | `dr-metal-distant` | distant metallic drone | 遠い金属のうなり。非整数比。LPで手前に出さない。 | 36 | 16.6 |
 | `dr:mn` | yes | `dr-minor-dark` | dark minor drone | 暗い短3度寄り（6:5）。シネマのマイナー床。長三和音は使わない。 | 31 | 16.6 |
-| `dr:nb` | yes | `dr-noisy-bp` | noisy bandpass rumble | 高FBの砂を低いBPでランブルにする。カットオフは80 Hz付近。サブ隣接を残す。 | 28 | 16.4 |
+| `dr:nb` | yes | `dr-noisy-bp` | noisy bandpass rumble | ノイズの砂を低いBPでランブルにする。カットオフは80 Hz付近。サブ隣接を残す。 | 28 | 16.4 |
 | `dr:os` | yes | `dr-octave-stack` | octave stack drone | オクターブ重ねの重いベッド。0.5 / 1 / 2。ミッドは薄く。 | 28 | 16.5 |
 | `dr:pd` | yes | `dr-pad-dark` | dark pad drone | 暗いパッドドローン。ソーの芯に正弦のサブ。 | 36 | 16.6 |
 | `dr:pf` | yes | `dr-pulse-fifth` | pulse fifth rumble | パルスの5度ランブル。中空で攻撃的な低域。 | 33 | 16.4 |
@@ -112,11 +112,11 @@ strudel-rs の呼び出しは `s("<part>:<slug>")`。音程楽器は `note(...).
 | `dr:sh` | yes | `dr-scifi-hum` | sci-fi hum | SFの電源ハム。固定60 Hz層＋ノートのサブ。 | 36 | 16.5 |
 | `dr:sc` | yes | `dr-score-hold` | scored trailer hold | スコア／トレーラーのホールド。スーパーソー低域＋正弦サブ。ミッド（C3）。 | 48 | 17.2 |
 | `dr:ss` | yes | `dr-sine-sub` | sine sub bed | シネマティックな正弦サブベッド。20–40 Hzの胴を長くホールド。レイヤーの床。 | 24 | 16.4 |
-| `dr:st` | yes | `dr-storm` | storm rumble | 嵐のランブル。高FBノイズをLPで遠雷にする。サブ正弦が芯。 | 24 | 16.8 |
+| `dr:st` | yes | `dr-storm` | storm rumble | 嵐のランブル。ノイズをLPで遠雷にする。サブ正弦が芯。 | 24 | 16.8 |
 | `dr:so` | yes | `dr-sub-octave` | sub octave bed | サブと1オクターブ上の正弦スタック。空洞のない重い床。 | 24 | 16.5 |
 | `dr:sl` | yes | `dr-supersaw-low` | low supersaw drone | 低いスーパーソードローン。トレーラーの厚いパッド床。LPでサブを残す。 | 36 | 16.8 |
 | `dr:th` | yes | `dr-tape-hum` | tape machine hum | テープ／機械のハム。わずかなデチューンと低いランブル。 | 28 | 16.4 |
-| `dr:tb` | yes | `dr-thunder-bed` | thunder bed | 雷のベッド。サブ正弦＋高FBの遠雷ノイズ。ワンショットではない。 | 24 | 16.8 |
+| `dr:tb` | yes | `dr-thunder-bed` | thunder bed | 雷のベッド。サブ正弦＋遠雷ノイズ。ワンショットではない。 | 24 | 16.8 |
 | `dr:tl` | yes | `dr-trailer-bloom` | trailer bloom drone | 短いインパクトが開いてドローンになる。トレーラーヒット→ホールド。 | 24 | 16.8 |
 | `dr:uw` | yes | `dr-underwater` | underwater drone | 水中の低いうなり。LPが狭く、ゆっくり揺れる。 | 24 | 16.6 |
 | `dr:vd` | yes | `dr-void` | void drone | 虚空。極端に暗いLP。ほぼサブだけの長い無。 | 24 | 17.0 |
@@ -242,7 +242,7 @@ strudel-rs の呼び出しは `s("<part>:<slug>")`。音程楽器は `note(...).
 | `ld:ml` | yes | `ld-mallet` | ld-mallet | マレット／木琴寄り。ハーフサインの胴と短い減衰。メロディワンショット。 | 48 | 8.2 |
 | `ld:mt` | yes | `ld-metallic` | ld-metallic | 金属FMリード。インハーモニック比＋固定周波数のリン。攻撃的ミッド。 | 48 | 8.2 |
 | `ld:mx` | yes | `ld-music-box` | ld-music-box | オルゴール。高いベル＋短い減衰。C4ワンショット。 | 60 | 8.2 |
-| `ld:nb` | yes | `ld-noisy-bp` | ld-noisy-bp | ノイズ寄りのBPリード。高FBの砂をバンドパスで音符にする。 | 48 | 8.2 |
+| `ld:nb` | yes | `ld-noisy-bp` | ld-noisy-bp | ノイズ寄りのBPリード。砂をバンドパスで音符にする。 | 48 | 8.2 |
 | `ld:ny` | yes | `ld-nylon` | ld-nylon | ミュートしたナイロン寄りのプラック。ハーフサイン＋低いLP。柔らかいメロディ用。 | 48 | 8.2 |
 | `ld:oc` | yes | `ld-octave` | ld-octave | オクターブスタック。比1と2のソー／サイン。シンプルな厚いリード。 | 48 | 8.2 |
 | `ld:or` | yes | `ld-organ` | ld-organ | オルガン寄り。並列オペ（ドローバー風 1+2+3）。加算＋薄いFB。 | 48 | 8.2 |
@@ -265,9 +265,9 @@ strudel-rs の呼び出しは `s("<part>:<slug>")`。音程楽器は `note(...).
 
 | call | in_bank | id | name | description | note | dur |
 | --- | --- | --- | --- | --- | --- | --- |
-| `oh:op` | yes | `pc-hat-open` | open hat | オープンハット。尾は約1秒。クローズより長いノイズ減衰。 | 84 | 1.15 |
-| `oh:dn` | yes | `pc-hat-dnb-op` | dnb open hat | DnBのオープンハット。中くらいの尾。ロールやオフビート向き。 | 80 | 1.05 |
-| `oh:fc` | yes | `pc-hat-fc-op` | frenchcore open hat | フレンチコアのオープンハット。硬いハイ＋少し長い尾。 | 86 | 0.95 |
+| `oh:op` | yes | `pc-hat-open` | open hat | オープンハット。ホワイトノイズの長い砂＋スティック粒。尾は約1秒。 | 84 | 1.15 |
+| `oh:dn` | yes | `pc-hat-dnb-op` | dnb open hat | DnBのオープンハット。少し暗いホワイトノイズの中くらいの尾。ロールやオフビート向き。 | 80 | 1.05 |
+| `oh:fc` | yes | `pc-hat-fc-op` | frenchcore open hat | フレンチコアのオープンハット。硬いハイのホワイトノイズ＋少し長い尾。 | 86 | 0.95 |
 
 ## `perc`
 
