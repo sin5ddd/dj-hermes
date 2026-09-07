@@ -313,34 +313,34 @@ strudel-rs の呼び出しは `s("<part>:<slug>")`。音程楽器は `note(...).
 
 | call | in_bank | id | name | description | note | dur |
 | --- | --- | --- | --- | --- | --- | --- |
-| `pf:al` | yes | `pf-alpine` | alpine pad | 高山の澄んだ5度。明るいが軽い。 | 67 | 16.5 |
-| `pf:br` | yes | `pf-breeze` | breeze pad | そよ風。パルスの薄い息＋サイン。HP。 | 64 | 16.6 |
+| `pf:al` | yes | `pf-alpine` | alpine pad | 高山の澄んだ5度。明るいが軽い。 | 72 | 16.5 |
+| `pf:br` | yes | `pf-breeze` | breeze pad | そよ風。パルスの薄い息＋サイン。HP。 | 60 | 16.6 |
 | `pf:ca` | yes | `pf-choir-air` | choir air pad | 柔らかいクワイアの空気。加算サイン、HP。泥は入れない。 | 60 | 16.7 |
 | `pf:cw` | yes | `pf-chorus-wide` | wide chorus pad | 広いコーラスパッド。デチューンしたサインの重ね。午前の空気。 | 60 | 16.4 |
 | `pf:cs` | yes | `pf-clear-saw` | clear saw pad | 澄んだソーパッド。HPで低域を切り、午前のアナログ。 | 60 | 16.5 |
 | `pf:cl` | yes | `pf-cloud` | soft cloud pad | 柔らかい雲。ハーフサインの層。湿った空気、泥なし。 | 60 | 16.9 |
-| `pf:dn` | yes | `pf-dawn` | dawn bloom pad | 夜明けのブルーム。フィルタがゆっくり開く。メジャー寄り。 | 55 | 17.0 |
+| `pf:dn` | yes | `pf-dawn` | dawn bloom pad | 夜明けのブルーム。フィルタがゆっくり開く。メジャー寄り。 | 60 | 17.0 |
 | `pf:fo` | yes | `pf-fifth-open` | open fifth pad | 開いた5度パッド（C+G）。長3度なし。C3でもHPで150 Hz以上。 | 48 | 16.5 |
 | `pf:fl` | yes | `pf-flute-pad` | flute pad | フルートパッド。遅い息＋サイン。HPで胴なし。C5。 | 72 | 16.8 |
-| `pf:ga` | yes | `pf-glass-air` | glass air pad | ガラスの空気。薄い非整数比。ベルワンショットではない。 | 67 | 16.9 |
+| `pf:ga` | yes | `pf-glass-air` | glass air pad | ガラスの空気。薄い非整数比。ベルワンショットではない。 | 72 | 16.9 |
 | `pf:hl` | yes | `pf-halo` | halo choir pad | ハローのクワイア空気。広いデチューン、HP。 | 60 | 17.0 |
-| `pf:ha` | yes | `pf-harp-air` | harp air pad | ハープの空気。アタックは少し立つが16秒ホールド。 | 67 | 16.7 |
+| `pf:ha` | yes | `pf-harp-air` | harp air pad | ハープの空気。アタックは少し立つが16秒ホールド。 | 72 | 16.7 |
 | `pf:hz` | yes | `pf-horizon` | horizon pad | 地平線。広い5度＋9度。C3の開いた配置。 | 48 | 16.7 |
-| `pf:iv` | yes | `pf-ivory` | ivory pad | 象牙／柔らかい鍵盤のパッド。倍音は薄い。ホールド。 | 64 | 16.5 |
+| `pf:iv` | yes | `pf-ivory` | ivory pad | 象牙／柔らかい鍵盤のパッド。倍音は薄い。ホールド。 | 60 | 16.5 |
 | `pf:ju` | yes | `pf-juno-air` | juno air pad | Juno風の広いが軽いパッド。ソー＋サイン、HPで胴を切る。 | 60 | 16.6 |
 | `pf:ln` | yes | `pf-linen` | linen pad | リネンの質感。アブサインの薄いフォルマント。爽やか。 | 60 | 16.7 |
 | `pf:ly` | yes | `pf-lydian-sky` | lydian sky pad | リディアン（#4=11/8）の空。明るいが軽い。 | 60 | 16.8 |
 | `pf:ms` | yes | `pf-major-soft` | soft major pad | 柔らかい長三和音パッド（C–E–G）。開いた配置。 | 60 | 16.4 |
-| `pf:md` | yes | `pf-meadow` | meadow pad | 草原。長3度＋5度の柔らかい加算。朝。 | 64 | 16.4 |
+| `pf:md` | yes | `pf-meadow` | meadow pad | 草原。長3度＋5度の柔らかい加算。朝。 | 60 | 16.4 |
 | `pf:mn` | yes | `pf-morning` | morning chorus pad | 朝のアナログコーラスパッド。軽いスーパーソー＋HP。低域はドローンに任せる。 | 60 | 16.5 |
 | `pf:ni` | yes | `pf-ninth-open` | open ninth pad | 開いた9度（根音＋9度＋5度）。ワイドだがサブなし。 | 48 | 16.6 |
 | `pf:oc` | yes | `pf-octave-light` | light octave pad | 軽いオクターブ重ね（1+2）。サブの0.5は使わない。 | 60 | 16.3 |
-| `pf:or` | yes | `pf-organ-light` | light organ pad | 軽いオルガン（1・2・3・4）。ドローバーだがHPで床なし。 | 55 | 16.4 |
-| `pf:pu` | yes | `pf-pulse-air` | pulse air pad | 中空のパルス空気。スクエアの隙間、HP。 | 55 | 16.6 |
+| `pf:or` | yes | `pf-organ-light` | light organ pad | 軽いオルガン（1・2・3・4）。ドローバーだがHPで床なし。 | 60 | 16.4 |
+| `pf:pu` | yes | `pf-pulse-air` | pulse air pad | 中空のパルス空気。スクエアの隙間、HP。 | 60 | 16.6 |
 | `pf:rs` | yes | `pf-reed-soft` | soft reed pad | 柔らかいリード／リード管。パルス芯＋サイン。HP。 | 60 | 16.6 |
-| `pf:sk` | yes | `pf-silk` | silk sine pad | 絹のサインパッド。ごく薄いコーラス。澄んでいる。 | 67 | 16.8 |
-| `pf:so` | yes | `pf-sky-open` | open sky pad | 開いた空。オクターブ＋5度の高い配置。 | 64 | 16.5 |
-| `pf:sp` | yes | `pf-spring` | spring pad | 春。リディアン寄り＋空気。明るく開く。 | 64 | 16.8 |
+| `pf:sk` | yes | `pf-silk` | silk sine pad | 絹のサインパッド。ごく薄いコーラス。澄んでいる。 | 72 | 16.8 |
+| `pf:so` | yes | `pf-sky-open` | open sky pad | 開いた空。オクターブ＋5度の高い配置。 | 60 | 16.5 |
+| `pf:sp` | yes | `pf-spring` | spring pad | 春。リディアン寄り＋空気。明るく開く。 | 60 | 16.8 |
 | `pf:wa` | yes | `pf-water-air` | water air pad | 水の空気。遅いLFO、薄いモジュレーション。泥なし。 | 60 | 17.1 |
 | `pf:wm` | yes | `pf-wide-major` | wide major pad | 開いた長三和音（根音＋10度＋12度）。泥のないワイド。 | 48 | 16.6 |
 | `pf:ff` | yes | `pad-fm_fifth` | fifth pad | C3 hollow C+G pad (~8 s). Write C4:…. Cannot invent a third. | 48 | 8.2 |
@@ -390,35 +390,35 @@ strudel-rs の呼び出しは `s("<part>:<slug>")`。音程楽器は `note(...).
 
 | call | in_bank | id | name | description | note | dur |
 | --- | --- | --- | --- | --- | --- | --- |
-| `ps:au` | yes | `ps-aurora` | aurora pad | オーロラ。ゆっくり色が変わるFMの輝き。 | 64 | 17.2 |
+| `ps:au` | yes | `ps-aurora` | aurora pad | オーロラ。ゆっくり色が変わるFMの輝き。 | 60 | 17.2 |
 | `ps:ba` | yes | `ps-bell-air` | bell air pad | ベルの空気。金属というより光。ホールド。 | 72 | 16.6 |
 | `ps:bh` | yes | `ps-bell-hold` | held bell pad | ベルのホールド。アタックは立つがサステインで16秒残る。 | 72 | 16.8 |
 | `ps:ce` | yes | `ps-celesta` | celesta pad | チェレスタパッド。鍵盤ベルを伸ばしたホールド。 | 72 | 16.5 |
-| `ps:cs` | yes | `ps-celestial` | celestial pad | 天のパッド。クワイア＋高い輝き。 | 64 | 17.0 |
+| `ps:cs` | yes | `ps-celestial` | celestial pad | 天のパッド。クワイア＋高い輝き。 | 60 | 17.0 |
 | `ps:cp` | yes | `ps-chime-pad` | chime pad | チャイムパッド。金属の高い層をホールド。 | 72 | 16.8 |
-| `ps:ch` | yes | `ps-chorus-shine` | chorus shine pad | 遅いコーラスの輝き。キラキラが横に広がる。 | 64 | 16.7 |
+| `ps:ch` | yes | `ps-chorus-shine` | chorus shine pad | 遅いコーラスの輝き。キラキラが横に広がる。 | 60 | 16.7 |
 | `ps:cr` | yes | `ps-crystal` | crystal pad | クリスタルパッド。高い部分音。ホールド（ワンショットベルではない）。 | 72 | 16.6 |
-| `ps:cc` | yes | `ps-crystal-choir` | crystal choir pad | クリスタルクワイア。サイン重ね＋高い部分音。 | 67 | 16.9 |
+| `ps:cc` | yes | `ps-crystal-choir` | crystal choir pad | クリスタルクワイア。サイン重ね＋高い部分音。 | 72 | 16.9 |
 | `ps:dm` | yes | `ps-diamond` | diamond pad | ダイヤモンド。硬い高次、明るいホールド。 | 72 | 16.5 |
-| `ps:fs` | yes | `ps-fm-sparkle` | evolving fm sparkle | ゆっくり指数が開くFMスパークル。キラキラが育つ。 | 67 | 17.2 |
-| `ps:fr` | yes | `ps-frost` | frost pad | 霜。冷たい高域の層。キラキラは控えめ。 | 69 | 16.8 |
+| `ps:fs` | yes | `ps-fm-sparkle` | evolving fm sparkle | ゆっくり指数が開くFMスパークル。キラキラが育つ。 | 72 | 17.2 |
+| `ps:fr` | yes | `ps-frost` | frost pad | 霜。冷たい高域の層。キラキラは控えめ。 | 72 | 16.8 |
 | `ps:gb` | yes | `ps-glass-bell` | glass bell pad | ガラスベルのパッド。高い非整数比を持続。 | 72 | 16.9 |
-| `ps:gl` | yes | `ps-glisten` | glisten pad | きらめき。高域がゆっくり呼吸する。 | 69 | 16.9 |
+| `ps:gl` | yes | `ps-glisten` | glisten pad | きらめき。高域がゆっくり呼吸する。 | 72 | 16.9 |
 | `ps:gt` | yes | `ps-glitter` | glitter pad | グリッター。高次倍音の粉。パッドとして残る。 | 72 | 16.6 |
 | `ps:gp` | yes | `ps-glock-pad` | glock pad | グロッケンパッド。鉄琴の輝きを伸ばす。 | 72 | 16.5 |
-| `ps:hs` | yes | `ps-halo-shine` | halo shine pad | ハローの輝き。広いデチューン＋高次。 | 64 | 16.8 |
+| `ps:hs` | yes | `ps-halo-shine` | halo shine pad | ハローの輝き。広いデチューン＋高次。 | 60 | 16.8 |
 | `ps:hp` | yes | `ps-high-partials` | high partials pad | 高次奇数倍音（1・3・5・7）。キラキラの骨格。 | 60 | 16.4 |
-| `ps:ic` | yes | `ps-ice-choir` | ice choir pad | 氷のクワイア。冷たい重ねサイン＋輝き。 | 67 | 17.0 |
+| `ps:ic` | yes | `ps-ice-choir` | ice choir pad | 氷のクワイア。冷たい重ねサイン＋輝き。 | 72 | 17.0 |
 | `ps:is` | yes | `ps-ice-shine` | ice shine pad | 氷の輝き。冷たい高域。ホールド。 | 72 | 16.7 |
-| `ps:ih` | yes | `ps-inharmonic` | inharmonic sparkle | 非整数比のスパークル。金属だがパッドとして残る。 | 67 | 16.8 |
+| `ps:ih` | yes | `ps-inharmonic` | inharmonic sparkle | 非整数比のスパークル。金属だがパッドとして残る。 | 72 | 16.8 |
 | `ps:mx` | yes | `ps-music-box` | music box pad | オルゴールパッド。高いベル層をホールド（減衰しきらない）。 | 72 | 16.5 |
-| `ps:pr` | yes | `ps-prism` | prism pad | プリズム。スペクトルがゆっくり割れる。 | 67 | 17.1 |
-| `ps:qz` | yes | `ps-quartz` | quartz pad | 石英。硬い透明感。高い部分音のホールド。 | 69 | 16.7 |
-| `ps:sh` | yes | `ps-shimmer` | shimmer pad | シマー。高い部分音がゆっくり揺れる。キラキラのホールド。 | 67 | 16.9 |
+| `ps:pr` | yes | `ps-prism` | prism pad | プリズム。スペクトルがゆっくり割れる。 | 72 | 17.1 |
+| `ps:qz` | yes | `ps-quartz` | quartz pad | 石英。硬い透明感。高い部分音のホールド。 | 72 | 16.7 |
+| `ps:sh` | yes | `ps-shimmer` | shimmer pad | シマー。高い部分音がゆっくり揺れる。キラキラのホールド。 | 72 | 16.9 |
 | `ps:sf` | yes | `ps-shine-fifth` | shine fifth pad | 輝く5度。開いたC+Gに高い粉。 | 60 | 16.6 |
-| `ps:sv` | yes | `ps-silver` | silver pad | 銀。冷たい金属の層。キラキラ控えめのホールド。 | 67 | 16.7 |
-| `ps:se` | yes | `ps-spark-evolve` | evolving spark pad | 火花がゆっくり育つ。モジュレーションスイープ。 | 67 | 17.2 |
-| `ps:sl` | yes | `ps-starlight` | starlight pad | 星明かり。高い非整数比がゆっくり動く。 | 69 | 17.0 |
+| `ps:sv` | yes | `ps-silver` | silver pad | 銀。冷たい金属の層。キラキラ控えめのホールド。 | 72 | 16.7 |
+| `ps:se` | yes | `ps-spark-evolve` | evolving spark pad | 火花がゆっくり育つ。モジュレーションスイープ。 | 72 | 17.2 |
+| `ps:sl` | yes | `ps-starlight` | starlight pad | 星明かり。高い非整数比がゆっくり動く。 | 72 | 17.0 |
 | `ps:tw` | yes | `ps-twinkle` | twinkle pad | トゥインクル。星のまたたきをホールド（ワンショットではない）。 | 72 | 16.6 |
 
 ## `sd`
