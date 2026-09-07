@@ -196,15 +196,15 @@ strudel-rs の呼び出しは `s("<part>:<slug>")`。音程楽器は `note(...).
 
 | call | in_bank | id | name | description | note | dur |
 | --- | --- | --- | --- | --- | --- | --- |
-| `hh:cl` | yes | `pc-hat-closed` | closed hat | クローズドハット。短いノイズFM。キックやスネアではない。 | 84 | 0.18 |
-| `hh:ch` | yes | `pc-hat-chip` | chip hat | チップチューン寄りの短いハット。パルスの粒が見える。 | 96 | 0.13 |
-| `hh:dk` | yes | `pc-hat-dark` | dark hat | 暗いクローズドハット。HPを低めにして胴っぽい砂を残す。 | 76 | 0.22 |
-| `hh:dn` | yes | `pc-hat-dnb-cl` | dnb closed hat | DnBのクローズドハット。少し暗く、短い砂。 | 80 | 0.16 |
-| `hh:fc` | yes | `pc-hat-fc` | frenchcore hat | フレンチコアの攻撃的クローズハット。硬いハイ、短い。 | 86 | 0.12 |
-| `hh:hs` | yes | `pc-hat-house` | house closed hat | ハウスのクローズドハット。タイトで明るい。4つ打ちの16分向き。 | 84 | 0.14 |
-| `hh:ns` | yes | `pc-hat-noise` | noise hat | ノイズ寄りのハット。フィードバック最大付近。 | 84 | 0.2 |
-| `hh:pd` | yes | `pc-hat-pedal` | pedal hat | ペダル／フットハット。クローズより暗く短いチック。 | 72 | 0.15 |
-| `hh:tt` | yes | `pc-hat-tight` | tight hat | 極短いタイトハット。16分の隙間向き。 | 88 | 0.1 |
+| `hh:cl` | yes | `pc-hat-closed` | closed hat | クローズドハット。ホワイトノイズの短い砂＋スティック粒。キックやスネアではない。 | 84 | 0.36 |
+| `hh:ch` | yes | `pc-hat-chip` | chip hat | チップチューン寄りの短いハット。パルスの粒＋薄いホワイトノイズ。 | 96 | 0.26 |
+| `hh:dk` | yes | `pc-hat-dark` | dark hat | 暗いクローズドハット。ピンクノイズで胴っぽい砂を残す。 | 76 | 0.44 |
+| `hh:dn` | yes | `pc-hat-dnb-cl` | dnb closed hat | DnBのクローズドハット。少し暗いホワイトノイズの短い砂。 | 80 | 0.32 |
+| `hh:fc` | yes | `pc-hat-fc` | frenchcore hat | フレンチコアの攻撃的クローズハット。硬いハイのホワイトノイズ、短い。 | 86 | 0.24 |
+| `hh:hs` | yes | `pc-hat-house` | house closed hat | ハウスのクローズドハット。タイトで明るいホワイトノイズ。4つ打ちの16分向き。 | 84 | 0.28 |
+| `hh:ns` | yes | `pc-hat-noise` | noise hat | ノイズ寄りのハット。ホワイトノイズ主体の砂。 | 84 | 0.4 |
+| `hh:pd` | yes | `pc-hat-pedal` | pedal hat | ペダル／フットハット。クローズより暗いホワイトノイズの短いチック。 | 72 | 0.3 |
+| `hh:tt` | yes | `pc-hat-tight` | tight hat | 極短いタイトハット。明るいホワイトノイズ。16分の隙間向き。 | 88 | 0.2 |
 
 ## `ld`
 
