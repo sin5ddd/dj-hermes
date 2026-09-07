@@ -426,7 +426,12 @@ impl FxState {
             if (y - a.y).abs() > 0.5 {
                 continue;
             }
+            // Source x is unwrapped; the pane clips long lines. Skip atoms past
+            // the clip (start >= len panics even when x1 is clamped).
             let x0 = a.x.round().max(0.0) as usize;
+            if x0 >= cells.len() {
+                continue;
+            }
             let x1 = (x0 + a.cols as usize).min(cells.len());
             for c in &mut cells[x0..x1] {
                 c.bg = Some(Color::Indexed(a.color));
@@ -967,6 +972,19 @@ mod tests {
                 .any(|l| l.contains("\x1b[48;5;") || l.contains("\x1b[48;2;")),
             "{lines:?}"
         );
+    }
+
+    #[test]
+    fn composite_does_not_panic_when_atom_is_past_pane_width() {
+        let mut fx = FxState::new();
+        let mut h = hit("hh", false, 0.0);
+        h.x = 108.0;
+        h.y = 0.0;
+        h.atom_cols = 8;
+        fx.observe(0, &[h], 2.0);
+        let mut lines = vec!["short pane".to_string()];
+        fx.composite_lines(0, &mut lines, 69);
+        assert!(!lines[0].is_empty());
     }
 
     #[test]
