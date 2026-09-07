@@ -133,7 +133,7 @@ Genre recipes (`strudel-genre-*`):
 | [strudel-genre-four-on-the-floor](./strudel-genre-four-on-the-floor/SKILL.md) | Techno kick+offbeat hats (`bd*4, [~ hh]*4`); no clap | `songs/four-on-the-floor/01.strudel` |
 | [strudel-genre-house](./strudel-genre-house/SKILL.md) | House clap on 2/4 (`[~ cp]*2`, not stacked with `sd`) + C4:minor pluck | `songs/house/01.strudel` |
 | [strudel-genre-techno-duck](./strudel-genre-techno-duck/SKILL.md) | Techno kick ducks pad **and** bass; short recover; no track compressor | `songs/techno-duck/01.strudel` |
-| [strudel-genre-acid](./strudel-genre-acid/SKILL.md) | TB-303: per-note `lpenv`, high `lpq`, not static `lpf` + amp ADSR | `songs/acid/01.strudel` |
+| [strudel-genre-acid](./strudel-genre-acid/SKILL.md) | TB-303 hook (`lpenv`); other slots and keys may jump; not a chromatic clone of 01 | `songs/acid/01.strudel` |
 | [strudel-genre-dnb](./strudel-genre-dnb/SKILL.md) | 174 BPM break, drums above sub, square+saw Reese; mini `*2` not `.fast(2)` | `songs/dnb/01.strudel` |
 | [strudel-genre-dnb-reese-mid-stab](./strudel-genre-dnb-reese-mid-stab/SKILL.md) | 174 BPM break, square C2 sub + `bs:rm` at C4 + hollow-fifth stab | `songs/dnb-reese/01.strudel` |
 | [strudel-genre-ambient](./strudel-genre-ambient/SKILL.md) | Ambient | — |

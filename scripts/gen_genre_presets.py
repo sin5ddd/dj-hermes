@@ -18,6 +18,39 @@ HOLD = {"clockwork", "glass-garden", "night-market", "tide-lantern"}
 
 # 10 parent keys, three skill variants → 30 slots.
 KEYS = [0, 2, 3, 4, 5, 7, 8, 9, 10, 11]
+# Acid: not a rising C D Eb walk. Mix of up/down fifths and steps (01 forced to 0).
+ACID_KEYS = [
+    0,
+    7,
+    -5,
+    5,
+    -2,
+    3,
+    -7,
+    10,
+    -4,
+    8,
+    2,
+    -3,
+    9,
+    -8,
+    4,
+    -6,
+    11,
+    -1,
+    6,
+    -9,
+    1,
+    -10,
+    8,
+    4,
+    -5,
+    7,
+    -2,
+    10,
+    3,
+    -7,
+]
 PC_NAMES = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"]
 
 SCALE_TOKEN = re.compile(r"([A-G](?:#|b)?)(\d):([A-Za-z]+)")
@@ -141,7 +174,7 @@ $: note("0 0 3 0  7 3 2 0  4 4 3 0  -1 3 0 <2 5>")
   .release(0.04)
 // lead
 $: note("~ 7 ~ <9 7 4 12>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
-  .s("plk:ac").gain(0.12).cut(1)
+  .s("plk:lp").gain(0.12).cut(1)
 // arp
 $: s("<~ perc:mh ~ perc:tm>").gain(0.14)
 // chords
@@ -494,12 +527,19 @@ PALETTES: dict[str, dict[str, list]] = {
             {"bd": "bd:tc"},
             {"bd": "bd:9p"},
             {"hh": "hh:cl"},
+            {"bd": "bd:ez", "hh": "hh:ch"},
+            {"bd": "bd:hf", "hh": "hh:hs"},
+            {"bd": "bd:8t", "hh": "hh:dk"},
+            {"bd": "bd:ng", "hh": "hh:ns"},
+            {"bd": "bd:mt", "hh": "hh:pd"},
+            {"bd": "bd:dc", "hh": "hh:tt"},
+            {"bd": "bd:lf", "hh": "hh:dk"},
         ],
-        "bass": ["bs:su"],
-        "lead": ["plk:pk", "plk:ac"],
-        "arp": ["perc:tm", "perc:mh"],
-        "chords": ["plk:sf", "ep:mt"],
-        "pad": ["pf:pu", "dr:pd", "pf:ff"],
+        "bass": ["bs:su", "sine"],
+        "lead": ["plk:lp", "plk:pk", "ld:fm", "sine", "ld:sf", "plk:fc", "ld:mt"],
+        "arp": ["perc:tm", "perc:mh", "perc:st", "perc:tk", "perc:cb", "perc:sk"],
+        "chords": ["plk:sf", "ep:mt", "plk:s5", "ep:ky", "plk:an"],
+        "pad": ["pf:pu", "dr:pd", "pf:ff", "pf:cs", "dr:fg", "pf:fo"],
     },
     "dnb": {
         "drums": [
@@ -677,7 +717,7 @@ LOCKED_01 = {
     "four-on-the-floor": {"drums", "bass"},
     "dnb": {"bass", "bass-mid"},
     "dnb-reese": {"bass", "bass-mid", "hook"},
-    "acid": {"hook", "bass"},
+    "acid": {"hook", "bass", "lead"},
     "techno-duck": {"bass"},
     "electro": {"bass", "hook"},
     "dubstep": {"bass"},
@@ -809,6 +849,67 @@ def inject_after_s(body: str, snippet: str) -> str:
     )
 
 
+def replace_method(body: str, name: str, args: str) -> str | None:
+    needle = f".{name}("
+    j = body.find(needle)
+    if j < 0:
+        return None
+    k = j + len(needle)
+    depth = 1
+    while k < len(body) and depth:
+        if body[k] == "(":
+            depth += 1
+        elif body[k] == ")":
+            depth -= 1
+        k += 1
+    return body[:j] + f".{name}({args})" + body[k:]
+
+
+def set_method(body: str, name: str, args: str) -> str:
+    replaced = replace_method(body, name, args)
+    if replaced is not None:
+        return replaced
+    return inject_after_s(body, f".{name}({args})")
+
+
+# n=2.. : bass cutoff / LFO. Not applied to 01 (e2e 303 bed).
+ACID_BASS_FILTER = [
+    ("120", None),
+    ("sine.rangex(70, 200).slow(8)", 3),
+    ("280", None),
+    ("sine.rangex(90, 260).slow(4)", 2),
+    ("150", 4),
+    ("sine.range(80, 240).slow(16)", None),
+    ("220", None),
+    ("sine.rangex(60, 180).slow(6)", 3),
+    ("100", None),
+]
+
+
+def apply_acid_color(text: str, n: int) -> str:
+    if n == 1:
+        return text
+    lpf_args, lpq = ACID_BASS_FILTER[(n - 2) % len(ACID_BASS_FILTER)]
+
+    def on_bass(name: str, chunk: str) -> str:
+        if name != "bass":
+            return chunk
+        chunk = set_method(chunk, "lpf", lpf_args)
+        if lpq is not None:
+            chunk = set_method(chunk, "lpq", str(lpq))
+        return chunk
+
+    text = map_tracks(text, on_bass)
+    if n % 4 == 0:
+        text = re.sub(
+            r"\[~ (hh(?::[a-z0-9]+)?)\]\*4",
+            r"\1*8",
+            text,
+            count=1,
+        )
+    return text
+
+
 def ensure_cut1(body: str) -> str:
     if ".cut(" in body:
         return body
@@ -916,6 +1017,17 @@ def apply_bass_sound(chunk: str, new: str, pcm_min_oct: int = 4) -> str:
     return chunk
 
 
+def apply_acid_fm_lead(chunk: str) -> str:
+    """Live 2-op FM lead (sound-design signed-off numbers). Not a second 303."""
+    chunk = set_dot_s(chunk, "sine")
+    chunk = strip_methods(chunk, STRIP_SYNTH)
+    chunk = inject_after_s(
+        chunk,
+        ".fm(3).fmh(2).fmatt(0.01).fmdec(0.3).fmsus(0.25).lpf(1800).lpenv(2)",
+    )
+    return ensure_cut1(chunk)
+
+
 def apply_pitched_sound(
     chunk: str, new: str, slot: str, pcm_min_oct: int = 4
 ) -> str:
@@ -978,6 +1090,8 @@ def apply_palette(genre: str, text: str, n: int) -> str:
         used.add(new)
         if name == "bass":
             return apply_bass_sound(chunk, new, pcm_min_oct)
+        if genre == "acid" and name == "lead" and new == "sine":
+            return apply_acid_fm_lead(chunk)
         return apply_pitched_sound(chunk, new, name, pcm_min_oct)
 
     return map_tracks(text, apply_one)
@@ -1191,19 +1305,22 @@ def validate(path: Path, text: str) -> None:
     map_tracks(text, collect)
 
 
-def slot_spec(n: int) -> tuple[int, int]:
+def slot_spec(n: int, genre: str = "") -> tuple[int, int]:
     idx = n - 1
-    return KEYS[idx % 10], idx // 10
+    keys = ACID_KEYS if genre == "acid" else KEYS
+    return keys[idx % len(keys)], idx // 10
 
 
 def render(genre: str, n: int) -> str:
     text = FENCES[genre].strip() + "\n"
-    semis, variant = slot_spec(n)
+    semis, variant = slot_spec(n, genre)
     if n == 1:
         variant = 0
         semis = 0
     text = apply_variant(genre, text, variant)
     text = apply_palette(genre, text, n)
+    if genre == "acid":
+        text = apply_acid_color(text, n)
     text = transpose_text(text, semis)
     if n == 1 and genre in TITLE_01:
         title = TITLE_01[genre]

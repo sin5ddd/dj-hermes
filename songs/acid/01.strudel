@@ -24,7 +24,7 @@ $: note("0 0 3 0  7 3 2 0  4 4 3 0  -1 3 0 <2 5>")
   .release(0.04)
 // lead
 $: note("~ 7 ~ <9 7 4 12>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
-  .s("plk:pk").gain(0.12).cut(1)
+  .s("plk:lp").gain(0.12).cut(1)
 // arp
 $: s("<~ perc:tm ~ perc:mh>").gain(0.14)
 // chords
