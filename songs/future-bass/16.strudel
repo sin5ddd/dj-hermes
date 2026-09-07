@@ -4,22 +4,27 @@ setcpm(140/4)
 // kick
 $: s("bd:8t ~ bd:8t ~").gain(0.85).duckorbit(2).duckattack(0.05).duckdepth(0.8)
 // hats
-$: s("~ ~ sd:tr ~, hh:ch*8, <~ ~ ~ [hh:ch*16]>").gain(0.42)
+$: s("~ ~ sd:tr ~, hh:ch*8, <~ ~ ~ [hh:ch*16] ~ ~ ~ [hh:ch*16] ~ ~ ~ [hh:ch*16] ~ ~ ~ [hh:ch*16]>").gain(0.42)
 // bass
-$: note("0 ~ 0 <0 4 0 2>").scale("<E5:minor C5:lydian D5:mixolydian G4:major>")
+$: note("0 ~ 0 <0 4 0 2>").scale("<E5:minor C5:lydian D5:mixolydian G4:major E5:minor C5:lydian D5:mixolydian G4:major G4:major D5:mixolydian C5:lydian E5:minor G4:major F#5:locrian E5:minor D5:mixolydian>")
   .s("bs:su").gain(0.4).orbit(2)
 // lead
-$: note("4@2 7 9@2  7 4 <2 0> ~").scale("<E5:minor C5:lydian D5:mixolydian G4:major>")
+$: note("<[~ 4 ~ 7  ~ 9 4 2] [~ 7 4 9  7 ~ 4 2] [4 ~ 9 7  ~ 4 2 0] [~ 4 7 9  4 2 ~ 7] [4@2 7 9@2  7 4 2 0] [4@2 7 9@2  7 4 0 2] [4@2 7 9@2  7 4 2 ~] [4@2 7 9@2  7 4 2 0] [~ 9 7 4  2 0 ~ 4] [9 ~ 7 4  ~ 2 0 4] [7 4 ~ 2  0 ~ 4 7] [~ 4 2 0  4 7 ~ 9] [4@2 7 9@2  7 4 2 0] [4@2 7 9@2  7 4 0 2] [4@2 7 9@2  7 4 2 ~] [4@2 7 9@2  7 4 2 0]>")
+  .scale("<E5:minor C5:lydian D5:mixolydian G4:major E5:minor C5:lydian D5:mixolydian G4:major G4:major D5:mixolydian C5:lydian E5:minor G4:major F#5:locrian E5:minor D5:mixolydian>")
   .s("ld:ss").gain(0.16).cut(1)
 // hook
-$: note("~ 11 ~ 12  ~ 9 ~ <11 12>").scale("<E5:minor C5:lydian D5:mixolydian G4:major>")
+$: note("<[~ 11 ~ 12] [~ 9 ~ 11] [~ 11 ~ 12] [~ 9 ~ 7] [~ 11 ~ 12] [~ 9 ~ 11] [~ 11 ~ 12] [11 12 9 11] [~ 12 ~ 9] [~ 11 ~ 7] [~ 9 ~ 4] [~ 7 ~ 4] [~ 11 ~ 12] [~ 9 ~ 11] [~ 11 ~ 12] [11 12 9 11]>")
+  .scale("<E5:minor C5:lydian D5:mixolydian G4:major E5:minor C5:lydian D5:mixolydian G4:major G4:major D5:mixolydian C5:lydian E5:minor G4:major F#5:locrian E5:minor D5:mixolydian>")
   .s("plk:mx").gain(0.18).cut(1)
 // arp
-$: note("0 4 ~ 7  4 ~ 9 4").scale("<E5:minor C5:lydian D5:mixolydian G4:major>")
+$: note("0 4 ~ 7  4 ~ 9 4").scale("<E6:minor C6:lydian D6:mixolydian G5:major E6:minor C6:lydian D6:mixolydian G5:major G5:major D6:mixolydian C6:lydian E6:minor G5:major F#6:locrian E6:minor D6:mixolydian>")
   .s("plk:fg").gain(0.14).cut(1)
 // chords
-$: note("[0,4,9] ~ [0,4,9] ~").scale("<E5:minor C5:lydian D5:mixolydian G4:major>")
+$: note("[0,4,9] ~ [0,4,9] ~").scale("<E5:minor C5:lydian D5:mixolydian G4:major E5:minor C5:lydian D5:mixolydian G4:major G4:major D5:mixolydian C5:lydian E5:minor G4:major F#5:locrian E5:minor D5:mixolydian>")
   .s("plk:ss").gain(0.2).orbit(2)
 // pad
-$: note("<0 ~ ~ ~>").scale("<E5:minor C5:lydian D5:mixolydian G4:major>")
+$: note("<0 ~ ~ ~>").scale("<E5:minor C5:lydian D5:mixolydian G4:major E5:minor C5:lydian D5:mixolydian G4:major G4:major D5:mixolydian C5:lydian E5:minor G4:major F#5:locrian E5:minor D5:mixolydian>")
   .s("ps:mx").cut(1).gain(0.14).room(0.3).orbit(2)
+// strings
+$: note("<0 ~ ~ ~>").scale("<E5:minor C5:lydian D5:mixolydian G4:major E5:minor C5:lydian D5:mixolydian G4:major G4:major D5:mixolydian C5:lydian E5:minor G4:major F#5:locrian E5:minor D5:mixolydian>")
+  .s("pf:wm").cut(1).gain(0.12).room(0.45).orbit(2)

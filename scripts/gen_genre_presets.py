@@ -212,25 +212,30 @@ setcpm(140/4)
 // kick
 $: s("bd ~ bd ~").gain(0.85).duckorbit(2).duckattack(0.05).duckdepth(0.8)
 // hats
-$: s("~ ~ sd ~, hh*8, <~ ~ ~ [hh*16]>").gain(0.42)
+$: s("~ ~ sd ~, hh*8, <~ ~ ~ [hh*16] ~ ~ ~ [hh*16] ~ ~ ~ [hh*16] ~ ~ ~ [hh*16]>").gain(0.42)
 // bass
-$: note("0 ~ 0 <0 4 0 2>").scale("<F4:lydian G4:mixolydian E4:phrygian A4:minor>")
+$: note("0 ~ 0 <0 4 0 2>").scale("<F4:lydian G4:mixolydian E4:phrygian A4:minor F4:lydian G4:mixolydian E4:phrygian A4:minor A4:minor E4:phrygian G4:mixolydian F4:lydian C4:major B4:locrian A4:minor G4:mixolydian>")
   .s("bs:su").gain(0.4).orbit(2)
 // lead
-$: note("4@2 7 9@2  7 4 <2 0> ~").scale("<F4:lydian G4:mixolydian E4:phrygian A4:minor>")
+$: note("<[~ 4 ~ 7  ~ 9 4 2] [~ 7 4 9  7 ~ 4 2] [4 ~ 9 7  ~ 4 2 0] [~ 4 7 9  4 2 ~ 7] [4@2 7 9@2  7 4 2 0] [4@2 7 9@2  7 4 0 2] [4@2 7 9@2  7 4 2 ~] [4@2 7 9@2  7 4 2 0] [~ 9 7 4  2 0 ~ 4] [9 ~ 7 4  ~ 2 0 4] [7 4 ~ 2  0 ~ 4 7] [~ 4 2 0  4 7 ~ 9] [4@2 7 9@2  7 4 2 0] [4@2 7 9@2  7 4 0 2] [4@2 7 9@2  7 4 2 ~] [4@2 7 9@2  7 4 2 0]>")
+  .scale("<F4:lydian G4:mixolydian E4:phrygian A4:minor F4:lydian G4:mixolydian E4:phrygian A4:minor A4:minor E4:phrygian G4:mixolydian F4:lydian C4:major B4:locrian A4:minor G4:mixolydian>")
   .s("ld:ss").gain(0.16).cut(1)
 // hook
-$: note("~ 11 ~ 12  ~ 9 ~ <11 12>").scale("<F4:lydian G4:mixolydian E4:phrygian A4:minor>")
+$: note("<[~ 11 ~ 12] [~ 9 ~ 11] [~ 11 ~ 12] [~ 9 ~ 7] [~ 11 ~ 12] [~ 9 ~ 11] [~ 11 ~ 12] [11 12 9 11] [~ 12 ~ 9] [~ 11 ~ 7] [~ 9 ~ 4] [~ 7 ~ 4] [~ 11 ~ 12] [~ 9 ~ 11] [~ 11 ~ 12] [11 12 9 11]>")
+  .scale("<F4:lydian G4:mixolydian E4:phrygian A4:minor F4:lydian G4:mixolydian E4:phrygian A4:minor A4:minor E4:phrygian G4:mixolydian F4:lydian C4:major B4:locrian A4:minor G4:mixolydian>")
   .s("plk:mx").gain(0.18).cut(1)
 // arp
-$: note("0 4 ~ 7  4 ~ 9 4").scale("<F4:lydian G4:mixolydian E4:phrygian A4:minor>")
+$: note("0 4 ~ 7  4 ~ 9 4").scale("<F5:lydian G5:mixolydian E5:phrygian A5:minor F5:lydian G5:mixolydian E5:phrygian A5:minor A5:minor E5:phrygian G5:mixolydian F5:lydian C5:major B5:locrian A5:minor G5:mixolydian>")
   .s("plk:fg").gain(0.14).cut(1)
 // chords
-$: note("[0,4,9] ~ [0,4,9] ~").scale("<F4:lydian G4:mixolydian E4:phrygian A4:minor>")
+$: note("[0,4,9] ~ [0,4,9] ~").scale("<F4:lydian G4:mixolydian E4:phrygian A4:minor F4:lydian G4:mixolydian E4:phrygian A4:minor A4:minor E4:phrygian G4:mixolydian F4:lydian C4:major B4:locrian A4:minor G4:mixolydian>")
   .s("plk:ss").gain(0.2).orbit(2)
 // pad
-$: note("0").scale("<F4:lydian G4:mixolydian E4:phrygian A4:minor>")
+$: note("<0 ~ ~ ~>").scale("<F4:lydian G4:mixolydian E4:phrygian A4:minor F4:lydian G4:mixolydian E4:phrygian A4:minor A4:minor E4:phrygian G4:mixolydian F4:lydian C4:major B4:locrian A4:minor G4:mixolydian>")
   .s("pf:ff").gain(0.14).room(0.3).orbit(2)
+// strings
+$: note("<0 ~ ~ ~>").scale("<F4:lydian G4:mixolydian E4:phrygian A4:minor F4:lydian G4:mixolydian E4:phrygian A4:minor A4:minor E4:phrygian G4:mixolydian F4:lydian C4:major B4:locrian A4:minor G4:mixolydian>")
+  .s("ld:cr").gain(0.12).room(0.45).orbit(2)
 '''
 
 FENCES["chill-pop"] = r'''// @title chill-pop-01
@@ -529,6 +534,7 @@ PALETTES: dict[str, dict[str, list]] = {
         "arp": ["plk:fc", "plk:fg"],
         "chords": ["plk:sm", "plk:ss"],
         "pad": ["ps:mx", "ps:gb", "pf:sp", "pf:ga", "pf:ff"],
+        "strings": ["ld:cr", "pf:ca", "pf:hl", "pf:wm"],
     },
     "chill-pop": {
         "drums": [
@@ -676,7 +682,7 @@ STRIP_SYNTH = [
     "lpq",
 ]
 STRIP_ADSR = ["attack", "decay", "sustain", "release"]
-PITCHED_SLOTS = {"bass", "bass-mid", "lead", "hook", "arp", "chords", "pad"}
+PITCHED_SLOTS = {"bass", "bass-mid", "lead", "hook", "arp", "chords", "pad", "strings"}
 TRACK_HEADER = re.compile(r"^// ([a-z][a-z0-9-]*)\n", re.M)
 DOT_S = re.compile(r'\.s\("([^"]+)"\)')
 INDEX_CALL = re.compile(r"`([a-z]{2,4}:[a-z0-9]{1,3})`")
@@ -893,8 +899,9 @@ def apply_pitched_sound(chunk: str, new: str, slot: str) -> str:
         is_long(new) or new.startswith(("plk:", "ld:"))
     ):
         chunk = ensure_cut1(chunk)
-    if slot in {"pad", "chords"}:
-        chunk = maybe_thin_note(chunk, new, slot)
+    if slot in {"pad", "chords", "strings"}:
+        thin_slot = "pad" if slot == "strings" else slot
+        chunk = maybe_thin_note(chunk, new, thin_slot)
     return chunk
 
 
@@ -1004,8 +1011,12 @@ def scale4(oct_: int, pairs: list[tuple[int, str]]) -> str:
 
 
 ODO = [(5, "lydian"), (7, "mixolydian"), (4, "phrygian"), (9, "minor")]  # IV V iii vi
+ODO_REV = [(9, "minor"), (4, "phrygian"), (7, "mixolydian"), (5, "lydian")]  # vi iii V IV
+CLICHE = [(0, "major"), (11, "locrian"), (9, "minor"), (7, "mixolydian")]  # I vii vi V
 KOMURO = [(9, "minor"), (5, "lydian"), (7, "mixolydian"), (0, "major")]  # vi IV V I
+KOMURO_REV = [(0, "major"), (7, "mixolydian"), (5, "lydian"), (9, "minor")]  # I V IV vi
 CANON = [(0, "major"), (7, "mixolydian"), (9, "minor"), (5, "lydian")]  # I V vi IV
+CANON_REV = [(5, "lydian"), (9, "minor"), (7, "mixolydian"), (0, "major")]  # IV vi V I
 CITY = [(5, "lydian"), (4, "phrygian"), (2, "dorian"), (0, "major")]  # IV iii ii I
 WEST = [(0, "major"), (9, "mixolydian"), (2, "mixolydian"), (7, "mixolydian")]
 TWO5 = [(2, "dorian"), (7, "mixolydian"), (0, "major"), (9, "minor")]
@@ -1015,7 +1026,7 @@ def replace_scale_inners(text: str, pairs: list[tuple[int, str]]) -> str:
     def repl(m: re.Match[str]) -> str:
         inner = m.group(1)
         toks = inner.split()
-        if len(toks) != 4:
+        if len(toks) != len(pairs):
             return m.group(0)
         octs = []
         for tok in toks:
@@ -1036,7 +1047,11 @@ def apply_variant(genre: str, text: str, variant: int) -> str:
     if variant == 0:
         return text
     if genre == "future-bass":
-        return replace_scale_inners(text, KOMURO if variant == 1 else CANON)
+        if variant == 1:
+            return replace_scale_inners(
+                text, KOMURO + KOMURO + KOMURO_REV + CLICHE
+            )
+        return replace_scale_inners(text, CANON + CANON + CANON_REV + CLICHE)
     if genre == "chill-pop":
         return replace_scale_inners(text, WEST if variant == 1 else TWO5)
     if genre == "house" and variant == 1:
@@ -1109,8 +1124,9 @@ def set_title(text: str, title: str) -> str:
 
 def validate(path: Path, text: str) -> None:
     n = len(re.findall(r"^\$:", text, re.M))
-    if n < 7 or n > 8:
-        raise SystemExit(f"{path}: expected 7–8 $: tracks, got {n}")
+    max_n = 9 if path.parent.name == "future-bass" else 8
+    if n < 7 or n > max_n:
+        raise SystemExit(f"{path}: expected 7–{max_n} $: tracks, got {n}")
     if "setcpm(" not in text:
         raise SystemExit(f"{path}: missing setcpm")
     for bad in ("stack(", ".cpm(", ".lfo(", ".fast(", "kit:bd"):
