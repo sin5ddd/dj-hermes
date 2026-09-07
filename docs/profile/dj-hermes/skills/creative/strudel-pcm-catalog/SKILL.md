@@ -30,7 +30,7 @@ metadata:
 - キック／スネア／ハット／ベース／プラック／EP／短い FX を **PCM のキャラ付き**で選びたい時
 - `s("bd*4")` のまま音色だけ変えたい時（`bd:hf` など）
 
-Don't use for: ライブ 2-op `.fm`（→ strudel-sound-design）、記法そのもの（→ composition）。長尺 `ld:` / `dr:` / `pf:` / `ps:` は INDEX のほとんどが `in_bank=no`。例外の同梱は `ld:ss` と `pf:ff`。
+Don't use for: ライブ 2-op `.fm`（→ strudel-sound-design）、記法そのもの（→ composition）。長尺 `ld:` / `dr:` / `pf:` / `ps:` のほとんどは INDEX の `in_bank=no`（未作成）。例外の同梱は `ld:ss` と `pf:ff`。`plk:fp` / `plk:sp` も約 8.2 秒。
 
 ## 呼び出し
 
@@ -119,8 +119,8 @@ Apply the inline recipe with `strudel_apply_song`. `songs/house/01.strudel` uses
 | `plk:dt` | DnB タイト |
 | `ep:ky` | 同梱 EP ワンショット（ライブ lead ではない） |
 | `ep:rs` | 柔らかい Rhodes |
-| `pf:ff` | 同梱 fifth pad（既定で in_bank） |
-| `ld:ss` | 同梱 supersaw（既定で in_bank） |
+| `pf:ff` | 同梱 fifth pad（約 8.2 秒） |
+| `ld:ss` | 同梱 supersaw（約 8.2 秒） |
 
 ### FX `fx:`（`note()` なし）
 
@@ -131,7 +131,7 @@ Apply the inline recipe with `strudel_apply_song`. `songs/house/01.strudel` uses
 | `id` | DnB インパクト |
 | `sd` | サブドロップ |
 
-長尺 `ld:` / `dr:` / `pf:` / `ps:` の残りは INDEX の `in_bank=no`（`samples/` にファイルが無い）。無いキーは無音（演奏は継続）。 `ld:ss` と `pf:ff` は同梱済み。
+長尺 `ld:` / `dr:` / `pf:` / `ps:` の残りは INDEX の `in_bank=no`（未作成。`samples/` にファイルが無い）。曲には書かない。無いキーは無音（演奏は継続）。`ld:ss` と `pf:ff` は同梱済み。`plk:fp` / `plk:sp` も約 8.2 秒なので毎小節撃たない。
 
 ## Rules
 
@@ -139,7 +139,7 @@ Apply the inline recipe with `strudel_apply_song`. `songs/house/01.strudel` uses
 2. ドラムは `note()` なし。音程は `C4:…`。FX は bare `s("…")`
 3. 長いワンショットを毎小節撃たない
 4. `.bank` と `part:slug` を同じ `$:` で混ぜない
-5. `in_bank=no` を content に書かない
+5. `in_bank=no`（未作成）を content に書かない
 6. slug の意味が分からなければ INDEX を読む（2〜3 字だけでは足りない）
 
 ## Do not

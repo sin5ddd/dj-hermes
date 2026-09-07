@@ -95,6 +95,7 @@
 "pc-zap-lo" = { part = "perc", slug = "zl" }
 "glass-hit" = { part = "perc", slug = "gs" }
 "metallic-hit" = { part = "perc", slug = "mh" }
+"perc-fm_metal" = { part = "perc", slug = "fm" }
 "bs-808-sub" = { part = "bs", slug = "8s" }
 "bs-acid" = { part = "bs", slug = "ac" }
 "bs-amen-sub" = { part = "bs", slug = "am" }
@@ -115,11 +116,15 @@
 "sub-bass" = { part = "bs", slug = "sb" }
 "supersaw-bass" = { part = "bs", slug = "sw" }
 "reese-mid" = { part = "bs", slug = "rm", skip = true, alias = "bs:rm" }
+"bass-fm_house" = { part = "bs", slug = "hf" }
+"bass-fm_sub" = { part = "bs", slug = "su" }
+"reese-dark" = { part = "bs", slug = "dk" }
 "ep-muted" = { part = "ep", slug = "mt" }
 "ep-rhodes-hard" = { part = "ep", slug = "rh" }
 "ep-rhodes-soft" = { part = "ep", slug = "rs" }
 "ep-tine-bell" = { part = "ep", slug = "tb" }
 "ep-wurli" = { part = "ep", slug = "wr" }
+"keys-fm_ep" = { part = "ep", slug = "ky" }
 "pl-acid-short" = { part = "plk", slug = "ac" }
 "pl-ambient-soft" = { part = "plk", slug = "am" }
 "pl-arp-major" = { part = "plk", slug = "aj" }
@@ -154,6 +159,8 @@
 "stab-pluck" = { part = "plk", slug = "sp" }
 "stab-fm-fifth" = { part = "plk", slug = "s5", skip = true, alias = "plk:s5" }
 "stab-fm-major" = { part = "plk", slug = "s3", skip = true, alias = "plk:s3" }
+"lead-fm_bell" = { part = "plk", slug = "bl" }
+"lead-fm_pluck" = { part = "plk", slug = "lp" }
 "fx-alarm" = { part = "fx", slug = "al" }
 "fx-blip" = { part = "fx", slug = "bl" }
 "fx-boom" = { part = "fx", slug = "bm" }
@@ -338,6 +345,7 @@
 "pf-spring" = { part = "pf", slug = "sp" }
 "pf-water-air" = { part = "pf", slug = "wa" }
 "pf-wide-major" = { part = "pf", slug = "wm" }
+"pad-fm_fifth" = { part = "pf", slug = "ff" }
 "ps-aurora" = { part = "ps", slug = "au" }
 "ps-bell-air" = { part = "ps", slug = "ba" }
 "ps-bell-hold" = { part = "ps", slug = "bh" }

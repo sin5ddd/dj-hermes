@@ -1,8 +1,10 @@
 # rust-fm-synthe PCM index
 
-strudel-rs の呼び出しは `s("<part>:<slug>")`。 音程楽器は `note(...).scale("C4:…").s("<part>:<slug>")`。 `in_bank` が no の行はファイルが `samples/` に無い（長尺は既定オフ、または skip）。
+strudel-rs の呼び出しは `s("<part>:<slug>")`。音程楽器は `note(...).scale("C4:…").s("<part>:<slug>")`。
 
-`samples/` にあるキーは `in_bank=yes`。長尺などでファイルが無い行は `no`。
+`in_bank=yes` は `samples/<part>/<slug>.wav` があるキー。`in_bank=no` は **未作成**（これから足す長尺。ファイルがまだ無いので曲には書かない）。
+
+同梱の長尺は `ld:ss` と `pf:ff`（ほか `plk:fp` / `plk:sp` も約 8.2 秒）。同梱キットの `bd/00.wav` などは `s("bd")`（整数 index）。カタログ slug ではない。
 
 ## `bd`
 
@@ -53,9 +55,9 @@ strudel-rs の呼び出しは `s("<part>:<slug>")`。 音程楽器は `note(...)
 | `bs:sb` | yes | `sub-bass` | sub-bass | キックの下に置くDnBサブ。短いクリックのあと正弦に近い胴が残るワンショット。 | 36 | 1.35 |
 | `bs:sw` | yes | `supersaw-bass` | supersaw-bass | 厚みのあるミッドベース。キャリアを super-saw（擬似スーパーソー）にしたトランス寄りワンショット。 | 36 | 1.4 |
 | `bs:rm` | yes | `reese-mid` | reese-mid | C3ミッドReeseの糊だけ。800–1200 Hzのバンドパス。サブなし。軽いデチューンと弱いFM。 alias `bs:rm` | 48 | 1.1 |
-| `bs:hf` | yes | `bass-fm_house` | house floor bass | C2 tight house floor (batch 1). Native C2; write C4:…. Pairs with bd:hf. |  |  |
-| `bs:su` | yes | `bass-fm_sub` | fm sine sub | C2 clean sine sub (batch 1). Floor only. Write C4:…. Do not stack with other subs. |  |  |
-| `bs:dk` | yes | `reese-dark` | dark Reese | C3 full-range dark Reese with sub. Write C4:…. Do not stack with other subs. |  |  |
+| `bs:hf` | yes | `bass-fm_house` | house floor bass | C2 tight house floor (batch 1). Native C2; write C4:…. Pairs with bd:hf. | 36 | 0.85 |
+| `bs:su` | yes | `bass-fm_sub` | fm sine sub | C2 clean sine sub (batch 1). Floor only. Write C4:…. Do not stack with other subs. | 36 | 1.8 |
+| `bs:dk` | yes | `reese-dark` | dark Reese | C3 full-range dark Reese with sub. Write C4:…. Do not stack with other subs. | 48 | 1.7 |
 
 ## `cp`
 
@@ -130,7 +132,7 @@ strudel-rs の呼び出しは `s("<part>:<slug>")`。 音程楽器は `note(...)
 | `ep:rs` | yes | `ep-rhodes-soft` | ep-rhodes-soft | 柔らかいRhodes。アタックでタイン（比2＝約262 Hz、比3＝約392 Hz）が立ち、減衰してサイン寄りの胴（比1＝約131 Hz）へ。C3。約3.2秒。ベル（3.5）ではない。 | 48 | 3.2 |
 | `ep:tb` | yes | `ep-tine-bell` | ep-tine-bell | タイン前のめりEP。2×/3×を強く出すが整数倍のまま（3.5や ld-bell-pluck の非整数比は使わない）。胴（比1）は残す。C3。約2.4秒。 | 48 | 2.4 |
 | `ep:wr` | yes | `ep-wurli` | ep-wurli | ウーリッツァー寄り。パルス／アブサインのモジュレータでミッドの樹皮感。Rhodesより短い（約1.8秒）がクリックではない。タインは2×/3×。C3。 | 48 | 1.8 |
-| `ep:ky` | yes | `keys-fm_ep` | FM EP one-shot | C3 EP tines (2×/3×). Write C4:…. Not the live 2-op lead. |  |  |
+| `ep:ky` | yes | `keys-fm_ep` | FM EP one-shot | C3 EP tines (2×/3×). Write C4:…. Not the live 2-op lead. | 48 | 0.88 |
 
 ## `fx`
 
@@ -258,7 +260,6 @@ strudel-rs の呼び出しは `s("<part>:<slug>")`。 音程楽器は `note(...)
 | `ld:vw` | no | `ld-vowel` | ld-vowel | 母音FM。非整数モジュレータでアー／オー。BPが口。 | 48 | 8.2 |
 | `ld:wb` | no | `ld-wobble` | ld-wobble | ミッドウォブル。ピッチLFO＋フィルタエンベ。ニューロ寄りの音符。 | 48 | 8.2 |
 | `ld:zp` | no | `ld-zap` | ld-zap | ザップリード。下向きピッチでもノートとして使える。フィル兼メロディ。 | 48 | 8.2 |
-| `ld:lp` | no | `lead-fm-pluck` | lead-fm-pluck | C3（MIDI 48、約130.8 Hz）の短いFMプラック。C4ではない。速いアンプとフィルタADSR。メロディ用。 alias `plk:lp` | 48 | 8.2 |
 
 ## `oh`
 
@@ -306,7 +307,7 @@ strudel-rs の呼び出しは `s("<part>:<slug>")`。 音程楽器は `note(...)
 | `perc:zl` | yes | `pc-zap-lo` | low perc zap | 低いパーカッションザップ。ミッドの短い落下。キックではない。 | 55 | 0.28 |
 | `perc:gs` | yes | `glass-hit` | glass-hit | ガラス／ベル系の短いヒット。高整数比とトリプルキャリア。トップやアクセント。 | 84 | 0.7 |
 | `perc:mh` | yes | `metallic-hit` | metallic-hit | 金属ヒット。固定周波数オペでピッチに追従しない倍音。パーカッション／トップ。 | 72 | 0.55 |
-| `perc:fm` | yes | `perc-fm_metal` | FM metal hit | Unpitched metallic hit. Not a stab or kick. |  |  |
+| `perc:fm` | yes | `perc-fm_metal` | FM metal hit | Unpitched metallic hit. Not a stab or kick. | 72 | 0.4 |
 
 ## `pf`
 
@@ -342,7 +343,7 @@ strudel-rs の呼び出しは `s("<part>:<slug>")`。 音程楽器は `note(...)
 | `pf:sp` | no | `pf-spring` | spring pad | 春。リディアン寄り＋空気。明るく開く。 | 64 | 16.8 |
 | `pf:wa` | no | `pf-water-air` | water air pad | 水の空気。遅いLFO、薄いモジュレーション。泥なし。 | 60 | 17.1 |
 | `pf:wm` | no | `pf-wide-major` | wide major pad | 開いた長三和音（根音＋10度＋12度）。泥のないワイド。 | 48 | 16.6 |
-| `pf:ff` | yes | `pad-fm_fifth` | fifth pad | C3 hollow C+G pad (~8 s). Write C4:…. Cannot invent a third. |  |  |
+| `pf:ff` | yes | `pad-fm_fifth` | fifth pad | C3 hollow C+G pad (~8 s). Write C4:…. Cannot invent a third. | 48 | 8.2 |
 
 ## `plk`
 
@@ -378,12 +379,12 @@ strudel-rs の呼び出しは `s("<part>:<slug>")`。 音程楽器は `note(...)
 | `plk:sm` | yes | `pl-stab-major` | stab major pluck | スタブ。長三和音で明るい。短い（0.40秒）。C–E–G。 | 55 | 0.4 |
 | `plk:ss` | yes | `pl-supersaw-short` | supersaw short pluck | EDM。厚いスーパーソーで中庸の明るさ。短い（0.36秒）。ユニゾン5本。 | 55 | 0.36 |
 | `plk:tg` | yes | `pl-trance-gate` | trance gate pluck | トランス。明るくゲートしたスーパーソー。極短い（0.32秒）。速いLP閉じ。 | 60 | 0.32 |
-| `plk:fp` | yes | `filter-pluck` | filter-pluck | カットオフADSRで開いて閉じるプラック。低めのLPから3–6 kHz付近まで開く。 | 60 | 8.2 |
-| `plk:sp` | yes | `stab-pluck` | stab-pluck | 短いスタブ／プラック。デュアルスタックで芯と倍音を分離。コードのワンショット。 | 60 | 8.2 |
-| `plk:s5` | yes | `stab-fm-fifth` | stab-fm-fifth | C3の中空DnBスタブ。完全5度（CとG、比1と3/2）の2パーシャルだけ。長3度（E / 5:4）は出さない。 alias `plk:s5` | 48 | 8.2 |
-| `plk:s3` | yes | `stab-fm-major` | stab-fm-major | C3の明るい長三和音スタブ。C–E–G（比1、5/4、3/2）の3パーシャル。中空の stab-fm-fifth（C–Gのみ）の対。 alias `plk:s3` | 48 | 8.2 |
-| `plk:bl` | yes | `lead-fm_bell` | FM bell pluck | C3 inharmonic bell / glass (ratio 3.5). Write C4:…. Not a pad. |  |  |
-| `plk:lp` | yes | `lead-fm_pluck` | FM pluck | C3 short FM pluck. Write C4:…. .cut(1) if monophonic. |  |  |
+| `plk:fp` | yes | `filter-pluck` | filter-pluck | カットオフADSRで開いて閉じるプラック。低めのLPから3–6 kHz付近まで開く。約8.2秒のホールド。毎小節撃たない。 | 60 | 8.2 |
+| `plk:sp` | yes | `stab-pluck` | stab-pluck | 長いホールドのスタブ／プラック（約8.2秒）。デュアルスタックで芯と倍音を分離。短いワンショットではない。毎小節撃たない。 | 60 | 8.2 |
+| `plk:s5` | yes | `stab-fm-fifth` | stab-fm-fifth | C3の中空DnBスタブ。完全5度（CとG、比1と3/2）の2パーシャルだけ。長3度（E / 5:4）は出さない。 alias `plk:s5` | 48 | 0.34 |
+| `plk:s3` | yes | `stab-fm-major` | stab-fm-major | C3の明るい長三和音スタブ。C–E–G（比1、5/4、3/2）の3パーシャル。中空の stab-fm-fifth（C–Gのみ）の対。 alias `plk:s3` | 48 | 0.42 |
+| `plk:bl` | yes | `lead-fm_bell` | FM bell pluck | C3 inharmonic bell / glass (ratio 3.5). Write C4:…. Not a pad. | 48 | 0.88 |
+| `plk:lp` | yes | `lead-fm_pluck` | FM pluck | C3 short FM pluck. Write C4:…. .cut(1) if monophonic. | 48 | 0.4 |
 
 ## `ps`
 
