@@ -44,6 +44,8 @@ struct ScheduledHit {
     midi_ch: Option<u8>,
     /// 0 = first synth `$:`, 1 = second (MIDI ch 8 / 9).
     synth_ordinal: u8,
+    /// `$:` index for `.cut` (choke is per-track, not global).
+    cut_track: u16,
 }
 
 pub struct Deck {
@@ -256,7 +258,7 @@ impl Deck {
             }
         }
         let mut synth_i = 0u8;
-        for (pc, annot, is_syn) in &tracks {
+        for (track_i, (pc, annot, is_syn)) in tracks.iter().enumerate() {
             // 0 → ch 8, 1 → ch 9, 2+ → ch 8 (map_channel treats only 1 as SYNTH 2).
             let ord = if *is_syn { synth_i } else { 0 };
             schedule_track_into(
@@ -267,6 +269,7 @@ impl Deck {
                 spb,
                 annot.ch,
                 ord,
+                track_i as u16,
             );
             if *is_syn {
                 synth_i = synth_i.saturating_add(1);
@@ -277,6 +280,7 @@ impl Deck {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn schedule_track_into(
     scheduled: &mut Vec<ScheduledHit>,
     pc: &PatternCode,
@@ -285,6 +289,7 @@ fn schedule_track_into(
     spb: f64,
     midi_ch: Option<u8>,
     synth_ordinal: u8,
+    cut_track: u16,
 ) {
     let speed = pc.speed.max(1e-6);
     let len_scale = pc.length_scale() as f64;
@@ -386,6 +391,7 @@ fn schedule_track_into(
                 roomsize: pc.roomsize,
                 midi_ch,
                 synth_ordinal,
+                cut_track,
             });
         }
     }
@@ -393,18 +399,27 @@ fn schedule_track_into(
 
 impl Deck {
     fn alloc_voice(&mut self, voice: VoiceKind) -> usize {
-        if let Some(cut) = voice.cut_group() {
+        if let Some(key) = voice.cut_key() {
             for i in 0..self.voices.len() {
-                if self.voices[i]
-                    .as_ref()
-                    .is_some_and(|v| v.cut_group() == Some(cut))
-                {
+                if self.voices[i].as_ref().and_then(|v| v.cut_key()) == Some(key) {
                     self.midi_off_slot(i);
-                    self.voices[i] = None;
+                    if let Some(v) = self.voices[i].as_mut() {
+                        v.force_release();
+                        v.clear_cut_group();
+                    }
                 }
             }
         }
         if let Some(i) = self.voices.iter().position(|v| v.is_none()) {
+            self.voices[i] = Some(voice);
+            return i;
+        }
+        if let Some(i) = self
+            .voices
+            .iter()
+            .position(|v| v.as_ref().is_some_and(|x| x.is_releasing()))
+        {
+            self.midi_off_slot(i);
             self.voices[i] = Some(voice);
             return i;
         }
@@ -599,7 +614,8 @@ impl Deck {
                     hit.cut,
                 )
                 .with_adsr_timing(sr, hit.len_samples)
-                .with_pan(hit.pan);
+                .with_pan(hit.pan)
+                .with_cut_track(hit.cut_track);
                 Some(self.alloc_voice(VoiceKind::Synth(Box::new(v))))
             }
             ResolvedSound::Noise(n) => {
@@ -619,7 +635,8 @@ impl Deck {
                     hit.cut,
                 )
                 .with_adsr_timing(sr, hit.len_samples)
-                .with_pan(hit.pan);
+                .with_pan(hit.pan)
+                .with_cut_track(hit.cut_track);
                 Some(self.alloc_voice(VoiceKind::Synth(Box::new(v))))
             }
             ResolvedSound::Wavetable(table) => {
@@ -639,7 +656,8 @@ impl Deck {
                     hit.cut,
                 )
                 .with_adsr_timing(sr, hit.len_samples)
-                .with_pan(hit.pan);
+                .with_pan(hit.pan)
+                .with_cut_track(hit.cut_track);
                 Some(self.alloc_voice(VoiceKind::Synth(Box::new(v))))
             }
             ResolvedSound::Sample(name) => {
@@ -670,7 +688,8 @@ impl Deck {
                     hit.cut,
                 )
                 .with_adsr_timing(sr, hit.len_samples)
-                .with_pan(hit.pan);
+                .with_pan(hit.pan)
+                .with_cut_track(hit.cut_track);
                 Some(self.alloc_voice(VoiceKind::Sample(v)))
             }
         };
@@ -806,7 +825,7 @@ bass: note("c3 e3 g3").s("sawtooth").gain(0.8)
         use crate::code::parse_code;
         let pc = parse_code(r#"s("bd").ply(4).gain(0.5)"#).unwrap();
         let mut hits = Vec::new();
-        schedule_track_into(&mut hits, &pc, 0, 0, 48_000.0, None, 0);
+        schedule_track_into(&mut hits, &pc, 0, 0, 48_000.0, None, 0, 0);
         assert_eq!(hits.len(), 4);
         // Equal spacing within the bar (speed=1).
         let starts: Vec<u64> = hits.iter().map(|h| h.at_sample).collect();
@@ -824,8 +843,8 @@ bass: note("c3 e3 g3").s("sawtooth").gain(0.8)
             parse_code(r#"note("0").scale("C4:major").add(2).s("sine").gain(0.5)"#).unwrap();
         let mut h0 = Vec::new();
         let mut h2 = Vec::new();
-        schedule_track_into(&mut h0, &base, 0, 0, 48_000.0, None, 0);
-        schedule_track_into(&mut h2, &shifted, 0, 0, 48_000.0, None, 0);
+        schedule_track_into(&mut h0, &base, 0, 0, 48_000.0, None, 0, 0);
+        schedule_track_into(&mut h2, &shifted, 0, 0, 48_000.0, None, 0, 0);
         assert_eq!(h0.len(), 1);
         assert_eq!(h2.len(), 1);
         // C major: degree 0+2 == degree 2 ≈ E4
@@ -839,7 +858,7 @@ bass: note("c3 e3 g3").s("sawtooth").gain(0.8)
         let pc =
             parse_code(r#"note("[0,2,4]").scale("C3:minor").s("triangle").gain(0.3)"#).unwrap();
         let mut hits = Vec::new();
-        schedule_track_into(&mut hits, &pc, 0, 0, 48_000.0, None, 0);
+        schedule_track_into(&mut hits, &pc, 0, 0, 48_000.0, None, 0, 0);
         assert_eq!(hits.len(), 3, "comma-parallel degrees are three voices");
         let mut freqs: Vec<f32> = hits.iter().map(|h| h.freq).collect();
         freqs.sort_by(|a, b| a.partial_cmp(b).unwrap());
@@ -857,7 +876,7 @@ bass: note("c3 e3 g3").s("sawtooth").gain(0.8)
         let pc =
             parse_code(r#"note("[0,4,9]").scale("C4:major").s("triangle").gain(0.3)"#).unwrap();
         let mut hits = Vec::new();
-        schedule_track_into(&mut hits, &pc, 0, 0, 48_000.0, None, 0);
+        schedule_track_into(&mut hits, &pc, 0, 0, 48_000.0, None, 0, 0);
         assert_eq!(hits.len(), 3, "spread parallel degrees are three voices");
         let mut freqs: Vec<f32> = hits.iter().map(|h| h.freq).collect();
         freqs.sort_by(|a, b| a.partial_cmp(b).unwrap());
@@ -875,7 +894,7 @@ bass: note("c3 e3 g3").s("sawtooth").gain(0.8)
         use crate::code::{note_to_hz, parse_code};
         let pc = parse_code(r#"note("c3'min").s("triangle").gain(0.3)"#).unwrap();
         let mut hits = Vec::new();
-        schedule_track_into(&mut hits, &pc, 0, 0, 48_000.0, None, 0);
+        schedule_track_into(&mut hits, &pc, 0, 0, 48_000.0, None, 0, 0);
         assert_eq!(hits.len(), 1, "deck does not expand chord suffixes");
         assert!((hits[0].freq - note_to_hz("c3").unwrap()).abs() < 1.0);
     }
@@ -885,7 +904,7 @@ bass: note("c3 e3 g3").s("sawtooth").gain(0.8)
         use crate::code::parse_code;
         let pat = parse_code(r#"s("bd bd").lpf("100 900").gain(0.5)"#).unwrap();
         let mut hits = Vec::new();
-        schedule_track_into(&mut hits, &pat, 0, 0, 48_000.0, None, 0);
+        schedule_track_into(&mut hits, &pat, 0, 0, 48_000.0, None, 0, 0);
         assert_eq!(hits.len(), 2);
         assert!((hits[0].filter.lpf.unwrap() - 100.0).abs() < 1.0);
         assert!((hits[1].filter.lpf.unwrap() - 900.0).abs() < 1.0);
@@ -893,7 +912,7 @@ bass: note("c3 e3 g3").s("sawtooth").gain(0.8)
         let lfo =
             parse_code(r#"note("c3").s("sawtooth").lpf(sine.rangex(500,4000)).gain(0.4)"#).unwrap();
         let mut h2 = Vec::new();
-        schedule_track_into(&mut h2, &lfo, 0, 0, 48_000.0, None, 0);
+        schedule_track_into(&mut h2, &lfo, 0, 0, 48_000.0, None, 0, 0);
         assert_eq!(h2.len(), 1);
         assert!(h2[0].mods.lpf_lfo.is_some());
         assert!(h2[0].filter.lpf.is_some());
@@ -1126,5 +1145,65 @@ hit: note("c5").s("sine").gain(0.9).attack(0.001).decay(0.01).sustain(0).release
         let buf = process_mid(&mut d, 12_000, &t, &bank);
         let late: f32 = buf[4000..10000].iter().map(|x| x * x).sum();
         assert!(late > 1e-6, "expected room tail energy, late={late}");
+    }
+
+    #[test]
+    fn cut_releases_instead_of_hard_stop() {
+        let song = parse_song(
+            r#"---
+lead: note("c4 c4").s("sine").gain(0.9).cut(1).attack(0.001).decay(0).sustain(1).release(0.05)
+"#,
+            "t",
+        )
+        .unwrap();
+        let mut d = Deck::new("A");
+        d.load(song);
+        let t = Transport::new(48_000, 120.0);
+        let bank = SampleBank::empty();
+        let buf = process_mid(&mut d, 52_000, &t, &bank);
+        let before = buf[47_000].abs();
+        let at_cut = buf[48_000].abs();
+        assert!(before > 0.05, "sustain before second note, before={before}");
+        assert!(
+            at_cut > before * 0.3,
+            "cut should ADSR-release, not drop to 0: before={before} at_cut={at_cut}"
+        );
+    }
+
+    #[test]
+    fn cut_group_does_not_choke_other_tracks() {
+        let one = parse_song(
+            r#"---
+a: note("c4").s("sine").gain(0.8).cut(1).attack(0.001).decay(0).sustain(1).release(0.05)
+"#,
+            "t",
+        )
+        .unwrap();
+        let two = parse_song(
+            r#"---
+a: note("c4").s("sine").gain(0.8).cut(1).attack(0.001).decay(0).sustain(1).release(0.05)
+b: note("e4").s("sine").gain(0.8).cut(1).attack(0.001).decay(0).sustain(1).release(0.05)
+"#,
+            "t",
+        )
+        .unwrap();
+        let t = Transport::new(48_000, 120.0);
+        let bank = SampleBank::empty();
+        let mut d1 = Deck::new("A");
+        d1.load(one);
+        let e1: f32 = process_mid(&mut d1, 8_000, &t, &bank)
+            .iter()
+            .map(|s| s.abs())
+            .sum();
+        let mut d2 = Deck::new("A");
+        d2.load(two);
+        let e2: f32 = process_mid(&mut d2, 8_000, &t, &bank)
+            .iter()
+            .map(|s| s.abs())
+            .sum();
+        assert!(
+            e2 > e1 * 1.15,
+            "shared .cut(1) must not mute the other $:  one={e1} two={e2}"
+        );
     }
 }

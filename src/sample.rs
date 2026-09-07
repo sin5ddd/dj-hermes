@@ -313,6 +313,8 @@ pub struct SampleVoice {
     pub pan: f32,
     pub orbit: u8,
     pub cut: Option<i32>,
+    pub cut_track: u16,
+    last_sample: f32,
     // amp env
     adsr: Adsr,
     stage: u8, // 0A 1D 2S 3R 4Done
@@ -387,6 +389,8 @@ impl SampleVoice {
             pan: 0.5,
             orbit,
             cut,
+            cut_track: 0,
+            last_sample: 0.0,
             adsr,
             stage: 0,
             env_level: 0.0,
@@ -430,8 +434,57 @@ impl SampleVoice {
         self
     }
 
+    pub fn with_cut_track(mut self, track: u16) -> Self {
+        self.cut_track = track;
+        self
+    }
+
+    pub fn force_release(&mut self) {
+        if self.stage >= 4 {
+            return;
+        }
+        if self.sample_i < self.gate_off {
+            self.gate_off = self.sample_i;
+        }
+        self.stage = 3;
+    }
+
+    pub fn clear_cut_group(&mut self) {
+        self.cut = None;
+    }
+
+    pub fn is_releasing(&self) -> bool {
+        self.stage == 3
+    }
+
+    fn clip_release_to_eof_fade(&mut self, sr: f32) {
+        let fade = (0.005 * sr).max(1.0) as u64;
+        if self.stage < 3 {
+            self.stage = 3;
+            self.gate_off = self.sample_i;
+            self.release_s = fade;
+        } else {
+            let elapsed = self.sample_i.saturating_sub(self.gate_off);
+            self.release_s = elapsed.saturating_add(fade);
+        }
+    }
+
+    fn read_pcm(&mut self) -> Option<f32> {
+        if self.pos >= self.end || self.data.is_empty() {
+            return None;
+        }
+        let i0 = self.pos.floor() as usize;
+        if i0 >= self.data.len() {
+            return None;
+        }
+        let frac = self.pos - i0 as f64;
+        let s0 = self.data[i0];
+        let s1 = self.data.get(i0 + 1).copied().unwrap_or(s0);
+        Some((s0 as f64 + (s1 as f64 - s0 as f64) * frac) as f32)
+    }
+
     pub fn next_sample(&mut self, sr: f32) -> Option<f32> {
-        if self.stage == 4 || self.pos >= self.end || self.data.is_empty() {
+        if self.stage == 4 || self.data.is_empty() {
             self.stage = 4;
             return None;
         }
@@ -442,23 +495,25 @@ impl SampleVoice {
             self.attack_s = 1;
             self.decay_s = 1;
             self.release_s = 1;
-            let _ = sr;
         }
 
         if self.sample_i >= self.gate_off && self.stage < 3 {
             self.stage = 3;
         }
 
+        let raw = match self.read_pcm() {
+            Some(s) => {
+                self.last_sample = s;
+                s
+            }
+            None => {
+                self.clip_release_to_eof_fade(sr);
+                self.last_sample
+            }
+        };
+
         let env = self.advance_env();
-        let i0 = self.pos.floor() as usize;
-        if i0 >= self.data.len() {
-            self.stage = 4;
-            return None;
-        }
-        let frac = self.pos - i0 as f64;
-        let s0 = self.data[i0];
-        let s1 = self.data.get(i0 + 1).copied().unwrap_or(s0);
-        let mut x = (s0 as f64 + (s1 as f64 - s0 as f64) * frac) as f32 * self.gain * env;
+        let mut x = raw * self.gain * env;
         if self.use_lpf {
             x = self.lpf.process(x);
         }
@@ -545,6 +600,37 @@ impl VoiceKind {
         match self {
             VoiceKind::Synth(v) => v.cut,
             VoiceKind::Sample(v) => v.cut,
+        }
+    }
+
+    pub fn cut_key(&self) -> Option<(u16, i32)> {
+        self.cut_group().map(|g| {
+            let track = match self {
+                VoiceKind::Synth(v) => v.cut_track,
+                VoiceKind::Sample(v) => v.cut_track,
+            };
+            (track, g)
+        })
+    }
+
+    pub fn force_release(&mut self) {
+        match self {
+            VoiceKind::Synth(v) => v.force_release(),
+            VoiceKind::Sample(v) => v.force_release(),
+        }
+    }
+
+    pub fn clear_cut_group(&mut self) {
+        match self {
+            VoiceKind::Synth(v) => v.clear_cut_group(),
+            VoiceKind::Sample(v) => v.clear_cut_group(),
+        }
+    }
+
+    pub fn is_releasing(&self) -> bool {
+        match self {
+            VoiceKind::Synth(v) => v.is_releasing(),
+            VoiceKind::Sample(v) => v.is_releasing(),
         }
     }
 
@@ -719,5 +805,48 @@ mod tests {
             }
         }
         assert!(n >= 5);
+    }
+
+    #[test]
+    fn sample_eof_fades_instead_of_cliff() {
+        let data = Arc::new(vec![1.0f32; 80]);
+        let mut v = SampleVoice::new_fx(
+            data,
+            1.0,
+            0.0,
+            1.0,
+            1.0,
+            1.0,
+            FilterParams::default(),
+            Adsr {
+                attack: 0.0,
+                decay: 0.0,
+                sustain: 1.0,
+                release: 0.1,
+            },
+            1,
+            None,
+        )
+        .with_adsr_timing(48_000.0, 10_000);
+        let mut out = Vec::new();
+        while let Some(s) = v.next_sample(48_000.0) {
+            out.push(s);
+            if out.len() > 20_000 {
+                break;
+            }
+        }
+        assert!(
+            out.len() > 80,
+            "eof should keep samples for a fade, n={}",
+            out.len()
+        );
+        let at_end = out[79].abs();
+        let after = out.get(100).map(|s| s.abs()).unwrap_or(0.0);
+        assert!(at_end > 0.5, "still in file, at_end={at_end}");
+        assert!(
+            after > 0.0 && after < at_end,
+            "fade after eof: after={after} at_end={at_end}"
+        );
+        assert!(out.last().copied().unwrap_or(1.0).abs() < 0.05);
     }
 }

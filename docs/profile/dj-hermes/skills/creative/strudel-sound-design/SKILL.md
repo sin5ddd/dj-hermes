@@ -372,7 +372,7 @@ $: note("0").scale("C2:minor").s("sawtooth").lpf(sine.range(200, 2000).slow(4)).
 .bank("name")        // 小文字化して接頭辞
 .clip(0.5)           // イベント長スケール
 .legato(0.8)
-.cut(1)              // 同一 cut グループで steal
+.cut(1)              // 同じ `$:` の前の音を ADSR release（即殺しない。他トラックは切らない）
 ```
 
 ---

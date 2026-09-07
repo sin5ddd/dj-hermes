@@ -83,6 +83,8 @@ pub struct Voice {
     pub pan: f32,
     pub orbit: u8,
     pub cut: Option<i32>,
+    /// `$:` index so `.cut(1)` on lead does not choke pad/hook that also write `.cut(1)`.
+    pub cut_track: u16,
     phase: f32,
     mod_phase: f32,
     vib_phase: f32,
@@ -158,6 +160,7 @@ impl Voice {
             pan: 0.5,
             orbit,
             cut,
+            cut_track: 0,
             phase: 0.0,
             mod_phase: 0.0,
             vib_phase: 0.0,
@@ -221,6 +224,34 @@ impl Voice {
     pub fn with_pan(mut self, pan: f32) -> Self {
         self.pan = pan.clamp(0.0, 1.0);
         self
+    }
+
+    pub fn with_cut_track(mut self, track: u16) -> Self {
+        self.cut_track = track;
+        self
+    }
+
+    /// Begin amplitude release now (cut-group choke). Oscillator keeps running until env hits 0.
+    pub fn force_release(&mut self) {
+        if self.stage == EnvStage::Done {
+            return;
+        }
+        if self.pos < self.gate_off {
+            self.gate_off = self.pos;
+        }
+        self.stage = EnvStage::Release;
+        let need = self.pos.saturating_add(self.release_samples);
+        if self.len < need {
+            self.len = need;
+        }
+    }
+
+    pub fn clear_cut_group(&mut self) {
+        self.cut = None;
+    }
+
+    pub fn is_releasing(&self) -> bool {
+        matches!(self.stage, EnvStage::Release)
     }
 
     fn rebuild_filters(&mut self, sr: f32) {
@@ -679,6 +710,31 @@ mod tests {
         }
         let late = v.next_sample(48_000.0).map(|s| s.abs()).unwrap_or(0.0);
         assert!(late < mid, "late={late} mid={mid}");
+    }
+
+    #[test]
+    fn force_release_fades_instead_of_dropping() {
+        let mut v = Voice::new_wave(Wave::Sine, 440.0, 1.0, 48_000, None)
+            .with_adsr(Adsr {
+                attack: 0.001,
+                decay: 0.0,
+                sustain: 1.0,
+                release: 0.02,
+            })
+            .with_adsr_timing(48_000.0, 48_000);
+        for _ in 0..2000 {
+            let _ = v.next_sample(48_000.0);
+        }
+        let before = v.next_sample(48_000.0).unwrap().abs();
+        v.force_release();
+        let first = v.next_sample(48_000.0).unwrap().abs();
+        assert!(first > 0.0, "release still outputs audio");
+        for _ in 0..2000 {
+            let _ = v.next_sample(48_000.0);
+        }
+        let late = v.next_sample(48_000.0).map(|s| s.abs()).unwrap_or(0.0);
+        assert!(late < before * 0.1, "late={late} before={before}");
+        assert!(v.next_sample(48_000.0).is_none());
     }
 
     #[test]
