@@ -2,21 +2,23 @@
 // @genre minimal-techno
 setcpm(126/4)
 // drums
-$: s("bd:tc*4, hh:tt*8, <~ ~ ~ cp>").gain(0.7)
+$: s("bd:tc*4, <hh:tt*8 hh:tt*8 hh:tt*8 hh:tt*8 hh:tt*8 hh:tt*8 hh:tt*8 hh:tt*8 hh:tt*8 hh:tt*8 hh:tt*8 hh:tt*8 ~ ~ ~ ~>, <~ ~ ~ cp ~ ~ ~ cp ~ ~ ~ cp ~ ~ ~ cp>").gain(0.7)
 // bass
-$: note("0 ~ 3 ~").scale("<E2:minor E2:minor E2:minor B2:phrygian>")
+$: note("<~ ~ ~ ~ [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~]>").scale("<E2:minor E2:minor E2:minor B2:phrygian>")
   .s("sawtooth").lpf(320).gain(0.4)
 // lead
-$: note("~ ~ 7 ~").scale("<E4:minor E4:minor E4:minor B4:phrygian>")
+$: note("<~ ~ ~ ~ ~ ~ ~ ~ [~ ~ 7 ~] [~ ~ 7 ~] [~ ~ 7 ~] [~ ~ 7 ~] ~ ~ ~ ~>").scale("<E4:minor E4:minor E4:minor B4:phrygian>")
   .s("plk:ac").gain(0.1).cut(1)
 // hook
-$: note("~ 4 ~ ~").scale("<E4:minor E4:minor E4:minor B4:phrygian>")
+$: note("<~ ~ ~ ~ [~ 4 ~ ~] [~ 4 ~ ~] [~ 4 ~ ~] [~ 4 ~ ~] [~ 4 ~ ~] [~ 4 ~ ~] [~ 4 ~ ~] [~ 4 ~ ~] ~ ~ [~ 4 ~ ~] [~ 4 ~ ~]>").scale("<E4:minor E4:minor E4:minor B4:phrygian>")
   .s("plk:pk").gain(0.12).cut(1)
 // arp
-$: s("<~ perc:tk ~ perc:st>").gain(0.12)
+$: s("<~ perc:tk ~ perc:st ~ perc:tk ~ perc:st ~ perc:tk ~ perc:st ~ ~ ~ perc:tk>").gain(0.12)
 // chords
-$: note("~ [0,2,4] ~ ~").scale("<E4:minor E4:minor E4:minor B4:phrygian>")
+$: note("<~ ~ ~ ~ ~ ~ ~ ~ [~ [0,2,4] ~ ~] [~ [0,2,4] ~ ~] [~ [0,2,4] ~ ~] [~ [0,2,4] ~ ~] [~ [0,2,4] ~ ~] [~ [0,2,4] ~ ~] ~ ~>").scale("<E4:minor E4:minor E4:minor B4:phrygian>")
   .s("ep:mt").gain(0.14)
 // pad
-$: note("0").scale("<E4:minor E4:minor E4:minor B4:phrygian>")
-  .s("pf:ff").orbit(2).gain(0.1).room(0.25)
+$: note("<~ ~ ~ ~ ~ ~ ~ ~ 0 ~ ~ ~ ~ ~ ~ ~>").scale("<E4:minor E4:minor E4:minor B4:phrygian>")
+  .s("pf:ff").orbit(2).cut(1).gain(0.1).room(0.25)
+// fx
+$: s("<~ ~ ~ fx:nb ~ ~ fx:rm ~ fx:im ~ ~ ~ fx:sd ~ ~ fx:wd>").gain(0.18).cut(1)

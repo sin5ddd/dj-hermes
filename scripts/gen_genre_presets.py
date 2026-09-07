@@ -394,24 +394,26 @@ FENCES["minimal-techno"] = r'''// @title minimal-techno-01
 // @genre minimal-techno
 setcpm(126/4)
 // drums
-$: s("bd*4, hh*8, <~ ~ ~ cp>").gain(0.7)
+$: s("bd*4, <hh*8 hh*8 hh*8 hh*8 hh*8 hh*8 hh*8 hh*8 hh*8 hh*8 hh*8 hh*8 ~ ~ hh*8 hh*8>, <~ ~ ~ cp ~ ~ ~ cp ~ ~ ~ cp ~ ~ ~ cp>").gain(0.7)
 // bass
-$: note("0 ~ 3 ~").scale("<C2:minor C2:minor C2:minor G2:phrygian>")
+$: note("<~ ~ ~ ~ [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~]>").scale("<C2:minor C2:minor C2:minor G2:phrygian>")
   .s("sawtooth").lpf(320).gain(0.4)
 // lead
-$: note("~ ~ 7 ~").scale("<C4:minor C4:minor C4:minor G4:phrygian>")
+$: note("<~ ~ ~ ~ ~ ~ ~ ~ [~ ~ 7 ~] [~ ~ 7 ~] [~ ~ 7 ~] [~ ~ 7 ~] ~ ~ ~ ~>").scale("<C4:minor C4:minor C4:minor G4:phrygian>")
   .s("plk:pk").gain(0.1).cut(1)
 // hook
-$: note("~ 4 ~ ~").scale("<C4:minor C4:minor C4:minor G4:phrygian>")
+$: note("<~ ~ ~ ~ [~ 4 ~ ~] [~ 4 ~ ~] [~ 4 ~ ~] [~ 4 ~ ~] [~ 4 ~ ~] [~ 4 ~ ~] [~ 4 ~ ~] [~ 4 ~ ~] ~ ~ [~ 4 ~ ~] [~ 4 ~ ~]>").scale("<C4:minor C4:minor C4:minor G4:phrygian>")
   .s("plk:ac").gain(0.12).cut(1)
 // arp
-$: s("<~ perc:tk ~ perc:st>").gain(0.12)
+$: s("<~ perc:tk ~ perc:st ~ perc:tk ~ perc:st ~ perc:tk ~ perc:st ~ ~ ~ perc:st>").gain(0.12)
 // chords
-$: note("~ [0,2,4] ~ ~").scale("<C4:minor C4:minor C4:minor G4:phrygian>")
+$: note("<~ ~ ~ ~ ~ ~ ~ ~ [~ [0,2,4] ~ ~] [~ [0,2,4] ~ ~] [~ [0,2,4] ~ ~] [~ [0,2,4] ~ ~] [~ [0,2,4] ~ ~] [~ [0,2,4] ~ ~] ~ ~>").scale("<C4:minor C4:minor C4:minor G4:phrygian>")
   .s("ep:mt").gain(0.14)
 // pad
-$: note("0").scale("<C4:minor C4:minor C4:minor G4:phrygian>")
-  .s("pf:ff").orbit(2).gain(0.1).room(0.25)
+$: note("<~ ~ ~ ~ ~ ~ ~ ~ 0 ~ ~ ~ ~ ~ ~ ~>").scale("<C4:minor C4:minor C4:minor G4:phrygian>")
+  .s("pf:ff").orbit(2).cut(1).gain(0.1).room(0.25)
+// fx
+$: s("<~ ~ ~ fx:rd ~ ~ fx:rk ~ fx:cg ~ ~ ~ fx:sd ~ ~ fx:sw>").gain(0.18).cut(1)
 '''
 
 FENCES["progressive-house"] = r'''// @title progressive-house-01
@@ -622,6 +624,26 @@ PALETTES: dict[str, dict[str, list]] = {
         "arp": ["perc:st", "perc:tk"],
         "chords": ["plk:sf", "ep:mt"],
         "pad": ["pf:pu", "pf:cs", "pf:ff"],
+        "fx": [
+            {
+                "fx:rd": "fx:nh",
+                "fx:rk": "fx:ry",
+                "fx:cg": "fx:mc",
+                "fx:sw": "fx:dn",
+            },
+            {
+                "fx:rd": "fx:ck",
+                "fx:rk": "fx:rl",
+                "fx:cg": "fx:ha",
+                "fx:sw": "fx:wh",
+            },
+            {
+                "fx:rd": "fx:nb",
+                "fx:rk": "fx:rm",
+                "fx:cg": "fx:im",
+                "fx:sw": "fx:wd",
+            },
+        ],
     },
     "progressive-house": {
         "drums": [
@@ -659,6 +681,7 @@ LOCKED_01 = {
     "techno-duck": {"bass"},
     "electro": {"bass"},
     "dubstep": {"bass"},
+    "minimal-techno": {"fx"},
 }
 
 WAVEFORMS = {"sawtooth", "square", "sine", "triangle", "wt_organ", "wt_bright", "wt_sine"}
@@ -924,7 +947,7 @@ def apply_palette(genre: str, text: str, n: int) -> str:
         picks = pal.get(slot)
         if not picks:
             return chunk
-        if slot == "drums" and isinstance(picks[0], dict):
+        if slot in {"drums", "fx"} and isinstance(picks[0], dict):
             mapping = picks[(n - 1) % len(picks)]
             return apply_drum_map(chunk, mapping)
         str_picks = [p for p in picks if isinstance(p, str)]
@@ -1095,6 +1118,8 @@ def apply_variant(genre: str, text: str, variant: int) -> str:
         return text.replace("hh*8", "hh*16")
     if genre == "minimal-techno" and variant == 1:
         return text.replace("hh*8", "hh*4")
+    if genre == "minimal-techno" and variant == 2:
+        return text.replace("~ ~ hh*8 hh*8>", "~ ~ ~ ~>")
     if genre == "progressive-house" and variant == 1:
         return text.replace("hh*8", "hh*16")
     if genre == "dubstep" and variant == 1:
@@ -1105,7 +1130,6 @@ def apply_variant(genre: str, text: str, variant: int) -> str:
         "ambient",
         "lofi-hiphop",
         "electro",
-        "minimal-techno",
         "progressive-house",
         "dubstep",
         "four-on-the-floor",

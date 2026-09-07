@@ -4,7 +4,7 @@ Assistant-agnostic recipes for this engine: **to make music of type X, write Str
 
 These are Hermes-format `SKILL.md` files (`name`, `description` starting with “Use when”, `version`, `author`, `license`, `metadata.hermes`). Folders are named `strudel-*` (genre recipes `strudel-genre-*`). This tree documents how **this repo** turns notation into rhythm, harmony, genre, and DJ mix.
 
-Engine-accurate recipes (formerly unprefixed folders such as `four-on-the-floor`) were merged into the matching `strudel-*` skill, or renamed when there was no overlap. Playable files live under `songs/<genre>/01.strudel` (and `02`…) and follow the 7–8 track bed in [strudel-composition](./strudel-composition/SKILL.md) (Future Bass: 9 tracks and a 16-bar `.scale`). This directory is the canonical skill tree and the copy source for the live `dj-hermes` profile. `strudel-live-edit` also lives here (natural-language live edits); it is not a song-recipe skill.
+Engine-accurate recipes (formerly unprefixed folders such as `four-on-the-floor`) were merged into the matching `strudel-*` skill, or renamed when there was no overlap. Playable files live under `songs/<genre>/01.strudel` (and `02`…) and follow the 7–8 track bed in [strudel-composition](./strudel-composition/SKILL.md) (Future Bass: 9 tracks and a 16-bar `.scale`; Minimal Techno: 8 tracks and a 16-bar mute map). This directory is the canonical skill tree and the copy source for the live `dj-hermes` profile. `strudel-live-edit` also lives here (natural-language live edits); it is not a song-recipe skill.
 
 Do not invent syntax from the public Strudel REPL. Only patterns that parse and play here belong in a skill.
 
@@ -115,7 +115,7 @@ Cross-cutting:
 
 | Skill | When | Example song |
 | --- | --- | --- |
-| [strudel-composition](./strudel-composition/SKILL.md) | 7–8 `$:` tracks, 4-bar phrases (Future Bass: 9 tracks / 16 bars), mini-notation | `songs/<genre>/01.strudel` |
+| [strudel-composition](./strudel-composition/SKILL.md) | 7–8 `$:` tracks, 4-bar phrases (Future Bass: 9 tracks / 16-bar scale; Minimal Techno: 8 tracks / 16-bar mute), mini-notation | `songs/<genre>/01.strudel` |
 | [strudel-data-format](./strudel-data-format/SKILL.md) | `.strudel` save/load shape | — |
 | [strudel-sound-design](./strudel-sound-design/SKILL.md) | Synths, FX, live 2-op FM, factory PCM stems | — (inline recipes; apply via `strudel_apply_song`) |
 | [strudel-pcm-catalog](./strudel-pcm-catalog/SKILL.md) | rust-fm-synthe `part:slug`（`bd:8b`, `hh:cl`）。意味は INDEX | — |
@@ -143,7 +143,7 @@ Genre recipes (`strudel-genre-*`):
 | [strudel-genre-electro](./strudel-genre-electro/SKILL.md) | Electro | — |
 | [strudel-genre-future-bass](./strudel-genre-future-bass/SKILL.md) | Kawaii Future Bass: 140 half-time 2-step, 16-bar A A' B C (王道 + reverse + cliché), refrain lead, strings; not `bd*4` | `songs/future-bass/01.strudel` |
 | [strudel-genre-lofi-hiphop](./strudel-genre-lofi-hiphop/SKILL.md) | Lo-fi hip hop | — |
-| [strudel-genre-minimal-techno](./strudel-genre-minimal-techno/SKILL.md) | Minimal Techno | — |
+| [strudel-genre-minimal-techno](./strudel-genre-minimal-techno/SKILL.md) | Minimal Techno: 126, 16-bar mute on/off, dark FX; not all loops always on | `songs/minimal-techno/01.strudel` |
 | [strudel-genre-progressive-house](./strudel-genre-progressive-house/SKILL.md) | Progressive House | — |
 
 `songs/acid/01.strudel` is the 303 filter-envelope live loop (130 BPM). Play it solo — another 303 on the other deck doubles the acid, it is not a mix.
