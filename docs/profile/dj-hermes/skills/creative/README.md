@@ -140,10 +140,10 @@ Genre recipes (`strudel-genre-*`):
 | [strudel-genre-chill](./strudel-genre-chill/SKILL.md) | Chill / downtempo | — |
 | [strudel-genre-chill-pop](./strudel-genre-chill-pop/SKILL.md) | Japanese city pop: IV–iii–ii–I maj7 + Rhodes; not EDM I–I–IV–I, not 王道 | — |
 | [strudel-genre-dubstep](./strudel-genre-dubstep/SKILL.md) | Dubstep | — |
-| [strudel-genre-electro](./strudel-genre-electro/SKILL.md) | Electro | — |
+| [strudel-genre-electro](./strudel-genre-electro/SKILL.md) | Electro: 126, supersaw hook, pitched at C2 (arp C3); not a thin zap hook | `songs/electro/01.strudel` |
 | [strudel-genre-future-bass](./strudel-genre-future-bass/SKILL.md) | Kawaii Future Bass: 140 half-time 2-step, 16-bar A A' B C (王道 + reverse + cliché), refrain lead, strings; not `bd*4` | `songs/future-bass/01.strudel` |
 | [strudel-genre-lofi-hiphop](./strudel-genre-lofi-hiphop/SKILL.md) | Lo-fi hip hop | — |
-| [strudel-genre-minimal-techno](./strudel-genre-minimal-techno/SKILL.md) | Minimal Techno: 126, 16-bar mute on/off, dark FX; not all loops always on | `songs/minimal-techno/01.strudel` |
+| [strudel-genre-minimal-techno](./strudel-genre-minimal-techno/SKILL.md) | Minimal Techno: 126, offbeat open hats `[~ oh]*4`, 16-bar mute on/off, dark FX; not all loops always on | `songs/minimal-techno/01.strudel` |
 | [strudel-genre-progressive-house](./strudel-genre-progressive-house/SKILL.md) | Progressive House | — |
 
 `songs/acid/01.strudel` is the 303 filter-envelope live loop (130 BPM). Play it solo — another 303 on the other deck doubles the acid, it is not a mix.

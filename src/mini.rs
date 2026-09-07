@@ -647,6 +647,41 @@ mod tests {
     }
 
     #[test]
+    fn minimal_techno_offbeat_open_hat_times() {
+        // Skill strudel-genre-minimal-techno: open hat on the ands, not hh*8 downbeats.
+        let n = parse("bd*4, [~ oh]*4").unwrap();
+        let ev = events(&n, 0);
+        let starts = |name: &str| -> Vec<f64> {
+            ev.iter()
+                .filter(|e| e.value == name)
+                .map(|e| e.start)
+                .collect()
+        };
+        let bd = starts("bd");
+        let oh = starts("oh");
+        assert_eq!(starts("hh").len(), 0);
+        assert_eq!(bd.len(), 4);
+        assert_eq!(oh.len(), 4);
+        for (got, want) in bd.iter().zip([0.0, 0.25, 0.5, 0.75]) {
+            assert!((got - want).abs() < 1e-9, "bd start {got} != {want}");
+        }
+        for (got, want) in oh.iter().zip([0.125, 0.375, 0.625, 0.875]) {
+            assert!((got - want).abs() < 1e-9, "oh start {got} != {want}");
+        }
+
+        let sparse = parse("[~ oh ~ ~]*2").unwrap();
+        let sparse_oh: Vec<f64> = events(&sparse, 0)
+            .iter()
+            .filter(|e| e.value == "oh")
+            .map(|e| e.start)
+            .collect();
+        assert_eq!(sparse_oh.len(), 2);
+        for (got, want) in sparse_oh.iter().zip([0.125, 0.625]) {
+            assert!((got - want).abs() < 1e-9, "sparse oh start {got} != {want}");
+        }
+    }
+
+    #[test]
     fn four_on_the_floor_event_times() {
         // House backbeat grid (not the techno skill default).
         let n = parse("bd*4, [~ sd]*2, [~ hh]*4").unwrap();

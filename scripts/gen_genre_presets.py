@@ -348,19 +348,19 @@ $: note("0 ~ 0 <3 0 0 5>").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
   .s("square").lpf(500).gain(0.46)
   .attack(0.001).decay(0.08).sustain(0.15).release(0.04)
 // lead
-$: note("~ 7 4 <9 7 12 7>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
-  .s("ld:ss").gain(0.14).cut(1)
+$: note("~ 7 4 <9 7 12 7>").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
+  .s("ld:pu").gain(0.14).cut(1)
 // hook
-$: note("12 ~ 7 <12 15 12 7>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
-  .s("square").penv(12).pattack(0.001).pdecay(0.08).lpf(2400).gain(0.16)
+$: note("12 ~ 7 <12 15 12 7>").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
+  .s("ld:ss").gain(0.16).cut(1)
 // arp
-$: note("~ 0 3 7  3 0 ~ 5").scale("<C5:minor C5:minor G5:phrygian C5:minor>")
+$: note("~ 0 3 7  3 0 ~ 5").scale("<C3:minor C3:minor G3:phrygian C3:minor>")
   .s("plk:cv").gain(0.14).cut(1)
 // chords
-$: note("[0,2,4] ~ [0,2,4] ~").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
+$: note("[0,2,4] ~ [0,2,4] ~").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
   .s("plk:sp").gain(0.18)
 // pad
-$: note("0").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
+$: note("0").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
   .s("pf:ff").gain(0.14).room(0.25).orbit(2)
 '''
 
@@ -394,7 +394,7 @@ FENCES["minimal-techno"] = r'''// @title minimal-techno-01
 // @genre minimal-techno
 setcpm(126/4)
 // drums
-$: s("bd*4, <hh*8 hh*8 hh*8 hh*8 hh*8 hh*8 hh*8 hh*8 hh*8 hh*8 hh*8 hh*8 ~ ~ hh*8 hh*8>, <~ ~ ~ cp ~ ~ ~ cp ~ ~ ~ cp ~ ~ ~ cp>").gain(0.7)
+$: s("bd*4, <[~ oh]*4 [~ oh]*4 [~ oh]*4 [~ oh]*4 [~ oh]*4 [~ oh]*4 [~ oh]*4 [~ oh]*4 [~ oh]*4 [~ oh]*4 [~ oh]*4 [~ oh]*4 ~ ~ [~ oh]*4 [~ oh]*4>, <~ ~ ~ cp ~ ~ ~ cp ~ ~ ~ cp ~ ~ ~ cp>").gain(0.7)
 // bass
 $: note("<~ ~ ~ ~ [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~]>").scale("<C2:minor C2:minor C2:minor G2:phrygian>")
   .s("sawtooth").lpf(320).gain(0.4)
@@ -594,8 +594,8 @@ PALETTES: dict[str, dict[str, list]] = {
             {"bd": "bd:ez", "hh": "hh:ch"},
         ],
         "bass": ["bs:dq"],
-        "lead": ["ld:pu", "ld:ch", "ld:dp", "ld:lz"],
-        "hook": ["ld:zp", "ld:lz"],
+        "lead": ["ld:pu", "ld:ch", "ld:dp"],
+        "hook": ["ld:ss", "ld:st", "ld:us"],
         "arp": ["plk:cv"],
         "chords": ["plk:sf", "plk:s5"],
         "pad": ["pf:pu", "ld:hf", "pf:ff"],
@@ -615,8 +615,8 @@ PALETTES: dict[str, dict[str, list]] = {
     "minimal-techno": {
         "drums": [
             {"bd": "bd:tc"},
-            {"hh": "hh:tt"},
-            {"bd": "bd:tc", "hh": "hh:tt"},
+            {"oh": "oh:op"},
+            {"bd": "bd:tc", "oh": "oh:dn"},
         ],
         "bass": ["bs:ht", "sawtooth"],
         "lead": ["plk:pk", "plk:ac"],
@@ -679,9 +679,14 @@ LOCKED_01 = {
     "dnb-reese": {"bass", "bass-mid", "hook"},
     "acid": {"hook", "bass"},
     "techno-duck": {"bass"},
-    "electro": {"bass"},
+    "electro": {"bass", "hook"},
     "dubstep": {"bass"},
     "minimal-techno": {"fx"},
+}
+
+# Electro writes pitched PCM two octaves below catalog native (C4 → C2).
+PCM_MIN_OCT = {
+    "electro": 2,
 }
 
 WAVEFORMS = {"sawtooth", "square", "sine", "triangle", "wt_organ", "wt_bright", "wt_sine"}
@@ -887,7 +892,7 @@ def pick_unique(picks: list[str], n: int, used: set[str]) -> str | None:
     return None
 
 
-def apply_bass_sound(chunk: str, new: str) -> str:
+def apply_bass_sound(chunk: str, new: str, pcm_min_oct: int = 4) -> str:
     old = dot_s(chunk)
     if old == new:
         return chunk
@@ -897,8 +902,11 @@ def apply_bass_sound(chunk: str, new: str) -> str:
     had_fm = ".fm(" in chunk or ".fmh(" in chunk
     if new_pcm:
         chunk = strip_methods(chunk, STRIP_SYNTH + STRIP_ADSR)
-        chunk = octave_swap(chunk, 2, 4)
-        chunk = bump_scale_oct(chunk, 4)
+        if pcm_min_oct >= 4:
+            chunk = octave_swap(chunk, 2, 4)
+            chunk = bump_scale_oct(chunk, 4)
+        else:
+            chunk = bump_scale_oct(chunk, pcm_min_oct)
     elif old_pcm and not new_pcm:
         chunk = octave_swap(chunk, 4, 2)
         if ".lpf(" not in chunk:
@@ -908,14 +916,16 @@ def apply_bass_sound(chunk: str, new: str) -> str:
     return chunk
 
 
-def apply_pitched_sound(chunk: str, new: str, slot: str) -> str:
+def apply_pitched_sound(
+    chunk: str, new: str, slot: str, pcm_min_oct: int = 4
+) -> str:
     old = dot_s(chunk)
     if old != new:
         chunk = set_dot_s(chunk, new)
         if is_pcm_key(new) or new.startswith("wt_"):
             chunk = strip_methods(chunk, STRIP_SYNTH)
         if is_pcm_key(new):
-            chunk = bump_scale_oct(chunk, 4)
+            chunk = bump_scale_oct(chunk, pcm_min_oct)
         if new == "square" and ".lpf(" not in chunk:
             chunk = inject_after_s(chunk, ".lpf(3200)")
     if slot != "chords" and (
@@ -936,6 +946,7 @@ def apply_palette(genre: str, text: str, n: int) -> str:
     if n == 1:
         locked |= LOCKED_01.get(genre, set())
     used: set[str] = set()
+    pcm_min_oct = PCM_MIN_OCT.get(genre, 4)
 
     def apply_one(name: str, chunk: str) -> str:
         slot = "drums" if name in {"kick", "hats"} else name
@@ -966,8 +977,8 @@ def apply_palette(genre: str, text: str, n: int) -> str:
             return chunk
         used.add(new)
         if name == "bass":
-            return apply_bass_sound(chunk, new)
-        return apply_pitched_sound(chunk, new, name)
+            return apply_bass_sound(chunk, new, pcm_min_oct)
+        return apply_pitched_sound(chunk, new, name, pcm_min_oct)
 
     return map_tracks(text, apply_one)
 
@@ -1117,9 +1128,9 @@ def apply_variant(genre: str, text: str, variant: int) -> str:
     if genre == "electro" and variant == 1:
         return text.replace("hh*8", "hh*16")
     if genre == "minimal-techno" and variant == 1:
-        return text.replace("hh*8", "hh*4")
+        return text.replace("[~ oh]*4", "[~ oh ~ ~]*2")
     if genre == "minimal-techno" and variant == 2:
-        return text.replace("~ ~ hh*8 hh*8>", "~ ~ ~ ~>")
+        return text.replace("~ ~ [~ oh]*4 [~ oh]*4>", "~ ~ ~ ~>")
     if genre == "progressive-house" and variant == 1:
         return text.replace("hh*8", "hh*16")
     if genre == "dubstep" and variant == 1:

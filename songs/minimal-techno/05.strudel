@@ -2,7 +2,7 @@
 // @genre minimal-techno
 setcpm(126/4)
 // drums
-$: s("bd*4, <hh:tt*8 hh:tt*8 hh:tt*8 hh:tt*8 hh:tt*8 hh:tt*8 hh:tt*8 hh:tt*8 hh:tt*8 hh:tt*8 hh:tt*8 hh:tt*8 ~ ~ hh:tt*8 hh:tt*8>, <~ ~ ~ cp ~ ~ ~ cp ~ ~ ~ cp ~ ~ ~ cp>").gain(0.7)
+$: s("bd*4, <[~ oh:op]*4 [~ oh:op]*4 [~ oh:op]*4 [~ oh:op]*4 [~ oh:op]*4 [~ oh:op]*4 [~ oh:op]*4 [~ oh:op]*4 [~ oh:op]*4 [~ oh:op]*4 [~ oh:op]*4 [~ oh:op]*4 ~ ~ [~ oh:op]*4 [~ oh:op]*4>, <~ ~ ~ cp ~ ~ ~ cp ~ ~ ~ cp ~ ~ ~ cp>").gain(0.7)
 // bass
 $: note("<~ ~ ~ ~ [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~]>").scale("<F4:minor F4:minor F4:minor C5:phrygian>")
   .s("bs:ht").gain(0.4)

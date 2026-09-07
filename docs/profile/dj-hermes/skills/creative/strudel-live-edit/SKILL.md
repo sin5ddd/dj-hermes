@@ -1,7 +1,7 @@
 ---
 name: strudel-live-edit
 description: "Use when editing a playing strudel-rs song from natural language: add melody, drum fill, modulate/transpose, brighter/darker."
-version: 1.2.0
+version: 1.2.1
 author: Hermes Agent
 license: MIT
 metadata:
@@ -55,7 +55,7 @@ strudel_edit_method(deck="A", track="hat", op="remove", method="gain")
 | 転調 / キー上げ下げ | 全 `.scale` の **ルート** | ルート変更 or `.scale("<…>")` 進行（pitched 全部で揃える） |
 | 移調 / 半音上げ / 度数上げ | pitched の `$:` | **`.add(n)` / `.sub(n)`**（次数 or 半音） |
 | 明るく / 暗く | 全 `.scale` の **モード** | 明暗梯子を ±1 段（lpf は副次） |
-| ハット細かく | drums | `hh*8` 等（composition のライブ表と同じ） |
+| ハット細かく | drums | 既定は `[~ hh]*4` → `hh*8`。**ミニマルテクノは `[~ oh]*4` のまま**（裏拍オープン。→ **strudel-genre-minimal-techno**） |
 | コード変えて | `// chords` | `[0,2,4]` または進行の `<>` |
 | パッド薄く / 厚く | `// pad` | `.gain` / `.lpf` / `.room`。orbit はリードと分けたまま |
 | フック変えて | `// hook` | ジャンル署名次数は消さない（house の `4 ~ 7 4 …` 等） |

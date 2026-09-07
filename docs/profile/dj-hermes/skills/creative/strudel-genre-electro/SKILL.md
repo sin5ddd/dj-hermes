@@ -2,9 +2,10 @@
 name: strudel-genre-electro
 description: >-
   Use when writing Electro for strudel-rs: 126 BPM, mechanical
-  four-on-the-floor, short square bass, zap hook. Not house clap-front
-  and not sparse minimal-techno.
-version: 5.1.0
+  four-on-the-floor, short square bass, supersaw hook, pitched parts
+  two octaves below typical C4 PCM. Not house clap-front, not a thin
+  zap hook, and not sparse minimal-techno.
+version: 6.0.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -20,12 +21,15 @@ metadata:
 
 ## Overview
 
-機械的なキックとスネア、短い square ベース。この Skill のテンポは **126 BPM**（目安 120–130）。ハウスのクラップ先行でも、休符だらけのミニマルでもない。
+機械的なキックとスネア、短い square ベース、太いスーパーソーのフック。この Skill のテンポは **126 BPM**（目安 120–130）。ハウスのクラップ先行でも、休符だらけのミニマルでもない。
+
+帯域は他ジャンルの PCM `C4:` より **だいたい 2 オクターブ下**。ベースは `C2:` が床。lead / hook / chords / pad も `C2:`。arp は `C3:`。PCM も `C4:` に戻さない（native C4 を 2 オクターブ下げて鳴らす）。
 
 ## When
 
-- 依頼が **エレクトロ**（機械的な 4 つ打ち、短いシンセ、zap 風フック）のとき
+- 依頼が **エレクトロ**（機械的な 4 つ打ち、短いシンセ、スーパーソーのフック）のとき
 - キック / スネア / ハットを **1 本のドラム** にまとめるとき
+- フックを細い zap や `square`+`penv` のヒョロヒョロにしないとき
 - ハウスの `[~ cp]*2` や、隙間を主にしたミニマルテクノではないとき
 
 ## Pattern
@@ -41,53 +45,64 @@ $: note("0 ~ 0 <3 0 0 5>").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
   .s("square").lpf(500).gain(0.46)
   .attack(0.001).decay(0.08).sustain(0.15).release(0.04)
 // lead
-$: note("~ 7 4 <9 7 12 7>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
-  .s("ld:ss").gain(0.14).cut(1)
+$: note("~ 7 4 <9 7 12 7>").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
+  .s("ld:pu").gain(0.14).cut(1)
 // hook
-$: note("12 ~ 7 <12 15 12 7>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
-  .s("square").penv(12).pattack(0.001).pdecay(0.08).lpf(2400).gain(0.16)
+$: note("12 ~ 7 <12 15 12 7>").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
+  .s("ld:ss").gain(0.16).cut(1)
 // arp
-$: note("~ 0 3 7  3 0 ~ 5").scale("<C5:minor C5:minor G5:phrygian C5:minor>")
+$: note("~ 0 3 7  3 0 ~ 5").scale("<C3:minor C3:minor G3:phrygian C3:minor>")
   .s("plk:cv").gain(0.14).cut(1)
 // chords
-$: note("[0,2,4] ~ [0,2,4] ~").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
+$: note("[0,2,4] ~ [0,2,4] ~").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
   .s("plk:sp").gain(0.18)
 // pad
-$: note("0").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
+$: note("0").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
   .s("pf:ff").gain(0.14).room(0.25).orbit(2)
 ```
 
-同梱 `songs/electro/01.strudel` はこのフェンスと同じ（グリッドと次数）。新規 apply の `.s()` は下のパレットから選ぶ。**ベースとフックの両方を `square` にしない。**
+同梱 `songs/electro/01.strudel` はこのフェンスと同じ（グリッド・次数・帯域）。新規 apply の `.s()` は下のパレットから選ぶ。**フックはスーパーソー。リードに `ld:ss` を重ねない。**
+
+フック次数 12 は `C2:` 上で C3。C5 の zap にはしない。
 
 ## 音色パレット（新規 apply はここから選ぶ）
 
 Pattern はグリッド・次数・スロットの見本。新規曲は下表からスロットごとに 1 つ選び、このフェンスの `.s()` を毎回コピーしない。同一曲の pitched 2 本に同じ `.s()` を使わない。slug の意味は strudel-pcm-catalog の INDEX。長尺（`ld:` / `dr:` / `pf:` / `ps:`、`plk:fp` / `plk:sp`）は `.cut(1)` か `s("<x ~ ~ ~>")`。
 
-短い square ベースは **1 役だけ**。フックの zap は `ld:zp` 側へ。`square`+`penv` はベースが square でないときだけ。
+短い square ベースは **1 役だけ**。フックの芯は `ld:ss`。zap（`ld:zp`）は下の Variations だけ。
 
 | スロット | 芯 | 代替 | 禁止 |
 | --- | --- | --- | --- |
 | drums | 機械的 4 つ打ち + 2/4 `sd` | `bd:ez` / `bd:9p`、`sd:rm`、`hh:ch` | `[~ cp]*2`、`bd:gb` |
-| bass | 短い `square`+`lpf(500)` at `C2:` | `bs:dq` at `C4:`（square と同時に使わない） | `bs:su` 重ね、長い pad をベースに |
-| lead | | `ld:pu`、`ld:ch`、`ld:dp`、`ld:lz` | `ld:ss` 固定、`ep:rs` |
-| hook | zap 1 役 | `ld:zp`、`ld:lz`、`perc:zp`。`square`+`penv` は bass が square でないとき | bass と同じ `square`、`plk:mx` |
-| arp | | `plk:cv`、`perc:zp` | ナイロン `plk:ny` |
-| chords | | `plk:sf`、`plk:s5`、`plk:sp` を `<>` | `ep:rs`、`triangle` |
-| pad | | `pf:pu`、`ld:hf` を `<>`、`pf:ff`+`note("0")` | `pf:al`、オルゴール、Rhodes |
+| bass | 短い `square`+`lpf(500)` at `C2:` | `bs:dq` at `C2:`（square と同時に使わない。`C4:` に上げない） | `bs:su` 重ね、長い pad をベースに、`C0:` |
+| lead | `C2:` | `ld:pu`、`ld:ch`、`ld:dp` | `ld:ss`（フックの役）、`ep:rs`、`C4:` |
+| hook | `ld:ss` at `C2:` | `ld:st`、`ld:us` | `ld:zp` を既定、bass と同じ `square`、`plk:mx`、`C4:` |
+| arp | `C3:` | `plk:cv`、`perc:zp` | ナイロン `plk:ny`、`C5:` |
+| chords | `C2:` | `plk:sf`、`plk:s5`、`plk:sp` を `<>` | `ep:rs`、`triangle`、`C4:` |
+| pad | `C2:` | `pf:pu`、`ld:hf` を `<>`、`pf:ff`+`note("0")` | `pf:al`、オルゴール、Rhodes、`C4:` |
 
 ## Why
 
 グリッドは `bd*4` に 2/4 の `sd` と 16 分 `hh`。4 小節目だけ `[bd sd bd sd]` のフィルで反復を崩す。
 
+フックを `ld:zp` や高い `square`+`penv` にすると、倍音が細く C4〜C5 に寄る。`ld:ss` を `C2:` に置くとミッドに厚みが出る。PCM を他ジャンルどおり `C4:` にすると、`bs:dq` も含めて低音が空く。
+
 ## レシピ
 
 1. キック / スネア / ハットはカンマで 1 本
-2. ベースは短い square（シンセサブ）**または**パレットの別キー 1 つ。ADSR を短くする
-3. フックは zap（`ld:zp` 等）。`square`+`penv` はベースが square でないときだけ。長い release は使わない
-4. ピッチトラックは 4 小節 `.scale("<C:minor C:minor G:phrygian C:minor>")`（オクターブは帯域に合わせる）
+2. ベースは短い square（シンセサブ）**または** `bs:dq` 1 つ。どちらも **`C2:`**。ADSR を短くする
+3. フックはスーパーソー（`ld:ss` / `ld:st` / `ld:us`）。長い `ld:` は `.cut(1)`
+4. ピッチトラックは 4 小節 `.scale`。オクターブは **bass/lead/hook/chords/pad = C2、arp = C3**（他ジャンルの C4/C5 から 2 オクターブ下）
 5. ハットは乾いたまま（長い room をドラムに載せない）
 
 鳴らすのは `strudel_apply_song(content, deck)`（次小節、無書き込み）。`strudel_save_song` は残す指示のときだけ（演奏は変えない）。
+
+## Variations（同じ文法）
+
+| 目的 | 変更 |
+| --- | --- |
+| フックを zap に | `ld:ss` を `ld:zp`（既定にはしない。帯域は `C2:` のまま） |
+| ハットを細かく | `hh*8` を `hh*16` |
 
 ## Pitfalls
 
@@ -96,7 +111,8 @@ Pattern はグリッド・次数・スロットの見本。新規曲は下表か
 3. 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`）を毎小節撃たない
 4. アンビエント寄りの長い release
 5. square サブの上に `bs:su` を重ねる
-6. ベースとフックの両方を `square` にする。新規 apply でフェンスの `.s()` を全コピーする
+6. フックを `ld:zp` や `square`+`penv` の既定にする。lead と hook の両方を `ld:ss` にする
+7. pitched を `C4:` / `C5:` に書く（他ジャンルの PCM native ルールをそのまま使う）。ベースを `C0:` にする
 
 ## Checklist
 
@@ -104,5 +120,7 @@ Pattern はグリッド・次数・スロットの見本。新規曲は下表か
 - [ ] 4 小節フレーズ（`.scale("<…>")` が 4 個）
 - [ ] ドラムは 1 本のカンマ層
 - [ ] 機械的な 4 つ打ち + 2/4 スネア（クラップ先行にしない）
-- [ ] `.s()` は音色パレット。bass と hook が両方 `square` ではない
+- [ ] フックはスーパーソー（`ld:ss` / `ld:st` / `ld:us`）。lead と重ねない
+- [ ] 帯域は bass/lead/hook/chords/pad `C2:`、arp `C3:`（PCM も `C4:` に上げない）
+- [ ] `.s()` は音色パレット
 - [ ] `strudel_apply_song(content, deck)`（save は残す指示のときだけ）

@@ -1,7 +1,7 @@
 ---
 name: strudel-composition
 description: "Use when writing a strudel-rs song: 7–8 $: tracks (drums, bass 1–2, three melody instruments, chords, pad), 4-bar phrases, strudel_apply_song (save only to persist)."
-version: 5.4.0
+version: 5.4.2
 author: Hermes Agent
 license: MIT
 metadata:
@@ -59,7 +59,8 @@ strudel-rs の曲は **`$:` を重ねたループを、演奏しながら 1 本�
 - ベース 2 本: drums + bass + bass-mid + lead + hook + arp + chords + pad = **8**
 - **duck 例外**: キックだけ別 `$:`（`duckorbit`）。ハットは 2 本目。この 2 本でドラム枠。残り 6 = bass 1 + メロ 3 + chords + pad。2 本目ベースは足さない
 - **Future Bass 例外**: duck 分割のうえ `// strings` を足して **9 本**。繰り返しは **16 小節**（`.scale` 16 子。`cat` ではない）
-- **Minimal Techno 例外**: **8 本**（7 + `// fx`）。繰り返しは **16 小節ミュート**（キック常時、他は `<>` 16 子でオンオフ。和声は 4 小節 `.scale`。`cat` ではない）。マップとダーク FX は **strudel-genre-minimal-techno**
+- **Minimal Techno 例外**: **8 本**（7 + `// fx`）。繰り返しは **16 小節ミュート**（キック常時、他は `<>` 16 子でオンオフ。和声は 4 小節 `.scale`。`cat` ではない）。ハット既定は裏拍オープン `[~ oh]*4`（下表の `hh*8` にしない）。マップとダーク FX は **strudel-genre-minimal-techno**
+- **Electro 例外**: フックはスーパーソー（`ld:ss`）。pitched は `C2:`（arp は `C3:`）。PCM も他ジャンルの `C4:` native に上げない → **strudel-genre-electro**
 - 目標 **7–8 本**。9 本以上は既定にしない（上の Future Bass 例外だけ 9 本）
 
 各ジャンルのグリッドは Pattern、音色は **音色パレット**（**strudel-genre-***）。
@@ -135,7 +136,7 @@ $: note("0 0 2 4").scale("C2:minor").s("sawtooth").lpf(450).gain(0.5)
 - chords はジャンル表の和音（多くは `ep:*` の `[0,2,4]`、チルポップは `[0,2,6]`）。pad はパレットの pad 列。`pf:ff` なら次数 `0`（`[0,4]` で重ねない）
 - コードは **3 音まで**。`pf:ff` を `[0,2,4]` で鳴らさない。6 音スタック禁止（デッキ `MAX_VOICES` は 32）
 - サブ同士を重ねない（`bs:su` / `bs:hf` / `bs:dk` / `square`+低い lpf）
-- レジスタ: シンセサブは C2 帯。PCM フロアは `C4:` で native。リードは C4 以上
+- レジスタ: シンセサブは C2 帯。PCM フロアは `C4:` で native。リードは C4 以上。**Electro は pitched を C2:**（arp は C3:。PCM も C4: に戻さない → **strudel-genre-electro**）
 - gain 目安: drums 0.50–0.70、bass 0.35–0.50、各メロ 0.12–0.22、chords 0.22–0.32、pad 0.14–0.26
 - 長い `ld:` / `pf:` / `dr:` / `ps:`（約 8–17 秒）は毎小節撃たない。`s("<ld:ss ~ ~ ~>")` のように `<>` で間引く。slug の意味は strudel-pcm-catalog の INDEX。ジャンル外の長尺はパレットの禁止列
 

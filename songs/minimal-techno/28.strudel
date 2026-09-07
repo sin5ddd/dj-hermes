@@ -2,7 +2,7 @@
 // @genre minimal-techno
 setcpm(126/4)
 // drums
-$: s("bd:tc*4, <hh*8 hh*8 hh*8 hh*8 hh*8 hh*8 hh*8 hh*8 hh*8 hh*8 hh*8 hh*8 ~ ~ ~ ~>, <~ ~ ~ cp ~ ~ ~ cp ~ ~ ~ cp ~ ~ ~ cp>").gain(0.7)
+$: s("bd:tc*4, <[~ oh]*4 [~ oh]*4 [~ oh]*4 [~ oh]*4 [~ oh]*4 [~ oh]*4 [~ oh]*4 [~ oh]*4 [~ oh]*4 [~ oh]*4 [~ oh]*4 [~ oh]*4 ~ ~ ~ ~>, <~ ~ ~ cp ~ ~ ~ cp ~ ~ ~ cp ~ ~ ~ cp>").gain(0.7)
 // bass
 $: note("<~ ~ ~ ~ [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~]>").scale("<A2:minor A2:minor A2:minor E3:phrygian>")
   .s("sawtooth").lpf(320).gain(0.4)
