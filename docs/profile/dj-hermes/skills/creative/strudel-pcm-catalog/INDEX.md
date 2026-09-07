@@ -163,14 +163,14 @@ strudel-rs の呼び出しは `s("<part>:<slug>")`。音程楽器は `note(...).
 | `fx:nh` | yes | `fx-noise-hit` | fx-noise-hit | ホワイト寄りの短いノイズヒット。トップやグリッチ。 | 72 | 0.35 |
 | `fx:pb` | yes | `fx-passby` | fx-passby | 通過音。ピッチが落ち、BPが横切るドップラー風。 | 60 | 1.1 |
 | `fx:rd` | yes | `fx-radio-stab` | fx-radio-stab | ラジオスタブ。狭いBPとパルス。通信ノイズ風。 | 67 | 0.4 |
-| `fx:ra` | yes | `fx-rev-air` | fx-rev-air | エア寄りのリバースハット。スーパーソーの砂＋HPスウェル。 | 84 | 1.8 |
+| `fx:ra` | yes | `fx-rev-air` | fx-rev-air | エア寄りのリバースハット。ホワイトノイズ＋スーパーソーのHPスウェル。 | 84 | 1.8 |
 | `fx:rc` | yes | `fx-rev-crash` | fx-rev-crash | 明るいリバースクラッシュ。HPが開いて砂状のクラッシュで切れる。 | 76 | 2.1 |
 | `fx:rm` | yes | `fx-rev-crash-metal` | fx-rev-crash-metal | 金属FMのリバースクラッシュ。固定周波数のリンが後半で開く。 | 72 | 2.2 |
 | `fx:ry` | yes | `fx-rev-cym` | fx-rev-cym | クラシックなリバースシンバル。暗いノイズからHP/LPが開き、上昇ピッチでクラッシュへ。 | 72 | 2.6 |
 | `fx:rb` | yes | `fx-rev-cym-bright` | fx-rev-cym-bright | 短い明るいリバースシンバル。BPが上へ開いてスプラッシュ気味。 | 80 | 1.7 |
 | `fx:rk` | yes | `fx-rev-cym-dark` | fx-rev-cym-dark | 暗いリバースシンバル。胴寄り。ライドの逆再生印象。 | 55 | 3.0 |
 | `fx:rl` | yes | `fx-rev-cym-long` | fx-rev-cym-long | 長いダークなリバースライド。3.8秒。ビルドの奥で使う。後で切る前提。 | 60 | 3.8 |
-| `fx:rn` | yes | `fx-rev-cym-noise` | fx-rev-cym-noise | ノイズ寄りのリバースシンバル。高FBと高比でホワイトに近い砂。 | 67 | 2.4 |
+| `fx:rn` | yes | `fx-rev-cym-noise` | fx-rev-cym-noise | ノイズ寄りのリバースシンバル。ホワイトノイズの砂が開く。 | 67 | 2.4 |
 | `fx:rh` | yes | `fx-rev-hat` | fx-rev-hat | リバースハットのスウェル。短め・明るい。ハイハットの逆再生印象。 | 84 | 1.55 |
 | `fx:rs` | yes | `fx-rev-splash` | fx-rev-splash | 短いリバーススプラッシュ。明るいクラッシュの逆再生。1.5秒。 | 84 | 1.5 |
 | `fx:rv` | yes | `fx-rev-verb` | fx-rev-verb | リバースリバーブ風。遅いアタック＋HPのウォッシュ。フェイク。 | 67 | 2.0 |
@@ -186,9 +186,9 @@ strudel-rs の呼び出しは `s("<part>:<slug>")`。音程楽器は `note(...).
 | `fx:up` | yes | `fx-uplifter` | fx-uplifter | アップリフター。ピッチ上昇＋フィルタ開放。ビルド用。 | 60 | 2.8 |
 | `fx:wh` | yes | `fx-whoosh` | fx-whoosh | ウーシュ。BPが横切る風切り。 | 67 | 1.4 |
 | `fx:wp` | yes | `fx-whoosh-hp` | fx-whoosh-hp | ハイパスのウーシュ。空気だけが横切る。 | 80 | 1.2 |
-| `fx:wd` | yes | `fx-wind` | fx-wind | 風。高FBの持続ノイズ＋遅いLFO。パッドではなくワンショット。 | 72 | 2.2 |
+| `fx:wd` | yes | `fx-wind` | fx-wind | 風。ピンクノイズの持続する砂＋遅いLFO。パッドではなくワンショット。 | 72 | 2.2 |
 | `fx:zp` | yes | `fx-zap` | fx-zap | ノイズ寄りの落下ザップ。ld-zap / zap より砂が多く、FX専用。 | 76 | 0.32 |
-| `fx:fr` | yes | `fm-riser` | fm-riser | ノイズ寄りのFMライザー。ピッチ上昇と変調量スイープ。ビルドのFX。 | 48 | 2.4 |
+| `fx:fr` | yes | `fm-riser` | fm-riser | ノイズ寄りのFMライザー。ホワイトノイズ＋ピッチ上昇と変調量スイープ。ビルドのFX。 | 48 | 2.4 |
 | `fx:ha` | yes | `hp-air` | hp-air | ハイパスで胴を切ったエア／ティック。トップやトランジションの短いワンショット。 | 84 | 0.5 |
 | `fx:zz` | yes | `zap` | zap | 下向きピッチのレーザー／ザップ。フィルやトランジションのワンショット。 | 72 | 0.38 |
 
