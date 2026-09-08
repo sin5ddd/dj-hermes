@@ -33,7 +33,7 @@ jobs:
           lfs: true
       - uses: dtolnay/rust-toolchain@stable
       - name: Install ALSA dev
-        if: runner.os == "Linux"
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y libasound2-dev

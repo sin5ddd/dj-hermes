@@ -513,7 +513,7 @@ impl Deck {
         for i in 0..self.midi_slots.len() {
             self.midi_off_slot(i);
         }
-        let timed: Vec<(u64, u8, u8)> = self.midi_timed.drain(..).collect();
+        let timed = std::mem::take(&mut self.midi_timed);
         for (_, ch, note) in timed {
             self.push_midi(MidiEvent::NoteOff { ch, note });
         }
