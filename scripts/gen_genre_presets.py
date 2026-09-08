@@ -401,8 +401,8 @@ $: note("0").scale("<C4:minor C4:minor F4:dorian C4:minor>")
   .s("pf:ff").gain(0.14).room(0.35).orbit(1)
 '''
 
-FENCES["minimal-techno"] = r'''// @title minimal-techno-01
-// @genre minimal-techno
+FENCES["minimal"] = r'''// @title minimal-01
+// @genre minimal
 setcpm(126/4)
 // drums
 $: s("bd*4, <[~ oh]*4 [~ oh]*4 [~ oh]*4 [~ oh]*4 [~ oh]*4 [~ oh]*4 [~ oh]*4 [~ oh]*4 [~ oh]*4 [~ oh]*4 [~ oh]*4 [~ oh]*4 ~ ~ [~ oh]*4 [~ oh]*4>, <~ ~ ~ cp ~ ~ ~ cp ~ ~ ~ cp ~ ~ ~ cp>").gain(0.7)
@@ -617,7 +617,7 @@ PALETTES: dict[str, dict[str, list]] = {
         "chords": ["ep:mt"],
         "pad": ["pf:cl", "dr:th", "pf:ff"],
     },
-    "minimal-techno": {
+    "minimal": {
         "drums": [
             {"bd": "bd:tc"},
             {"oh": "oh:op"},
@@ -687,7 +687,7 @@ LOCKED_01 = {
     "techno-duck": {"bass"},
     "electro": {"bass", "hook"},
     "dubstep": {"bass"},
-    "minimal-techno": {"fx"},
+    "minimal": {"fx"},
 }
 
 # Electro writes pitched PCM two octaves below catalog native (C4 → C2).
@@ -1203,9 +1203,9 @@ def apply_variant(genre: str, text: str, variant: int) -> str:
         return text.replace("[~ hh]*4", "[~ hh]*4, perc:cb")
     if genre == "electro" and variant == 1:
         return text.replace("hh*8", "hh*16")
-    if genre == "minimal-techno" and variant == 1:
+    if genre == "minimal" and variant == 1:
         return text.replace("[~ oh]*4", "[~ oh ~ ~]*2")
-    if genre == "minimal-techno" and variant == 2:
+    if genre == "minimal" and variant == 2:
         return text.replace("~ ~ [~ oh]*4 [~ oh]*4>", "~ ~ ~ ~>")
     if genre == "progressive-house" and variant == 1:
         return text.replace("hh*8", "hh*16")

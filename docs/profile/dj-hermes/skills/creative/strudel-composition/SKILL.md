@@ -1,7 +1,7 @@
 ---
 name: strudel-composition
 description: "Use when writing a dj-hermes song: 7–8 $: tracks (drums, bass 1–2, three melody instruments, chords, pad), 4-bar phrases, dj_hermes_apply_song (save only to persist)."
-version: 5.5.0
+version: 5.6.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -26,16 +26,16 @@ dj-hermes の曲は **`$:` を重ねたループを、演奏しながら 1 本�
 - 演奏形式: `setcpm` + **`$:` トラック**のみ（鳴らすのは `dj_hermes_apply_song`）
 - mini-notation は文字列の中だけ（`s("...")` / `note("...")`）
 - **新規の既定: 7–8 本**（ドラム＋ベース 1～2＋メロディ楽器 3＋コード＋パッド）
-- **繰り返し周期の既定は 4 小節**（1 サイクル＝1 小節のまま。`.scale("<…>")` と 4 子以上の `<>` で周期を延ばす）。**Future Bass** と **Kawaii Future Bass** は 16 小節の `.scale`（16 子。`cat` ではない → **strudel-genre-future-bass** / **strudel-genre-kawaii-future-bass**）。**Minimal Techno** は 16 小節のミュートマップ（各トラックの `<>` 16 子。和声の `.scale` は 4 子のままでよい → **strudel-genre-minimal-techno**）
+- **繰り返し周期の既定は 4 小節**（1 サイクル＝1 小節のまま。`.scale("<…>")` と 4 子以上の `<>` で周期を延ばす）。**Future Bass** と **Kawaii Future Bass** は 16 小節の `.scale`（16 子。`cat` ではない → **strudel-genre-future-bass** / **strudel-genre-kawaii-future-bass**）。**Minimal** は 14–16 本・16 小節ミュート（キック / 裏拍 OHH / ベースは常時。他だけ `<>` 16 子。和声の `.scale` は 4 子 → **strudel-genre-minimal**）
 - **16 小節 `cat` は既定にしない**（ライブ差分が重い）。プリセットの A/B は最大 8 引数
 - ジャンルのグリッド・フック次数は **strudel-genre-*** の Pattern。**音色は同 Skill のパレット**からスロットごとに選ぶ（フェンスの `.s()` を毎回コピーしない）
 - **音色・サンプル**: ドラムは短い `bd`/`sd`/… + 任意 `.bank` または `part:slug`。メロ／コード／パッドはカタログ PCM（`plk:` / `ep:` / `ld:` / `pf:` / `dr:` / `ps:`）か、ジャンルパレットが許した波形 / `wt_*` / ライブ `.fm`。波形をメロ／コード／パッドの既定にしない（サブ・303・Reese・wobble・zap はジャンルが芯と書いたスロットだけ。→ **strudel-sound-design** / **strudel-pcm-catalog**）
 
 | 場面 | 既定 |
 | --- | --- |
-| 新規曲・プリセット（`dj_hermes_apply_song`） | 7–8 本、4 小節フレーズ（Future Bass / Kawaii Future Bass は 9 本・16 小節 scale。Minimal Techno は 8 本・16 小節ミュート） |
+| 新規曲・プリセット（`dj_hermes_apply_song`） | 7–8 本、4 小節フレーズ（Future Bass / Kawaii Future Bass は 9 本・16 小節 scale。Minimal は 14–16 本・16 小節ミュート） |
 | 来場者の一言編集 | **1 トラック or 1 メソッド**（全文を作り直さない） |
-| 同梱 `songs/<genre>/` | 7–8 本、4 小節フレーズ（Future Bass / Kawaii Future Bass は 9 本・16 小節 scale。Minimal Techno は 8 本・16 小節ミュート） |
+| 同梱 `songs/<genre>/` | 7–8 本、4 小節フレーズ（Future Bass / Kawaii Future Bass は 9 本・16 小節 scale。Minimal の新規は 14–16 本。同梱は旧 8 本のまま） |
 
 ## スロット（`$:` 本数の正本）
 
@@ -55,13 +55,13 @@ dj-hermes の曲は **`$:` を重ねたループを、演奏しながら 1 本�
 
 数え方:
 
-- ベース 1 本: drums + bass + lead + hook + arp + chords + pad = **7**。8 本目は `// perc`（毎小節撃たないワンショット）か対旋律。Minimal Techno の 8 本目は `// fx`
+- ベース 1 本: drums + bass + lead + hook + arp + chords + pad = **7**。8 本目は `// perc`（毎小節撃たないワンショット）か対旋律
 - ベース 2 本: drums + bass + bass-mid + lead + hook + arp + chords + pad = **8**
 - **duck 例外**: キックだけ別 `$:`（`duckorbit`）。ハットは 2 本目。この 2 本でドラム枠。残り 6 = bass 1 + メロ 3 + chords + pad。2 本目ベースは足さない
 - **Future Bass / Kawaii Future Bass 例外**: duck 分割のうえ `// strings` を足して **9 本**。繰り返しは **16 小節**（`.scale` 16 子。`cat` ではない）。ドラム／ベース／リードは 1 小節ループにしない。`<>` の子は **同じウェイト**（8 分なら 8）。王道・ベルは kawaii、スーパーソーの壁は future-bass（混ぜない）
-- **Minimal Techno 例外**: **8 本**（7 + `// fx`）。繰り返しは **16 小節ミュート**（キック常時、他は `<>` 16 子でオンオフ。和声は 4 小節 `.scale`。`cat` ではない）。ハット既定は裏拍オープン `[~ oh]*4`（下表の `hh*8` にしない）。マップとダーク FX は **strudel-genre-minimal-techno**
+- **Minimal 例外**: **14–16 本**。キック / 裏拍 OHH / ベースは常時オン（16 子ミュートを書かない）。他は 16 小節ミュート。kick / ohh / chh は別 `$:`。perc / tom / metal は `note()` 可。スロットとマップは **strudel-genre-minimal**
 - **Electro 例外**: フックはスーパーソー（`ld:ss`）。pitched は `C2:`（arp は `C3:`）。PCM も他ジャンルの `C4:` native に上げない → **strudel-genre-electro**
-- 目標 **7–8 本**。9 本以上は既定にしない（上の Future Bass / Kawaii 例外だけ 9 本）
+- 目標 **7–8 本**。9 本以上は既定にしない（Future Bass / Kawaii は 9 本、Minimal は 14–16 本）
 
 各ジャンルのグリッドは Pattern、音色は **音色パレット**（**strudel-genre-***）。
 
@@ -69,8 +69,8 @@ dj-hermes の曲は **`$:` を重ねたループを、演奏しながら 1 本�
 
 1 サイクル = 1 小節（エンジン）。**繰り返し周期**を 4 小節にする。
 
-1. 和声: 既定 4 小節 `.scale("<Root:mode …>")`。次数パターンは固定。Future Bass / Kawaii Future Bass は 16 子。Minimal Techno の和声は 4 子のまま（16 子はミュート）
-2. メロ / ベース: `<>` の子を **4 個以上**（1 小節同じフレーズを既定にしない）。Minimal Techno の ostinato は 1 小節のままでよい（16 子はオン／オフ）。Future Bass / Kawaii のベースは **8 子以上**
+1. 和声: 既定 4 小節 `.scale("<Root:mode …>")`。次数パターンは固定。Future Bass / Kawaii Future Bass は 16 子。Minimal の和声は 4 子のまま（16 子は非リズムのミュート）
+2. メロ / ベース: `<>` の子を **4 個以上**（1 小節同じフレーズを既定にしない）。Minimal の ostinato は 1 小節のままでよい（16 子はリズム帯以外のオン／オフ）。Future Bass / Kawaii のベースは **8 子以上**
 3. ドラム: 1 小節骨格は可。4 小節目だけフィル `..., <~ ~ ~ [fill]>`。Future Bass / Kawaii はキックを 4 子以上の `<>` にし、ハット連打は 8/16 小節目の末だけ（4 小節ごと `[hh*16]` は禁止）
 4. 長い PCM FX（ライザー約 15 秒）: `<fx:up ~ ~ ~ ~ ~ ~ ~>`（8 小節に 1 回。`fr` / `nr` / `rf` / `rp` / `rw` も同じ）
 5. `cat()`: プリセットで A/B を分けるときだけ、**最大 8 引数**
@@ -153,11 +153,11 @@ $: note("0 0 2 4").scale("C2:minor").s("sawtooth").lpf(450).gain(0.5)
 
 | 来場者の言い方 | 変更例 |
 | --- | --- |
-| ハット細かく | `[~ hh]*4` → `hh*8` |
+| ハット細かく | `[~ hh]*4` → `hh*8`。**ミニマルは OHH を触らず `// chh` をオン**（→ **strudel-genre-minimal**） |
 | ベース動かして | 次数の末尾を `<>` で差し替え |
 | 暗い / 明るい | **モード梯子**（→ **strudel-mood-bright-dark**）。副次で lpf |
 | ブレイク / フィル | drums に `<>` / `.ply(2)` |
-| メロディ足して | 空いている lead/hook/arp を埋める。既に 3 本あるときは 1 本を差し替え |
+| メロディ足して | 空いている lead/hook/arp を埋める。既に 3 本あるときは 1 本を差し替え。**ミニマルは次数を増やさず synth / pluck をオン** |
 | 転調 / 移調 | scale ルート or `.add`/`.sub` |
 | コード変えて | `// chords` の `[0,2,4]` または進行の `<>` |
 | パッド薄く | `// pad` の `.gain` / `.lpf` |
@@ -195,7 +195,7 @@ $: s("bd*4, [~ sd]*2, [~ hh]*4, <~ ~ ~ [~@3 bd ~@4]>").gain(0.55)
 2. **定番骨格** → `bd*4, [~ sd]*2, [~ hh]*4`（ハウス 2/4 は `[~ cp]*2`。テクノは clap なし）
 3. **不均等** → `@`
 4. **小節っぽい差分** → パターン内の `<>`（まずこれ）。プリセットは 4 小節フィル
-5. **例外で分離** — `.duckorbit` 付きキックだけ別 `$:`
+5. **例外で分離** — `.duckorbit` 付きキックだけ別 `$:`。**Minimal** は kick / ohh / chh を別 `$:`（→ **strudel-genre-minimal**）
 6. 本家 `stack(...)` は使わない
 7. **パート名は短く**（`bd` `sd` `hh` `oh` `cp`）。キット差は **`.bank("tr808-hard")` 等**（ディスクは `{bank}_{part}`）。フルネームでリズムを埋めない
 8. **FM カタログは `bd:hf` のような `part:slug`**（2〜3 字。→ strudel-pcm-catalog）。`kit:bd` は不可。同梱は `s("bd")` / `.n(0)`
@@ -299,7 +299,7 @@ $: note("0 2 4 0").scale("C3:minor").s("piano-acoustic_soft").gain(0.35)
 ## 禁止
 
 - 本家 JS: `stack(...)`、`.cpm()`、裸の `s("...")` 行（`$:` 無し）
-- 理由なく kick/hat/snare を 3 トラックに分ける
+- 理由なく kick/hat/snare を 3 トラックに分ける（Minimal の kick / ohh / chh 分割は例外）
 - 未実装: `.lfo`
 - テクノキック前グリッドにハウス `cp` を載せる（`[~ cp]*2` はハウス専用）
 - 既定での 16 小節 `cat` 長尺
@@ -328,9 +328,9 @@ $: note("0 2 4 0").scale("C3:minor").s("piano-acoustic_soft").gain(0.35)
 
 ## Checklist
 
-- [ ] `setcpm` + **7–8 本**の `$:`（drums、bass 1–2、lead/hook/arp、chords、pad）。Future Bass / Kawaii Future Bass は 9 本（`// strings`）。Minimal Techno は 8 本（`// fx`）
-- [ ] 4 小節フレーズ（`.scale("<…>")` 4 個 または `<>` 4 子）。1 小節同一繰り返しだけにしない。Future Bass / Kawaii は 16 子 scale。Minimal Techno は 16 子ミュート（和声は 4 子）
-- [ ] ドラムは原則 1 本の短い `s("bd …")`（キットは `.bank` / `part:slug`）。duck キックのみ分離
+- [ ] `setcpm` + **7–8 本**の `$:`（drums、bass 1–2、lead/hook/arp、chords、pad）。Future Bass / Kawaii Future Bass は 9 本（`// strings`）。Minimal は 14–16 本（kick / ohh / bass 常時）
+- [ ] 4 小節フレーズ（`.scale("<…>")` 4 個 または `<>` 4 子）。1 小節同一繰り返しだけにしない。Future Bass / Kawaii は 16 子 scale。Minimal は非リズムの 16 子ミュート（和声は 4 子）
+- [ ] ドラムは原則 1 本の短い `s("bd …")`（キットは `.bank` / `part:slug`）。duck キックのみ分離。Minimal は kick / ohh / chh を分割
 - [ ] ピッチは可能なら次数 + `.scale`。PCM は `C4:`、シンセサブは `C2:`
 - [ ] メロ 3 本は掛け合い。コード 3 音まで。pad はジャンルパレット（`pf:ff` なら `note("0")`）で別 orbit
 - [ ] 音色はジャンルの **音色パレット**。同一曲で pitched の `.s()` を重複させない（Reese 分割以外）

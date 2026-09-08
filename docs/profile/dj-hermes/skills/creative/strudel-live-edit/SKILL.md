@@ -1,7 +1,7 @@
 ---
 name: strudel-live-edit
 description: "Use when editing a playing dj-hermes song from natural language: add melody, drum fill, modulate/transpose, brighter/darker."
-version: 1.2.1
+version: 1.3.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -11,6 +11,7 @@ metadata:
       - strudel-composition
       - strudel-sound-design
       - strudel-data-format
+      - strudel-genre-minimal
 ---
 
 # dj-hermes ライブ編集（自然言語 → 差分）
@@ -30,7 +31,7 @@ metadata:
    - メソッド 1 個（`.lpf` / `.gain` / `.add` / `.ply` / `.scale` 等）→ **`dj_hermes_edit_method(deck, track, op, method, args?)`**
      - `op`: `set`（同名は末尾を置換、無ければ追加） / `add`（末尾に追加） / `remove`
    - 1 トラックのチェーン丸ごと差し替え・追加・削除 → **`dj_hermes_patch_track(deck, track, op, code?, name?)`**
-   - 新規曲や大規模な再構成のみ → `dj_hermes_apply_song(content, deck)`（ディスクに書かない）。新規は **strudel-composition の 7–8 本**。一言の要望で 8 本全部を作り直さない
+   - 新規曲や大規模な再構成のみ → `dj_hermes_apply_song(content, deck)`（ディスクに書かない）。新規は **strudel-composition の 7–8 本**（ジャンル例外あり。ミニマルは 14–16 本）。一言の要望で全部を作り直さない
 4. バー境界で反映。チャットにコードだけ書いて終わりにしない  
 
 ### edit_method 例
@@ -50,12 +51,12 @@ dj_hermes_edit_method(deck="A", track="hat", op="remove", method="gain")
 
 | 言い方の例 | 対象 | 操作の要約 |
 | --- | --- | --- |
-| メロディ足して / lead 欲しい | 空いている `// lead` / `// hook` / `// arp`。既に 3 本あるときは 1 本を差し替え | 次数 + `.scale` + `@` で長め音。新規全文は composition の 8 スロット |
+| メロディ足して / lead 欲しい | 空いている `// lead` / `// hook` / `// arp`。既に 3 本あるときは 1 本を差し替え。**ミニマルは次数を増やさず `// synth` / `// pluck` をオン** | 次数 + `.scale` + `@` で長め音。新規全文は composition / ジャンル Skill |
 | フィル入れて / ブレイク | `// drums` の `s(...)` | `<>` でフィル層 / `*` / `.ply(n)`。Mixer のディレイ/スイッチは **strudel-dj-mix** |
 | 転調 / キー上げ下げ | 全 `.scale` の **ルート** | ルート変更 or `.scale("<…>")` 進行（pitched 全部で揃える） |
 | 移調 / 半音上げ / 度数上げ | pitched の `$:` | **`.add(n)` / `.sub(n)`**（次数 or 半音） |
 | 明るく / 暗く | 全 `.scale` の **モード** | 明暗梯子を ±1 段（lpf は副次） |
-| ハット細かく | drums | 既定は `[~ hh]*4` → `hh*8`。**ミニマルテクノは `[~ oh]*4` のまま**（裏拍オープン。→ **strudel-genre-minimal-techno**） |
+| ハット細かく | drums / chh | 既定は `[~ hh]*4` → `hh*8`。**ミニマルは OHH `[~ oh]*4` を触らず、`// chh` を `[hh hh ~ hh]*4` でオン**（裏拍 `&` には hh を置かない。→ **strudel-genre-minimal**） |
 | コード変えて | `// chords` | `[0,2,4]` または進行の `<>` |
 | パッド薄く / 厚く | `// pad` | `.gain` / `.lpf` / `.room`。orbit はリードと分けたまま |
 | フック変えて | `// hook` | ジャンル署名次数は消さない（house の `4 ~ 7 4 …` 等） |
@@ -206,7 +207,7 @@ $: note("0 2 4 0").scale("C2:phrygian").s("sawtooth").lpf(500).gain(0.6)
 2. lead だけ別キーにする → 既存 `.scale` の Root:mode をコピー  
 3. 「暗く」を lpf だけ → まず mode を下げる  
 4. `.add` のパターン引数は実装どおり（不明なら composition を見る）  
-5. ドラムを kick/hat/snare の 3 `$:` に分けない（duckorbit キックのみ例外）  
+5. ドラムを kick/hat/snare の 3 `$:` に分けない（duckorbit キックのみ例外。**ミニマルの kick / ohh / chh 分割は例外**）  
 6. `get_song` せず記憶の古い content で全文上書き → 他トラック破壊  
 
 ## Checklist

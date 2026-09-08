@@ -4,7 +4,7 @@ description: >-
   Use when writing Electro for dj-hermes: 126 BPM, mechanical
   four-on-the-floor, short square bass, supersaw hook, pitched parts
   two octaves below typical C4 PCM. Not house clap-front, not a thin
-  zap hook, and not sparse minimal-techno.
+  zap hook, and not sparse minimal.
 version: 6.0.0
 author: Hermes Agent
 license: MIT
@@ -30,7 +30,7 @@ metadata:
 - 依頼が **エレクトロ**（機械的な 4 つ打ち、短いシンセ、スーパーソーのフック）のとき
 - キック / スネア / ハットを **1 本のドラム** にまとめるとき
 - フックを細い zap や `square`+`penv` のヒョロヒョロにしないとき
-- ハウスの `[~ cp]*2` や、隙間を主にしたミニマルテクノではないとき
+- ハウスの `[~ cp]*2` や、隙間を主にしたミニマルではないとき
 
 ## Pattern
 

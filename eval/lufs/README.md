@@ -57,7 +57,7 @@ python scripts/lufs_gate.py --keep-wav
 | 曲 | 統合 LUFS |
 | --- | ---: |
 | `songs/house/01.strudel` | 約 −23.7 |
-| `songs/minimal-techno/01.strudel` | 約 −23.7 |
+| `songs/minimal/01.strudel` | 約 −23.7 |
 | `songs/ambient/01.strudel` | 約 −25.3 |
 
 既定 −28 は、この「鳴っているプリセット」より数 dB 下の床。−20 にすると現行 01 も below になる。無音や PCM ミスはもっと下がる。初回カタログの分布を見て `--min-lufs` を上げ下げしてよい。ジャンル別の表は持たない。

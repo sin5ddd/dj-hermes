@@ -647,8 +647,8 @@ mod tests {
     }
 
     #[test]
-    fn minimal_techno_offbeat_open_hat_times() {
-        // Skill strudel-genre-minimal-techno: open hat on the ands, not hh*8 downbeats.
+    fn minimal_offbeat_open_hat_times() {
+        // Skill strudel-genre-minimal: open hat on the ands, not hh*8 downbeats.
         let n = parse("bd*4, [~ oh]*4").unwrap();
         let ev = events(&n, 0);
         let starts = |name: &str| -> Vec<f64> {

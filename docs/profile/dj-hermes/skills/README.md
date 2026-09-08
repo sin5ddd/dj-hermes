@@ -20,7 +20,7 @@ skills/
     strudel-data-format/   # ファイル形式
     strudel-sound-design/  # 音色・FX・サンプル用法（bank / フルネーム）・役割レシピ
     strudel-pcm-catalog/   # rust-fm-synthe part:slug（INDEX 付き）
-    strudel-genre-*/       # ジャンル別スロット（グリッド + 8 本例）
+    strudel-genre-*/       # ジャンル別スロット（グリッド + 本数は各 Skill）
 ```
 
 各ディレクトリに `SKILL.md` が必要（agentskills.io / Hermes 互換）。

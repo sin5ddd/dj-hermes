@@ -15,7 +15,7 @@ metadata:
 
 来場者の「沸かせて」は **ライザー → B 固定にしない**。低レベル表は **strudel-dj-mix**。こちらは状況で `to` と `kind` を選ぶ。
 
-新しい MCP ツールは使わない。`apply_song` / hush / `mixer_eq` 4 連はしない。
+`apply_song` / hush / `mixer_eq` 4 連はしない。デッキを切らずに短く止めるときだけ `dj_hermes_mixer_tape` を足してよい。
 
 ## 毎回の手順
 
@@ -24,7 +24,7 @@ metadata:
 3. クロスフェーダーが端でない → 主電源へ 100%
    - 主電源: `crossfader < 0.5` → A、それ以外 → B
    - `dj_hermes_mixer_crossfader(pos=0 または 1)`（即時）
-4. 下の表で `kind` と `to` を決めて **`dj_hermes_mix` を 1 回**
+4. 下の表で `kind` と `to` を決めて **`dj_hermes_mix` を 1 回**。同じ曲のまま止めて盛り上げるなら mix の代わりに `dj_hermes_mixer_tape(on=true, len="4n", reps=2)`（四分音符×2 連）
 5. 任意でトラックミュートは 1 本まで（`dj_hermes_mute`）。同じデッキのドロップに mix の `mute_track` は使わない（戻らない）
 
 ## 状況 → `to`
@@ -43,7 +43,7 @@ metadata:
 
 | 主電源ジャンル | 既定 kind | 代わり（同じ系統を連続しない） |
 | --- | --- | --- |
-| house / four-on-the-floor / techno-duck / progressive-house / acid / electro / minimal-techno | `hpf` または `echo` | `lpf` / `flash` |
+| house / four-on-the-floor / techno-duck / progressive-house / acid / electro / minimal | `hpf` または `echo` | `lpf` / `flash` |
 | dnb / dnb-reese / dubstep / future-bass | `roll` または `drop` | `riser` |
 | kawaii-future-bass / chill-pop | `riser` | `flash` / `drop` |
 | ambient / chill / lofi-hiphop | `lpf`（切替なら `long`） | roll/drop は使わない |

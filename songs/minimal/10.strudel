@@ -1,0 +1,24 @@
+// @title minimal-10
+// @genre minimal
+setcpm(126/4)
+// drums
+$: s("bd:tc*4, <[~ oh]*4 [~ oh]*4 [~ oh]*4 [~ oh]*4 [~ oh]*4 [~ oh]*4 [~ oh]*4 [~ oh]*4 [~ oh]*4 [~ oh]*4 [~ oh]*4 [~ oh]*4 ~ ~ [~ oh]*4 [~ oh]*4>, <~ ~ ~ cp ~ ~ ~ cp ~ ~ ~ cp ~ ~ ~ cp>").gain(0.7)
+// bass
+$: note("<~ ~ ~ ~ [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~]>").scale("<B2:minor B2:minor B2:minor F#3:phrygian>")
+  .s("sawtooth").lpf(320).gain(0.4)
+// lead
+$: note("<~ ~ ~ ~ ~ ~ ~ ~ [~ ~ 7 ~] [~ ~ 7 ~] [~ ~ 7 ~] [~ ~ 7 ~] ~ ~ ~ ~>").scale("<B4:minor B4:minor B4:minor F#5:phrygian>")
+  .s("plk:ac").gain(0.1).cut(1)
+// hook
+$: note("<~ ~ ~ ~ [~ 4 ~ ~] [~ 4 ~ ~] [~ 4 ~ ~] [~ 4 ~ ~] [~ 4 ~ ~] [~ 4 ~ ~] [~ 4 ~ ~] [~ 4 ~ ~] ~ ~ [~ 4 ~ ~] [~ 4 ~ ~]>").scale("<B4:minor B4:minor B4:minor F#5:phrygian>")
+  .s("plk:pk").gain(0.12).cut(1)
+// arp
+$: s("<~ perc:tk ~ perc:st ~ perc:tk ~ perc:st ~ perc:tk ~ perc:st ~ ~ ~ perc:tk>").gain(0.12)
+// chords
+$: note("<~ ~ ~ ~ ~ ~ ~ ~ [~ [0,2,4] ~ ~] [~ [0,2,4] ~ ~] [~ [0,2,4] ~ ~] [~ [0,2,4] ~ ~] [~ [0,2,4] ~ ~] [~ [0,2,4] ~ ~] ~ ~>").scale("<B4:minor B4:minor B4:minor F#5:phrygian>")
+  .s("ep:mt").gain(0.14)
+// pad
+$: note("<~ ~ ~ ~ ~ ~ ~ ~ 0 ~ ~ ~ ~ ~ ~ ~>").scale("<B4:minor B4:minor B4:minor F#5:phrygian>")
+  .s("pf:pu").orbit(2).cut(1).gain(0.1).room(0.25)
+// fx
+$: s("<~ ~ ~ fx:nh ~ ~ fx:ry ~ fx:mc ~ ~ ~ fx:sd ~ ~ fx:dn>").gain(0.18).cut(1)

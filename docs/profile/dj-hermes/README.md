@@ -32,7 +32,7 @@
 | `strudel-sound-design` | 波形・エフェクト・音色（ライブで触るツマミ） |
 | `strudel-pcm-catalog` | rust-fm-synthe `part:slug`（INDEX 付き） |
 | `strudel-live-edit` | 自然言語 → 1 トラック / 1 メソッドの差分 |
-| `strudel-genre-*` | ジャンル別 8 スロット（16 小節 cat は書かない） |
+| `strudel-genre-*` | ジャンル別スロット（本数は各 Skill。16 小節 cat は書かない） |
 | その他 | `strudel-minor-scale-loop` / `strudel-mood-bright-dark` など |
 
 エージェントは `skills_list` / `skill_view` で必要なものだけ読む（progressive disclosure）。  

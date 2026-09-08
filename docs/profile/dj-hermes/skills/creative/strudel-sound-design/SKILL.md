@@ -21,7 +21,7 @@ metadata:
       - strudel-genre-four-on-the-floor
       - strudel-genre-techno-duck
       - strudel-genre-electro
-      - strudel-genre-minimal-techno
+      - strudel-genre-minimal
       - strudel-genre-ambient
       - strudel-genre-chill
       - strudel-genre-dubstep

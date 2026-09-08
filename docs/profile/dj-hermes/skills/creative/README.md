@@ -4,7 +4,7 @@ Assistant-agnostic recipes for this engine: **to make music of type X, write Str
 
 These are Hermes-format `SKILL.md` files (`name`, `description` starting with “Use when”, `version`, `author`, `license`, `metadata.hermes`). Folders are named `strudel-*` (genre recipes `strudel-genre-*`). This tree documents how **this repo** turns notation into rhythm, harmony, genre, and DJ mix.
 
-Engine-accurate recipes (formerly unprefixed folders such as `four-on-the-floor`) were merged into the matching `strudel-*` skill, or renamed when there was no overlap. Playable files live under `songs/<genre>/01.strudel` (and `02`…) and follow the 7–8 track bed in [strudel-composition](./strudel-composition/SKILL.md) (Future Bass / Kawaii Future Bass: 9 tracks and a 16-bar `.scale`; Minimal Techno: 8 tracks and a 16-bar mute map). This directory is the canonical skill tree and the copy source for the live `dj-hermes` profile. `strudel-live-edit` also lives here (natural-language live edits); it is not a song-recipe skill.
+Engine-accurate recipes (formerly unprefixed folders such as `four-on-the-floor`) were merged into the matching `strudel-*` skill, or renamed when there was no overlap. Playable files live under `songs/<genre>/01.strudel` (and `02`…) and follow the 7–8 track bed in [strudel-composition](./strudel-composition/SKILL.md) (Future Bass / Kawaii Future Bass: 9 tracks and a 16-bar `.scale`; Minimal: 14–16 tracks, always-on kick/ohh/bass, 16-bar mute of the rest). This directory is the canonical skill tree and the copy source for the live `dj-hermes` profile. `strudel-live-edit` also lives here (natural-language live edits); it is not a song-recipe skill.
 
 Do not invent syntax from the public Strudel REPL. Only patterns that parse and play here belong in a skill.
 
@@ -104,7 +104,7 @@ Bundled one-shots: `samples/bd`, `sd`, `hh`, `oh`, `cp` (`samples/cp/00.wav`), p
 ## DJ / mix
 
 - Two decks, one `Transport`.
-- Mixer faders + per-deck Hi/Mid/Lo EQ (cut-only: 1.0 = 0 dB, 0 = kill; shelves at 6 kHz / 1 kHz / 200 Hz) + held master LPF/HPF and delay. Time-repeat (`/repeat 16n`) loops the **play** position for one bar (四分/八分/16分/32分音符). Fill `kind=roll` is a different PCM loop that then cuts in.
+- Mixer faders + per-deck Hi/Mid/Lo EQ (cut-only: 1.0 = 0 dB, 0 = kill; shelves at 6 kHz / 1 kHz / 200 Hz) + held master LPF/HPF and delay. Time-repeat (`/repeat 16n`) loops the **play** position for one bar (四分/八分/16分/32分音符). Tape-stop (`/tape 4n 2`, `/tape 1n`) slows the mixed output; `off` cancels mid-shot. Fill `kind=roll` is a different PCM loop that then cuts in.
 - Crossfade: `gainA = cos(θ)`, `gainB = sin(θ)` for `θ` in `0 … π/2` (`mixer.rs`). Starts on a bar boundary; `hush` is immediate.
 - `.compressor(...)` on a `$:` is **mixer master**, last-write (`engine.rs`) — not a track insert. It will squash the kick.
 - Try a pair **at the same BPM**: `dj-hermes dj songs/house/01.strudel songs/four-on-the-floor/01.strudel` (both `setcpm(124/4)`) then `/x 4`. A second file at another `setcpm` does not keep its own tempo. Do not pair 174 DnB with 126 techno.
@@ -115,7 +115,7 @@ Cross-cutting:
 
 | Skill | When | Example song |
 | --- | --- | --- |
-| [strudel-composition](./strudel-composition/SKILL.md) | 7–8 `$:` tracks, 4-bar phrases (Future Bass / Kawaii Future Bass: 9 tracks / 16-bar scale; Minimal Techno: 8 tracks / 16-bar mute), mini-notation | `songs/<genre>/01.strudel` |
+| [strudel-composition](./strudel-composition/SKILL.md) | 7–8 `$:` tracks, 4-bar phrases (Future Bass / Kawaii Future Bass: 9 tracks / 16-bar scale; Minimal: 14–16 tracks / 16-bar mute of non-rhythm), mini-notation | `songs/<genre>/01.strudel` |
 | [strudel-data-format](./strudel-data-format/SKILL.md) | `.strudel` save/load shape | — |
 | [strudel-sound-design](./strudel-sound-design/SKILL.md) | Synths, FX, live 2-op FM, factory PCM stems | — (inline recipes; apply via `dj_hermes_apply_song`) |
 | [strudel-pcm-catalog](./strudel-pcm-catalog/SKILL.md) | rust-fm-synthe `part:slug`（`bd:8b`, `hh:cl`）。意味は INDEX | — |
@@ -145,7 +145,7 @@ Genre recipes (`strudel-genre-*`):
 | [strudel-genre-future-bass](./strudel-genre-future-bass/SKILL.md) | Future Bass: 140 trap half-time, supersaw eurobeat-flash, 16-bar anthem, 8th-note bass; not 王道, not kawaii bells, not `bd*4` | `songs/future-bass/01.strudel` |
 | [strudel-genre-kawaii-future-bass](./strudel-genre-kawaii-future-bass/SKILL.md) | Kawaii Future Bass: 140 trap half-time, sparkly pads, J-pop 王道/小室, bells; not supersaw anthem | `songs/kawaii-future-bass/01.strudel` |
 | [strudel-genre-lofi-hiphop](./strudel-genre-lofi-hiphop/SKILL.md) | Lo-fi hip hop | — |
-| [strudel-genre-minimal-techno](./strudel-genre-minimal-techno/SKILL.md) | Minimal Techno: 126, offbeat open hats `[~ oh]*4`, 16-bar mute on/off, dark FX; not all loops always on | `songs/minimal-techno/01.strudel` |
+| [strudel-genre-minimal](./strudel-genre-minimal/SKILL.md) | Minimal: 126, always-on kick + offbeat OHH + LPF bass, dark synth, 14–16 PCM tracks, mute non-rhythm only; CHH `[hh hh ~ hh]*4`; `note()` on perc/tom/metal | `songs/minimal/01.strudel` |
 | [strudel-genre-progressive-house](./strudel-genre-progressive-house/SKILL.md) | Progressive House | — |
 
 `songs/acid/01.strudel` is the 303 filter-envelope live loop (130 BPM). Play it solo — another 303 on the other deck doubles the acid, it is not a mix.
@@ -185,6 +185,6 @@ Headless hosts without an audio device: `cargo test --test e2e` renders through 
 ## Adding a skill
 
 1. New directory `docs/profile/dj-hermes/skills/creative/strudel-<name>/SKILL.md` (genre recipes: `strudel-genre-<name>`). Hermes YAML: `name`, `description` starting with “Use when”, `version`, `author`, `license`, `metadata.hermes` (`tags`, `related_skills`).
-2. Include: when, the exact `$:` pattern (**7–8 tracks** per strudel-composition, unless the genre skill names an exception), a **timbre palette** (slot / keep / pick one / forbidden), **why it sounds that way** (cite mini/scale/mixer/duck behavior), and a play/dj command.
+2. Include: when, the exact `$:` pattern (**7–8 tracks** per strudel-composition, unless the genre skill names an exception — Minimal is 14–16), a **timbre palette** (slot / keep / pick one / forbidden), **why it sounds that way** (cite mini/scale/mixer/duck behavior), and a play/dj command.
 3. Point at an existing `songs/<genre>/01.strudel` if one exists. Every `songs/**/*.strudel` is parsed by `tests/e2e.rs`.
 4. Fence only syntax this parser accepts (`setcpm` + `$:`. No `stack()` / `.cpm()`). Do not write INDEX `in_bank=no` keys. Long `ld:` / `dr:` / `pf:` / `ps:` exist; do not fire them every bar.

@@ -1,7 +1,7 @@
 ---
 name: strudel-data-format
 description: "Use when writing .strudel files for dj-hermes apply/save (MCP): 7–8 $: tracks, 4-bar phrases."
-version: 5.0.0
+version: 5.0.1
 author: Hermes Agent
 license: MIT
 metadata:
@@ -18,7 +18,7 @@ metadata:
 
 dj-hermes は `.strudel` テキストをパースして再生する。鳴らすのは MCP **`dj_hermes_apply_song`**（無書き込み）。ディスク保存は **`dj_hermes_save_song`** のみ（file ツール不可、明示指示までしない）。書き込み先は `~/.config/dj-hermes/songs/<name>.strudel` のみ。
 
-**曲の長さの目安**: トラック **7–8 本**、4 小節フレーズ（`.scale("<…>")` / 4 子の `<>`）。16 小節 `cat` は非既定（→ strudel-composition）。
+**曲の長さの目安**: トラック **7–8 本**、4 小節フレーズ（`.scale("<…>")` / 4 子の `<>`）。16 小節 `cat` は非既定。本数のジャンル例外（Future Bass 9 本、Minimal 14–16 本）は **strudel-composition** / 各 **strudel-genre-***。
 
 ## 必須の形（コピー用・8 スロット）
 
@@ -56,7 +56,7 @@ $: s("<~ ~ ~ perc:cm>").gain(0.18)
 1. 任意: `// @title` / `@by` / `@genre` などのコメントタグ  
 2. **必須**: `setcpm(N)` または `setcpm(BPM/4)`（1 cycle = 1 bar = 4 beats → エンジン BPM = N×4）。`setcps(x)` も可  
 3. **必須**: 1 本以上の **`$:` 行**（トラック）。直前の `// name` がトラック名  
-4. ドラムは原則 **1 本の `s(...)`**。新規は **7–8 本**（→ strudel-composition）  
+4. ドラムは原則 **1 本の `s(...)`**。新規は **7–8 本**（ジャンル例外は strudel-composition）  
 
 ## dj_hermes_apply_song
 
@@ -101,6 +101,6 @@ $: s("<~ ~ ~ perc:cm>").gain(0.18)
 
 - [ ] `setcpm` がある  
 - [ ] 各トラックが `$:` で始まる  
-- [ ] 7–8 本（drums / bass 1–2 / lead / hook / arp / chords / pad）  
+- [ ] 7–8 本（drums / bass 1–2 / lead / hook / arp / chords / pad）。ジャンル例外は composition  
 - [ ] 4 小節フレーズ。ドラムは統合記法  
 - [ ] `dj_hermes_apply_song(content, deck)` を実行した。save は「残して」と言われたときだけ
