@@ -12,13 +12,15 @@ use std::time::{Duration, Instant};
 use crossbeam::channel::{unbounded, Receiver, RecvTimeoutError, Sender};
 
 pub const JOB_NAME: &str = "dj-automix";
+pub const SWAP_JOB_NAME: &str = "dj-autoswap";
 pub const IDLE: Duration = Duration::from_secs(300);
 const CLI_TIMEOUT: Duration = Duration::from_secs(15);
 const TICK: Duration = Duration::from_millis(200);
-const GATEWAY_DOWN_MSG: &str =
-    "automix: dj-hermes の cron ticker が止まっている（hermes --profile dj-hermes gateway、または default の gateway.multiplex_profiles: true）";
+pub(crate) const GATEWAY_DOWN_MSG: &str =
+    "Hermes cron が起動していません（hermes --profile dj-hermes gateway、または default の gateway.multiplex_profiles: true）";
 
 const PROMPT: &str = include_str!("../docs/profile/dj-hermes/cron/dj-automix.prompt.txt");
+const SWAP_PROMPT: &str = include_str!("../docs/profile/dj-hermes/cron/dj-autoswap.prompt.txt");
 
 pub enum AutomixCmd {
     Touch,
@@ -44,10 +46,10 @@ pub enum AutomixEvent {
 
 pub trait CronCli: Send {
     fn list_all(&self) -> Result<String, String>;
-    fn create_paused(&self, prompt: &str) -> Result<(), String>;
+    fn create_paused(&self, name: &str, schedule: &str, prompt: &str) -> Result<(), String>;
     fn pause(&self) -> Result<(), String>;
     fn resume(&self) -> Result<(), String>;
-    fn status_gateway(&self) -> Result<String, String>;
+    fn ticker_live(&self) -> Result<bool, String>;
 }
 
 pub struct AutomixHandle {
@@ -156,14 +158,14 @@ impl CronCli for HermesCronCli {
         self.run(&self.profile_args(&["cron", "list", "--all"]))
     }
 
-    fn create_paused(&self, prompt: &str) -> Result<(), String> {
-        self.run(&self.profile_args(&[
+    fn create_paused(&self, name: &str, schedule: &str, prompt: &str) -> Result<(), String> {
+        let mut rest: Vec<&str> = vec![
             "cron",
             "create",
-            "every 1m",
+            schedule,
             prompt,
             "--name",
-            JOB_NAME,
+            name,
             "--skill",
             "strudel-dj-mix",
             "--deliver",
@@ -173,25 +175,33 @@ impl CronCli for HermesCronCli {
             "--paused",
             "--paused-reason",
             "idle gate",
-            "--continuity",
             "--reasoning-effort",
             "none",
-        ]))
-        .map(|_| ())
+        ];
+        if name == JOB_NAME {
+            rest.push("--continuity");
+        }
+        self.run(&self.profile_args(&rest)).map(|_| ())
     }
 
     fn pause(&self) -> Result<(), String> {
-        self.run(&self.profile_args(&["cron", "pause", JOB_NAME]))
+        self.run(&self.profile_args(&["cron", "pause", JOB_NAME]))?;
+        self.run(&self.profile_args(&["cron", "pause", SWAP_JOB_NAME]))
             .map(|_| ())
     }
 
     fn resume(&self) -> Result<(), String> {
-        self.run(&self.profile_args(&["cron", "resume", JOB_NAME]))
+        self.run(&self.profile_args(&["cron", "resume", JOB_NAME]))?;
+        self.run(&self.profile_args(&["cron", "resume", SWAP_JOB_NAME]))
             .map(|_| ())
     }
 
-    fn status_gateway(&self) -> Result<String, String> {
-        self.run(&self.profile_args(&["cron", "status"]))
+    fn ticker_live(&self) -> Result<bool, String> {
+        let cron_status = self.run(&self.profile_args(&["cron", "status"]))?;
+        let gateway_status = self
+            .run(&self.profile_args(&["gateway", "status"]))
+            .unwrap_or_default();
+        Ok(ticker_live_from_outputs(&cron_status, &gateway_status))
     }
 }
 
@@ -219,33 +229,35 @@ fn worker_loop(
 fn ensure_job(cli: &dyn CronCli, event_tx: &Sender<AutomixEvent>) {
     match cli.list_all() {
         Ok(listed) => {
-            let n = listed.matches(JOB_NAME).count();
-            if n >= 2 {
-                emit(
-                    event_tx,
-                    AutomixEvent::Failed(format!(
-                        "duplicate {JOB_NAME}; hermes --profile dj-hermes cron remove"
-                    )),
-                );
-            } else if n == 0 {
-                if let Err(e) = cli.create_paused(PROMPT.trim_end()) {
-                    emit(event_tx, AutomixEvent::Failed(e));
+            for (name, schedule, prompt) in [
+                (JOB_NAME, "every 1m", PROMPT),
+                (SWAP_JOB_NAME, "every 3m", SWAP_PROMPT),
+            ] {
+                let n = listed.matches(name).count();
+                if n >= 2 {
+                    emit(
+                        event_tx,
+                        AutomixEvent::Failed(format!(
+                            "duplicate {name}; hermes --profile dj-hermes cron remove"
+                        )),
+                    );
+                } else if n == 0 {
+                    if let Err(e) = cli.create_paused(name, schedule, prompt.trim_end()) {
+                        emit(event_tx, AutomixEvent::Failed(e));
+                    }
                 }
             }
         }
         Err(e) => emit(event_tx, AutomixEvent::Failed(e)),
     }
 
-    match cli.status_gateway() {
-        Ok(s) if gateway_appears_down(&s) => {
+    match cli.ticker_live() {
+        Ok(false) => {
             eprintln!("{GATEWAY_DOWN_MSG}");
             emit(event_tx, AutomixEvent::GatewayDown);
         }
-        Err(_) => {
-            eprintln!("{GATEWAY_DOWN_MSG}");
-            emit(event_tx, AutomixEvent::GatewayDown);
-        }
-        Ok(_) => {}
+        Err(e) => emit(event_tx, AutomixEvent::Failed(e)),
+        Ok(true) => {}
     }
 }
 
@@ -265,7 +277,7 @@ fn handle_cmd(
             }
         }
         AutomixCmd::ForceOn => {
-            resume_to(cli, event_tx, mode);
+            resume_to(cli, event_tx, mode, last_touch);
         }
         AutomixCmd::ForceOff => {
             *lock(last_touch) = Instant::now();
@@ -287,7 +299,7 @@ fn tick(
     if lock(last_touch).elapsed() < IDLE {
         return;
     }
-    resume_to(cli, event_tx, mode);
+    resume_to(cli, event_tx, mode, last_touch);
 }
 
 fn pause_to(
@@ -310,13 +322,28 @@ fn pause_to(
     }
 }
 
-fn resume_to(cli: &dyn CronCli, event_tx: &Sender<AutomixEvent>, mode: &Mutex<AutomixMode>) {
-    match cli.resume() {
-        Ok(()) => {
-            *lock(mode) = AutomixMode::Armed;
-            emit(event_tx, AutomixEvent::Resumed);
+fn resume_to(
+    cli: &dyn CronCli,
+    event_tx: &Sender<AutomixEvent>,
+    mode: &Mutex<AutomixMode>,
+    last_touch: &Mutex<Instant>,
+) {
+    match cli.ticker_live() {
+        Ok(false) => {
+            *lock(last_touch) = Instant::now();
+            emit(event_tx, AutomixEvent::GatewayDown);
         }
-        Err(e) => emit(event_tx, AutomixEvent::Failed(e)),
+        Err(e) => {
+            *lock(last_touch) = Instant::now();
+            emit(event_tx, AutomixEvent::Failed(e));
+        }
+        Ok(true) => match cli.resume() {
+            Ok(()) => {
+                *lock(mode) = AutomixMode::Armed;
+                emit(event_tx, AutomixEvent::Resumed);
+            }
+            Err(e) => emit(event_tx, AutomixEvent::Failed(e)),
+        },
     }
 }
 
@@ -328,14 +355,18 @@ fn lock<T>(m: &Mutex<T>) -> std::sync::MutexGuard<'_, T> {
     m.lock().unwrap_or_else(|e| e.into_inner())
 }
 
-fn gateway_appears_down(status: &str) -> bool {
-    let s = status.to_ascii_lowercase();
-    s.contains("not running")
-        || s.contains("stopped")
-        || s.contains("offline")
-        || s.contains("inactive")
-        || s.contains("no gateway")
-        || s.contains("gateway down")
+fn ticker_live_from_outputs(cron_status: &str, gateway_status: &str) -> bool {
+    let cron = cron_status.to_ascii_lowercase();
+    let gw = gateway_status.to_ascii_lowercase();
+    if cron.contains("has not reported a heartbeat")
+        || cron.contains("looks stalled")
+        || cron.contains("no tick has succeeded")
+    {
+        return false;
+    }
+    gw.contains("default-profile multiplexer")
+        || gw.contains("gateway process running")
+        || cron.contains("cron jobs will fire automatically")
 }
 
 fn run_timed(bin: &std::path::Path, args: &[String], timeout: Duration) -> Result<String, String> {
@@ -400,7 +431,7 @@ fn run_timed(bin: &std::path::Path, args: &[String], timeout: Duration) -> Resul
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::atomic::{AtomicUsize, Ordering};
+    use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
     #[derive(Clone)]
     struct MockCli {
@@ -409,7 +440,8 @@ mod tests {
 
     struct MockInner {
         list: Mutex<String>,
-        status: Mutex<String>,
+        ticker: AtomicBool,
+        ticker_calls: AtomicUsize,
         pause: AtomicUsize,
         resume: AtomicUsize,
         create: AtomicUsize,
@@ -421,7 +453,8 @@ mod tests {
             Self {
                 inner: Arc::new(MockInner {
                     list: Mutex::new(JOB_NAME.to_string()),
-                    status: Mutex::new("gateway running".into()),
+                    ticker: AtomicBool::new(true),
+                    ticker_calls: AtomicUsize::new(0),
                     pause: AtomicUsize::new(0),
                     resume: AtomicUsize::new(0),
                     create: AtomicUsize::new(0),
@@ -437,6 +470,10 @@ mod tests {
         fn resume_n(&self) -> usize {
             self.inner.resume.load(Ordering::SeqCst)
         }
+
+        fn ticker_n(&self) -> usize {
+            self.inner.ticker_calls.load(Ordering::SeqCst)
+        }
     }
 
     impl CronCli for MockCli {
@@ -445,7 +482,7 @@ mod tests {
             Ok(lock(&self.inner.list).clone())
         }
 
-        fn create_paused(&self, _prompt: &str) -> Result<(), String> {
+        fn create_paused(&self, _name: &str, _schedule: &str, _prompt: &str) -> Result<(), String> {
             self.inner.create.fetch_add(1, Ordering::SeqCst);
             Ok(())
         }
@@ -460,8 +497,9 @@ mod tests {
             Ok(())
         }
 
-        fn status_gateway(&self) -> Result<String, String> {
-            Ok(lock(&self.inner.status).clone())
+        fn ticker_live(&self) -> Result<bool, String> {
+            self.inner.ticker_calls.fetch_add(1, Ordering::SeqCst);
+            Ok(self.inner.ticker.load(Ordering::SeqCst))
         }
     }
 
@@ -516,6 +554,7 @@ mod tests {
         h.force_on();
         wait_mode(&h, AutomixMode::Armed);
         assert_eq!(mock.resume_n(), 1);
+        assert!(mock.ticker_n() >= 1);
     }
 
     #[test]
@@ -541,5 +580,50 @@ mod tests {
         thread::sleep(TICK + Duration::from_millis(40));
         assert_eq!(h.mode(), AutomixMode::IdleWait);
         assert_eq!(mock.pause_n(), pause_before);
+    }
+
+    #[test]
+    fn ticker_live_from_outputs_matches_hermes_status_text() {
+        assert!(!ticker_live_from_outputs(
+            "✗ Gateway is not running — cron jobs will NOT fire",
+            "",
+        ));
+        assert!(ticker_live_from_outputs(
+            "✗ Gateway is not running — cron jobs will NOT fire",
+            "✓ Gateway is running via the default-profile multiplexer",
+        ));
+        assert!(ticker_live_from_outputs(
+            "✓ Gateway is running — cron jobs will fire automatically",
+            "✓ Gateway process running (PID: 1)",
+        ));
+        assert!(!ticker_live_from_outputs(
+            "has not reported a heartbeat",
+            "✓ Gateway process running (PID: 1)",
+        ));
+    }
+
+    #[test]
+    fn force_on_without_ticker_does_not_resume() {
+        let mock = MockCli::new();
+        mock.inner.ticker.store(false, Ordering::SeqCst);
+        let h = AutomixHandle::start_with_cli(Box::new(mock.clone()));
+        wait_ready(&mock);
+        let _ = h.drain_events();
+        h.force_on();
+        let t = Instant::now();
+        let mut saw_down = false;
+        while t.elapsed() < Duration::from_secs(2) {
+            if h.drain_events()
+                .iter()
+                .any(|e| matches!(e, AutomixEvent::GatewayDown))
+            {
+                saw_down = true;
+                break;
+            }
+            thread::sleep(Duration::from_millis(10));
+        }
+        assert!(saw_down);
+        assert_eq!(h.mode(), AutomixMode::IdleWait);
+        assert_eq!(mock.resume_n(), 0);
     }
 }

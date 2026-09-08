@@ -8,16 +8,11 @@ Parse CONTINUITY for a line TICK=N (integer). If missing, N=0. This run N2=N+1.
 2. If mix is present, reply exactly:
 TICK=N2
 [SILENT]
-3. If N2 is divisible by 3: song change then mix.
+3. Mix only. Need both decks loaded.
    - Genre = folder of the MAIN deck slot (status slot_a/slot_b). Main = crossfader < 0.5 → A, else B. Quiet = the other deck.
-   - If main has no slot, skip song change and do step 4.
-   - dj_hermes_list_songs(genre=<folder>). Pick a bundled ref different from both slot_a and slot_b. Same folder only. Never another genre. Do not pair 174 dnb with 124 house (already same folder so OK).
-   - If quiet deck empty or same folder: dj_hermes_load_song(path=<picked>, deck=quiet).
-   - Then dj_hermes_mix(move="long", to=<quiet>).
-4. Else (not divisible by 3): mix only.
-   - Need both decks loaded. If quiet empty, load same-genre other slot onto quiet first (same rules as 3) then mix.
+   - If quiet empty, dj_hermes_list_songs(genre=<folder>). Pick a bundled ref different from both slot_a and slot_b. Same folder only. Never another genre. Then dj_hermes_load_song(path=<picked>, deck=quiet).
    - If still one deck, reply TICK=N2 and [SILENT] (do not invent a genre).
    - Rotate by N2%8: 0 long, 1 fill delay, 2 fill lpf, 3 fill flash, 4 fill echo, 5 fill hpf, 6 fill roll, 7 fill drop. to = quiet deck. fill uses kind= that name.
-5. After tools, reply exactly two lines:
+4. After tools, reply exactly two lines:
 TICK=N2
 [SILENT]

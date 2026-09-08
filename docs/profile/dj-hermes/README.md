@@ -12,6 +12,7 @@
 | `profile.yaml` | プロファイル説明 |
 | `.no-bundled-skills` | バンドル skills を載せないマーカー（公式カタログは入れない） |
 | `skills/creative/strudel-*` | 作曲用ローカル skills（22 本。正本はこのツリー） |
+| `cron/*.prompt.txt` | automix ジョブの見本プロンプト（1 分ミックス / 3 分曲替え） |
 
 **含めないもの（マシン固有・秘密）**
 
@@ -121,12 +122,12 @@ hermes --profile dj-hermes skills list --source local --enabled-only
 
 ## Automix cron（live DJ のみ）
 
-無操作 5 分後、Hermes cron ジョブ `dj-automix` が 1 分おきにミックスする（3 分に 1 回は同ジャンルの曲変更）。`play` / `--text` / `--headless` では動かない。
+無操作 5 分後、Hermes cron が動く。`dj-automix` は 1 分おきにミックス、`dj-autoswap` は 3 分おきに同ジャンルの曲替え。`play` / `--text` / `--headless` では動かない。
 
-- **前提:** dj-hermes プロファイルの cron store を tick する gateway。確認は `hermes --profile dj-hermes cron status`（bare `hermes cron status` は default store）。足りなければ `hermes --profile dj-hermes gateway` か、default config に `gateway.multiplex_profiles: true`。dj-hermes は gateway を起動しない。
-- live DJ で無操作 5 分 → ジョブ `dj-automix` を resume。操作 / `/automix off` で pause。`/automix on` は idle を待たず resume。
+- **前提:** dj-hermes プロファイルの cron store を tick する gateway。`hermes --profile dj-hermes cron status` は multiplex 衛星で not running と嘘をつくので、確認は `hermes --profile dj-hermes gateway status`（bare `hermes cron status` は default store）。足りなければ `hermes --profile dj-hermes gateway` か、default config に `gateway.multiplex_profiles: true`。dj-hermes は gateway を起動しない。
+- live DJ で無操作 5 分 → 両ジョブを resume。操作 / `/automix off` で pause。`/automix on` は ticker 生存時だけ、idle を待たず resume。成功は「Hermes cronは起動中です」。不在は「Hermes cron が起動していません」。
 - `cronjob` ツールは無効のまま。`platform_toolsets.cron: [skills]`。`cron.allow_agent_scheduling: false`。ジョブ作成はアプリの CLI。
-- コピー手順に `cron/dj-automix.prompt.txt` は必須ではない（バイナリに焼いてある）。見本として置いてあるだけ。
+- コピー手順に prompt は必須ではない（バイナリに焼いてある）。見本は `cron/dj-automix.prompt.txt` と `cron/dj-autoswap.prompt.txt`。
 
 ## 小モデル向けの曲保存契約
 

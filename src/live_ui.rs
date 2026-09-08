@@ -20,7 +20,7 @@ use crossterm::terminal::{
 };
 use crossterm::{cursor, execute, queue, terminal};
 
-use crate::automix::{AutomixEvent, AutomixHandle, AutomixMode};
+use crate::automix::{AutomixEvent, AutomixHandle, AutomixMode, GATEWAY_DOWN_MSG};
 use crate::cmd::{self, DeckPaths, LiveInput};
 use crate::code::note_to_midi;
 use crate::complete::{self, CompleteCtx, CompleteResult};
@@ -360,7 +360,6 @@ pub fn run(
     if automix_start {
         if let Some(a) = &automix {
             a.force_on();
-            state.push_log("automix: on");
         } else {
             state.push_log("automix: skipped (Hermes off)");
         }
@@ -1697,8 +1696,10 @@ fn exec_local(
     automix: Option<&AutomixHandle>,
 ) -> bool {
     if let Some(handle) = automix {
-        if let Some(msg) = apply_automix_command(body, handle) {
-            state.push_log(msg);
+        if body.split_whitespace().next() == Some("automix") {
+            if let Some(msg) = apply_automix_command(body, handle) {
+                state.push_log(msg);
+            }
             return true;
         }
     }
@@ -1740,11 +1741,11 @@ fn apply_automix_command(body: &str, handle: &AutomixHandle) -> Option<String> {
         }
         Some("on") => {
             handle.force_on();
-            Some("automix: on".into())
+            None
         }
         Some("off") => {
             handle.force_off();
-            Some("automix: off".into())
+            None
         }
         Some(other) => Some(format!("automix: unknown arg `{other}` (on|off)")),
     }
@@ -1815,11 +1816,9 @@ fn drain_automix_events(state: &mut LiveState, automix: &AutomixHandle) {
     for ev in automix.drain_events() {
         match ev {
             AutomixEvent::Paused => state.push_log("automix: off"),
-            AutomixEvent::Resumed => state.push_log("automix: on"),
+            AutomixEvent::Resumed => state.push_log("Hermes cronは起動中です"),
             AutomixEvent::Failed(msg) => state.push_log(format!("automix: fail {msg}")),
-            AutomixEvent::GatewayDown => state.push_log(
-                "automix: dj-hermes の cron ticker が止まっている（hermes --profile dj-hermes gateway、または default の gateway.multiplex_profiles: true）",
-            ),
+            AutomixEvent::GatewayDown => state.push_log(GATEWAY_DOWN_MSG),
         }
     }
 }
