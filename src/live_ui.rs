@@ -280,6 +280,7 @@ pub fn run(
     hermes: Option<HermesHandle>,
     voice: Option<VoiceHandle>,
     session: SessionKind,
+    automix_start: bool,
 ) -> Result<(), String> {
     let zero_hit = SliderHit {
         row: 0,
@@ -356,6 +357,14 @@ pub fn run(
         )),
         _ => None,
     };
+    if automix_start {
+        if let Some(a) = &automix {
+            a.force_on();
+            state.push_log("automix: on");
+        } else {
+            state.push_log("automix: skipped (Hermes off)");
+        }
+    }
 
     enable_raw_mode().map_err(|e| format!("raw mode: {e}"))?;
     let mut out = stdout();

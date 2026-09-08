@@ -28,7 +28,10 @@ use dj_hermes::mcp;
 use dj_hermes::repl;
 use dj_hermes::sample::SampleBank;
 use dj_hermes::session::SessionKind;
-use dj_hermes::song::{parse_song, resolve_song_path};
+use dj_hermes::song::{
+    bundled_slot_path, is_genre_slug, list_bundled_slots, parse_song, pick_two_slots,
+    resolve_song_path,
+};
 
 #[derive(Debug, PartialEq, Eq)]
 enum CliAction {
@@ -93,6 +96,7 @@ dj-hermes — Strudel live CLI
 Usage:
   dj-hermes [SONG_A] [SONG_B] [--port N] [--no-api] [--text] [--resume]
   dj-hermes dj [SONG_A] [SONG_B] [--port N] [--no-api] [--text] [--resume]
+  dj-hermes GENRE [--port N] [--no-api] [--text]
   dj-hermes play [SONG] [--headless] [--seconds N] [--port N] [--no-api]
                  [--midi] [--midi-only] [--midi-port NAME|INDEX] [--midi-list]
   dj-hermes play --repl [SONG_A] [SONG_B]   (same 2-deck live UI as dj; compatibility)
@@ -104,6 +108,7 @@ Usage:
   SONG          song path or bare name (default dir: songs/; .strudel/.txt optional)
                 play with a SONG: 1-deck; default file songs/house/01.strudel
   SONG_A/B      optional decks (A then B; omit both to start empty)
+  GENRE         bundled songs/<genre>/ ; random A/B slots and automix on (not with --resume)
   --seconds N   stop after N seconds (play + --headless, or timed highlight without prompt)
   --headless    no TUI: meta log only (for scripts / non-TTY)
   --highlight   kept for compatibility (play default is live TUI which includes highlight)
@@ -152,6 +157,7 @@ Examples:
   cargo run -- play songs/house/01.strudel --headless --seconds 8 --midi-port \"TouchOSC Bridge\"
   cargo run -- dj songs/house/01.strudel songs/four-on-the-floor/01.strudel
   cargo run -- --resume                 # last dj Esc snapshot
+  cargo run -- house                    # random house A/B + automix
   cargo run -- render songs/house/01.strudel --out out/house.wav
   cargo run -- dj                          # empty decks; load from »
   # then:  暗くして   or   /house 01   or   /a house 01   or   /x 4
@@ -187,6 +193,8 @@ struct LiveSessionOpts {
     midi_only: bool,
     /// Load last Esc-quit A/B snapshot instead of song paths (`dj` only).
     resume: bool,
+    /// Bare bundled genre (`dj-hermes house`). `cmd_dj` fills `song_a`/`song_b`.
+    auto_genre: Option<String>,
 }
 
 /// Parse `dj` / live-session CLI. Returns `Ok(None)` when `--help` was printed.
@@ -273,6 +281,17 @@ fn parse_live_session_args(args: &[String]) -> Result<Option<LiveSessionOpts>, S
     if songs.len() > 2 {
         return Err("too many song paths (expected at most SONG_A SONG_B)".into());
     }
+    let mut auto_genre = None;
+    if songs.len() == 1 {
+        let name = songs[0].to_string_lossy();
+        if is_genre_slug(name.as_ref()) && !list_bundled_slots(name.as_ref()).is_empty() {
+            if resume {
+                return Err("--resume does not take a genre".into());
+            }
+            auto_genre = Some(name.into_owned());
+            songs.clear();
+        }
+    }
     if resume && !songs.is_empty() {
         return Err("--resume does not take song paths".into());
     }
@@ -294,6 +313,7 @@ fn parse_live_session_args(args: &[String]) -> Result<Option<LiveSessionOpts>, S
         midi_handle: None,
         midi_only: false,
         resume,
+        auto_genre,
     }))
 }
 
@@ -341,6 +361,19 @@ fn cmd_dj(args: &[String]) -> Result<(), String> {
         }
         opts.song_a = a;
         opts.song_b = b;
+    }
+    if let Some(ref g) = opts.auto_genre {
+        let slots = list_bundled_slots(g);
+        if slots.is_empty() {
+            return Err(format!("no slots in songs/{g}/"));
+        }
+        let seed = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_nanos() as u64)
+            .unwrap_or(1);
+        let (a, b) = pick_two_slots(&slots, seed);
+        opts.song_a = a.map(|nn| bundled_slot_path(g, &nn));
+        opts.song_b = b.map(|nn| bundled_slot_path(g, &nn));
     }
     cmd_live_session(opts)
 }
@@ -508,6 +541,7 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
             midi_handle: None,
             midi_only: false,
             resume: false,
+            auto_genre: None,
         });
     }
 
@@ -540,6 +574,7 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
             midi_handle,
             midi_only,
             resume: false,
+            auto_genre: None,
         });
     }
     let song_path = song_paths.into_iter().next();
@@ -671,6 +706,7 @@ fn cmd_live_session(opts: LiveSessionOpts) -> Result<(), String> {
         midi_handle: _midi_handle,
         midi_only,
         resume: _,
+        auto_genre,
     } = opts;
 
     let host = cpal::default_host();
@@ -794,6 +830,7 @@ fn cmd_live_session(opts: LiveSessionOpts) -> Result<(), String> {
             hermes_handle,
             voice_handle,
             session,
+            auto_genre.is_some() && with_highlight,
         )?;
     } else {
         eprintln!(
@@ -1367,6 +1404,7 @@ mod tests {
         assert!(!opts.with_highlight);
         assert!(!opts.api_enabled);
         assert!(!opts.resume);
+        assert!(opts.auto_genre.is_none());
     }
 
     #[test]
@@ -1382,12 +1420,42 @@ mod tests {
         assert!(opts.resume);
         assert!(opts.song_a.is_none());
         assert!(opts.song_b.is_none());
+        assert!(opts.auto_genre.is_none());
     }
 
     #[test]
     fn dj_args_resume_rejects_song_paths() {
         let err = parse_live_session_args(&s(&["--resume", "songs/house/01.strudel"])).unwrap_err();
         assert!(err.contains("--resume does not take song paths"), "{err}");
+    }
+
+    #[test]
+    fn dj_args_genre_house() {
+        let opts = parse_live_session_args(&s(&["house"])).unwrap().unwrap();
+        assert_eq!(opts.auto_genre.as_deref(), Some("house"));
+        assert!(opts.song_a.is_none());
+        assert!(opts.song_b.is_none());
+        assert!(!opts.resume);
+    }
+
+    #[test]
+    fn dj_args_resume_rejects_genre() {
+        let err = parse_live_session_args(&s(&["house", "--resume"])).unwrap_err();
+        assert!(err.contains("--resume does not take a genre"), "{err}");
+        let err = parse_live_session_args(&s(&["--resume", "house"])).unwrap_err();
+        assert!(err.contains("--resume does not take a genre"), "{err}");
+    }
+
+    #[test]
+    fn dj_args_slot_and_ext_are_song_paths() {
+        let opts = parse_live_session_args(&s(&["house/01"])).unwrap().unwrap();
+        assert!(opts.auto_genre.is_none());
+        assert_eq!(opts.song_a.as_deref(), Some(Path::new("house/01")));
+        let opts = parse_live_session_args(&s(&["house.strudel"]))
+            .unwrap()
+            .unwrap();
+        assert!(opts.auto_genre.is_none());
+        assert_eq!(opts.song_a.as_deref(), Some(Path::new("house.strudel")));
     }
 
     #[test]

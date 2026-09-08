@@ -262,6 +262,28 @@ pub fn list_bundled_slots(genre: &str) -> Vec<String> {
     list_bundled_slots_in(&Path::new(DEFAULT_SONGS_DIR).join(genre))
 }
 
+/// Pick two distinct bundled slot numbers. Empty → none; one slot → A only.
+/// Same seed yields the same order. `seed == 0` is remapped so xorshift is not stuck.
+pub fn pick_two_slots(slots: &[String], seed: u64) -> (Option<String>, Option<String>) {
+    match slots {
+        [] => (None, None),
+        [only] => (Some(only.clone()), None),
+        _ => {
+            let mut items = slots.to_vec();
+            let mut x = if seed == 0 { 0x9E3779B97F4A7C15 } else { seed };
+            let n = items.len();
+            for i in (1..n).rev() {
+                x ^= x << 13;
+                x ^= x >> 7;
+                x ^= x << 17;
+                let j = (x as usize) % (i + 1);
+                items.swap(i, j);
+            }
+            (Some(items[0].clone()), Some(items[1].clone()))
+        }
+    }
+}
+
 fn list_bundled_slots_in(dir: &Path) -> Vec<String> {
     let mut out = Vec::new();
     for name in list_song_basenames_in(dir) {
@@ -2023,5 +2045,36 @@ $: s("hh*8").gain(0.3)
             p.display()
         );
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn pick_two_slots_empty() {
+        assert_eq!(pick_two_slots(&[], 1), (None, None));
+    }
+
+    #[test]
+    fn pick_two_slots_one() {
+        assert_eq!(pick_two_slots(&["01".into()], 1), (Some("01".into()), None));
+    }
+
+    #[test]
+    fn pick_two_slots_stable_and_distinct() {
+        let slots: Vec<String> = ["01", "02", "03"].into_iter().map(String::from).collect();
+        let a = pick_two_slots(&slots, 42);
+        let b = pick_two_slots(&slots, 42);
+        assert_eq!(a, b);
+        let (Some(x), Some(y)) = a else {
+            panic!("expected two slots, got {a:?}");
+        };
+        assert_ne!(x, y);
+        assert!(slots.contains(&x), "{x}");
+        assert!(slots.contains(&y), "{y}");
+    }
+
+    #[test]
+    fn pick_two_slots_seed_zero_does_not_panic() {
+        let slots: Vec<String> = ["01", "02"].into_iter().map(String::from).collect();
+        let _ = pick_two_slots(&slots, 0);
+        let _ = pick_two_slots(&slots, 1);
     }
 }
