@@ -48,6 +48,9 @@ metadata:
 | ハイパスで薄くしてカット | `dj_hermes_mix(move="fill", kind="hpf", to="B")` |
 | ロールしてから A | `dj_hermes_mix(move="fill", kind="roll", to="A", grid="8n")` |
 | タイムリピート（四分/八分/16分/32分音符、1 小節で Off） | `dj_hermes_mixer_repeat(div="16n")`（相対再生位置。fill roll の PCM カットインではない） |
+| テープストップ（全音符 1 小節） | `dj_hermes_mixer_tape(on=true, len="1n")`（即時。途中で止めるなら `on=false`） |
+| 四分音符のテープを 2 連 | `dj_hermes_mixer_tape(on=true, len="4n", reps=2)` |
+| 速い曲をテープで落として遅い曲へ | 主電源で `mixer_tape(on=true, len="1n")` → 途中で `on=false` → `dj_hermes_mix(move="cut", to=着地)`。BPM は共有のまま |
 | インパクト入れてカット | `dj_hermes_mix(move="fill", kind="drop", to="B")` |
 | 4 分でスイッチ | `grid="4n"` |
 

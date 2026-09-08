@@ -8,7 +8,7 @@ use crate::midi::MidiEvent;
 use crate::mixer::{MixAction, MixCommand, Mixer};
 use crate::sample::SampleBank;
 use crate::song::Song;
-use crate::transport::{RepeatDiv, Transport};
+use crate::transport::{RepeatDiv, TapeSpec, Transport};
 use crossbeam::channel::Sender;
 
 pub enum Command {
@@ -60,6 +60,9 @@ pub enum Command {
     },
     /// Time-repeat: `Some(div)` starts (immediate, one absolute bar); `None` clears.
     SetTimeRepeat(Option<RepeatDiv>),
+    /// Tape-stop: `Some(spec)` starts (immediate); `None` clears.
+    /// Mutually exclusive with time-repeat (last-wins).
+    SetTapeStop(Option<TapeSpec>),
     /// DJ mix macro (long / cut / fill). Hold is [`Command::HoldXFade`].
     Mix(MixCommand),
     /// Freeze current xfade gains immediately (no bar wait).
@@ -203,6 +206,8 @@ impl Engine {
                 self.decks[0].unload();
                 self.decks[1].unload();
                 self.transport.clear_repeat();
+                self.transport.clear_tape();
+                self.mixer.clear_tape();
                 self.mixer.clear_xfade();
                 self.mixer.clear_job();
                 self.mixer.gain_a = 0.0;
@@ -284,8 +289,24 @@ impl Engine {
             Command::SetTimeRepeat(div) => {
                 let sr = self.transport.sample_rate as f32;
                 match div {
-                    Some(d) => self.transport.start_repeat(d),
+                    Some(d) => {
+                        self.mixer.stop_tape(sr);
+                        self.transport.start_repeat(d);
+                    }
                     None => self.transport.clear_repeat(),
+                }
+                self.mixer.soften_click(sr);
+            }
+            Command::SetTapeStop(spec) => {
+                let sr = self.transport.sample_rate as f32;
+                if let Some(spec) = spec {
+                    self.transport.start_tape(spec);
+                    if let Some((origin, dur, shots)) = self.transport.tape_schedule() {
+                        self.mixer.start_tape(origin, dur, shots);
+                    }
+                } else {
+                    self.transport.clear_tape();
+                    self.mixer.stop_tape(sr);
                 }
                 self.mixer.soften_click(sr);
             }
@@ -436,6 +457,12 @@ impl Engine {
                 self.mixer.soften_click(sr);
             }
         }
+        if let Some(end) = self.transport.tape_end_sample() {
+            let start = self.transport.global_sample;
+            if start < end && start.saturating_add(frames as u64) >= end {
+                self.mixer.soften_click(sr);
+            }
+        }
         if self.scratch_a_l.len() < frames {
             self.scratch_a_l.resize(frames, 0.0);
             self.scratch_a_r.resize(frames, 0.0);
@@ -493,6 +520,7 @@ impl Engine {
             &self.scratch_b_l[..frames],
             &self.scratch_b_r[..frames],
             sr,
+            self.transport.global_sample,
         );
 
         for i in 0..frames {
@@ -501,7 +529,7 @@ impl Engine {
         }
 
         self.transport.advance(frames);
-        // Sounding playhead (relative during time-repeat) for highlight / punchcard.
+        // Sounding playhead (relative during time-repeat / tape-stop) for highlight / punchcard.
         self.playhead
             .store(self.transport.play_sample(), Ordering::Relaxed);
     }
@@ -1513,5 +1541,162 @@ $: note("g3").s("sawtooth")
         e.push_command(Command::SetTimeRepeat(Some(RepeatDiv::Quarter)));
         e.push_command(Command::Hush);
         assert!(e.transport.repeat_div().is_none());
+    }
+
+    #[test]
+    fn tape_stop_pending_load_still_applies_on_absolute_bar() {
+        let mut e = Engine::new(48_000, 120.0);
+        let bank = SampleBank::empty();
+        e.load_song_immediate(0, test_song("c3"));
+        let mut buf = stereo_buf(48_000);
+        e.process(&mut buf, &bank);
+        e.push_command(Command::SetTapeStop(Some(TapeSpec::ONE_BAR)));
+        e.push_command(Command::LoadSong {
+            deck: 0,
+            song: Box::new(test_song("e3")),
+        });
+        let src0 = e.decks[0].song_ref().unwrap().source.clone();
+        assert!(src0.contains("c3"), "load is pending until absolute bar 1");
+        let mut buf = stereo_buf(48_000);
+        e.process(&mut buf, &bank);
+        let mut buf = stereo_buf(1_000);
+        e.process(&mut buf, &bank);
+        assert_eq!(e.transport.bar_index(), 1);
+        assert!(
+            e.transport.tape_on(),
+            "tape should still be running when bar 1 applies"
+        );
+        let src = e.decks[0].song_ref().unwrap().source.clone();
+        assert!(
+            src.contains("e3"),
+            "pending LoadSong should apply on absolute bar 1 during tape: {src}"
+        );
+    }
+
+    #[test]
+    fn tape_stop_auto_off_after_one_bar_snaps_playhead() {
+        let mut e = Engine::new(48_000, 120.0);
+        let bank = SampleBank::empty();
+        e.push_command(Command::SetTapeStop(Some(TapeSpec::ONE_BAR)));
+        assert!(e.transport.tape_on());
+        let mut buf = stereo_buf(96_000);
+        e.process(&mut buf, &bank);
+        assert!(
+            !e.transport.tape_on(),
+            "tape should expire after one absolute bar"
+        );
+        assert_eq!(
+            e.playhead.load(Ordering::Relaxed),
+            e.transport.global_sample
+        );
+    }
+
+    #[test]
+    fn tape_stop_and_repeat_last_wins() {
+        let mut e = Engine::new(48_000, 120.0);
+        e.push_command(Command::SetTimeRepeat(Some(RepeatDiv::Sixteenth)));
+        e.push_command(Command::SetTapeStop(Some(TapeSpec::ONE_BAR)));
+        assert!(e.transport.tape_on());
+        assert!(e.transport.repeat_div().is_none());
+        e.push_command(Command::SetTimeRepeat(Some(RepeatDiv::Eighth)));
+        assert!(!e.transport.tape_on());
+        assert_eq!(e.transport.repeat_div(), Some(RepeatDiv::Eighth));
+    }
+
+    #[test]
+    fn hush_clears_tape_stop() {
+        let mut e = Engine::new(48_000, 120.0);
+        e.push_command(Command::SetTapeStop(Some(TapeSpec::ONE_BAR)));
+        e.push_command(Command::Hush);
+        assert!(!e.transport.tape_on());
+        assert!(!e.mixer.tape_on());
+    }
+
+    #[test]
+    fn tape_stop_reduces_midi_note_ons() {
+        let (h, log) = midi_log();
+        let mut e = Engine::new(48_000, 120.0);
+        e.set_midi(h.sender());
+        e.set_midi_only(true);
+        e.load_song_immediate(0, midi_song(r#"$: note("c3*16").s("sawtooth")"#));
+        let bank = SampleBank::empty();
+        let mut buf = stereo_buf(96_000);
+        e.process(&mut buf, &bank);
+        let ev = snap_midi(&log);
+        let ons = ev
+            .iter()
+            .filter(|x| matches!(x, crate::midi::MidiEvent::NoteOn { .. }))
+            .count();
+        drop(e);
+        drop(h);
+
+        let (h2, log2) = midi_log();
+        let mut e2 = Engine::new(48_000, 120.0);
+        e2.set_midi(h2.sender());
+        e2.set_midi_only(true);
+        e2.load_song_immediate(0, midi_song(r#"$: note("c3*16").s("sawtooth")"#));
+        e2.push_command(Command::SetTapeStop(Some(TapeSpec::ONE_BAR)));
+        let mut buf = stereo_buf(96_000);
+        e2.process(&mut buf, &bank);
+        let ev2 = snap_midi(&log2);
+        let ons_tape = ev2
+            .iter()
+            .filter(|x| matches!(x, crate::midi::MidiEvent::NoteOn { .. }))
+            .count();
+        assert!(
+            ons_tape < ons,
+            "tape should fire fewer Note Ons ({ons_tape}) than identity ({ons})"
+        );
+        drop(e2);
+        drop(h2);
+    }
+
+    #[test]
+    fn tape_quarter_expires_after_one_beat() {
+        let mut e = Engine::new(48_000, 120.0);
+        let bank = SampleBank::empty();
+        e.push_command(Command::SetTapeStop(TapeSpec::parse("4n", None).ok()));
+        assert_eq!(
+            e.transport.tape_spec().map(|s| s.as_status()).as_deref(),
+            Some("4n")
+        );
+        let mut buf = stereo_buf(24_000);
+        e.process(&mut buf, &bank);
+        assert!(!e.transport.tape_on());
+        assert_eq!(
+            e.playhead.load(Ordering::Relaxed),
+            e.transport.global_sample
+        );
+    }
+
+    #[test]
+    fn tape_two_quarters_then_off() {
+        let mut e = Engine::new(48_000, 120.0);
+        let bank = SampleBank::empty();
+        e.push_command(Command::SetTapeStop(TapeSpec::parse("4n*2", None).ok()));
+        let mut buf = stereo_buf(24_000);
+        e.process(&mut buf, &bank);
+        assert!(e.transport.tape_on(), "second 4n still running");
+        let mut buf = stereo_buf(24_000);
+        e.process(&mut buf, &bank);
+        assert!(!e.transport.tape_on());
+    }
+
+    #[test]
+    fn tape_cancel_midway_snaps_playhead() {
+        let mut e = Engine::new(48_000, 120.0);
+        let bank = SampleBank::empty();
+        e.push_command(Command::SetTapeStop(Some(TapeSpec::ONE_BAR)));
+        let mut buf = stereo_buf(24_000);
+        e.process(&mut buf, &bank);
+        assert!(e.transport.tape_on());
+        e.push_command(Command::SetTapeStop(None));
+        assert!(!e.transport.tape_on());
+        let mut buf = stereo_buf(1_000);
+        e.process(&mut buf, &bank);
+        assert_eq!(
+            e.playhead.load(Ordering::Relaxed),
+            e.transport.global_sample
+        );
     }
 }

@@ -111,6 +111,9 @@ pub struct StatusInfo {
     /// Time-repeat note value (`4n`/`8n`/`16n`/`32n`), or omitted when off.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub repeat: Option<String>,
+    /// Tape-stop length (`1n` / `4n*2`, …), omitted when off.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tape: Option<String>,
     /// Active mix macro, if any.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub mix: Option<MixStatusInfo>,
@@ -340,6 +343,14 @@ pub struct MixerRepeatReq {
     pub div: Option<String>,
 }
 
+/// Tape-stop. `on: true` starts; `on: false` clears. `len` is `1n`/`2n`/`4n`/`8n`.
+#[derive(Deserialize)]
+pub struct MixerTapeReq {
+    pub on: bool,
+    pub len: Option<String>,
+    pub reps: Option<u8>,
+}
+
 #[derive(Deserialize)]
 pub struct MixerCrossfaderReq {
     /// 0 = full A, 1 = full B (immediate; cancels multi-bar xfade).
@@ -408,6 +419,7 @@ pub(crate) fn snapshot(engine: &Arc<Mutex<Engine>>, deck_paths: Option<&DeckPath
         muted_b: muted_names(&e.decks[1]),
         delay_wet: e.mixer.held_delay_wet(),
         repeat: e.transport.repeat_div().map(|d| d.as_str().to_string()),
+        tape: e.transport.tape_spec().map(|s| s.as_status()),
         mix: e.mixer.mix_status().map(MixStatusInfo::from_mixer),
     }
 }
@@ -959,6 +971,28 @@ async fn mixer_repeat(
     Ok(StatusCode::NO_CONTENT)
 }
 
+async fn mixer_tape(
+    State(s): State<AppState>,
+    Json(r): Json<MixerTapeReq>,
+) -> Result<StatusCode, (StatusCode, Json<ErrRes>)> {
+    let cmd = tape_command_from_req(&r).map_err(bad)?;
+    s.tx.send(cmd).map_err(|e| bad(e.to_string()))?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+fn tape_command_from_req(r: &MixerTapeReq) -> Result<Command, String> {
+    if !r.on {
+        return Ok(Command::SetTapeStop(None));
+    }
+    let spec = match (r.len.as_deref(), r.reps) {
+        (None, None) => crate::transport::TapeSpec::ONE_BAR,
+        (Some(l), None) => crate::transport::TapeSpec::parse(l, None)?,
+        (None, Some(n)) => crate::transport::TapeSpec::new(crate::transport::TapeLen::Whole, n)?,
+        (Some(l), Some(n)) => crate::transport::TapeSpec::parse(l, Some(&n.to_string()))?,
+    };
+    Ok(Command::SetTapeStop(Some(spec)))
+}
+
 async fn mix(
     State(s): State<AppState>,
     Json(r): Json<MixReq>,
@@ -1051,6 +1085,7 @@ pub fn router(state: AppState) -> Router {
         .route("/mixer/filter", post(mixer_filter))
         .route("/mixer/fx", post(mixer_fx))
         .route("/mixer/repeat", post(mixer_repeat))
+        .route("/mixer/tape", post(mixer_tape))
         .route("/mixer/crossfader", post(mixer_crossfader))
         .route("/mix", post(mix))
         .route("/status", get(get_status))
@@ -1854,6 +1889,63 @@ mod tests {
         match rx.try_recv().unwrap() {
             Command::SetTimeRepeat(None) => {}
             _ => panic!("expected SetTimeRepeat None"),
+        }
+    }
+
+    #[tokio::test]
+    async fn mixer_tape_on_and_off() {
+        let (state, rx) = test_state();
+        let app = router(state.clone());
+        let res = app
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/mixer/tape")
+                    .header("content-type", "application/json")
+                    .body(Body::from(r#"{"on":true}"#))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(res.status(), StatusCode::NO_CONTENT);
+        match rx.try_recv().unwrap() {
+            Command::SetTapeStop(Some(s)) => assert_eq!(s.as_status(), "1n"),
+            _ => panic!("expected SetTapeStop 1n"),
+        }
+        let app = router(state);
+        let res = app
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/mixer/tape")
+                    .header("content-type", "application/json")
+                    .body(Body::from(r#"{"on":false}"#))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(res.status(), StatusCode::NO_CONTENT);
+        match rx.try_recv().unwrap() {
+            Command::SetTapeStop(None) => {}
+            _ => panic!("expected SetTapeStop None"),
+        }
+        let (state, rx) = test_state();
+        let app = router(state);
+        let res = app
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/mixer/tape")
+                    .header("content-type", "application/json")
+                    .body(Body::from(r#"{"on":true,"len":"4n","reps":2}"#))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(res.status(), StatusCode::NO_CONTENT);
+        match rx.try_recv().unwrap() {
+            Command::SetTapeStop(Some(s)) => assert_eq!(s.as_status(), "4n*2"),
+            _ => panic!("expected SetTapeStop 4n*2"),
         }
     }
 

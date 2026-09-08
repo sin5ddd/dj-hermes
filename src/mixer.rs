@@ -26,6 +26,8 @@ const RISER_GAIN: f32 = 0.35;
 /// Click-soften on switch/cut snaps (AGENTS.md). Not a buffer split.
 const GAIN_RAMP_SEC: f32 = 0.005;
 const DELAY_MAX_SR: f32 = 96_000.0;
+/// Preallocated tape-stop ring (~4 s at 60 BPM). Never `resize` on the audio thread.
+const TAPE_RING_SEC: f32 = 4.0;
 
 /// Equal-power crossfade over N bars (sample range).
 #[derive(Debug, Clone)]
@@ -415,6 +417,116 @@ impl ChannelEq {
     }
 }
 
+#[derive(Clone, Copy)]
+struct TapeWindow {
+    origin_abs: u64,
+    dur: u64,
+    shots: u8,
+    last_shot: Option<u64>,
+}
+
+impl TapeWindow {
+    fn total_end(self) -> u64 {
+        self.origin_abs
+            .saturating_add(self.dur.max(1).saturating_mul(self.shots.max(1) as u64))
+    }
+}
+
+/// Linear-interpolation varispeed: write 1:1, read at `rate`.
+struct Varispeed {
+    ring_l: Vec<f32>,
+    ring_r: Vec<f32>,
+    cap: usize,
+    write: usize,
+    read: f64,
+    last_l: f32,
+    last_r: f32,
+    fade_i: u32,
+    fade_n: u32,
+    fade_from_l: f32,
+    fade_from_r: f32,
+}
+
+impl Varispeed {
+    fn new(cap: usize) -> Self {
+        let cap = cap.max(4);
+        Self {
+            ring_l: vec![0.0; cap],
+            ring_r: vec![0.0; cap],
+            cap,
+            write: 0,
+            read: 0.0,
+            last_l: 0.0,
+            last_r: 0.0,
+            fade_i: 0,
+            fade_n: 0,
+            fade_from_l: 0.0,
+            fade_from_r: 0.0,
+        }
+    }
+
+    fn reset(&mut self) {
+        self.write = 0;
+        self.read = 0.0;
+        self.last_l = 0.0;
+        self.last_r = 0.0;
+        self.fade_i = 0;
+        self.fade_n = 0;
+        self.fade_from_l = 0.0;
+        self.fade_from_r = 0.0;
+    }
+
+    fn fading(&self) -> bool {
+        self.fade_n > 0 && self.fade_i < self.fade_n
+    }
+
+    fn begin_fade_to_dry(&mut self, sr: f32) {
+        self.fade_from_l = self.last_l;
+        self.fade_from_r = self.last_r;
+        let n = (GAIN_RAMP_SEC * sr.max(1.0)).round() as u32;
+        self.fade_n = n.max(1);
+        self.fade_i = 0;
+        self.write = 0;
+        self.read = 0.0;
+    }
+
+    fn process(&mut self, l: f32, r: f32, rate: f64) -> (f32, f32) {
+        let cap = self.cap;
+        let wi = self.write % cap;
+        self.ring_l[wi] = l;
+        self.ring_r[wi] = r;
+        self.write = self.write.wrapping_add(1);
+
+        let max_lag = (cap - 2) as f64;
+        if (self.write as f64) - self.read > max_lag {
+            self.read = self.write as f64 - max_lag;
+        }
+
+        let idx = self.read.floor().max(0.0) as usize;
+        let frac = (self.read - idx as f64) as f32;
+        let i0 = idx % cap;
+        let i1 = (i0 + 1) % cap;
+        let ol = self.ring_l[i0].mul_add(1.0 - frac, self.ring_l[i1] * frac);
+        let or_ = self.ring_r[i0].mul_add(1.0 - frac, self.ring_r[i1] * frac);
+        self.read += rate.max(0.0);
+        self.last_l = ol;
+        self.last_r = or_;
+        (ol, or_)
+    }
+
+    fn mix_dry(&mut self, dry_l: f32, dry_r: f32) -> (f32, f32) {
+        if !self.fading() {
+            return (dry_l, dry_r);
+        }
+        let t = self.fade_i as f32 / self.fade_n as f32;
+        self.fade_i += 1;
+        (
+            self.fade_from_l + (dry_l - self.fade_from_l) * t,
+            self.fade_from_r + (dry_r - self.fade_from_r) * t,
+        )
+    }
+}
+
 /// Third layer above decks: how A/B are mixed and filtered.
 pub struct Mixer {
     pub gain_a: f32,
@@ -458,6 +570,8 @@ pub struct Mixer {
     ramp_from_b: f32,
     ramp_i: u32,
     ramp_n: u32,
+    tape: Option<TapeWindow>,
+    varispeed: Varispeed,
 }
 
 impl Default for Mixer {
@@ -469,6 +583,7 @@ impl Default for Mixer {
 impl Mixer {
     pub fn new() -> Self {
         let delay_n = (MAX_DELAY_SEC * DELAY_MAX_SR).ceil() as usize;
+        let tape_n = (TAPE_RING_SEC * DELAY_MAX_SR).ceil() as usize + 2;
         Self {
             gain_a: 1.0,
             gain_b: 0.0,
@@ -507,6 +622,8 @@ impl Mixer {
             ramp_from_b: 0.0,
             ramp_i: 0,
             ramp_n: 0,
+            tape: None,
+            varispeed: Varispeed::new(tape_n),
         }
     }
 
@@ -677,6 +794,34 @@ impl Mixer {
     /// ~5ms equal-power hold; used when time-repeat starts or jumps back to absolute.
     pub fn soften_click(&mut self, sr: f32) {
         self.begin_gain_ramp(sr);
+    }
+
+    /// Arm post-mix varispeed. `dur` is one shot; `shots` consecutive stabs snap between them.
+    pub fn start_tape(&mut self, origin_abs: u64, dur: u64, shots: u8) {
+        self.tape = Some(TapeWindow {
+            origin_abs,
+            dur: dur.max(1),
+            shots: shots.max(1),
+            last_shot: None,
+        });
+        self.varispeed.reset();
+    }
+
+    /// Drop unread ring and fade last wet sample to dry (~5ms).
+    pub fn stop_tape(&mut self, sr: f32) {
+        if self.tape.take().is_some() {
+            self.varispeed.begin_fade_to_dry(sr);
+        }
+    }
+
+    /// Immediate discard (hush). No fade.
+    pub fn clear_tape(&mut self) {
+        self.tape = None;
+        self.varispeed.reset();
+    }
+
+    pub fn tape_on(&self) -> bool {
+        self.tape.is_some()
     }
 
     fn begin_gain_ramp(&mut self, sr: f32) {
@@ -1314,6 +1459,7 @@ impl Mixer {
     }
 
     /// Mix A/B stereo buffers with channel EQ, faders, master filter, linked compressor.
+    /// `head_sample` is the absolute sample of `out[0]` (tape-stop varispeed).
     #[allow(clippy::too_many_arguments)]
     pub fn mix(
         &mut self,
@@ -1324,6 +1470,7 @@ impl Mixer {
         b_l: &[f32],
         b_r: &[f32],
         sample_rate: f32,
+        head_sample: u64,
     ) {
         let n = out_l
             .len()
@@ -1427,6 +1574,39 @@ impl Mixer {
                 r = cr;
             }
 
+            if self.tape.is_some() || self.varispeed.fading() {
+                let abs = head_sample.saturating_add(i as u64);
+                let window = self.tape.filter(|w| abs < w.total_end());
+                if let Some(w) = window {
+                    let dur = w.dur.max(1);
+                    let shot = abs.saturating_sub(w.origin_abs) / dur;
+                    if w.last_shot != Some(shot) {
+                        if w.last_shot.is_some() {
+                            self.varispeed.reset();
+                        }
+                        if let Some(t) = self.tape.as_mut() {
+                            t.last_shot = Some(shot);
+                        }
+                    }
+                    let shot_start = w.origin_abs.saturating_add(shot.saturating_mul(dur));
+                    let rate = crate::transport::tape_rate_at_abs(
+                        abs,
+                        shot_start,
+                        shot_start.saturating_add(dur),
+                    );
+                    let (ol, or_) = self.varispeed.process(l, r, rate);
+                    l = ol;
+                    r = or_;
+                } else {
+                    if self.tape.take().is_some() {
+                        self.varispeed.begin_fade_to_dry(sr);
+                    }
+                    let (ol, or_) = self.varispeed.mix_dry(l, r);
+                    l = ol;
+                    r = or_;
+                }
+            }
+
             out_l[i] = l.clamp(-1.0, 1.0);
             out_r[i] = r.clamp(-1.0, 1.0);
         }
@@ -1489,7 +1669,7 @@ mod tests {
         let mut out_l = vec![0.0f32; n];
         let mut out_r = vec![0.0f32; n];
         // Center mono sources: same on L and R (equal-power center would scale; tests use direct L/R).
-        m.mix(&mut out_l, &mut out_r, a, a, b, b, sr);
+        m.mix(&mut out_l, &mut out_r, a, a, b, b, sr, 0);
         for i in 0..n {
             out[i] = 0.5 * (out_l[i] + out_r[i]);
         }
@@ -1922,7 +2102,7 @@ mod tests {
         let b = [0.0f32; 8];
         let mut out_l = [0.0f32; 8];
         let mut out_r = [0.0f32; 8];
-        m.mix(&mut out_l, &mut out_r, &a_l, &a_r, &b, &b, 48_000.0);
+        m.mix(&mut out_l, &mut out_r, &a_l, &a_r, &b, &b, 48_000.0, 0);
         assert!(out_l[0].abs() > 1e-6);
         for x in &out_l[1..] {
             assert!(
@@ -1935,5 +2115,42 @@ mod tests {
         let done = m.tick_job(8, 48_000.0);
         assert!(done);
         assert!((m.gain_b - 1.0).abs() < 1e-5);
+    }
+
+    #[test]
+    fn varispeed_half_rate_doubles_sine_period() {
+        let mut v = Varispeed::new(8_000);
+        let sr = 48_000.0f32;
+        let freq = 440.0f32;
+        let n = 12_000usize;
+        let mut out = vec![0.0f32; n];
+        for (i, slot) in out.iter_mut().enumerate() {
+            let s = (2.0 * std::f32::consts::PI * freq * (i as f32) / sr).sin() * 0.5;
+            let (l, _) = v.process(s, s, 0.5);
+            *slot = l;
+        }
+        // Skip the first cycle of interpolation settle; measure +zero crossings.
+        let start = 2_000usize;
+        let mut crossings = Vec::new();
+        for (i, pair) in out.windows(2).enumerate().skip(start) {
+            if pair[0] < 0.0 && pair[1] >= 0.0 {
+                crossings.push(i + 1);
+            }
+        }
+        assert!(
+            crossings.len() >= 8,
+            "need several crossings, got {}",
+            crossings.len()
+        );
+        let mut gaps = Vec::new();
+        for w in crossings.windows(2) {
+            gaps.push((w[1] - w[0]) as f64);
+        }
+        let mean = gaps.iter().sum::<f64>() / gaps.len() as f64;
+        let expected = sr as f64 / freq as f64 * 2.0; // period at rate 0.5
+        assert!(
+            (mean - expected).abs() < expected * 0.08,
+            "mean period {mean} expected ~{expected}"
+        );
     }
 }

@@ -268,6 +268,19 @@ fn tools_list(session: SessionKind) -> Value {
                 }
             },
             {
+                "name": "dj_hermes_mixer_tape",
+                "description": "Mixer: tape-stop. Immediate. Slows the mixed output (post compressor) and the playhead over len (1n=whole/1 bar, 2n=half, 4n=quarter, 8n=eighth), then snaps back. reps=2 runs that shot twice in a row (hype double-stab). on=false cancels now (then mix cut if switching songs). Mutually exclusive with mixer_repeat (last-wins). --midi-only: fewer Note Ons, SEQTRAK pitch does not drop.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "on": { "type": "boolean", "description": "true starts, false clears" },
+                        "len": { "type": "string", "description": "1n | 2n | 4n | 8n (default 1n)" },
+                        "reps": { "type": "integer", "description": "consecutive shots 1..=8 (default 1)" }
+                    },
+                    "required": ["on"]
+                }
+            },
+            {
                 "name": "dj_hermes_mixer_crossfader",
                 "description": "Mixer: set equal-power crossfader position immediately (0=full A, 1=full B). Cancels multi-bar xfade animation.",
                 "inputSchema": {
@@ -466,7 +479,7 @@ fn tools_list(session: SessionKind) -> Value {
             },
             {
                 "name": "dj_hermes_status",
-                "description": "Transport: get decks, BPM, bars, mixer gains, EQ (eq_a/eq_b), filters, delay_wet, repeat, crossfader, muted_a/muted_b.",
+                "description": "Transport: get decks, BPM, bars, mixer gains, EQ (eq_a/eq_b), filters, delay_wet, repeat, tape, crossfader, muted_a/muted_b.",
                 "inputSchema": {
                     "type": "object",
                     "properties": {}
@@ -596,6 +609,21 @@ fn tools_call_http(
                 }
             }
             http_post(client, &format!("{base}/mixer/repeat"), Value::Object(body))
+        }
+        "dj_hermes_mixer_tape" => {
+            let on = args
+                .get("on")
+                .and_then(|v| v.as_bool())
+                .ok_or_else(|| rpc_error(-32602, "on required (boolean)"))?;
+            let mut body = Map::new();
+            body.insert("on".into(), json!(on));
+            if let Some(v) = args.get("len") {
+                body.insert("len".into(), v.clone());
+            }
+            if let Some(v) = args.get("reps") {
+                body.insert("reps".into(), v.clone());
+            }
+            http_post(client, &format!("{base}/mixer/tape"), Value::Object(body))
         }
         "dj_hermes_mixer_crossfader" => {
             let pos = args
@@ -783,6 +811,7 @@ fn tools_call_local(state: &AppState, name: &str, args: &Value) -> Result<Value,
         "dj_hermes_mixer_filter" => local_mixer_filter(state, args),
         "dj_hermes_mixer_fx" => local_mixer_fx(state, args),
         "dj_hermes_mixer_repeat" => local_mixer_repeat(state, args),
+        "dj_hermes_mixer_tape" => local_mixer_tape(state, args),
         "dj_hermes_mixer_crossfader" => local_mixer_crossfader(state, args),
         "dj_hermes_xfade" => local_xfade(state, args),
         "dj_hermes_mix" => local_mix(state, args),
@@ -917,6 +946,39 @@ fn local_mixer_fx(state: &AppState, args: &Value) -> Result<String, String> {
             feedback,
         },
     )?;
+    Ok("ok".into())
+}
+
+fn local_mixer_tape(state: &AppState, args: &Value) -> Result<String, String> {
+    let on = match args.get("on") {
+        Some(Value::Bool(b)) => *b,
+        None | Some(Value::Null) => return Err("on required (boolean)".into()),
+        Some(_) => return Err("on must be a boolean".into()),
+    };
+    if !on {
+        send_cmd(state, Command::SetTapeStop(None))?;
+        return Ok("ok".into());
+    }
+    let len = match args.get("len") {
+        None | Some(Value::Null) => None,
+        Some(Value::String(s)) => Some(s.as_str()),
+        Some(_) => return Err("len must be a string (1n|2n|4n|8n)".into()),
+    };
+    let reps = match args.get("reps") {
+        None | Some(Value::Null) => None,
+        Some(v) => {
+            let n = v
+                .as_u64()
+                .ok_or_else(|| "reps must be an integer 1..=8".to_string())?;
+            Some(n.to_string())
+        }
+    };
+    let spec = match (len, reps.as_deref()) {
+        (None, None) => crate::transport::TapeSpec::ONE_BAR,
+        (Some(l), r) => crate::transport::TapeSpec::parse(l, r)?,
+        (None, Some(r)) => crate::transport::TapeSpec::parse("1n", Some(r))?,
+    };
+    send_cmd(state, Command::SetTapeStop(Some(spec)))?;
     Ok("ok".into())
 }
 
@@ -1567,16 +1629,18 @@ mod tests {
     fn tools_list_mixer_deck_transport_no_set_code() {
         let v = tools_list(SessionKind::Dj);
         let tools = v["tools"].as_array().unwrap();
-        assert_eq!(tools.len(), 19);
+        assert_eq!(tools.len(), 20);
         let names: Vec<_> = tools.iter().filter_map(|t| t["name"].as_str()).collect();
         assert!(!names.contains(&"dj_hermes_set_code"));
         assert_eq!(names[0], "dj_hermes_mixer_eq");
         assert_eq!(names[1], "dj_hermes_mixer_filter");
         assert_eq!(names[2], "dj_hermes_mixer_fx");
         assert_eq!(names[3], "dj_hermes_mixer_repeat");
-        assert_eq!(names[4], "dj_hermes_mixer_crossfader");
+        assert_eq!(names[4], "dj_hermes_mixer_tape");
+        assert_eq!(names[5], "dj_hermes_mixer_crossfader");
         assert!(names.contains(&"dj_hermes_mixer_fx"));
         assert!(names.contains(&"dj_hermes_mixer_repeat"));
+        assert!(names.contains(&"dj_hermes_mixer_tape"));
         assert!(names.contains(&"dj_hermes_xfade"));
         assert!(names.contains(&"dj_hermes_mix"));
         assert!(names.contains(&"dj_hermes_set_bpm"));
@@ -1681,7 +1745,7 @@ mod tests {
             "method": "tools/list"
         });
         let resp = handle_rpc(&list, &backend).expect("list reply");
-        assert_eq!(resp["result"]["tools"].as_array().unwrap().len(), 19);
+        assert_eq!(resp["result"]["tools"].as_array().unwrap().len(), 20);
     }
 
     #[test]
@@ -1689,11 +1753,12 @@ mod tests {
         let v = tools_list(SessionKind::Play);
         let tools = v["tools"].as_array().unwrap();
         let names: Vec<_> = tools.iter().filter_map(|t| t["name"].as_str()).collect();
-        assert_eq!(names.len(), 13);
+        assert_eq!(names.len(), 14);
         for mix in MIX_TOOL_NAMES {
             assert!(!names.contains(mix), "{mix} should be hidden in play");
         }
         assert!(names.contains(&"dj_hermes_mixer_repeat"));
+        assert!(names.contains(&"dj_hermes_mixer_tape"));
         assert!(names.contains(&"dj_hermes_apply_song"));
         assert!(names.contains(&"dj_hermes_set_bpm"));
         let load = tools

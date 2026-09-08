@@ -15,7 +15,7 @@ use crate::song::{
     looks_like_slot_index, normalize_slot_index, parse_song, resolve_song_path,
     resolve_user_song_save_path, Song, MAX_SONG_CONTENT_BYTES,
 };
-use crate::transport::RepeatDiv;
+use crate::transport::{RepeatDiv, TapeSpec};
 
 /// Which path is loaded on deck A / B (for reload targeting).
 pub type DeckPaths = Arc<Mutex<[Option<PathBuf>; 2]>>;
@@ -46,6 +46,7 @@ filter lpf <hz>|off post-mix LPF (held)
 filter hpf <hz>|off post-mix HPF (held)
 delay <0..1>        post-mix delay wet (held)
 repeat 4n|8n|16n|32n|off  time-repeat (quarter/8th/16th/32nd notes, 1 bar)
+tape [1n|2n|4n|8n] [reps]  tape-stop (immediate). default 1n. 4n 2 = two quarters. off cancels
 bpm <n>             BPM from next bar
 hush                stop all (immediate)  [operator]
 status
@@ -79,6 +80,7 @@ filter lpf <hz>|off post-mix LPF (held)
 filter hpf <hz>|off post-mix HPF (held)
 delay <0..1>        post-mix delay wet (held)
 repeat 4n|8n|16n|32n|off  time-repeat (quarter/8th/16th/32nd notes, 1 bar)
+tape [1n|2n|4n|8n] [reps]  tape-stop (immediate). default 1n. 4n 2 = two quarters. off cancels
 bpm <n>             BPM from next bar
 hush                stop all (immediate)  [operator]
 status
@@ -287,6 +289,7 @@ pub fn exec_in(
         "filter" => return exec_filter(&args, tx),
         "delay" => return exec_delay(&args, tx),
         "repeat" => return exec_repeat(&args, tx),
+        "tape" => return exec_tape(&args, tx),
         "x" | "xfade" => {
             let bars = args
                 .get(1)
@@ -626,6 +629,35 @@ fn exec_repeat(args: &[&str], tx: &Sender<Command>) -> ExecResult {
     }
 }
 
+fn exec_tape(args: &[&str], tx: &Sender<Command>) -> ExecResult {
+    let rest = &args[1..];
+    if rest
+        .first()
+        .is_some_and(|t| matches!(*t, "off" | "0" | "none" | "false"))
+    {
+        let _ = tx.send(Command::SetTapeStop(None));
+        return ExecResult::msg("tape off");
+    }
+    let spec = if rest.is_empty() || matches!(rest[0], "on" | "true") {
+        let extra = if rest.len() > 1 { Some(rest[1]) } else { None };
+        if let Some(tok) = extra {
+            match TapeSpec::parse(tok, rest.get(2).copied()) {
+                Ok(s) => s,
+                Err(e) => return ExecResult::msg(e),
+            }
+        } else {
+            TapeSpec::ONE_BAR
+        }
+    } else {
+        match TapeSpec::parse(rest[0], rest.get(1).copied()) {
+            Ok(s) => s,
+            Err(e) => return ExecResult::msg(e),
+        }
+    };
+    let _ = tx.send(Command::SetTapeStop(Some(spec)));
+    ExecResult::msg(format!("tape {}", spec.as_status()))
+}
+
 fn exec_delay(args: &[&str], tx: &Sender<Command>) -> ExecResult {
     if args.len() < 2 {
         return ExecResult::msg("usage: delay <0..1>");
@@ -779,8 +811,13 @@ fn status(deck_paths: &DeckPaths, engine: Option<&Arc<Mutex<Engine>>>) -> ExecRe
                 .repeat_div()
                 .map(|d| d.as_str())
                 .unwrap_or("off");
+            let tape = e
+                .transport
+                .tape_spec()
+                .map(|s| s.as_status())
+                .unwrap_or_else(|| "off".into());
             messages.push(format!(
-                "bpm={:.1} transport_bar={} repeat={repeat} gainA={:.2} gainB={:.2} songs={:?}/{:?}",
+                "bpm={:.1} transport_bar={} repeat={repeat} tape={tape} gainA={:.2} gainB={:.2} songs={:?}/{:?}",
                 e.transport.bpm,
                 gbar,
                 e.mixer.gain_a,
@@ -955,6 +992,26 @@ mod tests {
         match rx.try_recv().unwrap() {
             Command::SetTimeRepeat(None) => {}
             _ => panic!("expected SetTimeRepeat None"),
+        }
+        let r = exec("tape", &tx, &paths, None);
+        assert!(r.messages[0].contains("1n"), "{:?}", r.messages);
+        match rx.try_recv().unwrap() {
+            Command::SetTapeStop(Some(s)) => assert_eq!(s, TapeSpec::ONE_BAR),
+            _ => panic!("expected SetTapeStop 1n"),
+        }
+        let r = exec("tape 4n 2", &tx, &paths, None);
+        assert!(r.messages[0].contains("4n*2"), "{:?}", r.messages);
+        match rx.try_recv().unwrap() {
+            Command::SetTapeStop(Some(s)) => {
+                assert_eq!(s.as_status(), "4n*2");
+            }
+            _ => panic!("expected SetTapeStop 4n*2"),
+        }
+        let r = exec("tape off", &tx, &paths, None);
+        assert!(r.messages[0].contains("off"));
+        match rx.try_recv().unwrap() {
+            Command::SetTapeStop(None) => {}
+            _ => panic!("expected SetTapeStop None"),
         }
     }
 
