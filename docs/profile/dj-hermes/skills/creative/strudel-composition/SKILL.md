@@ -1,7 +1,7 @@
 ---
 name: strudel-composition
 description: "Use when writing a dj-hermes song: 7–8 $: tracks (drums, bass 1–2, three melody instruments, chords, pad), 4-bar phrases, dj_hermes_apply_song (save only to persist)."
-version: 5.4.2
+version: 5.5.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -26,16 +26,16 @@ dj-hermes の曲は **`$:` を重ねたループを、演奏しながら 1 本�
 - 演奏形式: `setcpm` + **`$:` トラック**のみ（鳴らすのは `dj_hermes_apply_song`）
 - mini-notation は文字列の中だけ（`s("...")` / `note("...")`）
 - **新規の既定: 7–8 本**（ドラム＋ベース 1～2＋メロディ楽器 3＋コード＋パッド）
-- **繰り返し周期の既定は 4 小節**（1 サイクル＝1 小節のまま。`.scale("<…>")` と 4 子以上の `<>` で周期を延ばす）。**Future Bass** は 16 小節の `.scale`（16 子。`cat` ではない → **strudel-genre-future-bass**）。**Minimal Techno** は 16 小節のミュートマップ（各トラックの `<>` 16 子。和声の `.scale` は 4 子のままでよい → **strudel-genre-minimal-techno**）
+- **繰り返し周期の既定は 4 小節**（1 サイクル＝1 小節のまま。`.scale("<…>")` と 4 子以上の `<>` で周期を延ばす）。**Future Bass** と **Kawaii Future Bass** は 16 小節の `.scale`（16 子。`cat` ではない → **strudel-genre-future-bass** / **strudel-genre-kawaii-future-bass**）。**Minimal Techno** は 16 小節のミュートマップ（各トラックの `<>` 16 子。和声の `.scale` は 4 子のままでよい → **strudel-genre-minimal-techno**）
 - **16 小節 `cat` は既定にしない**（ライブ差分が重い）。プリセットの A/B は最大 8 引数
 - ジャンルのグリッド・フック次数は **strudel-genre-*** の Pattern。**音色は同 Skill のパレット**からスロットごとに選ぶ（フェンスの `.s()` を毎回コピーしない）
 - **音色・サンプル**: ドラムは短い `bd`/`sd`/… + 任意 `.bank` または `part:slug`。メロ／コード／パッドはカタログ PCM（`plk:` / `ep:` / `ld:` / `pf:` / `dr:` / `ps:`）か、ジャンルパレットが許した波形 / `wt_*` / ライブ `.fm`。波形をメロ／コード／パッドの既定にしない（サブ・303・Reese・wobble・zap はジャンルが芯と書いたスロットだけ。→ **strudel-sound-design** / **strudel-pcm-catalog**）
 
 | 場面 | 既定 |
 | --- | --- |
-| 新規曲・プリセット（`dj_hermes_apply_song`） | 7–8 本、4 小節フレーズ（Future Bass は 9 本・16 小節 scale。Minimal Techno は 8 本・16 小節ミュート） |
+| 新規曲・プリセット（`dj_hermes_apply_song`） | 7–8 本、4 小節フレーズ（Future Bass / Kawaii Future Bass は 9 本・16 小節 scale。Minimal Techno は 8 本・16 小節ミュート） |
 | 来場者の一言編集 | **1 トラック or 1 メソッド**（全文を作り直さない） |
-| 同梱 `songs/<genre>/` | 7–8 本、4 小節フレーズ（Future Bass は 9 本・16 小節 scale。Minimal Techno は 8 本・16 小節ミュート） |
+| 同梱 `songs/<genre>/` | 7–8 本、4 小節フレーズ（Future Bass / Kawaii Future Bass は 9 本・16 小節 scale。Minimal Techno は 8 本・16 小節ミュート） |
 
 ## スロット（`$:` 本数の正本）
 
@@ -51,17 +51,17 @@ dj-hermes の曲は **`$:` を重ねたループを、演奏しながら 1 本�
 | 6 | `// arp` | 対旋律 / アルペジオ / メロディック perc |
 | 7 | `// chords` | ブロック和音。`ep:*` で `[0,2,4]` 等。`c3'maj` は root のみなので使わない |
 | 8 | `// pad` | ジャンルパレットの pad。`pf:ff` なら次数 `0`（録音が 5 度）。orbit をリードと分ける |
-| 9 | `// strings` | Future Bass だけ。長いクワイア／広いパッド（カタログに violin は無い）。orbit は pad と同じ |
+| 9 | `// strings` | Future Bass と Kawaii Future Bass だけ。長いホールド（カタログに violin は無い）。orbit は pad と同じ |
 
 数え方:
 
 - ベース 1 本: drums + bass + lead + hook + arp + chords + pad = **7**。8 本目は `// perc`（毎小節撃たないワンショット）か対旋律。Minimal Techno の 8 本目は `// fx`
 - ベース 2 本: drums + bass + bass-mid + lead + hook + arp + chords + pad = **8**
 - **duck 例外**: キックだけ別 `$:`（`duckorbit`）。ハットは 2 本目。この 2 本でドラム枠。残り 6 = bass 1 + メロ 3 + chords + pad。2 本目ベースは足さない
-- **Future Bass 例外**: duck 分割のうえ `// strings` を足して **9 本**。繰り返しは **16 小節**（`.scale` 16 子。`cat` ではない）
+- **Future Bass / Kawaii Future Bass 例外**: duck 分割のうえ `// strings` を足して **9 本**。繰り返しは **16 小節**（`.scale` 16 子。`cat` ではない）。ドラム／ベース／リードは 1 小節ループにしない。`<>` の子は **同じウェイト**（8 分なら 8）。王道・ベルは kawaii、スーパーソーの壁は future-bass（混ぜない）
 - **Minimal Techno 例外**: **8 本**（7 + `// fx`）。繰り返しは **16 小節ミュート**（キック常時、他は `<>` 16 子でオンオフ。和声は 4 小節 `.scale`。`cat` ではない）。ハット既定は裏拍オープン `[~ oh]*4`（下表の `hh*8` にしない）。マップとダーク FX は **strudel-genre-minimal-techno**
 - **Electro 例外**: フックはスーパーソー（`ld:ss`）。pitched は `C2:`（arp は `C3:`）。PCM も他ジャンルの `C4:` native に上げない → **strudel-genre-electro**
-- 目標 **7–8 本**。9 本以上は既定にしない（上の Future Bass 例外だけ 9 本）
+- 目標 **7–8 本**。9 本以上は既定にしない（上の Future Bass / Kawaii 例外だけ 9 本）
 
 各ジャンルのグリッドは Pattern、音色は **音色パレット**（**strudel-genre-***）。
 
@@ -69,9 +69,9 @@ dj-hermes の曲は **`$:` を重ねたループを、演奏しながら 1 本�
 
 1 サイクル = 1 小節（エンジン）。**繰り返し周期**を 4 小節にする。
 
-1. 和声: 既定 4 小節 `.scale("<Root:mode …>")`。次数パターンは固定。Future Bass は 16 子。Minimal Techno の和声は 4 子のまま（16 子はミュート）
-2. メロ / ベース: `<>` の子を **4 個以上**（1 小節同じフレーズを既定にしない）。Minimal Techno の ostinato は 1 小節のままでよい（16 子はオン／オフ）
-3. ドラム: 1 小節骨格は可。4 小節目だけフィル `..., <~ ~ ~ [fill]>`
+1. 和声: 既定 4 小節 `.scale("<Root:mode …>")`。次数パターンは固定。Future Bass / Kawaii Future Bass は 16 子。Minimal Techno の和声は 4 子のまま（16 子はミュート）
+2. メロ / ベース: `<>` の子を **4 個以上**（1 小節同じフレーズを既定にしない）。Minimal Techno の ostinato は 1 小節のままでよい（16 子はオン／オフ）。Future Bass / Kawaii のベースは **8 子以上**
+3. ドラム: 1 小節骨格は可。4 小節目だけフィル `..., <~ ~ ~ [fill]>`。Future Bass / Kawaii はキックを 4 子以上の `<>` にし、ハット連打は 8/16 小節目の末だけ（4 小節ごと `[hh*16]` は禁止）
 4. 長い PCM FX: `<fx:up ~ ~ ~>`（4 小節に 1 回）
 5. `cat()`: プリセットで A/B を分けるときだけ、**最大 8 引数**
 
@@ -174,7 +174,7 @@ $: note("0 0 2 4").scale("C2:minor").s("sawtooth").lpf(450).gain(0.5)
 | `bd sd hh` | **スペース** → 順再生（ウェイト既定 1） |
 | `bd,sd` / `[bd,sd]` | **カンマ** → **同時再生** |
 | `bd*4` | 1 サイクルに 4 回（密度アップ） |
-| `a@2 b` | **`@` elongate** — 時間ウェイト（a が b の 2 倍） |
+| `a@2 b` | **`@` elongate** — 時間ウェイト（a が b の 2 倍）。`<>` の子どうしは **合計ウェイトを揃える**（8 分グリッドなら 8。`[4@2 7 9@2  7 4 2 0]` は 9 なのでズレる） |
 | `~` | 休符 |
 | `[a b]` | 細分化シーケンス |
 | `<a b c>` | サイクルまたぎで 1 つずつ（同時ではない） |
@@ -324,11 +324,12 @@ $: note("0 2 4 0").scale("C3:minor").s("piano-acoustic_soft").gain(0.35)
 9. 無い PCM キー → 無音。slug は INDEX で確認。長い PCM は毎小節撃たない
 10. 新規 apply でジャンルフェンスの `.s()` を全コピーする（パレットから選ぶ）
 11. 同一曲の lead と hook が同じ `.s()`（Reese 分割以外）
+12. `<>` の子で `@` 合計が違う（Future Bass / Kawaii のリフレインがドラムからズレる）
 
 ## Checklist
 
-- [ ] `setcpm` + **7–8 本**の `$:`（drums、bass 1–2、lead/hook/arp、chords、pad）。Future Bass は 9 本（`// strings`）。Minimal Techno は 8 本（`// fx`）
-- [ ] 4 小節フレーズ（`.scale("<…>")` 4 個 または `<>` 4 子）。1 小節同一繰り返しだけにしない。Future Bass は 16 子 scale。Minimal Techno は 16 子ミュート（和声は 4 子）
+- [ ] `setcpm` + **7–8 本**の `$:`（drums、bass 1–2、lead/hook/arp、chords、pad）。Future Bass / Kawaii Future Bass は 9 本（`// strings`）。Minimal Techno は 8 本（`// fx`）
+- [ ] 4 小節フレーズ（`.scale("<…>")` 4 個 または `<>` 4 子）。1 小節同一繰り返しだけにしない。Future Bass / Kawaii は 16 子 scale。Minimal Techno は 16 子ミュート（和声は 4 子）
 - [ ] ドラムは原則 1 本の短い `s("bd …")`（キットは `.bank` / `part:slug`）。duck キックのみ分離
 - [ ] ピッチは可能なら次数 + `.scale`。PCM は `C4:`、シンセサブは `C2:`
 - [ ] メロ 3 本は掛け合い。コード 3 音まで。pad はジャンルパレット（`pf:ff` なら `note("0")`）で別 orbit

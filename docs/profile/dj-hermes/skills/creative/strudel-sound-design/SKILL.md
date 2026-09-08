@@ -27,6 +27,7 @@ metadata:
       - strudel-genre-dubstep
       - strudel-genre-progressive-house
       - strudel-genre-future-bass
+      - strudel-genre-kawaii-future-bass
       - strudel-genre-lofi-hiphop
       - strudel-genre-chill-pop
 ---

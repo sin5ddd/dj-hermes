@@ -15,6 +15,7 @@ metadata:
       - strudel-sound-design
       - strudel-data-format
       - strudel-genre-future-bass
+      - strudel-genre-kawaii-future-bass
 ---
 
 # dj-hermes × ダブステップ
@@ -28,7 +29,7 @@ metadata:
 - 依頼が **ダブステップ**（140、ハーフタイム、wobble ベース）のとき
 - 4 つ打ちハウス / テクノではなく、スネアを後ろめに置くとき
 - `.lfo(...)` メソッドではなく `.lpf(sine.rangex(...))` で wobble するとき
-- 同じ 140 の 2 ステップに J-pop 王道／小室＋kawaii を載せるのは [strudel-genre-future-bass](../strudel-genre-future-bass/SKILL.md)（wobble を主役にしない）
+- 同じ 140 のハーフタイムにスーパーソーのアンセムを載せるのは [strudel-genre-future-bass](../strudel-genre-future-bass/SKILL.md)。J-pop 王道／kawaii ベルは [strudel-genre-kawaii-future-bass](../strudel-genre-kawaii-future-bass/SKILL.md)（どちらも wobble を主役にしない）
 
 ## Pattern
 

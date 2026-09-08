@@ -14,6 +14,8 @@ metadata:
       - strudel-composition
       - strudel-sound-design
       - strudel-data-format
+      - strudel-genre-kawaii-future-bass
+      - strudel-genre-future-bass
 ---
 
 # dj-hermes × チルポップ（日本のシティポップ）
@@ -22,7 +24,7 @@ metadata:
 
 このリポジトリでのチルポップは、**日本のシティポップ**（夕暮れの下降進行、maj7、Rhodes、ナイロンプラック）。BPM 目安 95–110。フェンスは **100**（`setcpm(100/4)`）。
 
-来場者が「チルポップ」と言ったら下表の **シティポップ下降** を書く。単語だけでは Western の I–V–vi–IV や EDM の I–I–IV–I に落ちる。アニソンの **王道進行** は [strudel-genre-future-bass](../strudel-genre-future-bass/SKILL.md) 側。
+来場者が「チルポップ」と言ったら下表の **シティポップ下降** を書く。単語だけでは Western の I–V–vi–IV や EDM の I–I–IV–I に落ちる。アニソンの **王道進行** は [strudel-genre-kawaii-future-bass](../strudel-genre-kawaii-future-bass/SKILL.md) 側。スーパーソーの Future Bass は [strudel-genre-future-bass](../strudel-genre-future-bass/SKILL.md)。
 
 チル（短調ダウンテンポ）よりコードが前面。ハウス clap は使わない。
 `songs/chill-pop/01.strudel` はこのフェンスと同じ（7 本）。
@@ -98,11 +100,11 @@ Pattern はグリッド・次数・スロットの見本。新規曲は下表か
 
 **シティポップ下降。** Fmaj7–Em7–Dm7–Cmaj7。ルートが 1 度ずつ下がる。I–I–IV–I（旧フェンス）は EDM の明るいループで、日本のシティポップではない。
 
-**maj7 `[0,2,6]`。** 次数 6 が 7 度。三和音 `[0,2,4]` だけだとポップ一般になって 7th の色が消える。Future Bass の add9 `[0,4,9]` にはしない。コードは `ep:mt`（フックの `ep:rs` と被らない）。パッドは `pf:ff` の次数 `0`（録音が 5 度。`[0,4]` で重ねない）。
+**maj7 `[0,2,6]`。** 次数 6 が 7 度。三和音 `[0,2,4]` だけだとポップ一般になって 7th の色が消える。Kawaii の add9 `[0,4,8]` や Future Bass のソー壁にはしない。コードは `ep:mt`（フックの `ep:rs` と被らない）。パッドは `pf:ff` の次数 `0`（録音が 5 度。`[0,4]` で重ねない）。
 
-**メロ。** 順次進行（2–4–6）、裏から入る `~`、7 度を色にする。アニソンの `4@2 7 9@2` のような長い伸ばしと跳躍は Future Bass 側。
+**メロ。** 順次進行（2–4–6）、裏から入る `~`、7 度を色にする。アニソンの `4@2 7 9@2` のような長い伸ばしと跳躍は kawaii 側。
 
-**Rhodes + ナイロン。** フック `ep:rs`、リード `plk:ps`、arp `plk:ny`。ベル／スーパーソーは kawaii 床。
+**Rhodes + ナイロン。** フック `ep:rs`、リード `plk:ps`、arp `plk:ny`。ベルは kawaii 床。スーパーソーは future-bass 床。
 
 **ドラム。** キック 1 と 3、スネア 2/4、ハット 16 分。ハウス `cp` は載せない。`bd*4` にすると四つ打ち EDM になる。
 
@@ -138,8 +140,8 @@ Pattern はグリッド・次数・スロットの見本。新規曲は下表か
 5. ハウス `[~ cp]*2` を載せる
 6. 新規 apply を 3 本のまま出す
 7. 100 BPM を 90 チルや 84 ローファイと DJ ペアにする（Transport は 1 つ）
-8. I–I–IV–I や王道 IV–V–iii–vi を既定にする（王道は future-bass）
-9. メロをアニソンの長い `@` にする。コードを add9 `[0,4,9]` にする
+8. I–I–IV–I や王道 IV–V–iii–vi を既定にする（王道は kawaii-future-bass）
+9. メロをアニソンの長い `@` にする。コードを add9 `[0,4,8]` にする
 10. 「チルポップ」とだけ書いて `.scale` を省略する
 11. コード／パッド／メロを `triangle` / `sine` / `sawtooth` にする
 12. 新規 apply でフェンスの `.s()` を全コピーする。`ld:ss` や `plk:ss` を載せる
