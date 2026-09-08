@@ -51,8 +51,8 @@ FX stems use the factory `default_note` / `default_duration` (no `--note` retune
 | `bs/hf.wav` | C2 (~65 Hz) tight house floor bass. Short decay, sidechain-friendly. Not Eb (factory +3.5 st scoop). Sits with the kick, not on top of it. |
 | `bs/dk.wav` | C3 (MIDI 48) dark full-range Reese (sub + mid). Not the 800–1200 Hz `bs:rm` glue. |
 | `ld/ss.wav` | C3 (~131 Hz) classic supersaw lead. ~8.2 s hold (4 bars @ 120). Factory HP 220 Hz hid C3; this stem lets the C3 fundamental through. |
-| `fx/nr.wav` | Unpitched noise riser (~3.2 s). Factory default_note/duration. |
-| `fx/up.wav` | Unpitched uplifter: pitch + filter open (~2.8 s). Factory duration. |
+| `fx/nr.wav` | Unpitched noise riser (~15 s, 8 bars at 130 BPM). Factory default_note/duration. |
+| `fx/up.wav` | Unpitched uplifter: pitch + filter open (~15 s, 8 bars at 130 BPM). Factory duration. |
 | `fx/id.wav` | Unpitched DnB impact: tight mid hit + short grit (~0.5 s). |
 | `fx/sd.wav` | Unpitched sub drop: large pitch fall (~1.1 s). Kick-lead-in, not a bass note. |
 

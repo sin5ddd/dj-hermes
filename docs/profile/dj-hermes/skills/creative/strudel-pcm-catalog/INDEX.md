@@ -4,7 +4,7 @@ dj-hermes の呼び出しは `s("<part>:<slug>")`。音程楽器は `note(...).s
 
 `in_bank=yes` は `samples/<part>/<slug>.wav` があるキー。`in_bank=no` は未作成（ファイルが無いので曲には書かない）。現行カタログのキーはすべて `yes`（`dr` / `ld` / `pf` / `ps` の長尺を含む）。
 
-長尺は `dr` / `pf` / `ps` が約 16–17 秒、`ld` と `plk:fp` / `plk:sp` が約 8.2 秒。毎小節撃たない。同梱キットの `bd/00.wav` などは `s("bd")`（整数 index）。カタログ slug ではない。
+長尺は `dr` / `pf` / `ps` が約 16–17 秒、ライザー（`fx:fr` / `fx:nr` / `fx:rf` / `fx:rp` / `fx:rw` / `fx:up`）が約 15 秒、`ld` と `plk:fp` / `plk:sp` が約 8.2 秒。毎小節撃たない。同梱キットの `bd/00.wav` などは `s("bd")`（整数 index）。カタログ slug ではない。
 
 ## `bd`
 
@@ -174,21 +174,21 @@ dj-hermes の呼び出しは `s("<part>:<slug>")`。音程楽器は `note(...).s
 | `fx:rh` | yes | `fx-rev-hat` | fx-rev-hat | リバースハットのスウェル。短め・明るい。ハイハットの逆再生印象。 | 84 | 1.55 |
 | `fx:rs` | yes | `fx-rev-splash` | fx-rev-splash | 短いリバーススプラッシュ。明るいクラッシュの逆再生。1.5秒。 | 84 | 1.5 |
 | `fx:rv` | yes | `fx-rev-verb` | fx-rev-verb | リバースリバーブ風。遅いアタック＋HPのウォッシュ。フェイク。 | 67 | 2.0 |
-| `fx:rf` | yes | `fx-riser-filter` | fx-riser-filter | フィルタ開放のライザー。ピッチは控えめ、カットオフが主役。 | 60 | 2.6 |
-| `fx:nr` | yes | `fx-riser-noise` | fx-riser-noise | ノイズライザー。砂が濃くなりピッチも上がる。3秒超。 | 55 | 3.2 |
-| `fx:rp` | yes | `fx-riser-pitch` | fx-riser-pitch | ピッチ主体のライザー。トーンがはっきり上がる。 | 60 | 2.4 |
-| `fx:rw` | yes | `fx-riser-saw` | fx-riser-saw | スーパーソーのライザー。厚みのある上昇。 | 48 | 3.0 |
+| `fx:rf` | yes | `fx-riser-filter` | fx-riser-filter | フィルタ開放のライザー。サブとスタート約100Hzのサインを重ね、カットオフが主役。130 BPMの8小節（約15秒）。 | 60 | 15.0 |
+| `fx:nr` | yes | `fx-riser-noise` | fx-riser-noise | ノイズライザー。サブとスタート約100Hzのサインを重ね、砂が濃くなりピッチも上がる。130 BPMの8小節（約15秒）。 | 55 | 15.0 |
+| `fx:rp` | yes | `fx-riser-pitch` | fx-riser-pitch | ピッチ主体のライザー。サブとスタート約100Hzのサインを重ね、トーンがはっきり上がる。130 BPMの8小節（約15秒）。 | 60 | 15.0 |
+| `fx:rw` | yes | `fx-riser-saw` | fx-riser-saw | スーパーソーのライザー。サブとスタート約100Hzのサインを重ね、ピッチ包絡と一緒に上昇。130 BPMの8小節（約15秒）。 | 48 | 15.0 |
 | `fx:sr` | yes | `fx-siren` | fx-siren | 短いサイレン風。深いLFOピッチ。長いループではない。 | 72 | 1.15 |
 | `fx:sd` | yes | `fx-sub-drop` | fx-sub-drop | サブドロップ。ピッチが大きく落ちる。キック前のダウン。 | 48 | 1.1 |
 | `fx:sw` | yes | `fx-sweep-bp` | fx-sweep-bp | バンドパス掃引。カットオフが上へ開くFXスイープ。 | 60 | 1.6 |
 | `fx:ts` | yes | `fx-tape-stop` | fx-tape-stop | テープストップ風。ピッチが後半急落。本物のテープではない。 | 60 | 1.0 |
 | `fx:tf` | yes | `fx-trans-fill` | fx-trans-fill | トランジションフィル。ノイズ＋短いピッチ落ち。1拍用。 | 60 | 0.65 |
-| `fx:up` | yes | `fx-uplifter` | fx-uplifter | アップリフター。ピッチ上昇＋フィルタ開放。ビルド用。 | 60 | 2.8 |
+| `fx:up` | yes | `fx-uplifter` | fx-uplifter | アップリフター。サブとスタート約100Hzのサインを重ね、ピッチ上昇＋フィルタ開放。130 BPMの8小節（約15秒）。 | 60 | 15.0 |
 | `fx:wh` | yes | `fx-whoosh` | fx-whoosh | ウーシュ。BPが横切る風切り。 | 67 | 1.4 |
 | `fx:wp` | yes | `fx-whoosh-hp` | fx-whoosh-hp | ハイパスのウーシュ。空気だけが横切る。 | 80 | 1.2 |
 | `fx:wd` | yes | `fx-wind` | fx-wind | 風。ピンクノイズの持続する砂＋遅いLFO。パッドではなくワンショット。 | 72 | 2.2 |
 | `fx:zp` | yes | `fx-zap` | fx-zap | ノイズ寄りの落下ザップ。ld-zap / zap より砂が多く、FX専用。 | 76 | 0.32 |
-| `fx:fr` | yes | `fm-riser` | fm-riser | ノイズ寄りのFMライザー。ホワイトノイズ＋ピッチ上昇と変調量スイープ。ビルドのFX。 | 48 | 2.4 |
+| `fx:fr` | yes | `fm-riser` | fm-riser | ノイズ寄りのFMライザー。基音は2オクターブ下、スタートで約100Hzのサインがピッチ包絡と一緒に上昇。倍音は1オクターブ上。130 BPMの8小節（約15秒）。 | 48 | 15.0 |
 | `fx:ha` | yes | `hp-air` | hp-air | ハイパスで胴を切ったエア／ティック。トップやトランジションの短いワンショット。 | 84 | 0.5 |
 | `fx:zz` | yes | `zap` | zap | 下向きピッチのレーザー／ザップ。フィルやトランジションのワンショット。 | 72 | 0.38 |
 

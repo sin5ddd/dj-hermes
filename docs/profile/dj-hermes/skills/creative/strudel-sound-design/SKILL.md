@@ -843,30 +843,34 @@ pluck line to this stem.
 
 ## Unpitched FX — `s("name")` only, **never `note()`**
 
-These four are gestures, not pitched instruments. Bare `s("…")`. No `.scale`.
+These are gestures, not pitched instruments. Bare `s("…")`. No `.scale`.
 
 | Disk | Sound key | Role |
 | --- | --- | --- |
-| `samples/fx/up.wav` | `fx:up` | Uplifter (pitch + filter open, ~2.8 s) |
-| `samples/fx/nr.wav` | `fx:nr` | Noise riser (~3.2 s) |
+| `samples/fx/up.wav` | `fx:up` | Uplifter (pitch + filter open, ~15 s / 8 bars at 130 BPM) |
+| `samples/fx/nr.wav` | `fx:nr` | Noise riser (~15 s / 8 bars at 130 BPM) |
+| `samples/fx/rf.wav` | `fx:rf` | Filter-open riser (~15 s / 8 bars at 130 BPM) |
+| `samples/fx/rp.wav` | `fx:rp` | Pitch riser (~15 s / 8 bars at 130 BPM) |
+| `samples/fx/rw.wav` | `fx:rw` | Supersaw riser (~15 s / 8 bars at 130 BPM) |
+| `samples/fx/fr.wav` | `fx:fr` | FM riser (~15 s / 8 bars at 130 BPM) |
 | `samples/fx/id.wav` | `fx:id` | DnB impact (~0.5 s) |
 | `samples/fx/sd.wav` | `fx:sd` | Sub drop (~50 Hz, ~1.1 s) |
 
-Long one-shots must **not** fire every bar. `fx:up` is ~2.8 s; a bar at
-124 BPM is ~1.94 s. `s("fx:up")` overlaps itself. Mini `<>` picks one
-child **per cycle** (`mini.rs` `Node::Stack`):
+Long one-shots must **not** fire every bar. The six risers are ~15 s; a
+bar at 124 BPM is ~1.94 s. `s("fx:up")` overlaps itself. Mini `<>` picks
+one child **per cycle** (`mini.rs` `Node::Stack`):
 
 ```
 setcpm(124/4)
-$: s("<fx:up ~ ~ ~>").gain(0.3)
+$: s("<fx:up ~ ~ ~ ~ ~ ~ ~>").gain(0.3)
 ```
 
-That is once per **4 bars**. Same idea for the other long FX (`fx:nr`
-~3.2 s). Short hits (`fx:id` ~0.5 s) can sit on a denser grid.
+That is once per **8 bars**. Same idea for `fx:nr` / `fx:rf` / `fx:rp` /
+`fx:rw` / `fx:fr`. Short hits (`fx:id` ~0.5 s) can sit on a denser grid.
 
 ```
 setcpm(124/4)
-$: s("<fx:nr ~ ~ ~>").gain(0.28)
+$: s("<fx:nr ~ ~ ~ ~ ~ ~ ~>").gain(0.28)
 $: s("fx:id").gain(0.35)
 $: s("<fx:sd ~ ~ ~>").gain(0.35)
 ```
@@ -939,6 +943,10 @@ Old flat stems at `samples/<stem>.wav` are gone.
 | `samples/pf/ff.wav` | `pf:ff` | `pad-fm_fifth` / `pad-fm-fifth` |
 | `samples/ld/ss.wav` | `ld:ss` | `lead-supersaw` / `lead_supersaw` |
 | `samples/fx/nr.wav` | `fx:nr` | `fx-riser_noise` / `fx-riser-noise` |
+| `samples/fx/rf.wav` | `fx:rf` | `fx-riser-filter` / `fx_riser_filter` |
+| `samples/fx/rp.wav` | `fx:rp` | `fx-riser-pitch` / `fx_riser_pitch` |
+| `samples/fx/rw.wav` | `fx:rw` | `fx-riser-saw` / `fx_riser_saw` |
+| `samples/fx/fr.wav` | `fx:fr` | `fm-riser` / `fm_riser` |
 | `samples/fx/id.wav` | `fx:id` | `fx-impact_dnb` / `fx-impact-dnb` |
 | `samples/fx/sd.wav` | `fx:sd` | `fx-sub_drop` / `fx-sub-drop` |
 | `samples/fx/up.wav` | `fx:up` | `fx-uplifter` / `fx_uplifter` |
@@ -951,9 +959,9 @@ may still use a full stem (`pad-ambient_drone01`).
 Track count follows **strudel-composition** (7–8 `$:`). Do not “improve” the signed-off hook degrees or drum grids below. Adding the missing lead/arp/chords/pad slots is the composition skill, not a rewrite of these stems.
 
 **Floor** = drums + `bs:hf` + `pf:ff` only. House bass is
-`0 0 4 0` (i and 5). Pad stays `0 ~ 0 ~`. FX is `<fx:up ~ ~ ~>` —
-once per 4 bars, not every bar. **No** `bs:dk` here (both that stem and
-the house bass have sub).
+`0 0 4 0` (i and 5). Pad stays `0 ~ 0 ~`. FX is
+`<fx:up ~ ~ ~ ~ ~ ~ ~>` — once per 8 bars, not every bar. **No** `bs:dk`
+here (both that stem and the house bass have sub).
 
 ```
 // @title skill-factory-pcm-usage
@@ -961,7 +969,7 @@ setcpm(124/4)
 $: s("bd*4, [~ cp]*2, [~ hh]*4").gain(0.65)
 $: note("0 0 4 0").scale("C4:minor").s("bs:hf").gain(0.45)
 $: note("0 ~ 0 ~").scale("C4:minor").s("pf:ff").gain(0.25)
-$: s("<fx:up ~ ~ ~>").gain(0.3)
+$: s("<fx:up ~ ~ ~ ~ ~ ~ ~>").gain(0.3)
 ```
 
 Apply the inline recipe with `dj_hermes_apply_song`. `songs/house/01.strudel` is a live factory-PCM house floor.
@@ -1017,8 +1025,8 @@ Live TUI: apply the inline recipes with `dj_hermes_apply_song`.
 - Treat `bs:dk` as a darker `bs:rm` (or the reverse).
 - Use `pf:ff` to brighten, or play it as `[0,2,4]`.
 - Fire `fx:up` every bar (`s("fx:up")` overlaps; use `<>`).
-- Put `note()` / `.scale` on `fx:up`, `fx:nr`, `fx:id`,
-  or `fx:sd` (including the ~50 Hz drop).
+- Put `note()` / `.scale` on `fx:up`, `fx:nr`, `fx:rf`, `fx:rp`,
+  `fx:rw`, `fx:fr`, `fx:id`, or `fx:sd` (including the ~50 Hz drop).
 - Stack `ld:ss` on the floor pad or the Reese bed.
 - Rewrite the lead degrees `4 ~ 7 4` or drop `.cut(1)`.
 - Rewrite `bs:rm` / `plk:lp` / live 2-op recipes to these stems.

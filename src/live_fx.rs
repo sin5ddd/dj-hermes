@@ -545,9 +545,10 @@ pub fn classify(label: &str, is_note: bool) -> HitClass {
 }
 
 fn is_long_fx(l: &str) -> bool {
-    matches!(l, "fx:up" | "fx:nr")
+    matches!(l, "fx:up" | "fx:nr" | "fx:fr" | "fx:rf" | "fx:rp" | "fx:rw")
         || l.starts_with("fx-riser")
         || l.starts_with("fx-uplifter")
+        || l == "fm-riser"
         || (l.starts_with("fx-") && (l.contains("riser") || l.contains("uplift")))
 }
 
@@ -848,6 +849,10 @@ mod tests {
         assert_eq!(classify("c3", true), HitClass::Note);
         assert_eq!(classify("fx:up", false), HitClass::LongFx);
         assert_eq!(classify("fx:nr", false), HitClass::LongFx);
+        assert_eq!(classify("fx:fr", false), HitClass::LongFx);
+        assert_eq!(classify("fx:rf", false), HitClass::LongFx);
+        assert_eq!(classify("fx:rp", false), HitClass::LongFx);
+        assert_eq!(classify("fx:rw", false), HitClass::LongFx);
     }
 
     #[test]

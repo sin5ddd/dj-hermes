@@ -31,7 +31,7 @@ metadata:
 - 長尺のドローン／リード／パッド（`dr:` / `ld:` / `pf:` / `ps:`）をワンショットで置きたい時
 - `s("bd*4")` のまま音色だけ変えたい時（`bd:hf` など）
 
-Don't use for: ライブ 2-op `.fm`（→ strudel-sound-design）、記法そのもの（→ composition）。長尺は毎小節撃たない（`dr` / `pf` / `ps` は約 16–17 秒、`ld` と `plk:fp` / `plk:sp` は約 8.2 秒）。
+Don't use for: ライブ 2-op `.fm`（→ strudel-sound-design）、記法そのもの（→ composition）。長尺は毎小節撃たない（`dr` / `pf` / `ps` は約 16–17 秒、ライザー `fx:fr` / `nr` / `rf` / `rp` / `rw` / `up` は約 15 秒、`ld` と `plk:fp` / `plk:sp` は約 8.2 秒）。
 
 ## 呼び出し
 
@@ -42,7 +42,7 @@ Don't use for: ライブ 2-op `.fm`（→ strudel-sound-design）、記法その
 | `s("bd:1")` | 整数 → `.n(1)` と同じ（ソート順） |
 | `s("bd").n(1)` | トラック全体の変種。atom の `:` の方が優先 |
 | `note("0 2").scale("C4:minor").s("bs:ht")` | 音程。`SAMPLE_ROOT_HZ` は C4 |
-| `s("<fx:up ~ ~ ~>")` | 長い FX は 4 小節に 1 回 |
+| `s("<fx:fr ~ ~ ~ ~ ~ ~ ~>")` | ライザー（`fr` / `nr` / `rf` / `rp` / `rw` / `up`）は 8 小節に 1 回（約 15 秒） |
 
 `kit:bd` は今も不可（bank 名が左に来る書き方）。キット切替は `.bank("tr808-hard")`。FM カタログとは混ぜない。
 
@@ -50,7 +50,7 @@ Don't use for: ライブ 2-op `.fm`（→ strudel-sound-design）、記法その
 setcpm(124/4)
 $: s("bd:hf*4, [~ sd:8s]*2, [~ hh:cl]*4").gain(0.6)
 $: note("0 0 4 0").scale("C4:minor").s("bs:ht").gain(0.45)
-$: s("<fx:up ~ ~ ~>").gain(0.3)
+$: s("<fx:up ~ ~ ~ ~ ~ ~ ~>").gain(0.3)
 ```
 
 Apply the inline recipe with `dj_hermes_apply_song`. `songs/house/01.strudel` uses `bd:hf` / `bs:su` / `plk:lp` as a live example.
@@ -125,8 +125,12 @@ Apply the inline recipe with `dj_hermes_apply_song`. `songs/house/01.strudel` us
 
 | slug | 向き |
 | --- | --- |
-| `up` | アップリフター（長い → `<>`） |
-| `nr` | ノイズライザー |
+| `up` | アップリフター（約15秒、8小節。`<>` で間引く） |
+| `fr` | FMライザー（約15秒、8小節。`<>` で間引く） |
+| `nr` | ノイズライザー（約15秒、8小節） |
+| `rf` | フィルタライザー（約15秒、8小節） |
+| `rp` | ピッチライザー（約15秒、8小節） |
+| `rw` | スーパーソーライザー（約15秒、8小節） |
 | `id` | DnB インパクト |
 | `sd` | サブドロップ |
 
