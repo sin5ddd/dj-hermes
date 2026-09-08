@@ -141,8 +141,8 @@ Genre recipes (`strudel-genre-*`):
 | [strudel-genre-chill-pop](./strudel-genre-chill-pop/SKILL.md) | Japanese city pop: IV–iii–ii–I maj7 + Rhodes; not EDM I–I–IV–I, not 王道 | — |
 | [strudel-genre-dubstep](./strudel-genre-dubstep/SKILL.md) | Dubstep | — |
 | [strudel-genre-electro](./strudel-genre-electro/SKILL.md) | Electro: 126, supersaw hook, pitched at C2 (arp C3); not a thin zap hook | `songs/electro/01.strudel` |
-| [strudel-genre-future-bass](./strudel-genre-future-bass/SKILL.md) | Future Bass: 140 trap half-time, supersaw eurobeat-flash, 16-bar anthem, 8th-note bass; not 王道, not kawaii bells, not `bd*4` | `songs/future-bass/01.strudel` (old bundle; rewrite via skill) |
-| [strudel-genre-kawaii-future-bass](./strudel-genre-kawaii-future-bass/SKILL.md) | Kawaii Future Bass: 140 trap half-time, sparkly pads, J-pop 王道/小室, bells; not supersaw anthem | — |
+| [strudel-genre-future-bass](./strudel-genre-future-bass/SKILL.md) | Future Bass: 140 trap half-time, supersaw eurobeat-flash, 16-bar anthem, 8th-note bass; not 王道, not kawaii bells, not `bd*4` | `songs/future-bass/01.strudel` |
+| [strudel-genre-kawaii-future-bass](./strudel-genre-kawaii-future-bass/SKILL.md) | Kawaii Future Bass: 140 trap half-time, sparkly pads, J-pop 王道/小室, bells; not supersaw anthem | `songs/kawaii-future-bass/01.strudel` |
 | [strudel-genre-lofi-hiphop](./strudel-genre-lofi-hiphop/SKILL.md) | Lo-fi hip hop | — |
 | [strudel-genre-minimal-techno](./strudel-genre-minimal-techno/SKILL.md) | Minimal Techno: 126, offbeat open hats `[~ oh]*4`, 16-bar mute on/off, dark FX; not all loops always on | `songs/minimal-techno/01.strudel` |
 | [strudel-genre-progressive-house](./strudel-genre-progressive-house/SKILL.md) | Progressive House | — |

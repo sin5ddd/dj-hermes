@@ -9,7 +9,15 @@ from __future__ import annotations
 
 import argparse
 import re
+import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from gen_half_time import (  # noqa: E402
+    HALF_TIME_FENCES,
+    HALF_TIME_PALETTES,
+    render_half_time,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 SONGS = ROOT / "songs"
@@ -239,37 +247,7 @@ $: note("0").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
   .s("pf:ff").gain(0.12).room(0.2).orbit(2)
 '''
 
-FENCES["future-bass"] = r'''// @title future-bass-01
-// @genre future-bass
-setcpm(140/4)
-// kick
-$: s("bd ~ bd ~").gain(0.85).duckorbit(2).duckattack(0.05).duckdepth(0.8)
-// hats
-$: s("~ ~ sd ~, hh*8, <~ ~ ~ [hh*16] ~ ~ ~ [hh*16] ~ ~ ~ [hh*16] ~ ~ ~ [hh*16]>").gain(0.42)
-// bass
-$: note("0 ~ 0 <0 4 0 2>").scale("<F4:lydian G4:mixolydian E4:phrygian A4:minor F4:lydian G4:mixolydian E4:phrygian A4:minor A4:minor E4:phrygian G4:mixolydian F4:lydian C4:major B4:locrian A4:minor G4:mixolydian>")
-  .s("bs:su").gain(0.4).orbit(2)
-// lead
-$: note("<[~ 4 ~ 7  ~ 9 4 2] [~ 7 4 9  7 ~ 4 2] [4 ~ 9 7  ~ 4 2 0] [~ 4 7 9  4 2 ~ 7] [4@2 7 9@2  7 4 2 0] [4@2 7 9@2  7 4 0 2] [4@2 7 9@2  7 4 2 ~] [4@2 7 9@2  7 4 2 0] [~ 9 7 4  2 0 ~ 4] [9 ~ 7 4  ~ 2 0 4] [7 4 ~ 2  0 ~ 4 7] [~ 4 2 0  4 7 ~ 9] [4@2 7 9@2  7 4 2 0] [4@2 7 9@2  7 4 0 2] [4@2 7 9@2  7 4 2 ~] [4@2 7 9@2  7 4 2 0]>")
-  .scale("<F4:lydian G4:mixolydian E4:phrygian A4:minor F4:lydian G4:mixolydian E4:phrygian A4:minor A4:minor E4:phrygian G4:mixolydian F4:lydian C4:major B4:locrian A4:minor G4:mixolydian>")
-  .s("ld:ss").gain(0.16).cut(1)
-// hook
-$: note("<[~ 11 ~ 12] [~ 9 ~ 11] [~ 11 ~ 12] [~ 9 ~ 7] [~ 11 ~ 12] [~ 9 ~ 11] [~ 11 ~ 12] [11 12 9 11] [~ 12 ~ 9] [~ 11 ~ 7] [~ 9 ~ 4] [~ 7 ~ 4] [~ 11 ~ 12] [~ 9 ~ 11] [~ 11 ~ 12] [11 12 9 11]>")
-  .scale("<F4:lydian G4:mixolydian E4:phrygian A4:minor F4:lydian G4:mixolydian E4:phrygian A4:minor A4:minor E4:phrygian G4:mixolydian F4:lydian C4:major B4:locrian A4:minor G4:mixolydian>")
-  .s("plk:mx").gain(0.18).cut(1)
-// arp
-$: note("0 4 ~ 7  4 ~ 9 4").scale("<F5:lydian G5:mixolydian E5:phrygian A5:minor F5:lydian G5:mixolydian E5:phrygian A5:minor A5:minor E5:phrygian G5:mixolydian F5:lydian C5:major B5:locrian A5:minor G5:mixolydian>")
-  .s("plk:fg").gain(0.14).cut(1)
-// chords
-$: note("[0,4,9] ~ [0,4,9] ~").scale("<F4:lydian G4:mixolydian E4:phrygian A4:minor F4:lydian G4:mixolydian E4:phrygian A4:minor A4:minor E4:phrygian G4:mixolydian F4:lydian C4:major B4:locrian A4:minor G4:mixolydian>")
-  .s("plk:ss").gain(0.2).orbit(2)
-// pad
-$: note("<0 ~ ~ ~>").scale("<F4:lydian G4:mixolydian E4:phrygian A4:minor F4:lydian G4:mixolydian E4:phrygian A4:minor A4:minor E4:phrygian G4:mixolydian F4:lydian C4:major B4:locrian A4:minor G4:mixolydian>")
-  .s("pf:ff").gain(0.14).room(0.3).orbit(2)
-// strings
-$: note("<0 ~ ~ ~>").scale("<F4:lydian G4:mixolydian E4:phrygian A4:minor F4:lydian G4:mixolydian E4:phrygian A4:minor A4:minor E4:phrygian G4:mixolydian F4:lydian C4:major B4:locrian A4:minor G4:mixolydian>")
-  .s("ld:cr").gain(0.12).room(0.45).orbit(2)
-'''
+FENCES.update(HALF_TIME_FENCES)
 
 FENCES["chill-pop"] = r'''// @title chill-pop-01
 // @genre chill-pop
@@ -564,20 +542,7 @@ PALETTES: dict[str, dict[str, list]] = {
         "chords": ["plk:sf", "ep:mt"],
         "pad": ["pf:fo", "dr:rd", "pf:ff"],
     },
-    "future-bass": {
-        "drums": [
-            {"bd": "bd:8t"},
-            {"sd": "sd:tr"},
-            {"hh": "hh:ch"},
-            {"bd": "bd:8t", "sd": "sd:tr", "hh": "hh:ch"},
-        ],
-        "lead": ["ld:st", "ld:mx", "square", "ld:ss"],
-        "hook": ["plk:ch", "plk:bl", "plk:mb", "plk:mx"],
-        "arp": ["plk:fc", "plk:fg"],
-        "chords": ["plk:sm", "plk:ss"],
-        "pad": ["ps:mx", "ps:gb", "pf:sp", "pf:ga", "pf:ff"],
-        "strings": ["ld:cr", "pf:ca", "pf:hl", "pf:wm"],
-    },
+    **HALF_TIME_PALETTES,
     "chill-pop": {
         "drums": [
             {"bd": "bd:dc"},
@@ -706,7 +671,8 @@ IDENTITY_ALWAYS = {
     "dnb": {"bass", "bass-mid"},
     "dnb-reese": {"bass", "bass-mid", "hook"},
     "acid": {"hook"},
-    "future-bass": {"bass"},
+    "future-bass": set(),
+    "kawaii-future-bass": set(),
     "chill": {"bass"},
     "lofi-hiphop": {"bass"},
 }
@@ -1194,12 +1160,8 @@ def replace_scale_inners(text: str, pairs: list[tuple[int, str]]) -> str:
 def apply_variant(genre: str, text: str, variant: int) -> str:
     if variant == 0:
         return text
-    if genre == "future-bass":
-        if variant == 1:
-            return replace_scale_inners(
-                text, KOMURO + KOMURO + KOMURO_REV + CLICHE
-            )
-        return replace_scale_inners(text, CANON + CANON + CANON_REV + CLICHE)
+    if genre in {"future-bass", "kawaii-future-bass"}:
+        return text
     if genre == "chill-pop":
         return replace_scale_inners(text, WEST if variant == 1 else TWO5)
     if genre == "house" and variant == 1:
@@ -1273,7 +1235,11 @@ def set_title(text: str, title: str) -> str:
 
 def validate(path: Path, text: str) -> None:
     n = len(re.findall(r"^\$:", text, re.M))
-    max_n = 9 if path.parent.name == "future-bass" else 8
+    max_n = (
+        9
+        if path.parent.name in {"future-bass", "kawaii-future-bass"}
+        else 8
+    )
     if n < 7 or n > max_n:
         raise SystemExit(f"{path}: expected 7–{max_n} $: tracks, got {n}")
     if "setcpm(" not in text:
@@ -1303,6 +1269,57 @@ def validate(path: Path, text: str) -> None:
         return chunk
 
     map_tracks(text, collect)
+    if path.parent.name in {"future-bass", "kawaii-future-bass"}:
+        validate_half_time(path, text)
+
+
+def validate_half_time(path: Path, text: str) -> None:
+    genre = path.parent.name
+    if "[hh*16]" in text:
+        raise SystemExit(f"{path}: 4-bar hh*16 roll")
+    if "[0,4,9]" in text:
+        raise SystemExit(f"{path}: [0,4,9] is not add9")
+    if "bd*4" in text:
+        raise SystemExit(f"{path}: four-on-the-floor kick")
+    scales = re.findall(r'\.scale\("<([^"]+)>"\)', text)
+    if not scales:
+        raise SystemExit(f"{path}: missing 16-bar .scale")
+    for inner in scales:
+        ntok = len(inner.split())
+        if ntok != 16:
+            raise SystemExit(f"{path}: scale has {ntok} children, want 16")
+    n_tracks = len(re.findall(r"^\$:", text, re.M))
+    if n_tracks != 9:
+        raise SystemExit(f"{path}: want 9 $: tracks, got {n_tracks}")
+    if genre == "future-bass":
+        banned = (
+            "plk:mx",
+            "ld:mx",
+            "plk:bl",
+            "plk:mb",
+            "plk:ch",
+            "ps:mx",
+            "ps:gb",
+            "ld:cr",
+            "plk:fg",
+            "plk:fc",
+        )
+        label = "kawaii"
+    else:
+        banned = (
+            "ld:ss",
+            "plk:ss",
+            "dr:sl",
+            "ld:ap",
+            "ld:st",
+            "ld:an",
+            "ld:us",
+            "bs:sw",
+        )
+        label = "supersaw"
+    for bad in banned:
+        if f'.s("{bad}")' in text:
+            raise SystemExit(f"{path}: {label} sound {bad}")
 
 
 def slot_spec(n: int, genre: str = "") -> tuple[int, int]:
@@ -1312,6 +1329,8 @@ def slot_spec(n: int, genre: str = "") -> tuple[int, int]:
 
 
 def render(genre: str, n: int) -> str:
+    if genre in HALF_TIME_FENCES:
+        return render_half_time(genre, n)
     text = FENCES[genre].strip() + "\n"
     semis, variant = slot_spec(n, genre)
     if n == 1:
@@ -1347,10 +1366,17 @@ def main() -> None:
             raise SystemExit(f"unknown genre {genre}")
         dest = SONGS / genre
         dest.mkdir(parents=True, exist_ok=True)
+        prev_kick = None
         for n in range(1, 31):
             text = render(genre, n)
             path = dest / f"{n:02d}.strudel"
             validate(path, text)
+            if genre in HALF_TIME_FENCES:
+                km = re.search(r'// kick\n\$: s\("([^"]+)"\)', text)
+                kick = km.group(1) if km else None
+                if prev_kick and kick == prev_kick:
+                    raise SystemExit(f"{path}: same kick string as previous song")
+                prev_kick = kick
             path.write_text(text, encoding="utf-8", newline="\n")
             written += 1
     print(f"wrote {written} songs")

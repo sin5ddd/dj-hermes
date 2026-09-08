@@ -38,7 +38,7 @@ metadata:
 
 テンポ既定は **140**（ダブステップと同じ時計。ペア可）。174 のブレイクに同じ上物を載せるのは別バリエーションで、そのときは **solo**（140 と混ぜない）。
 
-同梱 `songs/future-bass/*.strudel` は **旧・未分化**（2 ステップ固定、王道、ベル、4 小節ごと `hh*16`、キック揃えベース、リフレインのウェイト 9）。新規の Future Bass はこの Skill。Kawaii は隣の Skill。曲ファイルは別作業。
+同梱 `songs/future-bass/*.strudel` はこの Skill のスーパーソー床（16 小節アンセム、9 本）。Kawaii は `songs/kawaii-future-bass/`。
 
 ## When
 

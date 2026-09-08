@@ -1,0 +1,33 @@
+// @title kawaii-future-bass-15
+// @genre kawaii-future-bass
+setcpm(140/4)
+// kick
+$: s("<[bd:8t ~ [bd:8t ~] ~] [bd:8t ~ ~ ~] [bd:8t [~ bd:8t] ~ ~] [bd:8t ~ ~ bd:8t]>").gain(0.85).duckorbit(2).duckattack(0.05).duckdepth(0.8)
+// hats
+$: s("~ ~ sd:tr ~, hh:hs*8, <~ ~ ~ oh ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~>, <~ ~ ~ ~ ~ ~ ~ [~ ~ ~ ~ ~ ~ ~ [hh:hs*4]] ~ ~ ~ ~ ~ ~ ~ [~ ~ ~ ~ ~ ~ ~ [hh:hs*4]]>").gain(0.42)
+// bass
+$: note("<[0 0 0 0  4 ~ 0 4] [0 4 0 ~  0 0 2 0] [0 ~ 4 0  0 2 0 4] [0 0 2 4  0 ~ 0 0] [0 4 0 0  2 0 ~ 4] [0 0 ~ 2  0 4 0 0] [0 2 4 0  ~ 0 0 4] [0 0 4 2  0 0 ~ 0]>")
+  .scale("<D5:minor Bb4:lydian C5:mixolydian F4:major D5:minor Bb4:lydian C5:mixolydian F4:major F4:major C5:mixolydian Bb4:lydian D5:minor F4:major E5:locrian D5:minor C5:mixolydian>")
+  .s("bs:su").gain(0.4).cut(1).orbit(2)
+// lead
+$: note("<[~ 7 ~ 11  ~ 9 7 4] [11 ~ 7 4  9 ~ 4 2] [~ 4 7 11  7 4 ~ 0] [7 ~ 9 4  ~ 2 7 4] [4 7 ~ 9  7@2 4 2] [4 7 ~ 9  7@2 4 0] [4 7 ~ 9  7@2 2 ~] [4 7 ~ 9  7@2 4 2] [2 4 7 9  ~ 4 2 0] [~ 9 4 2  7 0 ~ 4] [4 2 ~ 9  0 4 7 2] [~ 0 4 2  7 9 4 ~] [4 7 ~ 9  7@2 4 2] [4 7 ~ 9  7@2 4 0] [4 7 ~ 9  7@2 2 ~] [4 7 ~ 9  7@2 4 2]>")
+  .scale("<D5:minor Bb4:lydian C5:mixolydian F4:major D5:minor Bb4:lydian C5:mixolydian F4:major F4:major C5:mixolydian Bb4:lydian D5:minor F4:major E5:locrian D5:minor C5:mixolydian>")
+  .s("ld:cy").gain(0.16).cut(1)
+// hook
+$: note("<[11 ~ ~ 12  9 ~ 11 7] [~ 12 11 ~  9 12 ~ 4] [12 9 ~ 11  ~ 7 9 12] [~ 9 11 4  12 7 ~ 9] [11 12 11 9  12 11 9 7] [12 ~ 11 12  9 7 11 9] [~ 11 12 9  11 12 7 12] [9 11 12 9  11 7 4 12] [~ 12 4 ~  9 7 ~ 0] [12 7 ~ 4  ~ 0 11 7] [~ 4 9 0  7 ~ 2 11] [4 ~ 7 2  0 9 ~ 4] [11 12 11 9  12 11 9 7] [12 ~ 11 12  9 7 11 9] [~ 11 12 9  11 12 7 12] [9 11 12 9  11 7 4 12]>")
+  .scale("<D5:minor Bb4:lydian C5:mixolydian F4:major D5:minor Bb4:lydian C5:mixolydian F4:major F4:major C5:mixolydian Bb4:lydian D5:minor F4:major E5:locrian D5:minor C5:mixolydian>")
+  .s("plk:mb").gain(0.18).cut(1)
+// arp
+$: note("<[4 0 ~ 7  ~ 9 4 0] [0 7 4 ~  12 ~ 4 7] [7 ~ 0 4  9 4 7 ~] [4 12 0 7  ~ 4 0 9] [0 4 9 ~  7 0 4 12] [~ 9 4 0  7 12 ~ 4] [4 7 0 9  ~ 0 4 7] [12 4 ~ 0  7 4 9 0]>")
+  .scale("<D6:minor Bb5:lydian C6:mixolydian F5:major D6:minor Bb5:lydian C6:mixolydian F5:major F5:major C6:mixolydian Bb5:lydian D6:minor F5:major E6:locrian D6:minor C6:mixolydian>")
+  .s("plk:fg").gain(0.12).cut(1)
+// chords
+$: note("<[[0,4,8] [0,4,8] ~ ~  ~ [0,2,8] ~ [0,4,8]] [[0,2,8] ~ [0,4,8] [0,4,8]  ~ ~ [0,2,8] ~] [[0,4,8] ~ ~ [0,2,8]  [0,4,8] ~ ~ [0,4,8]] [[0,2,8] [0,4,8] ~ [0,4,8]  ~ [0,2,8] ~ ~]>")
+  .scale("<D5:minor Bb4:lydian C5:mixolydian F4:major D5:minor Bb4:lydian C5:mixolydian F4:major F4:major C5:mixolydian Bb4:lydian D5:minor F4:major E5:locrian D5:minor C5:mixolydian>")
+  .s("plk:ch").gain(0.2).orbit(2)
+// pad
+$: note("<0 ~ 0 ~ ~ ~ 0 ~ ~ 0 ~ ~ 0 ~ ~ ~>").scale("<D5:minor Bb4:lydian C5:mixolydian F4:major D5:minor Bb4:lydian C5:mixolydian F4:major F4:major C5:mixolydian Bb4:lydian D5:minor F4:major E5:locrian D5:minor C5:mixolydian>")
+  .s("ps:mx").gain(0.16).room(0.35).orbit(2)
+// strings
+$: note("<~ ~ ~ 0 ~ 0 ~ ~ 0 ~ ~ 0 ~ ~ ~ ~>").scale("<D5:minor Bb4:lydian C5:mixolydian F4:major D5:minor Bb4:lydian C5:mixolydian F4:major F4:major C5:mixolydian Bb4:lydian D5:minor F4:major E5:locrian D5:minor C5:mixolydian>")
+  .s("pf:hl").gain(0.12).room(0.45).orbit(2)
