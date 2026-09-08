@@ -5,6 +5,7 @@ use crate::song::Song;
 
 #[derive(Debug, Clone)]
 pub struct HighlightTrack {
+    pub name: String,
     pub muted: bool,
     pub pattern: mini::Node,
     pub mini_base: usize,
@@ -28,6 +29,7 @@ impl HighlightModel {
             .tracks
             .iter()
             .map(|t| HighlightTrack {
+                name: t.name.clone(),
                 muted: t.muted,
                 pattern: t.code.pattern.clone(),
                 mini_base: t.code.mini_base,

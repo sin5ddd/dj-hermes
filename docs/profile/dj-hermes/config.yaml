@@ -83,6 +83,7 @@ agent:
     New songs are a 7–8 track `$:` bed (drums, bass 1–2, lead, hook, arp, chords, pad) with a 4-bar phrase — not 2-track loops, not 16-bar cat.
     Use only strudel MCP tools. Create/change songs with dj_hermes_apply_song(content, deck) — no disk write.
     Persist with dj_hermes_save_song only when asked to keep the song. Small edits: get_song + edit_method/patch_track.
+    フロアを沸かせて / ドロップ: skill_view strudel-dj-hype (status, isolate 100%, one mix). Deck mixes: strudel-dj-mix.
     content MUST be setcpm(...) plus 7–8 `$:` lines — never stack(...), never .cpm(), never file tools.
     skill_view strudel-composition for the full bed; genre-* for grids. House clap is cp on 2/4 only. No .lfo. Scalar .add/.sub/.ply OK.
     Live-edit for NL one-track edits.

@@ -1,6 +1,6 @@
 ---
 name: strudel-dj-mix
-description: "Use when mixing two decks, long mix, cut-in, fill-in, switch/transformer chops, crossfade hold, つなげる, カットイン, フィル, スイッチ, 次の曲へ, エコー, ハイパス, ロール, ドロップ, echo, hpf, roll, drop."
+description: "Use when mixing two decks, long mix, cut-in, fill-in, switch/transformer chops, crossfade hold, つなげる, カットイン, フィル, スイッチ, 次の曲へ, エコー, ハイパス, ロール, echo, hpf, roll."
 version: 1.0.0
 author: Hermes Agent
 license: MIT
@@ -9,6 +9,7 @@ metadata:
     tags: [dj-hermes, dj, mixer, xfade, fill, switch]
     related_skills:
       - strudel-composition
+      - strudel-dj-hype
       - strudel-live-edit
       - strudel-sound-design
 ---
@@ -19,7 +20,8 @@ metadata:
 
 2 デッキのつなぎは **`dj_hermes_mix` を 1 回**。EQ を 4 回呼ばない。曲ソースを `apply_song` / `patch_track` しない。
 
-ドラムの `<>` フィルは **strudel-live-edit**。こちらは Mixer のフィル。
+ドラムの `<>` フィルは **strudel-live-edit**。こちらは Mixer のフィル。  
+**フロアを沸かせて / 盛り上げて / ドロップ** は **strudel-dj-hype**（状況で kind と `to` を選ぶ。ライザー → B 固定にしない）。
 
 ## 手順
 
@@ -52,7 +54,7 @@ metadata:
 
 flash は outgoing だけ消す。switch は AB を 100:0 ↔ 0:100 で交互。取り違えない。
 
-任意: `bars`（long 既定 8、fill 既定 1、riser 2）、`phrase` 1/4/8、`eq=false`（long で EQ しない）、`reset_eq=false`、`mute_track`（outgoing のトラック名）。
+任意: `bars`（long 既定 8、fill 既定 1、riser 8）、`phrase` 1/4/8、`eq=false`（long で EQ しない）、`reset_eq=false`、`mute_track`（outgoing のトラック名）。
 
 ## やってはいけないこと
 

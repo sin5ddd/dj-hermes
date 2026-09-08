@@ -104,7 +104,7 @@ Bundled one-shots: `samples/bd`, `sd`, `hh`, `oh`, `cp` (`samples/cp/00.wav`), p
 ## DJ / mix
 
 - Two decks, one `Transport`.
-- Mixer faders + per-deck Hi/Mid/Lo EQ (shelves at 6 kHz / 1 kHz / 200 Hz) + master LPF/HPF.
+- Mixer faders + per-deck Hi/Mid/Lo EQ (cut-only: 1.0 = 0 dB, 0 = kill; shelves at 6 kHz / 1 kHz / 200 Hz) + held master LPF/HPF and delay.
 - Crossfade: `gainA = cos(θ)`, `gainB = sin(θ)` for `θ` in `0 … π/2` (`mixer.rs`). Starts on a bar boundary; `hush` is immediate.
 - `.compressor(...)` on a `$:` is **mixer master**, last-write (`engine.rs`) — not a track insert. It will squash the kick.
 - Try a pair **at the same BPM**: `dj-hermes dj songs/house/01.strudel songs/four-on-the-floor/01.strudel` (both `setcpm(124/4)`) then `/x 4`. A second file at another `setcpm` does not keep its own tempo. Do not pair 174 DnB with 126 techno.
@@ -123,6 +123,7 @@ Cross-cutting:
 | [strudel-mood-bright-dark](./strudel-mood-bright-dark/SKILL.md) | Brighter/darker (mode, voicing, register, sample, filter) — not a genre change | — (inline pair; apply via `dj_hermes_apply_song`) |
 | [strudel-live-edit](./strudel-live-edit/SKILL.md) | Natural language → one-track / one-method live edits | — |
 | [strudel-dj-mix](./strudel-dj-mix/SKILL.md) | A/B mix macros (`dj_hermes_mix` one call: long / cut / fill / switch / hold) | — |
+| [strudel-dj-hype](./strudel-dj-hype/SKILL.md) | フロアを沸かせて / ドロップ（status → 100% → 既存 mix 1 回） | — |
 
 Play 専用（このツリーには置かない）: [strudel-seqtrak](../../../play-hermes/skills/creative/strudel-seqtrak/SKILL.md) — Yamaha SEQTRAK への MIDI（`play --midi` / `--midi-only`）。`dj-hermes` にはコピーしない。
 

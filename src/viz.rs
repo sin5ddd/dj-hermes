@@ -91,7 +91,7 @@ impl VizModel {
     }
 
     pub fn has_drawable_tracks(&self) -> bool {
-        self.tracks.iter().any(|t| !t.muted)
+        !self.tracks.is_empty()
     }
 }
 
@@ -339,13 +339,8 @@ pub fn render_pane_lines_ex(
     let ph = ((play - cycle_lo) / span * grid_cols as f64).floor() as i64;
     let ph_col = ph.clamp(0, grid_cols as i64 - 1) as usize;
 
-    let drum_lanes: Vec<(usize, &VizTrack)> = model
-        .tracks
-        .iter()
-        .enumerate()
-        .filter(|(_, t)| !t.muted && !t.is_note)
-        .collect();
-    let has_notes = model.tracks.iter().any(|t| !t.muted && t.is_note);
+    let drum_lanes: Vec<(usize, &VizTrack)> = sample_lanes(model);
+    let has_notes = model.tracks.iter().any(|t| t.is_note);
 
     // Allocate rows: prefer at least 1 piano row when notes exist; drums get one row each first.
     let (drum_show, piano_rows) = allocate_rows(body_budget, drum_lanes.len(), has_notes);
@@ -364,8 +359,17 @@ pub fn render_pane_lines_ex(
             }
         }
         let label = pad_label(&track.name, label_w);
-        let grid_s = paint_mono_lane(&on, ph_col, DRUM_COLOR);
-        lines.push(format!("{label} {grid_s}"));
+        let grid_s = if track.muted {
+            "·".repeat(grid_cols.min(40))
+        } else {
+            paint_mono_lane(&on, ph_col, DRUM_COLOR)
+        };
+        let line = if track.muted {
+            format!("\x1b[2m{label}\x1b[0m {grid_s}")
+        } else {
+            format!("{label} {grid_s}")
+        };
+        lines.push(line);
     }
 
     // Separator when both sections present and room for piano after it.
@@ -435,6 +439,32 @@ pub fn render_pane_lines_ex(
     }
 
     pad_lines(lines, rows)
+}
+
+fn sample_lanes(model: &VizModel) -> Vec<(usize, &VizTrack)> {
+    model
+        .tracks
+        .iter()
+        .enumerate()
+        .filter(|(_, t)| !t.is_note)
+        .collect()
+}
+
+/// Punchcard sample-lane rows that can toggle mute (pane-relative, 0 = header).
+pub fn sample_lane_mute_rows(model: &VizModel, rows: usize) -> Vec<(usize, String)> {
+    if rows < 3 {
+        return Vec::new();
+    }
+    let body_budget = rows.saturating_sub(2).saturating_sub(1);
+    let lanes = sample_lanes(model);
+    let has_notes = model.tracks.iter().any(|t| t.is_note);
+    let (drum_show, _) = allocate_rows(body_budget, lanes.len(), has_notes);
+    lanes
+        .iter()
+        .take(drum_show)
+        .enumerate()
+        .map(|(i, (_, t))| (2 + i, t.name.clone()))
+        .collect()
 }
 
 /// How many drum lanes vs piano rows to show given body height.

@@ -41,12 +41,12 @@ impl CompleteResult {
 }
 
 const TOP_LEVEL: &[&str] = &[
-    "a", "b", "x", "mix", "bpm", "hush", "status", "help", "list", "quit", "viz", "vfx", "dopa",
-    "flash",
+    "a", "b", "x", "mix", "filter", "delay", "bpm", "hush", "status", "help", "list", "quit",
+    "viz", "vfx", "dopa", "flash",
 ];
 const TOP_LEVEL_PLAY: &[&str] = &[
-    "a", "load", "save", "reload", "mute", "unmute", "gain", "head", "bpm", "hush", "status",
-    "help", "list", "quit", "viz", "vfx", "dopa", "flash",
+    "a", "load", "save", "reload", "mute", "unmute", "gain", "head", "filter", "delay", "bpm",
+    "hush", "status", "help", "list", "quit", "viz", "vfx", "dopa", "flash",
 ];
 const MIX_MOVES: &[&str] = &["long", "cut", "fill", "hold"];
 const MIX_KINDS: &[&str] = &[
@@ -309,6 +309,9 @@ fn stage_suggest(
             list_result(filter_static(VIZ_ARGS, partial), replace_from, None)
         }
         ["bpm"] => hint_only(replace_from, "<bpm>"),
+        ["filter"] => list_result(filter_static(&["lpf", "hpf"], partial), replace_from, None),
+        ["filter", "lpf"] | ["filter", "hpf"] => hint_only(replace_from, "<hz>|off"),
+        ["delay"] => hint_only(replace_from, "<0..1>"),
         ["x"] | ["xfade"] => hint_only(replace_from, "<bars>"),
         ["mix"] => list_result(filter_static(MIX_MOVES, partial), replace_from, None),
         ["mix", "long"] | ["mix", "cut"] => hint_only(replace_from, "A|B"),

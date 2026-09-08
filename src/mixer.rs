@@ -3,10 +3,16 @@
 
 use std::sync::Arc;
 
-use crate::dsp::{eq_pos_to_db, Biquad, BiquadKind, DelayLine, MAX_DELAY_SEC};
+use crate::dsp::{
+    eq_pos_to_db, Biquad, BiquadKind, DelayLine, EQ_FLAT, MAX_DELAY_FEEDBACK, MAX_DELAY_SEC,
+};
 
-/// Isolator-style Lo kill: high-pass so kick/bass does not leak through a −12 dB shelf.
+/// Isolator-style Lo kill: high-pass so kick/bass does not leak through a shelf cut.
 const LO_KILL_HZ: f32 = 250.0;
+/// Isolator-style Hi kill: low-pass so air does not leak at slider left.
+const HI_KILL_HZ: f32 = 6_000.0;
+/// Slider at or below this engages Lo/Hi kill filters.
+const EQ_KILL_POS: f32 = 0.02;
 const LPF_SWEEP_START_HZ: f32 = 12_000.0;
 const LPF_SWEEP_END_HZ: f32 = 200.0;
 const DELAY_WET: f32 = 0.5;
@@ -127,7 +133,8 @@ impl FillKind {
 
     pub fn default_bars(self) -> u32 {
         match self {
-            Self::Riser => 2,
+            // Catalog risers (`fx:fr` / `nr` / `rf` / `rp` / `rw` / `up`) are ~15 s.
+            Self::Riser => 8,
             _ => 1,
         }
     }
@@ -268,7 +275,8 @@ enum MixJob {
     },
 }
 
-/// Per-deck channel EQ: Hi (shelf) / Mid (peak) / Lo (shelf). Positions 0..=1, 0.5 = flat.
+/// Per-deck channel EQ: Hi (shelf) / Mid (peak) / Lo (shelf).
+/// Positions 0..=1: **1.0 = 0 dB** (right), 0.0 = band kill (left). No boost.
 /// Dual-mono state (shared coeffs) so stereo pan is preserved.
 #[derive(Clone, Debug)]
 struct ChannelEq {
@@ -282,6 +290,8 @@ struct ChannelEq {
     lo_r: Biquad,
     kill_l: Biquad,
     kill_r: Biquad,
+    hi_kill_l: Biquad,
+    hi_kill_r: Biquad,
     lo_kill: bool,
     sr: f32,
 }
@@ -289,7 +299,7 @@ struct ChannelEq {
 impl ChannelEq {
     fn new(sr: f32) -> Self {
         let mut eq = Self {
-            pos: [0.5, 0.5, 0.5],
+            pos: [EQ_FLAT, EQ_FLAT, EQ_FLAT],
             hi_l: Biquad::bypass(),
             mid_l: Biquad::bypass(),
             lo_l: Biquad::bypass(),
@@ -298,6 +308,8 @@ impl ChannelEq {
             lo_r: Biquad::bypass(),
             kill_l: Biquad::bypass(),
             kill_r: Biquad::bypass(),
+            hi_kill_l: Biquad::bypass(),
+            hi_kill_r: Biquad::bypass(),
             lo_kill: false,
             sr: sr.max(1.0),
         };
@@ -355,27 +367,50 @@ impl ChannelEq {
             .set_coeffs(BiquadKind::HighPass, LO_KILL_HZ, q, sr);
         self.kill_r
             .set_coeffs(BiquadKind::HighPass, LO_KILL_HZ, q, sr);
+        self.hi_kill_l
+            .set_coeffs(BiquadKind::LowPass, HI_KILL_HZ, q, sr);
+        self.hi_kill_r
+            .set_coeffs(BiquadKind::LowPass, HI_KILL_HZ, q, sr);
     }
 
     fn set_lo_kill(&mut self, kill: bool) {
         self.lo_kill = kill;
     }
 
+    fn lo_is_kill(&self) -> bool {
+        self.lo_kill || self.pos[2] <= EQ_KILL_POS
+    }
+
+    fn hi_is_kill(&self) -> bool {
+        self.pos[0] <= EQ_KILL_POS
+    }
+
     #[inline]
     fn process_stereo(&mut self, l: f32, r: f32) -> (f32, f32) {
-        // Lo shelf skipped while isolator kill is on (HPF only).
-        let l = if self.lo_kill {
+        let lo_kill = self.lo_is_kill();
+        let hi_kill = self.hi_is_kill();
+        let l = if lo_kill {
             self.kill_l.process(l)
         } else {
             self.lo_l.process(l)
         };
-        let r = if self.lo_kill {
+        let r = if lo_kill {
             self.kill_r.process(r)
         } else {
             self.lo_r.process(r)
         };
-        let l = self.hi_l.process(self.mid_l.process(l));
-        let r = self.hi_r.process(self.mid_r.process(r));
+        let l = self.mid_l.process(l);
+        let r = self.mid_r.process(r);
+        let l = if hi_kill {
+            self.hi_kill_l.process(l)
+        } else {
+            self.hi_l.process(l)
+        };
+        let r = if hi_kill {
+            self.hi_kill_r.process(r)
+        } else {
+            self.hi_r.process(r)
+        };
         (l, r)
     }
 }
@@ -405,6 +440,11 @@ pub struct Mixer {
     delay_r: DelayLine,
     delay_wet: f32,
     delay_fb: f32,
+    /// Operator-held master FX; fill jobs overlay `lpf_hz` / `hpf_hz` / delay then restore these.
+    held_lpf: Option<f32>,
+    held_hpf: Option<f32>,
+    held_delay_wet: f32,
+    held_delay_fb: f32,
     flash_mul: [f32; 2],
     riser_pcm: Option<Arc<Vec<f32>>>,
     riser_idx: usize,
@@ -451,6 +491,10 @@ impl Mixer {
             delay_r: DelayLine::new(delay_n),
             delay_wet: 0.0,
             delay_fb: 0.0,
+            held_lpf: None,
+            held_hpf: None,
+            held_delay_wet: 0.0,
+            held_delay_fb: 0.0,
             flash_mul: [1.0, 1.0],
             riser_pcm: None,
             riser_idx: 0,
@@ -502,19 +546,19 @@ impl Mixer {
         let from = 1 - to_deck;
         self.set_lo_kill(from, true);
         self.set_lo_kill(to_deck, false);
-        self.set_deck_eq(from, 0, 0.5);
-        self.set_deck_eq(from, 1, 0.5);
-        self.set_deck_eq(from, 2, 0.5);
-        self.set_deck_eq(to_deck, 0, 0.5);
+        self.set_deck_eq(from, 0, EQ_FLAT);
+        self.set_deck_eq(from, 1, EQ_FLAT);
+        self.set_deck_eq(from, 2, EQ_FLAT);
+        self.set_deck_eq(to_deck, 0, EQ_FLAT);
         self.set_deck_eq(to_deck, 1, 0.0);
-        self.set_deck_eq(to_deck, 2, 0.5);
+        self.set_deck_eq(to_deck, 2, EQ_FLAT);
     }
 
     pub fn reset_eq_flat(&mut self) {
         for d in 0..2 {
             self.set_lo_kill(d, false);
             for b in 0..3 {
-                self.set_deck_eq(d, b, 0.5);
+                self.set_deck_eq(d, b, EQ_FLAT);
             }
         }
     }
@@ -538,21 +582,96 @@ impl Mixer {
     }
 
     /// Stop fill inserts (delay/LPF/flash/riser) without changing faders.
+    /// Restores operator-held master FX (does not zero them).
     pub fn clear_job(&mut self) {
         self.job = None;
         self.mix_status = None;
-        self.delay_wet = 0.0;
-        self.delay_fb = 0.0;
-        self.delay_l.clear();
-        self.delay_r.clear();
         self.flash_mul = [1.0, 1.0];
         self.riser_pcm = None;
         self.riser_idx = 0;
-        self.lpf_hz = None;
-        self.hpf_hz = None;
         self.roll_target = 0;
         self.roll_cap = 0;
         self.roll_i = 0;
+        self.restore_held_fx();
+    }
+
+    fn job_owns_lpf(&self) -> bool {
+        matches!(self.job, Some(MixJob::Lpf { .. }))
+    }
+
+    fn job_owns_hpf(&self) -> bool {
+        matches!(self.job, Some(MixJob::Hpf { .. }))
+    }
+
+    fn job_owns_delay(&self) -> bool {
+        matches!(self.job, Some(MixJob::Delay { .. } | MixJob::Echo { .. }))
+    }
+
+    fn restore_held_fx(&mut self) {
+        self.lpf_hz = self.held_lpf;
+        self.hpf_hz = self.held_hpf;
+        self.delay_wet = self.held_delay_wet;
+        self.delay_fb = self.held_delay_fb;
+        if self.held_delay_wet <= 0.0 {
+            self.delay_l.clear();
+            self.delay_r.clear();
+        }
+    }
+
+    /// Operator master LPF. Fill LPF overlay does not overwrite the held value.
+    pub fn set_held_lpf(&mut self, hz: Option<f32>) {
+        self.held_lpf = hz;
+        if !self.job_owns_lpf() {
+            self.lpf_hz = hz;
+        }
+    }
+
+    /// Operator master HPF. Fill HPF overlay does not overwrite the held value.
+    pub fn set_held_hpf(&mut self, hz: Option<f32>) {
+        self.held_hpf = hz;
+        if !self.job_owns_hpf() {
+            self.hpf_hz = hz;
+        }
+    }
+
+    /// Operator master delay wet/feedback. `time_sec` is the tap (typically an 8th).
+    pub fn set_held_delay(&mut self, wet: f32, feedback: Option<f32>, time_sec: f32, sr: f32) {
+        self.held_delay_wet = wet.clamp(0.0, 1.0);
+        if let Some(fb) = feedback {
+            self.held_delay_fb = fb.clamp(0.0, MAX_DELAY_FEEDBACK);
+        }
+        self.delay_l.set_time_sec(time_sec.max(0.0), sr);
+        self.delay_r.set_time_sec(time_sec.max(0.0), sr);
+        if !self.job_owns_delay() {
+            self.delay_wet = self.held_delay_wet;
+            self.delay_fb = self.held_delay_fb;
+            if self.held_delay_wet <= 0.0 {
+                self.delay_l.clear();
+                self.delay_r.clear();
+            }
+        }
+    }
+
+    pub fn held_delay_wet(&self) -> f32 {
+        self.held_delay_wet
+    }
+
+    /// Louder deck (tie → A). Used to isolate before a fill.
+    pub fn main_deck(&self) -> usize {
+        if self.gain_b > self.gain_a {
+            1
+        } else {
+            0
+        }
+    }
+
+    fn snap_to_main_if_needed(&mut self, sr: f32) {
+        let pos = self.crossfader_pos();
+        if pos <= 0.02 || pos >= 0.98 {
+            return;
+        }
+        let target = if self.main_deck() == 1 { 1.0 } else { 0.0 };
+        self.snap_crossfader(target, true, sr);
     }
 
     fn begin_gain_ramp(&mut self, sr: f32) {
@@ -599,20 +718,15 @@ impl Mixer {
 
     fn finish_job(&mut self, to_deck: usize, reset_eq: bool, sr: f32) {
         let to = if to_deck > 1 { 0 } else { to_deck };
-        self.delay_wet = 0.0;
-        self.delay_fb = 0.0;
-        self.delay_l.clear();
-        self.delay_r.clear();
         self.flash_mul = [1.0, 1.0];
         self.riser_pcm = None;
         self.riser_idx = 0;
-        self.lpf_hz = None;
-        self.hpf_hz = None;
         self.roll_target = 0;
         self.roll_cap = 0;
         self.roll_i = 0;
         self.job = None;
         self.mix_status = None;
+        self.restore_held_fx();
         if reset_eq {
             self.reset_eq_flat();
         }
@@ -657,6 +771,7 @@ impl Mixer {
             return;
         }
         self.clear_job();
+        self.snap_to_main_if_needed(sr);
         let bars = bars.clamp(1, 32);
         let spb = samples_per_bar.max(1.0) as u64;
         let len = (bars as f64 * samples_per_bar).max(1.0) as u64;
@@ -1089,7 +1204,7 @@ impl Mixer {
         }
     }
 
-    /// Set one EQ band for a deck. `band`: 0=Hi, 1=Mid, 2=Lo. `value`: 0..=1 (0.5 = flat).
+    /// Set one EQ band for a deck. `band`: 0=Hi, 1=Mid, 2=Lo. `value`: 0..=1 (1.0 = 0 dB).
     pub fn set_deck_eq(&mut self, deck: usize, band: usize, value: f32) {
         match deck {
             0 => self.eq_a.set_band(band, value),
@@ -1103,7 +1218,7 @@ impl Mixer {
         match deck {
             0 => self.eq_a.pos,
             1 => self.eq_b.pos,
-            _ => [0.5, 0.5, 0.5],
+            _ => [EQ_FLAT, EQ_FLAT, EQ_FLAT],
         }
     }
 
@@ -1441,7 +1556,7 @@ mod tests {
 
         let mut cut = Mixer::new();
         cut.gain_a = 1.0;
-        cut.set_deck_eq(0, 2, 0.0); // Lo min (-12 dB)
+        cut.set_deck_eq(0, 2, 0.0); // Lo kill
         let mut out_cut = vec![0.0f32; n];
         mix_center(&mut cut, &mut out_cut, &a, &b, sr);
 
@@ -1466,7 +1581,7 @@ mod tests {
 
         let mut shelf = Mixer::new();
         shelf.gain_a = 1.0;
-        shelf.set_deck_eq(0, 2, 0.0);
+        shelf.set_deck_eq(0, 2, 0.75);
         let mut out_shelf = vec![0.0f32; n];
         mix_center(&mut shelf, &mut out_shelf, &a, &b, sr);
 
@@ -1480,7 +1595,7 @@ mod tests {
         let e_kill: f32 = out_kill[2000..].iter().map(|x| x * x).sum();
         assert!(
             e_kill < e_shelf * 0.5,
-            "isolator kill should drop bass more than -12 dB shelf: kill={e_kill} shelf={e_shelf}"
+            "isolator kill should drop bass more than a mid-slider cut: kill={e_kill} shelf={e_shelf}"
         );
         assert!(kill.lo_kill(0));
     }
@@ -1523,7 +1638,7 @@ mod tests {
         assert!(!m.has_mix_job());
         assert!(m.gain_a.abs() < 1e-5);
         assert!((m.gain_b - 1.0).abs() < 1e-5);
-        assert!((m.deck_eq(0)[1] - 0.5).abs() < 1e-5);
+        assert!((m.deck_eq(0)[1] - EQ_FLAT).abs() < 1e-5);
         assert!(!m.lo_kill(0) && !m.lo_kill(1));
         assert!(m.lpf_hz.is_none());
     }
@@ -1605,10 +1720,10 @@ mod tests {
     }
 
     #[test]
-    fn eq_hi_boost_raises_treble() {
+    fn eq_hi_kill_drops_treble() {
         let sr = 48_000.0f32;
         let n = 8000;
-        // 8 kHz sine (above Hi shelf).
+        // 8 kHz sine (above Hi shelf / kill LPF).
         let mut a = vec![0.0f32; n];
         for (i, s) in a.iter_mut().enumerate() {
             *s = (2.0 * std::f32::consts::PI * 8000.0 * i as f32 / sr).sin() * 0.3;
@@ -1620,17 +1735,73 @@ mod tests {
         let mut out_flat = vec![0.0f32; n];
         mix_center(&mut flat, &mut out_flat, &a, &b, sr);
 
-        let mut boost = Mixer::new();
-        boost.gain_a = 1.0;
-        boost.set_deck_eq(0, 0, 1.0); // Hi max (+12 dB)
-        let mut out_boost = vec![0.0f32; n];
-        mix_center(&mut boost, &mut out_boost, &a, &b, sr);
+        let mut cut = Mixer::new();
+        cut.gain_a = 1.0;
+        cut.set_deck_eq(0, 0, 0.0);
+        let mut out_cut = vec![0.0f32; n];
+        mix_center(&mut cut, &mut out_cut, &a, &b, sr);
 
         let e_flat: f32 = out_flat[2000..].iter().map(|x| x * x).sum();
-        let e_boost: f32 = out_boost[2000..].iter().map(|x| x * x).sum();
+        let e_cut: f32 = out_cut[2000..].iter().map(|x| x * x).sum();
         assert!(
-            e_boost > e_flat * 1.5,
-            "Hi boost should raise treble: boost={e_boost} flat={e_flat}"
+            e_cut < e_flat * 0.5,
+            "Hi kill should drop treble: cut={e_cut} flat={e_flat}"
+        );
+    }
+
+    #[test]
+    fn fill_restores_held_lpf() {
+        let mut m = Mixer::new();
+        m.set_held_lpf(Some(800.0));
+        m.start_fill(
+            FillKind::Lpf,
+            1,
+            1,
+            true,
+            MixGrid::Eighth,
+            0,
+            1000.0,
+            120.0,
+            48_000.0,
+        );
+        let _ = m.tick_job(0, 48_000.0);
+        assert!(m.lpf_hz.unwrap() > 1000.0);
+        let done = m.tick_job(1000, 48_000.0);
+        assert!(done);
+        assert!((m.lpf_hz.unwrap() - 800.0).abs() < 1e-3);
+    }
+
+    #[test]
+    fn fill_snaps_mid_xfader_to_main() {
+        let mut m = Mixer::new();
+        m.set_crossfader(0.5);
+        assert!((m.crossfader_pos() - 0.5).abs() < 0.05);
+        m.start_fill(
+            FillKind::Delay,
+            1,
+            1,
+            true,
+            MixGrid::Eighth,
+            0,
+            96_000.0,
+            120.0,
+            48_000.0,
+        );
+        // Tie at 0.5 → main A; fill isolates A then will cut to B at end.
+        assert!(m.gain_a > 0.9, "fill should snap to main A first");
+        assert!(m.gain_b.abs() < 0.15);
+    }
+
+    #[test]
+    fn long_mix_does_not_snap_xfader() {
+        let mut m = Mixer::new();
+        m.set_crossfader(0.4);
+        let pos = m.crossfader_pos();
+        m.start_xfade(1, 0, 1000);
+        assert!(m.xfade().is_some());
+        assert!(
+            (m.crossfader_pos() - pos).abs() < 0.02,
+            "long xfade must not snap the fader before it ticks"
         );
     }
 
@@ -1652,6 +1823,7 @@ mod tests {
         assert_eq!(FillKind::Hpf.default_bars(), 1);
         assert_eq!(FillKind::Roll.default_bars(), 1);
         assert_eq!(FillKind::Drop.default_bars(), 1);
+        assert_eq!(FillKind::Riser.default_bars(), 8);
     }
 
     #[test]

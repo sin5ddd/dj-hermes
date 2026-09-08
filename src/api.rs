@@ -46,7 +46,7 @@ pub struct AppState {
     pub deck_paths: DeckPaths,
 }
 
-/// Channel EQ slider positions (0..=1, 0.5 = flat).
+/// Channel EQ slider positions (0..=1, 1.0 = 0 dB / flat, 0 = kill).
 #[derive(Clone, Debug, Serialize, PartialEq)]
 pub struct EqBands {
     pub hi: f32,
@@ -57,9 +57,9 @@ pub struct EqBands {
 impl Default for EqBands {
     fn default() -> Self {
         Self {
-            hi: 0.5,
-            mid: 0.5,
-            lo: 0.5,
+            hi: 1.0,
+            mid: 1.0,
+            lo: 1.0,
         }
     }
 }
@@ -99,6 +99,15 @@ pub struct StatusInfo {
     pub hpf_hz: Option<f32>,
     /// Equal-power crossfader 0=A … 1=B.
     pub crossfader: f32,
+    /// Muted `$:` track names on deck A.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub muted_a: Vec<String>,
+    /// Muted `$:` track names on deck B.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub muted_b: Vec<String>,
+    /// Operator-held master delay wet 0..=1.
+    #[serde(default)]
+    pub delay_wet: f32,
     /// Active mix macro, if any.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub mix: Option<MixStatusInfo>,
@@ -241,7 +250,7 @@ pub struct HeadReq {
     pub bar: u64,
 }
 
-/// Partial EQ update. At least one of hi/mid/lo required. Values 0..=1 (0.5 = flat).
+/// Partial EQ update. At least one of hi/mid/lo required. Values 0..=1 (1.0 = 0 dB).
 #[derive(Deserialize)]
 pub struct MixerEqReq {
     pub deck: String,
@@ -315,6 +324,13 @@ pub struct MixerFilterReq {
     pub hpf: FilterField,
 }
 
+/// Master delay on the post-mix line. `delay` is wet 0..=1.
+#[derive(Deserialize)]
+pub struct MixerFxReq {
+    pub delay: f32,
+    pub feedback: Option<f32>,
+}
+
 #[derive(Deserialize)]
 pub struct MixerCrossfaderReq {
     /// 0 = full A, 1 = full B (immediate; cancels multi-bar xfade).
@@ -379,8 +395,23 @@ pub(crate) fn snapshot(engine: &Arc<Mutex<Engine>>, deck_paths: Option<&DeckPath
         lpf_hz: e.mixer.lpf_hz,
         hpf_hz: e.mixer.hpf_hz,
         crossfader: e.mixer.crossfader_pos(),
+        muted_a: muted_names(&e.decks[0]),
+        muted_b: muted_names(&e.decks[1]),
+        delay_wet: e.mixer.held_delay_wet(),
         mix: e.mixer.mix_status().map(MixStatusInfo::from_mixer),
     }
+}
+
+fn muted_names(deck: &crate::deck::Deck) -> Vec<String> {
+    deck.song_ref()
+        .map(|s| {
+            s.tracks
+                .iter()
+                .filter(|t| t.muted)
+                .map(|t| t.name.clone())
+                .collect()
+        })
+        .unwrap_or_default()
 }
 
 fn slots_from_paths(deck_paths: Option<&DeckPaths>) -> (Option<String>, Option<String>) {
@@ -834,7 +865,7 @@ async fn mixer_eq(
     let deck = deck_idx(&r.deck).map_err(bad)?;
     let bands: [(u8, Option<f32>); 3] = [(0, r.hi), (1, r.mid), (2, r.lo)];
     if bands.iter().all(|(_, v)| v.is_none()) {
-        return Err(bad("provide at least one of hi, mid, lo (0..=1, 0.5=flat)"));
+        return Err(bad("provide at least one of hi, mid, lo (0..=1, 1.0=0dB)"));
     }
     for (band, val) in bands {
         let Some(v) = val else { continue };
@@ -880,6 +911,26 @@ async fn mixer_filter(
                 .map_err(|e| bad(e.to_string()))?;
         }
     }
+    Ok(StatusCode::NO_CONTENT)
+}
+
+async fn mixer_fx(
+    State(s): State<AppState>,
+    Json(r): Json<MixerFxReq>,
+) -> Result<StatusCode, (StatusCode, Json<ErrRes>)> {
+    if !r.delay.is_finite() {
+        return Err(bad("delay wet must be finite 0..=1"));
+    }
+    if let Some(fb) = r.feedback {
+        if !fb.is_finite() {
+            return Err(bad("feedback must be finite 0..=1"));
+        }
+    }
+    s.tx.send(Command::SetMixerDelay {
+        wet: r.delay.clamp(0.0, 1.0),
+        feedback: r.feedback.map(|f| f.clamp(0.0, 1.0)),
+    })
+    .map_err(|e| bad(e.to_string()))?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -973,6 +1024,7 @@ pub fn router(state: AppState) -> Router {
         .route("/hush", post(hush))
         .route("/mixer/eq", post(mixer_eq))
         .route("/mixer/filter", post(mixer_filter))
+        .route("/mixer/fx", post(mixer_fx))
         .route("/mixer/crossfader", post(mixer_crossfader))
         .route("/mix", post(mix))
         .route("/status", get(get_status))

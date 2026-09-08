@@ -47,11 +47,16 @@ pub enum Command {
     /// Master LPF cutoff Hz; `None` via negative/NaN not used — use `SetMixerLpf(None)`.
     SetMixerLpf(Option<f32>),
     SetMixerHpf(Option<f32>),
-    /// Per-deck channel EQ band (immediate). `band`: 0=Hi, 1=Mid, 2=Lo; `value`: 0..=1 (0.5=flat).
+    /// Per-deck channel EQ band (immediate). `band`: 0=Hi, 1=Mid, 2=Lo; `value`: 0..=1 (1.0=0 dB).
     SetDeckEq {
         deck: usize,
         band: u8,
         value: f32,
+    },
+    /// Master delay wet 0..=1 (immediate). Optional feedback; tap time from transport.
+    SetMixerDelay {
+        wet: f32,
+        feedback: Option<f32>,
     },
     /// DJ mix macro (long / cut / fill). Hold is [`Command::HoldXFade`].
     Mix(MixCommand),
@@ -254,10 +259,16 @@ impl Engine {
                 self.mixer.set_crossfader(pos);
             }
             Command::SetMixerLpf(hz) => {
-                self.mixer.lpf_hz = hz;
+                self.mixer.set_held_lpf(hz);
             }
             Command::SetMixerHpf(hz) => {
-                self.mixer.hpf_hz = hz;
+                self.mixer.set_held_hpf(hz);
+            }
+            Command::SetMixerDelay { wet, feedback } => {
+                let bpm = self.transport.bpm.max(1.0);
+                let eighth = (60.0 / bpm / 2.0) as f32;
+                let sr = self.transport.sample_rate as f32;
+                self.mixer.set_held_delay(wet, feedback, eighth, sr);
             }
             Command::SetDeckEq { deck, band, value } => {
                 if deck < 2 && (band as usize) < 3 {
@@ -444,7 +455,8 @@ impl Engine {
                     .get_stem("fx", "id")
                     .or_else(|| samples.get_stem("fx", "sd")),
                 _ => samples
-                    .get_stem("fx", "up")
+                    .get_stem("fx", "fr")
+                    .or_else(|| samples.get_stem("fx", "up"))
                     .or_else(|| samples.get_stem("fx", "nr")),
             };
             self.mixer.set_riser_pcm(pcm);
@@ -1016,7 +1028,24 @@ b: note("{n}").s("sawtooth").gain(0.8)
         assert!(e.mixer.gain_a.abs() < 1e-3);
         assert!((e.mixer.gain_b - 1.0).abs() < 1e-3);
         assert!(!e.mixer.lo_kill(0));
-        assert!((e.mixer.deck_eq(0)[1] - 0.5).abs() < 1e-5);
+        assert!((e.mixer.deck_eq(0)[1] - 1.0).abs() < 1e-5);
+    }
+
+    #[test]
+    fn mix_fill_same_deck_stays_on_a() {
+        let mut e = Engine::new(48_000, 120.0);
+        let bank = SampleBank::empty();
+        e.load_song_immediate(0, test_song("c3"));
+        e.mixer.set_crossfader(0.0);
+        e.push_command(Command::Mix(mix_fill(FillKind::Delay, 0)));
+        process_until_next_bar_applied(&mut e, &bank);
+        // 1 bar fill at 120 BPM / 48k = 96_000 frames; process a bit past that.
+        let mut buf = stereo_buf(4_800);
+        for _ in 0..25 {
+            e.process(&mut buf, &bank);
+        }
+        assert!(e.mixer.gain_a > 0.9);
+        assert!(e.mixer.gain_b.abs() < 0.15);
     }
 
     #[test]

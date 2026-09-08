@@ -805,6 +805,7 @@ fn factory_pcm_flat_stems_resolve_exactly() {
     assert!(bank.get_stem("ld", "ss").is_some());
     assert!(bank.get_stem("fx", "up").is_some());
     assert!(bank.get_stem("fx", "nr").is_some());
+    assert!(bank.get_stem("fx", "fr").is_some());
     assert!(bank.get_stem("fx", "id").is_some());
     assert!(bank.get_stem("fx", "sd").is_some());
     assert!(bank.has("bs"), "folder key is the part, not part:slug");

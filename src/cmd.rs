@@ -41,6 +41,9 @@ mix long A|B [bars] long mix (EQ bass-swap + xfade, next phrase)
 mix cut A|B         cut-in next bar (EQ reset)
 mix fill <kind> A|B [8n|4n]  delay|lpf|flash|riser|switch|echo|hpf|roll|drop then cut-in
 mix hold            freeze xfade now
+filter lpf <hz>|off post-mix LPF (held)
+filter hpf <hz>|off post-mix HPF (held)
+delay <0..1>        post-mix delay wet (held)
 bpm <n>             BPM from next bar
 hush                stop all (immediate)  [operator]
 status
@@ -70,6 +73,9 @@ gain <0..1>         fader (immediate)
 head <bar>          cue song bar (1-based; applies next bar). alias: cue
 list [genre]        bundled genres, or slot numbers in one genre
 a load|save|…       same verbs with an explicit deck A prefix
+filter lpf <hz>|off post-mix LPF (held)
+filter hpf <hz>|off post-mix HPF (held)
+delay <0..1>        post-mix delay wet (held)
 bpm <n>             BPM from next bar
 hush                stop all (immediate)  [operator]
 status
@@ -275,6 +281,8 @@ pub fn exec_in(
         "status" => return status(deck_paths, engine),
         "list" => return list_songs_cmd(&args[1..]),
         "mix" => return exec_mix(&args, tx, engine),
+        "filter" => return exec_filter(&args, tx),
+        "delay" => return exec_delay(&args, tx),
         "x" | "xfade" => {
             let bars = args
                 .get(1)
@@ -563,6 +571,56 @@ fn save_deck_song(
     ExecResult::msg(format!("saved {} → {}", label, dest.display()))
 }
 
+fn exec_filter(args: &[&str], tx: &Sender<Command>) -> ExecResult {
+    if args.len() < 3 {
+        return ExecResult::msg("usage: filter lpf|hpf <hz>|off");
+    }
+    let which = args[1];
+    let val = args[2];
+    let hz = if val.eq_ignore_ascii_case("off") || val.eq_ignore_ascii_case("none") || val == "0" {
+        None
+    } else {
+        match val.parse::<f32>() {
+            Ok(n) if n.is_finite() && n > 0.0 => Some(n),
+            _ => return ExecResult::msg(format!("filter Hz must be positive or off: {val}")),
+        }
+    };
+    match which {
+        "lpf" | "lp" => {
+            let _ = tx.send(Command::SetMixerLpf(hz));
+            ExecResult::msg(match hz {
+                Some(n) => format!("filter lpf {n} Hz"),
+                None => "filter lpf off".into(),
+            })
+        }
+        "hpf" | "hp" => {
+            let _ = tx.send(Command::SetMixerHpf(hz));
+            ExecResult::msg(match hz {
+                Some(n) => format!("filter hpf {n} Hz"),
+                None => "filter hpf off".into(),
+            })
+        }
+        other => ExecResult::msg(format!("usage: filter lpf|hpf <hz>|off (got {other})")),
+    }
+}
+
+fn exec_delay(args: &[&str], tx: &Sender<Command>) -> ExecResult {
+    if args.len() < 2 {
+        return ExecResult::msg("usage: delay <0..1>");
+    }
+    match args[1].parse::<f32>() {
+        Ok(w) if w.is_finite() => {
+            let wet = w.clamp(0.0, 1.0);
+            let _ = tx.send(Command::SetMixerDelay {
+                wet,
+                feedback: None,
+            });
+            ExecResult::msg(format!("delay wet {wet}"))
+        }
+        _ => ExecResult::msg(format!("delay wet must be 0..1: {}", args[1])),
+    }
+}
+
 fn exec_mix(
     args: &[&str],
     tx: &Sender<Command>,
@@ -832,6 +890,33 @@ mod tests {
             _ => panic!("expected XFade"),
         }
         assert!(r.messages[0].contains("xfade"));
+    }
+
+    #[test]
+    fn parses_filter_and_delay() {
+        let (tx, rx) = unbounded();
+        let paths = new_deck_paths();
+        let r = exec("filter lpf 800", &tx, &paths, None);
+        assert!(r.messages[0].contains("lpf"));
+        match rx.try_recv().unwrap() {
+            Command::SetMixerLpf(Some(hz)) => assert!((hz - 800.0).abs() < 1e-3),
+            _ => panic!("expected SetMixerLpf"),
+        }
+        let r = exec("filter hpf off", &tx, &paths, None);
+        assert!(r.messages[0].contains("off"));
+        match rx.try_recv().unwrap() {
+            Command::SetMixerHpf(None) => {}
+            _ => panic!("expected SetMixerHpf(None)"),
+        }
+        let r = exec("delay 0.4", &tx, &paths, None);
+        assert!(r.messages[0].contains("0.4"));
+        match rx.try_recv().unwrap() {
+            Command::SetMixerDelay { wet, feedback } => {
+                assert!((wet - 0.4).abs() < 1e-5);
+                assert!(feedback.is_none());
+            }
+            _ => panic!("expected SetMixerDelay"),
+        }
     }
 
     #[test]

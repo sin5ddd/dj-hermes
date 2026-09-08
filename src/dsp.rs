@@ -172,10 +172,15 @@ impl Biquad {
     }
 }
 
-/// Map DJ EQ slider position (0..=1, 0.5 = flat) to gain in dB (±12 dB).
+/// Cut-only EQ: slider `1.0` (right) is 0 dB, `0.0` (left) is [`EQ_CUT_DB`] down.
+pub const EQ_FLAT: f32 = 1.0;
+/// Deepest mid-band cut before the Lo/Hi kill filters take over.
+pub const EQ_CUT_DB: f32 = 36.0;
+
+/// Map DJ EQ slider (0..=1, **1.0 = 0 dB**, no boost) to gain in dB.
 #[inline]
 pub fn eq_pos_to_db(pos: f32) -> f32 {
-    (pos.clamp(0.0, 1.0) - 0.5) * 24.0
+    (1.0 - pos.clamp(0.0, 1.0)) * -EQ_CUT_DB
 }
 
 /// Circular delay line for orbit delay FX.
@@ -826,9 +831,10 @@ mod tests {
 
     #[test]
     fn eq_pos_to_db_flat_and_ends() {
-        assert!((eq_pos_to_db(0.5)).abs() < 1e-5);
-        assert!((eq_pos_to_db(1.0) - 12.0).abs() < 1e-5);
-        assert!((eq_pos_to_db(0.0) + 12.0).abs() < 1e-5);
+        assert!((eq_pos_to_db(1.0)).abs() < 1e-5);
+        assert!((eq_pos_to_db(0.0) + EQ_CUT_DB).abs() < 1e-5);
+        assert!((eq_pos_to_db(0.5) + EQ_CUT_DB * 0.5).abs() < 1e-5);
+        assert!(eq_pos_to_db(0.5).abs() > 1.0);
     }
 
     #[test]

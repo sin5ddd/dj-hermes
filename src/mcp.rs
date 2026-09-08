@@ -64,6 +64,7 @@ impl ToolBackend<'_> {
 const MIX_TOOL_NAMES: &[&str] = &[
     "dj_hermes_mixer_eq",
     "dj_hermes_mixer_filter",
+    "dj_hermes_mixer_fx",
     "dj_hermes_mixer_crossfader",
     "dj_hermes_xfade",
     "dj_hermes_mix",
@@ -221,27 +222,39 @@ fn tools_list(session: SessionKind) -> Value {
         "tools": [
             {
                 "name": "dj_hermes_mixer_eq",
-                "description": "Mixer: set deck A/B channel EQ (Hi/Mid/Lo). Values 0..=1, 0.5=flat (±12 dB). Immediate. Provide at least one of hi/mid/lo.",
+                "description": "Mixer: set deck A/B channel EQ (Hi/Mid/Lo). Values 0..=1, 1.0=0 dB (right/flat), 0=band kill. No boost. Immediate. Provide at least one of hi/mid/lo.",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
                         "deck": { "type": "string", "description": "A or B" },
-                        "hi": { "type": "number", "description": "High shelf 0..=1 (0.5 flat)" },
-                        "mid": { "type": "number", "description": "Mid peak 0..=1 (0.5 flat)" },
-                        "lo": { "type": "number", "description": "Low shelf 0..=1 (0.5 flat)" }
+                        "hi": { "type": "number", "description": "High 0..=1 (1.0 = 0 dB, 0 = kill)" },
+                        "mid": { "type": "number", "description": "Mid 0..=1 (1.0 = 0 dB, 0 = kill)" },
+                        "lo": { "type": "number", "description": "Low 0..=1 (1.0 = 0 dB, 0 = kill)" }
                     },
                     "required": ["deck"]
                 }
             },
             {
                 "name": "dj_hermes_mixer_filter",
-                "description": "Mixer: master LPF/HPF. Pass Hz number to set, or null to bypass. Immediate. Provide at least one of lpf/hpf.",
+                "description": "Mixer: post-mix LPF/HPF (held). Pass Hz number to set, or null to bypass. Immediate. Fill jobs overlay then restore this. Provide at least one of lpf/hpf.",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
                         "lpf": { "description": "Low-pass cutoff Hz, or null to bypass", "anyOf": [ {"type": "number"}, {"type": "null"} ] },
                         "hpf": { "description": "High-pass cutoff Hz, or null to bypass", "anyOf": [ {"type": "number"}, {"type": "null"} ] }
                     }
+                }
+            },
+            {
+                "name": "dj_hermes_mixer_fx",
+                "description": "Mixer: post-mix delay wet on the mixed line (held). Immediate. Fill delay/echo overlay then restore this. delay=0 bypasses.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "delay": { "type": "number", "description": "Wet 0..=1" },
+                        "feedback": { "type": "number", "description": "Feedback 0..=1 (optional)" }
+                    },
+                    "required": ["delay"]
                 }
             },
             {
@@ -275,7 +288,7 @@ fn tools_list(session: SessionKind) -> Value {
                     "properties": {
                         "move": { "type": "string", "description": "long | cut | fill | hold" },
                         "to": { "type": "string", "description": "A or B (required unless hold)" },
-                        "bars": { "type": "integer", "description": "long default 8, fill default 1 (riser 2)" },
+                        "bars": { "type": "integer", "description": "long default 8, fill default 1 (riser 8)" },
                         "eq": { "type": "boolean", "description": "long: apply bass-swap EQ (default true)" },
                         "reset_eq": { "type": "boolean", "description": "cut/fill: flatten EQ at the end (default true)" },
                         "kind": { "type": "string", "description": "fill only: delay | lpf | flash | riser | switch | echo | hpf | roll | drop" },
@@ -443,7 +456,7 @@ fn tools_list(session: SessionKind) -> Value {
             },
             {
                 "name": "dj_hermes_status",
-                "description": "Transport: get decks, BPM, bars, mixer gains, EQ (eq_a/eq_b), filters, crossfader.",
+                "description": "Transport: get decks, BPM, bars, mixer gains, EQ (eq_a/eq_b), filters, delay_wet, crossfader, muted_a/muted_b.",
                 "inputSchema": {
                     "type": "object",
                     "properties": {}
@@ -549,6 +562,18 @@ fn tools_call_http(
                 ));
             }
             http_post(client, &format!("{base}/mixer/filter"), Value::Object(body))
+        }
+        "dj_hermes_mixer_fx" => {
+            let delay = args
+                .get("delay")
+                .and_then(|v| v.as_f64())
+                .ok_or_else(|| rpc_error(-32602, "delay required (0..=1)"))?;
+            let mut body = Map::new();
+            body.insert("delay".into(), json!(delay));
+            if let Some(v) = args.get("feedback") {
+                body.insert("feedback".into(), v.clone());
+            }
+            http_post(client, &format!("{base}/mixer/fx"), Value::Object(body))
         }
         "dj_hermes_mixer_crossfader" => {
             let pos = args
@@ -734,6 +759,7 @@ fn tools_call_local(state: &AppState, name: &str, args: &Value) -> Result<Value,
     let outcome = match name {
         "dj_hermes_mixer_eq" => local_mixer_eq(state, args),
         "dj_hermes_mixer_filter" => local_mixer_filter(state, args),
+        "dj_hermes_mixer_fx" => local_mixer_fx(state, args),
         "dj_hermes_mixer_crossfader" => local_mixer_crossfader(state, args),
         "dj_hermes_xfade" => local_xfade(state, args),
         "dj_hermes_mix" => local_mix(state, args),
@@ -838,6 +864,36 @@ fn local_mixer_filter(state: &AppState, args: &Value) -> Result<String, String> 
         let hz = opt_hz(args.get("hpf"))?;
         send_cmd(state, Command::SetMixerHpf(hz))?;
     }
+    Ok("ok".into())
+}
+
+fn local_mixer_fx(state: &AppState, args: &Value) -> Result<String, String> {
+    let delay = args
+        .get("delay")
+        .and_then(|v| v.as_f64())
+        .ok_or_else(|| "delay required (0..=1)".to_string())?;
+    if !delay.is_finite() {
+        return Err("delay wet must be finite 0..=1".into());
+    }
+    let feedback = match args.get("feedback") {
+        None | Some(Value::Null) => None,
+        Some(v) => {
+            let n = v
+                .as_f64()
+                .ok_or_else(|| "feedback must be a number".to_string())?;
+            if !n.is_finite() {
+                return Err("feedback must be finite 0..=1".into());
+            }
+            Some((n as f32).clamp(0.0, 1.0))
+        }
+    };
+    send_cmd(
+        state,
+        Command::SetMixerDelay {
+            wet: (delay as f32).clamp(0.0, 1.0),
+            feedback,
+        },
+    )?;
     Ok("ok".into())
 }
 
@@ -1466,12 +1522,14 @@ mod tests {
     fn tools_list_mixer_deck_transport_no_set_code() {
         let v = tools_list(SessionKind::Dj);
         let tools = v["tools"].as_array().unwrap();
-        assert_eq!(tools.len(), 17);
+        assert_eq!(tools.len(), 18);
         let names: Vec<_> = tools.iter().filter_map(|t| t["name"].as_str()).collect();
         assert!(!names.contains(&"dj_hermes_set_code"));
         assert_eq!(names[0], "dj_hermes_mixer_eq");
         assert_eq!(names[1], "dj_hermes_mixer_filter");
-        assert_eq!(names[2], "dj_hermes_mixer_crossfader");
+        assert_eq!(names[2], "dj_hermes_mixer_fx");
+        assert_eq!(names[3], "dj_hermes_mixer_crossfader");
+        assert!(names.contains(&"dj_hermes_mixer_fx"));
         assert!(names.contains(&"dj_hermes_xfade"));
         assert!(names.contains(&"dj_hermes_mix"));
         assert!(names.contains(&"dj_hermes_set_bpm"));
@@ -1576,7 +1634,7 @@ mod tests {
             "method": "tools/list"
         });
         let resp = handle_rpc(&list, &backend).expect("list reply");
-        assert_eq!(resp["result"]["tools"].as_array().unwrap().len(), 17);
+        assert_eq!(resp["result"]["tools"].as_array().unwrap().len(), 18);
     }
 
     #[test]
