@@ -232,6 +232,76 @@ fn four_on_the_floor_01_grid() {
 }
 
 #[test]
+fn minimal_songs_follow_skill_bed() {
+    let song = load_song_file("minimal/01.strudel");
+    assert_eq!(song.title, "minimal-01");
+    assert!((song.bpm.unwrap() - 126.0).abs() < 1e-6);
+    let kick = track(&song, "kick");
+    let ohh = track(&song, "ohh");
+    let bass = track(&song, "bass");
+    let chh = track(&song, "chh");
+    assert!(
+        kick.code.mini_src.contains("bd*4"),
+        "{}",
+        kick.code.mini_src
+    );
+    assert!(
+        !kick.code.mini_src.contains('<'),
+        "kick stays always-on: {}",
+        kick.code.mini_src
+    );
+    assert!(
+        ohh.code.mini_src.contains("[~ oh]*4"),
+        "{}",
+        ohh.code.mini_src
+    );
+    assert!(
+        !ohh.code.mini_src.contains('<'),
+        "ohh stays always-on: {}",
+        ohh.code.mini_src
+    );
+    assert!(
+        !bass.code.mini_src.contains('<'),
+        "bass is a 1-bar ostinato: {}",
+        bass.code.mini_src
+    );
+    assert!(bass.code.filter.lpf.is_some(), "bass needs .lpf");
+    assert!(
+        chh.code.mini_src.contains("hh hh ~ hh"),
+        "chh skips the offbeat &: {}",
+        chh.code.mini_src
+    );
+    assert!(
+        !chh.code.mini_src.contains("hh*16"),
+        "{}",
+        chh.code.mini_src
+    );
+
+    let dir = songs_dir().join("minimal");
+    for entry in fs::read_dir(&dir).unwrap() {
+        let path = entry.unwrap().path();
+        if path.extension().and_then(|e| e.to_str()) != Some("strudel") {
+            continue;
+        }
+        let rel = format!("minimal/{}", path.file_name().unwrap().to_string_lossy());
+        let s = load_song_file(&rel);
+        assert!(
+            (14..=16).contains(&s.tracks.len()),
+            "{rel} track count {}",
+            s.tracks.len()
+        );
+        let names: Vec<&str> = s.tracks.iter().map(|t| t.name.as_str()).collect();
+        for need in ["kick", "ohh", "bass", "chh", "synth", "pluck"] {
+            assert!(names.contains(&need), "{rel} missing {need}");
+        }
+        assert!(
+            !names.contains(&"drums"),
+            "{rel} must not fold kick/ohh/chh into drums"
+        );
+    }
+}
+
+#[test]
 fn dnb_01_mix_rules() {
     let song = load_song_file("dnb/01.strudel");
     assert_eq!(song.title, "dnb-01");

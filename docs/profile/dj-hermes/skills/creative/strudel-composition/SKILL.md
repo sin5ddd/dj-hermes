@@ -1,7 +1,7 @@
 ---
 name: strudel-composition
 description: "Use when writing a dj-hermes song: 7–8 $: tracks (drums, bass 1–2, three melody instruments, chords, pad), 4-bar phrases, dj_hermes_apply_song (save only to persist)."
-version: 5.6.0
+version: 5.6.1
 author: Hermes Agent
 license: MIT
 metadata:
@@ -35,7 +35,7 @@ dj-hermes の曲は **`$:` を重ねたループを、演奏しながら 1 本�
 | --- | --- |
 | 新規曲・プリセット（`dj_hermes_apply_song`） | 7–8 本、4 小節フレーズ（Future Bass / Kawaii Future Bass は 9 本・16 小節 scale。Minimal は 14–16 本・16 小節ミュート） |
 | 来場者の一言編集 | **1 トラック or 1 メソッド**（全文を作り直さない） |
-| 同梱 `songs/<genre>/` | 7–8 本、4 小節フレーズ（Future Bass / Kawaii Future Bass は 9 本・16 小節 scale。Minimal の新規は 14–16 本。同梱は旧 8 本のまま） |
+| 同梱 `songs/<genre>/` | 7–8 本、4 小節フレーズ（Future Bass / Kawaii Future Bass は 9 本・16 小節 scale。Minimal は 14–16 本・16 小節ミュート） |
 
 ## スロット（`$:` 本数の正本）
 

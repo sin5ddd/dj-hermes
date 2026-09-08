@@ -404,25 +404,50 @@ $: note("0").scale("<C4:minor C4:minor F4:dorian C4:minor>")
 FENCES["minimal"] = r'''// @title minimal-01
 // @genre minimal
 setcpm(126/4)
-// drums
-$: s("bd*4, <[~ oh]*4 [~ oh]*4 [~ oh]*4 [~ oh]*4 [~ oh]*4 [~ oh]*4 [~ oh]*4 [~ oh]*4 [~ oh]*4 [~ oh]*4 [~ oh]*4 [~ oh]*4 ~ ~ [~ oh]*4 [~ oh]*4>, <~ ~ ~ cp ~ ~ ~ cp ~ ~ ~ cp ~ ~ ~ cp>").gain(0.7)
+// kick
+$: s("bd*4").gain(0.7)
+// ohh
+$: s("[~ oh]*4").gain(0.28)
 // bass
-$: note("<~ ~ ~ ~ [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~]>").scale("<C2:minor C2:minor C2:minor G2:phrygian>")
-  .s("sawtooth").lpf(320).gain(0.4)
-// lead
-$: note("<~ ~ ~ ~ ~ ~ ~ ~ [~ ~ 7 ~] [~ ~ 7 ~] [~ ~ 7 ~] [~ ~ 7 ~] ~ ~ ~ ~>").scale("<C4:minor C4:minor C4:minor G4:phrygian>")
-  .s("plk:pk").gain(0.1).cut(1)
-// hook
-$: note("<~ ~ ~ ~ [~ 4 ~ ~] [~ 4 ~ ~] [~ 4 ~ ~] [~ 4 ~ ~] [~ 4 ~ ~] [~ 4 ~ ~] [~ 4 ~ ~] [~ 4 ~ ~] ~ ~ [~ 4 ~ ~] [~ 4 ~ ~]>").scale("<C4:minor C4:minor C4:minor G4:phrygian>")
-  .s("plk:ac").gain(0.12).cut(1)
-// arp
-$: s("<~ perc:tk ~ perc:st ~ perc:tk ~ perc:st ~ perc:tk ~ perc:st ~ ~ ~ perc:st>").gain(0.12)
+$: note("0 ~ 3 ~").scale("<C2:minor C2:minor C2:minor G2:phrygian>")
+  .s("sawtooth").lpf(280).lpq(4).gain(0.45)
+// chh
+$: s("<~ ~ ~ ~ [hh hh ~ hh]*4 [hh hh ~ hh]*4 [hh hh ~ hh]*4 [hh hh ~ hh]*4 [hh hh ~ hh]*4 [hh hh ~ hh]*4 [hh hh ~ hh]*4 [hh hh ~ hh]*4 ~ ~ [hh hh ~ hh]*4 [hh hh ~ hh]*4>").gain(0.2)
+// perc
+$: note("<[0 ~ ~ ~] [0 ~ ~ ~] [0 ~ ~ ~] [0 ~ ~ ~] [0 ~ ~ ~] [0 ~ ~ ~] [0 ~ ~ ~] [0 ~ ~ ~] [0 ~ ~ ~] [0 ~ ~ ~] [0 ~ ~ ~] [0 ~ ~ ~] ~ ~ [0 ~ ~ ~] [0 ~ ~ ~]>")
+  .scale("<C5:minor C5:minor C5:minor G5:phrygian>").s("perc:tm").gain(0.1)
+// tom
+$: note("<~ ~ ~ ~ ~ ~ ~ ~ [~ 0 ~ ~] [~ 0 ~ ~] [~ 0 ~ ~] [~ 0 ~ ~] ~ ~ ~ ~>")
+  .scale("<C4:minor C4:minor C4:minor G4:phrygian>").s("tom:lo").gain(0.16)
+// metal
+$: note("<~ ~ ~ ~ [~ ~ 7 ~] [~ ~ 7 ~] [~ ~ 7 ~] [~ ~ 7 ~] [~ ~ 7 ~] [~ ~ 7 ~] [~ ~ 7 ~] [~ ~ 7 ~] ~ ~ ~ ~>")
+  .scale("<C4:minor C4:minor C4:minor G4:phrygian>").s("perc:mh").gain(0.08)
+// clap
+$: s("<~ ~ ~ cp ~ ~ ~ cp ~ ~ ~ cp ~ ~ ~ cp>").gain(0.22)
+// synth
+$: note("<~ ~ ~ ~ [~ ~ 4 ~] [~ ~ 4 ~] [~ ~ 4 ~] [~ ~ 4 ~] [~ ~ 4 ~] [~ ~ 4 ~] [~ ~ 4 ~] [~ ~ 4 ~] ~ ~ [~ ~ 4 ~] [~ ~ 4 ~]>")
+  .scale("<C4:minor C4:minor C4:minor G4:phrygian>")
+  .s("ld:in").lpf(900).gain(0.16).cut(1)
+// pluck
+$: note("<~ ~ ~ ~ ~ ~ ~ ~ [~ 7 ~ 1] [~ 7 ~ 1] [~ 7 ~ 1] [~ 7 ~ 1] ~ ~ ~ ~>")
+  .scale("<C4:minor C4:minor C4:minor G4:phrygian>")
+  .s("plk:nn").gain(0.12).cut(1)
+// stab
+$: note("<~ ~ ~ ~ [~ [0,4] ~ ~] [~ [0,4] ~ ~] [~ [0,4] ~ ~] [~ [0,4] ~ ~] [~ [0,4] ~ ~] [~ [0,4] ~ ~] [~ [0,4] ~ ~] [~ [0,4] ~ ~] ~ ~ [~ [0,4] ~ ~] [~ [0,4] ~ ~]>")
+  .scale("<C4:minor C4:minor C4:minor G4:phrygian>")
+  .s("plk:s5").gain(0.12).cut(1)
 // chords
-$: note("<~ ~ ~ ~ ~ ~ ~ ~ [~ [0,2,4] ~ ~] [~ [0,2,4] ~ ~] [~ [0,2,4] ~ ~] [~ [0,2,4] ~ ~] [~ [0,2,4] ~ ~] [~ [0,2,4] ~ ~] ~ ~>").scale("<C4:minor C4:minor C4:minor G4:phrygian>")
-  .s("ep:mt").gain(0.14)
+$: note("<~ ~ ~ ~ ~ ~ ~ ~ [~ [0,2,4] ~ ~] [~ [0,2,4] ~ ~] [~ [0,2,4] ~ ~] [~ [0,2,4] ~ ~] [~ [0,2,4] ~ ~] [~ [0,2,4] ~ ~] ~ ~>")
+  .scale("<C4:minor C4:minor C4:minor G4:phrygian>")
+  .s("plk:sf").gain(0.12)
 // pad
 $: note("<~ ~ ~ ~ ~ ~ ~ ~ 0 ~ ~ ~ ~ ~ ~ ~>").scale("<C4:minor C4:minor C4:minor G4:phrygian>")
-  .s("pf:ff").orbit(2).cut(1).gain(0.1).room(0.25)
+  .s("dr:pd").orbit(2).cut(1).gain(0.1).room(0.25)
+// drone
+$: note("<~ ~ ~ ~ 0 ~ ~ ~ 0 ~ ~ ~ ~ ~ ~ ~>").scale("<C4:minor C4:minor C4:minor G4:phrygian>")
+  .s("dr:mb").orbit(2).cut(1).gain(0.08)
+// texture
+$: s("<~ ~ ~ ~ ~ ~ fx:ha ~ ~ ~ fx:nh ~ ~ ~ ~ ~>").gain(0.12).cut(1)
 // fx
 $: s("<~ ~ ~ fx:rd ~ ~ fx:rk ~ fx:cg ~ ~ ~ fx:sd ~ ~ fx:sw>").gain(0.18).cut(1)
 '''
@@ -619,19 +644,36 @@ PALETTES: dict[str, dict[str, list]] = {
     },
     "minimal": {
         "drums": [
-            {"bd": "bd:tc"},
-            {"oh": "oh:op"},
-            {"bd": "bd:tc", "oh": "oh:dn"},
+            {"bd": "bd:tc", "oh": "oh:op", "hh": "hh:dk"},
+            {"bd": "bd:hf", "oh": "oh:dn", "hh": "hh:tt"},
+            {"bd": "bd:tc", "hh": "hh:cl"},
+            {"oh": "oh:op", "hh": "hh:dk"},
+            {"bd": "bd:hf", "oh": "oh:dn", "hh": "hh:cl"},
+            {"hh": "hh:tt", "oh": "oh:op"},
         ],
-        "bass": ["bs:ht", "sawtooth"],
-        "lead": ["plk:pk", "plk:ac"],
-        "hook": ["plk:ac", "plk:pk"],
-        "arp": ["perc:st", "perc:tk"],
-        "chords": ["plk:sf", "ep:mt"],
-        "pad": ["pf:pu", "pf:cs", "pf:ff"],
+        "bass": ["bs:ht", "bs:rd", "sawtooth"],
+        "perc": ["perc:tk", "perc:st", "perc:ti", "perc:tm"],
+        "tom": ["tom:md", "perc:gl", "tom:lo"],
+        "metal": ["perc:fm", "perc:cw", "perc:mh"],
+        "clap": [
+            {"cp": "cp:dr"},
+            {"cp": "perc:rm"},
+            {},
+        ],
+        "synth": ["ld:mt", "ld:nb", "ld:gr", "ld:pu", "ld:in"],
+        "pluck": ["plk:gm", "plk:kl", "plk:nn", "plk:s5"],
+        "stab": ["plk:sf", "plk:nn", "plk:s5"],
+        "chords": ["ep:mt", "plk:sf"],
+        "pad": ["dr:fg", "pf:ff", "dr:pd"],
+        "drone": ["dr:hr", "dr:md", "dr:id", "dr:mb"],
+        "texture": [
+            {"fx:ha": "fx:ck", "fx:nh": "fx:wd"},
+            {"fx:ha": "fx:wd"},
+            {"fx:nh": "fx:ck"},
+        ],
         "fx": [
             {
-                "fx:rd": "fx:nh",
+                "fx:rd": "fx:nb",
                 "fx:rk": "fx:ry",
                 "fx:cg": "fx:mc",
                 "fx:sw": "fx:dn",
@@ -639,15 +681,16 @@ PALETTES: dict[str, dict[str, list]] = {
             {
                 "fx:rd": "fx:ck",
                 "fx:rk": "fx:rl",
-                "fx:cg": "fx:ha",
+                "fx:cg": "fx:mc",
                 "fx:sw": "fx:wh",
             },
             {
                 "fx:rd": "fx:nb",
-                "fx:rk": "fx:rm",
-                "fx:cg": "fx:im",
-                "fx:sw": "fx:wd",
+                "fx:rk": "fx:ry",
+                "fx:cg": "fx:mc",
+                "fx:sw": "fx:dn",
             },
+            {},
         ],
     },
     "progressive-house": {
@@ -687,7 +730,6 @@ LOCKED_01 = {
     "techno-duck": {"bass"},
     "electro": {"bass", "hook"},
     "dubstep": {"bass"},
-    "minimal": {"fx"},
 }
 
 # Electro writes pitched PCM two octaves below catalog native (C4 → C2).
@@ -698,7 +740,7 @@ PCM_MIN_OCT = {
 WAVEFORMS = {"sawtooth", "square", "sine", "triangle", "wt_organ", "wt_bright", "wt_sine"}
 KIT_ATOMS = {"bd", "sd", "hh", "oh", "cp"}
 LONG_PLK = {"plk:fp", "plk:sp"}
-PCM_PARTS = {"plk", "ep", "ld", "pf", "ps", "dr", "bs"}
+PCM_PARTS = {"plk", "ep", "ld", "pf", "ps", "dr", "bs", "perc", "tom"}
 STRIP_SYNTH = [
     "fmatt",
     "fmdec",
@@ -716,7 +758,23 @@ STRIP_SYNTH = [
     "lpq",
 ]
 STRIP_ADSR = ["attack", "decay", "sustain", "release"]
-PITCHED_SLOTS = {"bass", "bass-mid", "lead", "hook", "arp", "chords", "pad", "strings"}
+PITCHED_SLOTS = {
+    "bass",
+    "bass-mid",
+    "lead",
+    "hook",
+    "arp",
+    "chords",
+    "pad",
+    "strings",
+    "synth",
+    "pluck",
+    "stab",
+    "drone",
+    "perc",
+    "tom",
+    "metal",
+}
 TRACK_HEADER = re.compile(r"^// ([a-z][a-z0-9-]*)\n", re.M)
 DOT_S = re.compile(r'\.s\("([^"]+)"\)')
 INDEX_CALL = re.compile(r"`([a-z]{2,4}:[a-z0-9]{1,3})`")
@@ -1020,6 +1078,8 @@ def apply_palette(genre: str, text: str, n: int) -> str:
     pal = PALETTES.get(genre)
     if not pal:
         return text
+    if genre == "minimal" and n == 1:
+        return text
     locked = set(IDENTITY_ALWAYS.get(genre, set()))
     if n == 1:
         locked |= LOCKED_01.get(genre, set())
@@ -1027,7 +1087,7 @@ def apply_palette(genre: str, text: str, n: int) -> str:
     pcm_min_oct = PCM_MIN_OCT.get(genre, 4)
 
     def apply_one(name: str, chunk: str) -> str:
-        slot = "drums" if name in {"kick", "hats"} else name
+        slot = "drums" if name in {"kick", "hats", "ohh", "chh"} else name
         if name in locked or slot in locked:
             cur = dot_s(chunk)
             if cur:
@@ -1036,7 +1096,7 @@ def apply_palette(genre: str, text: str, n: int) -> str:
         picks = pal.get(slot)
         if not picks:
             return chunk
-        if slot in {"drums", "fx"} and isinstance(picks[0], dict):
+        if isinstance(picks[0], dict):
             mapping = picks[(n - 1) % len(picks)]
             return apply_drum_map(chunk, mapping)
         str_picks = [p for p in picks if isinstance(p, str)]
@@ -1049,6 +1109,12 @@ def apply_palette(genre: str, text: str, n: int) -> str:
             b = pick_unique(perc_picks, n + 1, used) or a
             used.add(b)
             return set_perc_pair(chunk, a, b)
+        if name in {"perc", "tom", "metal"}:
+            new = pick_unique(str_picks, n, used)
+            if not new:
+                return chunk
+            used.add(new)
+            return apply_pitched_sound(chunk, new, name, pcm_min_oct)
         pitched = [p for p in str_picks if not p.startswith("perc:")]
         new = pick_unique(pitched, n, used)
         if not new:
@@ -1206,7 +1272,23 @@ def apply_variant(genre: str, text: str, variant: int) -> str:
     if genre == "minimal" and variant == 1:
         return text.replace("[~ oh]*4", "[~ oh ~ ~]*2")
     if genre == "minimal" and variant == 2:
-        return text.replace("~ ~ [~ oh]*4 [~ oh]*4>", "~ ~ ~ ~>")
+        text = text.replace(
+            "~ ~ [hh hh ~ hh]*4 [hh hh ~ hh]*4>",
+            "~ ~ ~ ~>",
+        )
+        text = text.replace("~ ~ [~ ~ 4 ~] [~ ~ 4 ~]>", "~ ~ ~ ~>")
+        text = text.replace(
+            "~ ~ [~ [0,4] ~ ~] [~ [0,4] ~ ~]>",
+            "~ ~ ~ ~>",
+        )
+        text = text.replace("~ ~ [0 ~ ~ ~] [0 ~ ~ ~]>", "~ ~ ~ ~>")
+
+        def drop(name: str, chunk: str) -> str:
+            if name in {"clap", "texture"}:
+                return ""
+            return chunk
+
+        return map_tracks(text, drop)
     if genre == "progressive-house" and variant == 1:
         return text.replace("hh*8", "hh*16")
     if genre == "dubstep" and variant == 1:
@@ -1234,14 +1316,16 @@ def set_title(text: str, title: str) -> str:
 
 
 def validate(path: Path, text: str) -> None:
+    genre = path.parent.name
     n = len(re.findall(r"^\$:", text, re.M))
-    max_n = (
-        9
-        if path.parent.name in {"future-bass", "kawaii-future-bass"}
-        else 8
-    )
-    if n < 7 or n > max_n:
-        raise SystemExit(f"{path}: expected 7–{max_n} $: tracks, got {n}")
+    if genre in {"future-bass", "kawaii-future-bass"}:
+        min_n, max_n = 9, 9
+    elif genre == "minimal":
+        min_n, max_n = 14, 16
+    else:
+        min_n, max_n = 7, 8
+    if n < min_n or n > max_n:
+        raise SystemExit(f"{path}: expected {min_n}–{max_n} $: tracks, got {n}")
     if "setcpm(" not in text:
         raise SystemExit(f"{path}: missing setcpm")
     for bad in ("stack(", ".cpm(", ".lfo(", ".fast(", "kit:bd"):
@@ -1250,8 +1334,15 @@ def validate(path: Path, text: str) -> None:
     if re.search(r"\bdb\b", text):
         raise SystemExit(f"{path}: sample db is silent")
     keys = index_keys()
+    slug_re = re.compile(r"([a-z]{2,4}:[a-z0-9]{1,3})")
     for sound in DOT_S.findall(text):
         if sound in WAVEFORMS or sound in KIT_ATOMS:
+            continue
+        slugs = slug_re.findall(sound)
+        if slugs:
+            for slug in slugs:
+                if slug not in keys and slug not in WAVEFORMS:
+                    raise SystemExit(f"{path}: unknown .s({slug}) in {sound!r}")
             continue
         if ":" in sound and sound not in keys:
             raise SystemExit(f"{path}: unknown .s({sound})")
@@ -1271,6 +1362,103 @@ def validate(path: Path, text: str) -> None:
     map_tracks(text, collect)
     if path.parent.name in {"future-bass", "kawaii-future-bass"}:
         validate_half_time(path, text)
+    if path.parent.name == "minimal":
+        validate_minimal(path, text)
+
+
+def mini_inner(chunk: str) -> str:
+    m = re.search(r'(?:note|s)\("([^"]*)"\)', chunk)
+    return m.group(1) if m else ""
+
+
+def validate_minimal(path: Path, text: str) -> None:
+    names = TRACK_HEADER.findall(text)
+    for need in (
+        "kick",
+        "ohh",
+        "bass",
+        "chh",
+        "perc",
+        "tom",
+        "metal",
+        "synth",
+        "pluck",
+        "stab",
+        "chords",
+        "pad",
+        "drone",
+        "fx",
+    ):
+        if need not in names:
+            raise SystemExit(f"{path}: missing //{need}")
+    if "drums" in names:
+        raise SystemExit(f"{path}: kick/ohh/chh must not be folded into // drums")
+    if "hh*16" in text or "hh*8" in text or "[~ cp]*2" in text:
+        raise SystemExit(f"{path}: forbidden hat/clap grid")
+    keys = index_keys()
+    for slug in re.findall(r"([a-z]{2,4}:[a-z0-9]{1,3})", text):
+        if slug not in keys:
+            raise SystemExit(f"{path}: unknown slug {slug}")
+
+    def check(name: str, chunk: str) -> str:
+        inner = mini_inner(chunk)
+        if name in {"kick", "ohh"} and "<" in inner:
+            raise SystemExit(f"{path}: {name} must stay always-on (no 16-child mute)")
+        if name == "bass":
+            note_m = re.search(r'note\("([^"]*)"\)', chunk)
+            if note_m and "<" in note_m.group(1):
+                raise SystemExit(f"{path}: bass must be a 1-bar ostinato, not 16-child mute")
+            if ".lpf(" not in chunk:
+                raise SystemExit(f"{path}: bass needs .lpf")
+        if name == "chh" and not re.search(
+            r"hh(?::[a-z0-9]+)? hh(?::[a-z0-9]+)? ~ hh(?::[a-z0-9]+)?",
+            inner,
+        ):
+            raise SystemExit(f"{path}: chh must skip the offbeat &")
+        if name == "synth" and ".lpf(" not in chunk:
+            raise SystemExit(f"{path}: synth needs .lpf")
+        return chunk
+
+    map_tracks(text, check)
+
+
+MINIMAL_BASS_PAT = ["0 ~ 3 ~", "0 0 ~ 3", "0 ~ ~ 3", "0 3 0 ~"]
+MINIMAL_SYNTH_LOOP = ["[~ ~ 4 ~]", "[~ ~ 7 ~]", "[4 ~ ~ ~]", "[~ 4 ~ ~]"]
+MINIMAL_PLUCK_LOOP = ["[~ 7 ~ 1]", "[~ 1 ~ 7]", "[7 ~ 1 ~]", "[~ 7 1 ~]"]
+MINIMAL_BASS_LPF = [280, 240, 320, 260, 300, 220]
+MINIMAL_SYNTH_LPF = [900, 800, 1100, 700, 1000, 1200]
+
+
+def apply_minimal_post(text: str, n: int) -> str:
+    bass_pat = MINIMAL_BASS_PAT[(n - 1) % len(MINIMAL_BASS_PAT)]
+    synth_loop = MINIMAL_SYNTH_LOOP[(n - 1) % len(MINIMAL_SYNTH_LOOP)]
+    pluck_loop = MINIMAL_PLUCK_LOOP[(n - 1) % len(MINIMAL_PLUCK_LOOP)]
+    bass_lpf = MINIMAL_BASS_LPF[(n - 1) % len(MINIMAL_BASS_LPF)]
+    synth_lpf = MINIMAL_SYNTH_LPF[(n - 1) % len(MINIMAL_SYNTH_LPF)]
+
+    def on_track(name: str, chunk: str) -> str:
+        if n > 1 and name == "bass":
+            chunk = chunk.replace('note("0 ~ 3 ~")', f'note("{bass_pat}")', 1)
+        if n > 1 and name == "synth":
+            chunk = chunk.replace("[~ ~ 4 ~]", synth_loop)
+        if n > 1 and name == "pluck":
+            chunk = chunk.replace("[~ 7 ~ 1]", pluck_loop)
+        if name == "bass":
+            if ".lpf(" in chunk:
+                chunk = set_method(chunk, "lpf", str(bass_lpf))
+            else:
+                chunk = inject_after_s(chunk, f".lpf({bass_lpf})")
+            sound = dot_s(chunk)
+            if sound in WAVEFORMS and ".lpq(" not in chunk:
+                chunk = inject_after_s(chunk, ".lpq(4)")
+        if name == "synth":
+            if ".lpf(" in chunk:
+                chunk = set_method(chunk, "lpf", str(synth_lpf))
+            else:
+                chunk = inject_after_s(chunk, f".lpf({synth_lpf})")
+        return chunk
+
+    return map_tracks(text, on_track)
 
 
 def validate_half_time(path: Path, text: str) -> None:
@@ -1340,6 +1528,8 @@ def render(genre: str, n: int) -> str:
     text = apply_palette(genre, text, n)
     if genre == "acid":
         text = apply_acid_color(text, n)
+    if genre == "minimal":
+        text = apply_minimal_post(text, n)
     text = transpose_text(text, semis)
     if n == 1 and genre in TITLE_01:
         title = TITLE_01[genre]

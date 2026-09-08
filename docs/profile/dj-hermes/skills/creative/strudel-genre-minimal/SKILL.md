@@ -7,7 +7,7 @@ description: >-
   only, closed-hat 16ths `[hh hh ~ hh]*4` exclusive with OHH, metallic
   uneasy pluck, note() allowed on perc/tom/metal. Not a house [~ cp]*2
   backbeat; not hh*16; not 8 thin tracks; not muting kick/ohh/bass.
-version: 8.1.0
+version: 8.2.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -30,7 +30,7 @@ metadata:
 
 テンポは **126 BPM**（目安 124–130）。和声は 4 小節 `.scale`。16 小節はミュートマップ（`<>` 16 子）。`cat` ではない。このエンジンの `<>` は `@` で小節数を伸ばさない。
 
-同梱 `songs/minimal/` は旧 8 本床。新規 apply はこの Skill。曲の作り直しは別作業。
+同梱 `songs/minimal/` はこのフェンス（14–16 本）。新規 apply の `.s()` は下のパレットから選ぶ。
 
 ## When
 

@@ -1,24 +1,45 @@
 // @title minimal-30
 // @genre minimal
 setcpm(126/4)
-// drums
-$: s("bd:tc*4, <[~ oh:dn]*4 [~ oh:dn]*4 [~ oh:dn]*4 [~ oh:dn]*4 [~ oh:dn]*4 [~ oh:dn]*4 [~ oh:dn]*4 [~ oh:dn]*4 [~ oh:dn]*4 [~ oh:dn]*4 [~ oh:dn]*4 [~ oh:dn]*4 ~ ~ ~ ~>, <~ ~ ~ cp ~ ~ ~ cp ~ ~ ~ cp ~ ~ ~ cp>").gain(0.7)
+// kick
+$: s("bd*4").gain(0.7)
+// ohh
+$: s("[~ oh:op]*4").gain(0.28)
 // bass
-$: note("<~ ~ ~ ~ [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~] [0 ~ 3 ~]>").scale("<B2:minor B2:minor B2:minor F#3:phrygian>")
-  .s("sawtooth").lpf(320).gain(0.4)
-// lead
-$: note("<~ ~ ~ ~ ~ ~ ~ ~ [~ ~ 7 ~] [~ ~ 7 ~] [~ ~ 7 ~] [~ ~ 7 ~] ~ ~ ~ ~>").scale("<B4:minor B4:minor B4:minor F#5:phrygian>")
-  .s("plk:ac").gain(0.1).cut(1)
-// hook
-$: note("<~ ~ ~ ~ [~ 4 ~ ~] [~ 4 ~ ~] [~ 4 ~ ~] [~ 4 ~ ~] [~ 4 ~ ~] [~ 4 ~ ~] [~ 4 ~ ~] [~ 4 ~ ~] ~ ~ [~ 4 ~ ~] [~ 4 ~ ~]>").scale("<B4:minor B4:minor B4:minor F#5:phrygian>")
-  .s("plk:pk").gain(0.12).cut(1)
-// arp
-$: s("<~ perc:tk ~ perc:st ~ perc:tk ~ perc:st ~ perc:tk ~ perc:st ~ ~ ~ perc:tk>").gain(0.12)
+$: note("0 0 ~ 3").scale("<B2:minor B2:minor B2:minor F#3:phrygian>")
+  .s("sawtooth").lpf(220).lpq(4).gain(0.45)
+// chh
+$: s("<~ ~ ~ ~ [hh:tt hh:tt ~ hh:tt]*4 [hh:tt hh:tt ~ hh:tt]*4 [hh:tt hh:tt ~ hh:tt]*4 [hh:tt hh:tt ~ hh:tt]*4 [hh:tt hh:tt ~ hh:tt]*4 [hh:tt hh:tt ~ hh:tt]*4 [hh:tt hh:tt ~ hh:tt]*4 [hh:tt hh:tt ~ hh:tt]*4 ~ ~ ~ ~>").gain(0.2)
+// perc
+$: note("<[0 ~ ~ ~] [0 ~ ~ ~] [0 ~ ~ ~] [0 ~ ~ ~] [0 ~ ~ ~] [0 ~ ~ ~] [0 ~ ~ ~] [0 ~ ~ ~] [0 ~ ~ ~] [0 ~ ~ ~] [0 ~ ~ ~] [0 ~ ~ ~] ~ ~ ~ ~>")
+  .scale("<B5:minor B5:minor B5:minor F#6:phrygian>").s("perc:st").gain(0.1)
+// tom
+$: note("<~ ~ ~ ~ ~ ~ ~ ~ [~ 0 ~ ~] [~ 0 ~ ~] [~ 0 ~ ~] [~ 0 ~ ~] ~ ~ ~ ~>")
+  .scale("<B4:minor B4:minor B4:minor F#5:phrygian>").s("tom:lo").gain(0.16)
+// metal
+$: note("<~ ~ ~ ~ [~ ~ 7 ~] [~ ~ 7 ~] [~ ~ 7 ~] [~ ~ 7 ~] [~ ~ 7 ~] [~ ~ 7 ~] [~ ~ 7 ~] [~ ~ 7 ~] ~ ~ ~ ~>")
+  .scale("<B4:minor B4:minor B4:minor F#5:phrygian>").s("perc:mh").gain(0.08)
+// synth
+$: note("<~ ~ ~ ~ [~ ~ 7 ~] [~ ~ 7 ~] [~ ~ 7 ~] [~ ~ 7 ~] [~ ~ 7 ~] [~ ~ 7 ~] [~ ~ 7 ~] [~ ~ 7 ~] ~ ~ ~ ~>")
+  .scale("<B4:minor B4:minor B4:minor F#5:phrygian>")
+  .s("ld:in").lpf(1200).gain(0.16).cut(1)
+// pluck
+$: note("<~ ~ ~ ~ ~ ~ ~ ~ [~ 1 ~ 7] [~ 1 ~ 7] [~ 1 ~ 7] [~ 1 ~ 7] ~ ~ ~ ~>")
+  .scale("<B4:minor B4:minor B4:minor F#5:phrygian>")
+  .s("plk:kl").gain(0.12).cut(1)
+// stab
+$: note("<~ ~ ~ ~ [~ [0,4] ~ ~] [~ [0,4] ~ ~] [~ [0,4] ~ ~] [~ [0,4] ~ ~] [~ [0,4] ~ ~] [~ [0,4] ~ ~] [~ [0,4] ~ ~] [~ [0,4] ~ ~] ~ ~ ~ ~>")
+  .scale("<B4:minor B4:minor B4:minor F#5:phrygian>")
+  .s("plk:s5").gain(0.12).cut(1)
 // chords
-$: note("<~ ~ ~ ~ ~ ~ ~ ~ [~ [0,2,4] ~ ~] [~ [0,2,4] ~ ~] [~ [0,2,4] ~ ~] [~ [0,2,4] ~ ~] [~ [0,2,4] ~ ~] [~ [0,2,4] ~ ~] ~ ~>").scale("<B4:minor B4:minor B4:minor F#5:phrygian>")
-  .s("ep:mt").gain(0.14)
+$: note("<~ ~ ~ ~ ~ ~ ~ ~ [~ [0,2,4] ~ ~] [~ [0,2,4] ~ ~] [~ [0,2,4] ~ ~] [~ [0,2,4] ~ ~] [~ [0,2,4] ~ ~] [~ [0,2,4] ~ ~] ~ ~>")
+  .scale("<B4:minor B4:minor B4:minor F#5:phrygian>")
+  .s("plk:sf").gain(0.12)
 // pad
 $: note("<~ ~ ~ ~ ~ ~ ~ ~ 0 ~ ~ ~ ~ ~ ~ ~>").scale("<B4:minor B4:minor B4:minor F#5:phrygian>")
-  .s("pf:ff").orbit(2).cut(1).gain(0.1).room(0.25)
+  .s("dr:pd").orbit(2).cut(1).gain(0.1).room(0.25)
+// drone
+$: note("<~ ~ ~ ~ 0 ~ ~ ~ 0 ~ ~ ~ ~ ~ ~ ~>").scale("<B4:minor B4:minor B4:minor F#5:phrygian>")
+  .s("dr:md").orbit(2).cut(1).gain(0.08)
 // fx
-$: s("<~ ~ ~ fx:nb ~ ~ fx:rm ~ fx:im ~ ~ ~ fx:sd ~ ~ fx:wd>").gain(0.18).cut(1)
+$: s("<~ ~ ~ fx:ck ~ ~ fx:rl ~ fx:mc ~ ~ ~ fx:sd ~ ~ fx:wh>").gain(0.18).cut(1)
