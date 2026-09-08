@@ -258,6 +258,16 @@ fn tools_list(session: SessionKind) -> Value {
                 }
             },
             {
+                "name": "dj_hermes_mixer_repeat",
+                "description": "Mixer: time-repeat playhead (quarter/eighth/16th/32nd notes, not minutes). Immediate. Loops the current note-value slice for one absolute bar then off. Hits and MIDI follow the relative playhead. div=null or off clears. Not fill kind=roll (PCM then cut-in).",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "div": { "description": "4n | 8n | 16n | 32n, or null to clear", "anyOf": [ {"type": "string"}, {"type": "null"} ] }
+                    }
+                }
+            },
+            {
                 "name": "dj_hermes_mixer_crossfader",
                 "description": "Mixer: set equal-power crossfader position immediately (0=full A, 1=full B). Cancels multi-bar xfade animation.",
                 "inputSchema": {
@@ -456,7 +466,7 @@ fn tools_list(session: SessionKind) -> Value {
             },
             {
                 "name": "dj_hermes_status",
-                "description": "Transport: get decks, BPM, bars, mixer gains, EQ (eq_a/eq_b), filters, delay_wet, crossfader, muted_a/muted_b.",
+                "description": "Transport: get decks, BPM, bars, mixer gains, EQ (eq_a/eq_b), filters, delay_wet, repeat, crossfader, muted_a/muted_b.",
                 "inputSchema": {
                     "type": "object",
                     "properties": {}
@@ -574,6 +584,18 @@ fn tools_call_http(
                 body.insert("feedback".into(), v.clone());
             }
             http_post(client, &format!("{base}/mixer/fx"), Value::Object(body))
+        }
+        "dj_hermes_mixer_repeat" => {
+            let mut body = Map::new();
+            match args.get("div") {
+                None | Some(Value::Null) => {
+                    body.insert("div".into(), Value::Null);
+                }
+                Some(v) => {
+                    body.insert("div".into(), v.clone());
+                }
+            }
+            http_post(client, &format!("{base}/mixer/repeat"), Value::Object(body))
         }
         "dj_hermes_mixer_crossfader" => {
             let pos = args
@@ -760,6 +782,7 @@ fn tools_call_local(state: &AppState, name: &str, args: &Value) -> Result<Value,
         "dj_hermes_mixer_eq" => local_mixer_eq(state, args),
         "dj_hermes_mixer_filter" => local_mixer_filter(state, args),
         "dj_hermes_mixer_fx" => local_mixer_fx(state, args),
+        "dj_hermes_mixer_repeat" => local_mixer_repeat(state, args),
         "dj_hermes_mixer_crossfader" => local_mixer_crossfader(state, args),
         "dj_hermes_xfade" => local_xfade(state, args),
         "dj_hermes_mix" => local_mix(state, args),
@@ -894,6 +917,28 @@ fn local_mixer_fx(state: &AppState, args: &Value) -> Result<String, String> {
             feedback,
         },
     )?;
+    Ok("ok".into())
+}
+
+fn local_mixer_repeat(state: &AppState, args: &Value) -> Result<String, String> {
+    let cmd = match args.get("div") {
+        None | Some(Value::Null) => Command::SetTimeRepeat(None),
+        Some(Value::String(s)) => {
+            let t = s.trim();
+            if t.is_empty()
+                || t.eq_ignore_ascii_case("off")
+                || t == "0"
+                || t.eq_ignore_ascii_case("none")
+            {
+                Command::SetTimeRepeat(None)
+            } else {
+                let d = crate::transport::RepeatDiv::parse(t)?;
+                Command::SetTimeRepeat(Some(d))
+            }
+        }
+        Some(_) => return Err("div must be a string (4n|8n|16n|32n) or null".into()),
+    };
+    send_cmd(state, cmd)?;
     Ok("ok".into())
 }
 
@@ -1522,14 +1567,16 @@ mod tests {
     fn tools_list_mixer_deck_transport_no_set_code() {
         let v = tools_list(SessionKind::Dj);
         let tools = v["tools"].as_array().unwrap();
-        assert_eq!(tools.len(), 18);
+        assert_eq!(tools.len(), 19);
         let names: Vec<_> = tools.iter().filter_map(|t| t["name"].as_str()).collect();
         assert!(!names.contains(&"dj_hermes_set_code"));
         assert_eq!(names[0], "dj_hermes_mixer_eq");
         assert_eq!(names[1], "dj_hermes_mixer_filter");
         assert_eq!(names[2], "dj_hermes_mixer_fx");
-        assert_eq!(names[3], "dj_hermes_mixer_crossfader");
+        assert_eq!(names[3], "dj_hermes_mixer_repeat");
+        assert_eq!(names[4], "dj_hermes_mixer_crossfader");
         assert!(names.contains(&"dj_hermes_mixer_fx"));
+        assert!(names.contains(&"dj_hermes_mixer_repeat"));
         assert!(names.contains(&"dj_hermes_xfade"));
         assert!(names.contains(&"dj_hermes_mix"));
         assert!(names.contains(&"dj_hermes_set_bpm"));
@@ -1634,7 +1681,7 @@ mod tests {
             "method": "tools/list"
         });
         let resp = handle_rpc(&list, &backend).expect("list reply");
-        assert_eq!(resp["result"]["tools"].as_array().unwrap().len(), 18);
+        assert_eq!(resp["result"]["tools"].as_array().unwrap().len(), 19);
     }
 
     #[test]
@@ -1642,10 +1689,11 @@ mod tests {
         let v = tools_list(SessionKind::Play);
         let tools = v["tools"].as_array().unwrap();
         let names: Vec<_> = tools.iter().filter_map(|t| t["name"].as_str()).collect();
-        assert_eq!(names.len(), 12);
+        assert_eq!(names.len(), 13);
         for mix in MIX_TOOL_NAMES {
             assert!(!names.contains(mix), "{mix} should be hidden in play");
         }
+        assert!(names.contains(&"dj_hermes_mixer_repeat"));
         assert!(names.contains(&"dj_hermes_apply_song"));
         assert!(names.contains(&"dj_hermes_set_bpm"));
         let load = tools

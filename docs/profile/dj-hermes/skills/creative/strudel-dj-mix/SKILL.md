@@ -47,6 +47,7 @@ metadata:
 | エコーで消して B へ | `dj_hermes_mix(move="fill", kind="echo", to="B")` |
 | ハイパスで薄くしてカット | `dj_hermes_mix(move="fill", kind="hpf", to="B")` |
 | ロールしてから A | `dj_hermes_mix(move="fill", kind="roll", to="A", grid="8n")` |
+| タイムリピート（四分/八分/16分/32分音符、1 小節で Off） | `dj_hermes_mixer_repeat(div="16n")`（相対再生位置。fill roll の PCM カットインではない） |
 | インパクト入れてカット | `dj_hermes_mix(move="fill", kind="drop", to="B")` |
 | 4 分でスイッチ | `grid="4n"` |
 

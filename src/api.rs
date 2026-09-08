@@ -108,6 +108,9 @@ pub struct StatusInfo {
     /// Operator-held master delay wet 0..=1.
     #[serde(default)]
     pub delay_wet: f32,
+    /// Time-repeat note value (`4n`/`8n`/`16n`/`32n`), or omitted when off.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub repeat: Option<String>,
     /// Active mix macro, if any.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub mix: Option<MixStatusInfo>,
@@ -331,6 +334,12 @@ pub struct MixerFxReq {
     pub feedback: Option<f32>,
 }
 
+/// Time-repeat. `div` is `4n`/`8n`/`16n`/`32n` (note values). JSON `null` = off.
+#[derive(Deserialize)]
+pub struct MixerRepeatReq {
+    pub div: Option<String>,
+}
+
 #[derive(Deserialize)]
 pub struct MixerCrossfaderReq {
     /// 0 = full A, 1 = full B (immediate; cancels multi-bar xfade).
@@ -398,6 +407,7 @@ pub(crate) fn snapshot(engine: &Arc<Mutex<Engine>>, deck_paths: Option<&DeckPath
         muted_a: muted_names(&e.decks[0]),
         muted_b: muted_names(&e.decks[1]),
         delay_wet: e.mixer.held_delay_wet(),
+        repeat: e.transport.repeat_div().map(|d| d.as_str().to_string()),
         mix: e.mixer.mix_status().map(MixStatusInfo::from_mixer),
     }
 }
@@ -934,6 +944,21 @@ async fn mixer_fx(
     Ok(StatusCode::NO_CONTENT)
 }
 
+async fn mixer_repeat(
+    State(s): State<AppState>,
+    Json(r): Json<MixerRepeatReq>,
+) -> Result<StatusCode, (StatusCode, Json<ErrRes>)> {
+    let cmd = match r.div.as_deref().map(str::trim) {
+        None | Some("") | Some("off") | Some("0") | Some("none") => Command::SetTimeRepeat(None),
+        Some(s) => {
+            let d = crate::transport::RepeatDiv::parse(s).map_err(bad)?;
+            Command::SetTimeRepeat(Some(d))
+        }
+    };
+    s.tx.send(cmd).map_err(|e| bad(e.to_string()))?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
 async fn mix(
     State(s): State<AppState>,
     Json(r): Json<MixReq>,
@@ -1025,6 +1050,7 @@ pub fn router(state: AppState) -> Router {
         .route("/mixer/eq", post(mixer_eq))
         .route("/mixer/filter", post(mixer_filter))
         .route("/mixer/fx", post(mixer_fx))
+        .route("/mixer/repeat", post(mixer_repeat))
         .route("/mixer/crossfader", post(mixer_crossfader))
         .route("/mix", post(mix))
         .route("/status", get(get_status))
@@ -1789,6 +1815,45 @@ mod tests {
         match rx.try_recv().unwrap() {
             Command::SetCrossfader(p) => assert!((p - 0.35).abs() < 1e-5),
             _ => panic!("expected SetCrossfader"),
+        }
+    }
+
+    #[tokio::test]
+    async fn mixer_repeat_on_and_off() {
+        let (state, rx) = test_state();
+        let app = router(state.clone());
+        let res = app
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/mixer/repeat")
+                    .header("content-type", "application/json")
+                    .body(Body::from(r#"{"div":"16n"}"#))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(res.status(), StatusCode::NO_CONTENT);
+        match rx.try_recv().unwrap() {
+            Command::SetTimeRepeat(Some(d)) => assert_eq!(d.as_str(), "16n"),
+            _ => panic!("expected SetTimeRepeat 16n"),
+        }
+        let app = router(state);
+        let res = app
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/mixer/repeat")
+                    .header("content-type", "application/json")
+                    .body(Body::from(r#"{"div":null}"#))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(res.status(), StatusCode::NO_CONTENT);
+        match rx.try_recv().unwrap() {
+            Command::SetTimeRepeat(None) => {}
+            _ => panic!("expected SetTimeRepeat None"),
         }
     }
 

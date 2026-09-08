@@ -57,8 +57,10 @@ pub struct Deck {
     steal_cursor: usize,
     scheduled: Vec<ScheduledHit>,
     next_event: usize,
-    /// Last *global* bar we scheduled against (not pattern cycle).
+    /// Last *play* bar we scheduled against (relative clock during time-repeat).
     scheduled_bar: u64,
+    /// Previous `map_play` sample, for wrap / jump detection.
+    last_play_sample: Option<u64>,
     /// Pattern cycle = (global_bar as i64 + cycle_offset).max(0).
     /// Set by head/cue so a deck can play a different song bar while transport stays locked.
     cycle_offset: i64,
@@ -89,6 +91,7 @@ impl Deck {
             scheduled: Vec::with_capacity(512),
             next_event: 0,
             scheduled_bar: u64::MAX,
+            last_play_sample: None,
             cycle_offset: 0,
             ducks: [DuckState::default(); NUM_ORBITS],
             orbit_fx: std::array::from_fn(|_| OrbitFx::new()),
@@ -134,6 +137,7 @@ impl Deck {
         self.scheduled.clear();
         self.next_event = 0;
         self.scheduled_bar = u64::MAX;
+        self.last_play_sample = None;
         self.cycle_offset = 0;
         self.ducks = [DuckState::default(); NUM_ORBITS];
         for fx in &mut self.orbit_fx {
@@ -151,6 +155,7 @@ impl Deck {
         self.scheduled.clear();
         self.next_event = 0;
         self.scheduled_bar = u64::MAX;
+        self.last_play_sample = None;
         self.cycle_offset = 0;
         self.ducks = [DuckState::default(); NUM_ORBITS];
         for fx in &mut self.orbit_fx {
@@ -186,7 +191,20 @@ impl Deck {
         self.scheduled.clear();
         self.next_event = 0;
         self.scheduled_bar = u64::MAX;
+        self.last_play_sample = None;
         self.ducks = [DuckState::default(); NUM_ORBITS];
+    }
+
+    fn cut_sounding(&mut self) {
+        self.midi_panic();
+        for v in &mut self.voices {
+            *v = None;
+        }
+        self.ducks = [DuckState::default(); NUM_ORBITS];
+    }
+
+    fn rewind_events(&mut self, now: u64) {
+        self.next_event = self.scheduled.partition_point(|e| e.at_sample < now);
     }
 
     pub fn song_title(&self) -> Option<&str> {
@@ -710,14 +728,32 @@ impl Deck {
         for fx in &mut self.orbit_fx {
             fx.ensure_sr(sr);
         }
-        let global_bar = transport.bar_index();
-        if global_bar != self.scheduled_bar {
-            self.schedule_bar(global_bar, transport);
-        }
 
         let n = out_l.len().min(out_r.len());
+        // Schedule from the buffer-head play bar only. Crossing an absolute bar
+        // mid-buffer must not spawn the next bar before Engine applies pending
+        // (mute / load) at the next process() head.
+        let head_play = transport.map_play(transport.global_sample);
+        let head_bar = transport.bar_index_of(head_play);
+        if head_bar != self.scheduled_bar {
+            self.schedule_bar(head_bar, transport);
+        }
+
         for i in 0..n {
-            let now = transport.global_sample + i as u64;
+            let abs = transport.global_sample + i as u64;
+            let now = transport.map_play(abs);
+            if let Some(prev) = self.last_play_sample {
+                if now < prev {
+                    self.cut_sounding();
+                    self.rewind_events(now);
+                } else if now > prev.saturating_add(1) {
+                    self.cut_sounding();
+                    let play_bar = transport.bar_index_of(now);
+                    self.schedule_bar(play_bar, transport);
+                }
+            }
+            self.last_play_sample = Some(now);
+
             while self.next_event < self.scheduled.len()
                 && self.scheduled[self.next_event].at_sample <= now
             {
@@ -768,8 +804,11 @@ impl Deck {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::midi::MidiEvent;
     use crate::sample::{write_test_wav, write_test_wav_secs};
     use crate::song::parse_song;
+    use crate::transport::RepeatDiv;
+    use crossbeam::channel::unbounded;
     use std::path::Path;
 
     fn process_mid(d: &mut Deck, frames: usize, t: &Transport, bank: &SampleBank) -> Vec<f32> {
@@ -1205,5 +1244,95 @@ b: note("e4").s("sine").gain(0.8).cut(1).attack(0.001).decay(0).sustain(1).relea
             e2 > e1 * 1.15,
             "shared .cut(1) must not mute the other $:  one={e1} two={e2}"
         );
+    }
+
+    fn count_note_ons(rx: &crossbeam::channel::Receiver<MidiEvent>) -> usize {
+        let mut n = 0;
+        while let Ok(ev) = rx.try_recv() {
+            if matches!(ev, MidiEvent::NoteOn { .. }) {
+                n += 1;
+            }
+        }
+        n
+    }
+
+    #[test]
+    fn time_repeat_retriggers_slice_hits_sixteen_times() {
+        let song = parse_song(
+            r#"---
+lead: note("c3").s("sine").gain(0.9)
+"#,
+            "t",
+        )
+        .unwrap();
+        let mut d = Deck::new("A");
+        d.load(song);
+        d.set_midi_only(true);
+        let (tx, rx) = unbounded();
+        d.set_midi(Some(tx));
+        let mut t = Transport::new(48_000, 120.0);
+        t.start_repeat(RepeatDiv::Sixteenth);
+        let bank = SampleBank::empty();
+        let mut l = vec![0f32; 96_000];
+        let mut r = vec![0f32; 96_000];
+        d.process(&mut l, &mut r, &t, &bank);
+        assert_eq!(
+            count_note_ons(&rx),
+            16,
+            "16th-note repeat of a bar-head hit should fire 16 times in one absolute bar"
+        );
+    }
+
+    #[test]
+    fn time_repeat_skips_hits_outside_slice() {
+        let song = parse_song(
+            r#"---
+lead: note("~ c3").s("sine").gain(0.9)
+"#,
+            "t",
+        )
+        .unwrap();
+        let mut d = Deck::new("A");
+        d.load(song);
+        d.set_midi_only(true);
+        let (tx, rx) = unbounded();
+        d.set_midi(Some(tx));
+        let mut t = Transport::new(48_000, 120.0);
+        t.start_repeat(RepeatDiv::Sixteenth);
+        let bank = SampleBank::empty();
+        let mut l = vec![0f32; 96_000];
+        let mut r = vec![0f32; 96_000];
+        d.process(&mut l, &mut r, &t, &bank);
+        assert_eq!(
+            count_note_ons(&rx),
+            0,
+            "hit in the second half of the bar is outside the first 16th slice"
+        );
+    }
+
+    #[test]
+    fn time_repeat_keeps_play_bar_while_absolute_bar_advances() {
+        let song = parse_song(
+            r#"---
+lead: note("c3").s("sine").gain(0.9)
+"#,
+            "t",
+        )
+        .unwrap();
+        let mut d = Deck::new("A");
+        d.load(song);
+        let mut t = Transport::new(48_000, 120.0);
+        t.global_sample = 48_000;
+        t.start_repeat(RepeatDiv::Quarter);
+        let bank = SampleBank::empty();
+        let mut l = vec![0f32; 24_000];
+        let mut r = vec![0f32; 24_000];
+        d.process(&mut l, &mut r, &t, &bank);
+        t.advance(24_000);
+        d.process(&mut l, &mut r, &t, &bank);
+        t.advance(24_000);
+        assert_eq!(t.bar_index(), 1);
+        assert_eq!(d.scheduled_bar, 0);
+        assert_eq!(t.play_bar_index(), 0);
     }
 }

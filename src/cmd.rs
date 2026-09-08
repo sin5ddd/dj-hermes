@@ -15,6 +15,7 @@ use crate::song::{
     looks_like_slot_index, normalize_slot_index, parse_song, resolve_song_path,
     resolve_user_song_save_path, Song, MAX_SONG_CONTENT_BYTES,
 };
+use crate::transport::RepeatDiv;
 
 /// Which path is loaded on deck A / B (for reload targeting).
 pub type DeckPaths = Arc<Mutex<[Option<PathBuf>; 2]>>;
@@ -44,6 +45,7 @@ mix hold            freeze xfade now
 filter lpf <hz>|off post-mix LPF (held)
 filter hpf <hz>|off post-mix HPF (held)
 delay <0..1>        post-mix delay wet (held)
+repeat 4n|8n|16n|32n|off  time-repeat (quarter/8th/16th/32nd notes, 1 bar)
 bpm <n>             BPM from next bar
 hush                stop all (immediate)  [operator]
 status
@@ -76,6 +78,7 @@ a load|save|…       same verbs with an explicit deck A prefix
 filter lpf <hz>|off post-mix LPF (held)
 filter hpf <hz>|off post-mix HPF (held)
 delay <0..1>        post-mix delay wet (held)
+repeat 4n|8n|16n|32n|off  time-repeat (quarter/8th/16th/32nd notes, 1 bar)
 bpm <n>             BPM from next bar
 hush                stop all (immediate)  [operator]
 status
@@ -283,6 +286,7 @@ pub fn exec_in(
         "mix" => return exec_mix(&args, tx, engine),
         "filter" => return exec_filter(&args, tx),
         "delay" => return exec_delay(&args, tx),
+        "repeat" => return exec_repeat(&args, tx),
         "x" | "xfade" => {
             let bars = args
                 .get(1)
@@ -604,6 +608,24 @@ fn exec_filter(args: &[&str], tx: &Sender<Command>) -> ExecResult {
     }
 }
 
+fn exec_repeat(args: &[&str], tx: &Sender<Command>) -> ExecResult {
+    if args.len() < 2 {
+        return ExecResult::msg("usage: repeat 4n|8n|16n|32n|off");
+    }
+    let token = args[1];
+    if matches!(token, "off" | "0" | "none") {
+        let _ = tx.send(Command::SetTimeRepeat(None));
+        return ExecResult::msg("repeat off");
+    }
+    match RepeatDiv::parse(token) {
+        Ok(d) => {
+            let _ = tx.send(Command::SetTimeRepeat(Some(d)));
+            ExecResult::msg(format!("repeat {}", d.as_str()))
+        }
+        Err(e) => ExecResult::msg(e),
+    }
+}
+
 fn exec_delay(args: &[&str], tx: &Sender<Command>) -> ExecResult {
     if args.len() < 2 {
         return ExecResult::msg("usage: delay <0..1>");
@@ -752,8 +774,13 @@ fn status(deck_paths: &DeckPaths, engine: Option<&Arc<Mutex<Engine>>>) -> ExecRe
     if let Some(eng) = engine {
         if let Ok(e) = eng.try_lock() {
             let gbar = e.transport.bar_index();
+            let repeat = e
+                .transport
+                .repeat_div()
+                .map(|d| d.as_str())
+                .unwrap_or("off");
             messages.push(format!(
-                "bpm={:.1} transport_bar={} gainA={:.2} gainB={:.2} songs={:?}/{:?}",
+                "bpm={:.1} transport_bar={} repeat={repeat} gainA={:.2} gainB={:.2} songs={:?}/{:?}",
                 e.transport.bpm,
                 gbar,
                 e.mixer.gain_a,
@@ -916,6 +943,18 @@ mod tests {
                 assert!(feedback.is_none());
             }
             _ => panic!("expected SetMixerDelay"),
+        }
+        let r = exec("repeat 16", &tx, &paths, None);
+        assert!(r.messages[0].contains("16n"), "{:?}", r.messages);
+        match rx.try_recv().unwrap() {
+            Command::SetTimeRepeat(Some(d)) => assert_eq!(d.as_str(), "16n"),
+            _ => panic!("expected SetTimeRepeat 16n"),
+        }
+        let r = exec("repeat off", &tx, &paths, None);
+        assert!(r.messages[0].contains("off"));
+        match rx.try_recv().unwrap() {
+            Command::SetTimeRepeat(None) => {}
+            _ => panic!("expected SetTimeRepeat None"),
         }
     }
 

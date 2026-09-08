@@ -194,7 +194,7 @@ Release プロファイル目安（プラン）: `opt-level = 3`, `lto = true`, 
 
 ### MCP ツール
 
-Mixer: `mixer_eq` / `mixer_filter` / `mixer_fx` / `mixer_crossfader` / `xfade` / `mix` / `set_bpm`  
+Mixer: `mixer_eq` / `mixer_filter` / `mixer_fx` / `mixer_repeat` / `mixer_crossfader` / `xfade` / `mix` / `set_bpm`  
 Deck: `load_song` / `apply_song` / `list_songs` / `save_song` / `mute` / `head`  
 Transport: `hush` / `status`  
 （いずれも `dj_hermes_*` プレフィックス。コード直書きの `set_code` は MCP から削除済み。鳴らす全文は `apply_song`、曲ファイルは `load_song`、残すのは `save_song`）

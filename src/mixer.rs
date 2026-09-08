@@ -674,6 +674,11 @@ impl Mixer {
         self.snap_crossfader(target, true, sr);
     }
 
+    /// ~5ms equal-power hold; used when time-repeat starts or jumps back to absolute.
+    pub fn soften_click(&mut self, sr: f32) {
+        self.begin_gain_ramp(sr);
+    }
+
     fn begin_gain_ramp(&mut self, sr: f32) {
         self.ramp_from_a = self.current_gain_a();
         self.ramp_from_b = self.current_gain_b();

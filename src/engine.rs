@@ -8,7 +8,7 @@ use crate::midi::MidiEvent;
 use crate::mixer::{MixAction, MixCommand, Mixer};
 use crate::sample::SampleBank;
 use crate::song::Song;
-use crate::transport::Transport;
+use crate::transport::{RepeatDiv, Transport};
 use crossbeam::channel::Sender;
 
 pub enum Command {
@@ -58,6 +58,8 @@ pub enum Command {
         wet: f32,
         feedback: Option<f32>,
     },
+    /// Time-repeat: `Some(div)` starts (immediate, one absolute bar); `None` clears.
+    SetTimeRepeat(Option<RepeatDiv>),
     /// DJ mix macro (long / cut / fill). Hold is [`Command::HoldXFade`].
     Mix(MixCommand),
     /// Freeze current xfade gains immediately (no bar wait).
@@ -200,6 +202,7 @@ impl Engine {
             Command::Hush => {
                 self.decks[0].unload();
                 self.decks[1].unload();
+                self.transport.clear_repeat();
                 self.mixer.clear_xfade();
                 self.mixer.clear_job();
                 self.mixer.gain_a = 0.0;
@@ -277,6 +280,14 @@ impl Engine {
             }
             Command::HoldXFade => {
                 self.mixer.hold_xfade();
+            }
+            Command::SetTimeRepeat(div) => {
+                let sr = self.transport.sample_rate as f32;
+                match div {
+                    Some(d) => self.transport.start_repeat(d),
+                    None => self.transport.clear_repeat(),
+                }
+                self.mixer.soften_click(sr);
             }
             Command::Mix(spec) => {
                 self.mixer.clear_job();
@@ -419,6 +430,12 @@ impl Engine {
         if frames == 0 {
             return;
         }
+        if let Some(end) = self.transport.repeat_end_sample() {
+            let start = self.transport.global_sample;
+            if start < end && start.saturating_add(frames as u64) >= end {
+                self.mixer.soften_click(sr);
+            }
+        }
         if self.scratch_a_l.len() < frames {
             self.scratch_a_l.resize(frames, 0.0);
             self.scratch_a_r.resize(frames, 0.0);
@@ -484,9 +501,9 @@ impl Engine {
         }
 
         self.transport.advance(frames);
-        // Publish after advance so UI sees the end-of-buffer position.
+        // Sounding playhead (relative during time-repeat) for highlight / punchcard.
         self.playhead
-            .store(self.transport.global_sample, Ordering::Relaxed);
+            .store(self.transport.play_sample(), Ordering::Relaxed);
     }
 }
 
@@ -1440,5 +1457,61 @@ $: note("g3").s("sawtooth")
         e.process(&mut buf, &bank);
         let peak = buf.iter().fold(0.0f32, |a, x| a.max(x.abs()));
         assert!(peak > 0.01, "soft synth should sound: peak={peak}");
+    }
+
+    #[test]
+    fn time_repeat_pending_load_still_applies_on_absolute_bar() {
+        let mut e = Engine::new(48_000, 120.0);
+        let bank = SampleBank::empty();
+        e.load_song_immediate(0, test_song("c3"));
+        let mut buf = stereo_buf(48_000);
+        e.process(&mut buf, &bank);
+        e.push_command(Command::SetTimeRepeat(Some(RepeatDiv::Sixteenth)));
+        e.push_command(Command::LoadSong {
+            deck: 0,
+            song: Box::new(test_song("e3")),
+        });
+        let src0 = e.decks[0].song_ref().unwrap().source.clone();
+        assert!(src0.contains("c3"), "load is pending until absolute bar 1");
+        let mut buf = stereo_buf(48_000);
+        e.process(&mut buf, &bank);
+        let mut buf = stereo_buf(1_000);
+        e.process(&mut buf, &bank);
+        assert_eq!(e.transport.bar_index(), 1);
+        assert!(
+            e.transport.repeat_div().is_some(),
+            "repeat should still be running when bar 1 applies"
+        );
+        let src = e.decks[0].song_ref().unwrap().source.clone();
+        assert!(
+            src.contains("e3"),
+            "pending LoadSong should apply on absolute bar 1 during repeat: {src}"
+        );
+    }
+
+    #[test]
+    fn time_repeat_auto_off_after_one_bar() {
+        let mut e = Engine::new(48_000, 120.0);
+        let bank = SampleBank::empty();
+        e.push_command(Command::SetTimeRepeat(Some(RepeatDiv::Eighth)));
+        assert_eq!(e.transport.repeat_div().map(|d| d.as_str()), Some("8n"));
+        let mut buf = stereo_buf(96_000);
+        e.process(&mut buf, &bank);
+        assert!(
+            e.transport.repeat_div().is_none(),
+            "repeat should expire after one absolute bar"
+        );
+        assert_eq!(
+            e.playhead.load(Ordering::Relaxed),
+            e.transport.global_sample
+        );
+    }
+
+    #[test]
+    fn hush_clears_time_repeat() {
+        let mut e = Engine::new(48_000, 120.0);
+        e.push_command(Command::SetTimeRepeat(Some(RepeatDiv::Quarter)));
+        e.push_command(Command::Hush);
+        assert!(e.transport.repeat_div().is_none());
     }
 }

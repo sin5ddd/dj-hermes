@@ -35,8 +35,8 @@ use crate::song::Song;
 use crate::viz::{self, VizModel};
 use crate::voice_input::{VoiceEvent, VoiceHandle, VoiceMode};
 
-const HELP_LINE: &str = "F9 vfx  F10 viz  F12音声  mute/FLT  drag xf/EQ  /help";
-const HELP_LINE_PLAY: &str = "F9 vfx  F10 viz  F12音声  mute/FLT  drag EQ  /help";
+const HELP_LINE: &str = "F9 vfx  F10 viz  F12音声  mute  drag xf/EQ  /help";
+const HELP_LINE_PLAY: &str = "F9 vfx  F10 viz  F12音声  mute  drag EQ  /help";
 /// Max candidate rows inside the suggest overlay (scroll window).
 const SUGGEST_MAX_ROWS: usize = 10;
 const HELP_LINE_LISTEN: &str = "VAD 待ち  話してね  F12 で一時停止";
@@ -93,8 +93,6 @@ enum DragTarget {
         band: usize,
         deck: usize,
     },
-    Flt,
-    Dly,
 }
 
 #[derive(Clone, Debug)]
@@ -137,10 +135,6 @@ struct LiveState {
     /// Per-deck EQ sliders 0..=1 (1.0 = 0 dB). Synced with Mixer channel EQ.
     /// Index: [band][deck] with band 0=Hi,1=Mid,2=Lo ; deck 0=A,1=B.
     eq: [[f32; 2]; 3],
-    /// Post-mix filter knob 0..=1 (0.5 = bypass, left = HPF, right = LPF).
-    flt_pos: f32,
-    /// Post-mix delay wet 0..=1.
-    delay_wet: f32,
     input: String,
     history: Vec<String>,
     history_idx: Option<usize>,
@@ -161,8 +155,6 @@ struct LiveState {
     xf_hit: SliderHit,
     /// [band][deck]
     eq_hits: [[SliderHit; 2]; 3],
-    flt_hit: SliderHit,
-    dly_hit: SliderHit,
     mute_hits: Vec<MuteHit>,
     drag: DragTarget,
     /// Issue #42 overlay. Default on; independent of `/viz`.
@@ -314,8 +306,6 @@ pub fn run(
         xfade_pos: 0.0,
         mix_label: None,
         eq: [[1.0; 2]; 3],
-        flt_pos: 0.5,
-        delay_wet: 0.0,
         input: String::new(),
         history: Vec::new(),
         history_idx: None,
@@ -329,8 +319,6 @@ pub fn run(
         prev_rows: 0,
         xf_hit: zero_hit,
         eq_hits: [[zero_hit; 2]; 3],
-        flt_hit: zero_hit,
-        dly_hit: zero_hit,
         mute_hits: Vec::new(),
         drag: DragTarget::None,
         vfx_on: true,
@@ -651,22 +639,6 @@ fn handle_mouse(
                 apply_drag(state, tx, m.column);
                 return;
             }
-            if state.flt_hit.contains(m.column, m.row) {
-                if let Some(a) = automix {
-                    a.touch();
-                }
-                state.drag = DragTarget::Flt;
-                apply_drag(state, tx, m.column);
-                return;
-            }
-            if state.dly_hit.contains(m.column, m.row) {
-                if let Some(a) = automix {
-                    a.touch();
-                }
-                state.drag = DragTarget::Dly;
-                apply_drag(state, tx, m.column);
-                return;
-            }
             for mh in &state.mute_hits {
                 if mh.hit.contains(m.column, m.row) {
                     if let Some(a) = automix {
@@ -732,21 +704,6 @@ fn apply_drag(state: &mut LiveState, tx: &Sender<Command>, col: u16) {
                 value: pos,
             });
         }
-        DragTarget::Flt => {
-            let pos = state.flt_hit.pos_from_col(col);
-            state.flt_pos = pos;
-            let (lpf, hpf) = bipolar_to_filters(pos);
-            let _ = tx.send(Command::SetMixerLpf(lpf));
-            let _ = tx.send(Command::SetMixerHpf(hpf));
-        }
-        DragTarget::Dly => {
-            let pos = state.dly_hit.pos_from_col(col);
-            state.delay_wet = pos;
-            let _ = tx.send(Command::SetMixerDelay {
-                wet: pos,
-                feedback: None,
-            });
-        }
     }
 }
 
@@ -767,12 +724,6 @@ fn sync_models_from_engine(state: &mut LiveState, eng: &Engine, sample_rate: u32
     state.cycle_offset_b = eng.decks[1].cycle_offset();
     if state.drag != DragTarget::Xf {
         state.xfade_pos = eng.mixer.crossfader_pos();
-    }
-    if state.drag != DragTarget::Flt {
-        state.flt_pos = filters_to_bipolar(eng.mixer.lpf_hz, eng.mixer.hpf_hz);
-    }
-    if state.drag != DragTarget::Dly {
-        state.delay_wet = eng.mixer.held_delay_wet();
     }
     // Mirror mixer EQ unless the user is dragging that band/deck.
     for band in 0..3 {
@@ -881,10 +832,10 @@ fn draw_frame(
         return Ok(());
     }
 
-    // Footer: EQ×3 + (xfade) + FLT + DLY + log×3 (reserved) + help + prompt
+    // Footer: EQ×3 + (xfade) + log×3 (reserved) + help + prompt
     let single = state.session.single_deck();
     let xf_rows = if single { 0 } else { 1 };
-    let footer_rows = (3 + xf_rows + 2 + LOG_LINES + 2).min(rows.saturating_sub(2));
+    let footer_rows = (3 + xf_rows + LOG_LINES + 2).min(rows.saturating_sub(2));
     let body_rows = rows.saturating_sub(footer_rows);
     let gs = playhead.load(Ordering::Relaxed);
 
@@ -1006,26 +957,6 @@ fn draw_frame(
     }
 
     state.mute_hits = collect_mute_hits(state, half, right_w, body_rows);
-
-    // Post-mix FLT (bipolar) + DLY wet
-    if lines.len() < rows {
-        let flt_row = lines.len();
-        let (flt_line, hit) = format_knob_line(
-            "FLT",
-            state.flt_pos,
-            cols,
-            flt_row as u16,
-            Some("HPF  bypass  LPF"),
-        );
-        state.flt_hit = hit;
-        lines.push(flt_line);
-    }
-    if lines.len() < rows {
-        let dly_row = lines.len();
-        let (dly_line, hit) = format_knob_line("DLY", state.delay_wet, cols, dly_row as u16, None);
-        state.dly_hit = hit;
-        lines.push(dly_line);
-    }
 
     // Change log: always exactly LOG_LINES rows (newest at bottom; empty rows reserved).
     // Show only the last LOG_LINES entries — older messages are dropped in push_log.
@@ -1636,82 +1567,6 @@ fn format_crossfader_line(
     (line, hit)
 }
 
-/// Short knob like the crossfader. `hint` is dim text after the track.
-fn format_knob_line(
-    name: &str,
-    pos: f32,
-    cols: usize,
-    row: u16,
-    hint: Option<&str>,
-) -> (String, SliderHit) {
-    if cols == 0 {
-        return (
-            String::new(),
-            SliderHit {
-                row,
-                col0: 0,
-                cols: 0,
-            },
-        );
-    }
-    let pos = pos.clamp(0.0, 1.0);
-    let prefix = format!("{name} ");
-    let pct = format!(" {:3.0}%", pos * 100.0);
-    let fixed = prefix.chars().count() + pct.chars().count();
-    let track_w = cols.saturating_sub(fixed).clamp(3, MAX_SLIDER_TRACK);
-    let track = format_track(pos, track_w);
-    let content = format!("{prefix}{track}{pct}");
-    let content_vis = prefix.chars().count() + track_w + pct.chars().count();
-    let pad_left = cols.saturating_sub(content_vis) / 2;
-    let mut raw = format!("{}{content}", " ".repeat(pad_left));
-    if let Some(s) = hint.filter(|s| !s.is_empty()) {
-        raw.push(' ');
-        raw.push_str("\x1b[2m");
-        raw.push_str(s);
-        raw.push_str("\x1b[0m");
-    }
-    let line = pad_clip_ansi(&raw, cols);
-    let hit = SliderHit {
-        row,
-        col0: (pad_left + prefix.chars().count()) as u16,
-        cols: track_w as u16,
-    };
-    (line, hit)
-}
-
-/// Bipolar master filter: 0.5 = bypass, left = HPF, right = LPF.
-fn bipolar_to_filters(pos: f32) -> (Option<f32>, Option<f32>) {
-    let p = pos.clamp(0.0, 1.0);
-    if (p - 0.5).abs() < 0.04 {
-        return (None, None);
-    }
-    if p < 0.5 {
-        let t = (0.5 - p) / 0.5;
-        let hz = 40.0 * (2000.0_f32 / 40.0).powf(t);
-        (None, Some(hz))
-    } else {
-        let t = (p - 0.5) / 0.5;
-        let hz = 12_000.0 * (200.0_f32 / 12_000.0).powf(t);
-        (Some(hz), None)
-    }
-}
-
-fn filters_to_bipolar(lpf: Option<f32>, hpf: Option<f32>) -> f32 {
-    match (lpf, hpf) {
-        (None, None) => 0.5,
-        (None, Some(hz)) => {
-            let span = (2000.0_f32 / 40.0).ln();
-            let t = ((hz / 40.0).ln() / span).clamp(0.0, 1.0);
-            0.5 - 0.5 * t
-        }
-        (Some(hz), _) => {
-            let span = (200.0_f32 / 12_000.0).ln();
-            let t = ((hz / 12_000.0).ln() / span).clamp(0.0, 1.0);
-            0.5 + 0.5 * t
-        }
-    }
-}
-
 fn collect_mute_hits(
     state: &LiveState,
     half: usize,
@@ -2207,25 +2062,6 @@ mod tests {
     }
 
     #[test]
-    fn bipolar_center_is_bypass() {
-        let (lpf, hpf) = bipolar_to_filters(0.5);
-        assert!(lpf.is_none() && hpf.is_none());
-        assert!((filters_to_bipolar(None, None) - 0.5).abs() < 1e-5);
-        let (lpf, hpf) = bipolar_to_filters(0.0);
-        assert!(hpf.is_some() && lpf.is_none());
-        let (lpf, hpf) = bipolar_to_filters(1.0);
-        assert!(lpf.is_some() && hpf.is_none());
-    }
-
-    #[test]
-    fn format_knob_has_hit() {
-        let (line, hit) = format_knob_line("FLT", 0.5, 80, 10, Some("bypass"));
-        assert!(line.contains("FLT"), "{line}");
-        assert!(hit.cols > 0);
-        assert_eq!(hit.row, 10);
-    }
-
-    #[test]
     fn format_track_max_len() {
         let t = format_track(0.0, 100);
         // Count visible non-ANSI chars
@@ -2249,8 +2085,6 @@ mod tests {
             xfade_pos: 0.0,
             mix_label: None,
             eq: [[1.0; 2]; 3],
-            flt_pos: 0.5,
-            delay_wet: 0.0,
             input: String::new(),
             history: Vec::new(),
             history_idx: None,
@@ -2272,16 +2106,6 @@ mod tests {
                 col0: 0,
                 cols: 0,
             }; 2]; 3],
-            flt_hit: SliderHit {
-                row: 0,
-                col0: 0,
-                cols: 0,
-            },
-            dly_hit: SliderHit {
-                row: 0,
-                col0: 0,
-                cols: 0,
-            },
             mute_hits: Vec::new(),
             drag: DragTarget::None,
             vfx_on: true,
