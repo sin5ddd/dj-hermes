@@ -1,7 +1,7 @@
 ---
 name: strudel-genre-four-on-the-floor
 description: >-
-  Use when writing a techno four-on-the-floor loop in strudel-rs
+  Use when writing a techno four-on-the-floor loop in dj-hermes
   (kick on every beat, hats on the offbeats, kick in front).
   7–8 $: tracks, 4-bar phrase, no clap.
 version: 5.1.0
@@ -9,7 +9,7 @@ author: Hermes Agent
 license: MIT
 metadata:
   hermes:
-    tags: [strudel-rs, music, genre, techno, four-on-the-floor]
+    tags: [dj-hermes, music, genre, techno, four-on-the-floor]
     related_skills:
       - strudel-composition
       - strudel-sound-design
@@ -19,7 +19,7 @@ metadata:
       - strudel-minor-scale-loop
 ---
 
-# Four-on-the-floor (strudel-rs)
+# Four-on-the-floor (dj-hermes)
 
 ## When to use
 
@@ -129,13 +129,13 @@ Both decks share one `Transport`. A DJ pair must use the **same** `setcpm`. This
 
 ```bash
 # From the repo root (needs samples/bd, hh)
-strudel-rs play songs/four-on-the-floor/01.strudel --seconds 12
+dj-hermes play songs/four-on-the-floor/01.strudel --seconds 12
 
 # Dual deck — both files are setcpm(124/4); do not pair a different BPM
-strudel-rs dj songs/house/01.strudel songs/four-on-the-floor/01.strudel
+dj-hermes dj songs/house/01.strudel songs/four-on-the-floor/01.strudel
 ```
 
-Load `songs/four-on-the-floor/01.strudel`, or `strudel_apply_song` the full-song fence.
+Load `songs/four-on-the-floor/01.strudel`, or `dj_hermes_apply_song` the full-song fence.
 
 No audio device: `cargo test --test e2e four_on_the_floor -- --nocapture` renders through `Engine::process`.
 

@@ -1,7 +1,7 @@
 ---
 name: strudel-mood-bright-dark
 description: >-
-  Use when asked to make a strudel-rs loop brighter or darker
+  Use when asked to make a dj-hermes loop brighter or darker
   (mode, voicing width, register, sample swap, filter/EQ) — not a
   genre change and not a new BPM.
 version: 4.0.0
@@ -9,7 +9,7 @@ author: Hermes Agent
 license: MIT
 metadata:
   hermes:
-    tags: [strudel-rs, music, mood, bright, dark, scale]
+    tags: [dj-hermes, music, mood, bright, dark, scale]
     related_skills:
       - strudel-composition
       - strudel-sound-design
@@ -18,7 +18,7 @@ metadata:
       - strudel-genre-four-on-the-floor
 ---
 
-# Brighter / darker (strudel-rs)
+# Brighter / darker (dj-hermes)
 
 ## When to use
 
@@ -26,7 +26,7 @@ metadata:
 - You already have (or are writing) a loop and need a **transform**, not a new genre recipe.
 - You are **not** switching house → techno → DnB. Tempo and drum grid stay put. A pair that will be mixed must share one `setcpm`.
 
-Apply the inline dark / bright recipes with `strudel_apply_song`. Same 124 house grid as `songs/house/01.strudel`.
+Apply the inline dark / bright recipes with `dj_hermes_apply_song`. Same 124 house grid as `songs/house/01.strudel`.
 
 ## The five moves
 
@@ -225,9 +225,9 @@ Square + `lpf(140)` vs saw + `lpf(1400)` is the synth-spectrum move. Drums stay 
 ## Try it in this app
 
 ```bash
-# Apply the inline recipes with strudel_apply_song (same 124 clock).
+# Apply the inline recipes with dj_hermes_apply_song (same 124 clock).
 # Existing 124 pair:
-strudel-rs dj songs/house/01.strudel songs/four-on-the-floor/01.strudel
+dj-hermes dj songs/house/01.strudel songs/four-on-the-floor/01.strudel
 ```
 
 No device: `cargo test --test e2e house_01 -- --nocapture`.

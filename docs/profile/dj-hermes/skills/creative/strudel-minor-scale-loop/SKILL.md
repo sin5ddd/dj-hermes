@@ -1,14 +1,14 @@
 ---
 name: strudel-minor-scale-loop
 description: >-
-  Use when writing a short minor-key bass and triad loop in strudel-rs
+  Use when writing a short minor-key bass and triad loop in dj-hermes
   (scale degrees, not chord-suffix tokens).
 version: 4.0.0
 author: Hermes Agent
 license: MIT
 metadata:
   hermes:
-    tags: [strudel-rs, music, harmony, scale, minor]
+    tags: [dj-hermes, music, harmony, scale, minor]
     related_skills:
       - strudel-composition
       - strudel-sound-design
@@ -17,7 +17,7 @@ metadata:
       - strudel-mood-bright-dark
 ---
 
-# Minor-scale loop (strudel-rs)
+# Minor-scale loop (dj-hermes)
 
 ## When to use
 
@@ -78,8 +78,8 @@ Saw + low LPF keeps the bass out of the triad’s midrange. Triangle + higher LP
 ## Try it in this app
 
 ```bash
-# Apply the inline recipe with strudel_apply_song, or pair existing 124 files:
-strudel-rs dj songs/house/01.strudel songs/four-on-the-floor/01.strudel
+# Apply the inline recipe with dj_hermes_apply_song, or pair existing 124 files:
+dj-hermes dj songs/house/01.strudel songs/four-on-the-floor/01.strudel
 ```
 
 No audio device: `cargo test --test e2e four_on_the_floor -- --nocapture`.

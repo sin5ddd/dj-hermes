@@ -1,14 +1,14 @@
 ---
 name: strudel-pcm-catalog
 description: >-
-  Use when choosing a rust-fm-synthe PCM one-shot for strudel-rs
+  Use when choosing a rust-fm-synthe PCM one-shot for dj-hermes
   (bd:8b, hh:cl, bs:ht, and other part:slug keys). Not for live 2-op .fm.
 version: 1.1.0
 author: Hermes Agent
 license: MIT
 metadata:
   hermes:
-    tags: [strudel-rs, music, samples, pcm, rust-fm-synthe]
+    tags: [dj-hermes, music, samples, pcm, rust-fm-synthe]
     related_skills:
       - strudel-sound-design
       - strudel-composition
@@ -17,7 +17,7 @@ metadata:
       - strudel-genre-dnb
 ---
 
-# strudel-rs PCM catalog（rust-fm-synthe）
+# dj-hermes PCM catalog（rust-fm-synthe）
 
 ## Overview
 
@@ -53,7 +53,7 @@ $: note("0 0 4 0").scale("C4:minor").s("bs:ht").gain(0.45)
 $: s("<fx:up ~ ~ ~>").gain(0.3)
 ```
 
-Apply the inline recipe with `strudel_apply_song`. `songs/house/01.strudel` uses `bd:hf` / `bs:su` / `plk:lp` as a live example.
+Apply the inline recipe with `dj_hermes_apply_song`. `songs/house/01.strudel` uses `bd:hf` / `bs:su` / `plk:lp` as a live example.
 
 ## 役割 → まずこれを試す
 

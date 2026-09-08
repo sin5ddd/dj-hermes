@@ -1,7 +1,7 @@
 ---
 name: strudel-genre-acid
 description: >-
-  Use when writing a TB-303-style acid line in strudel-rs: per-note
+  Use when writing a TB-303-style acid line in dj-hermes: per-note
   filter envelope (lpenv), high resonance, saw or square, monophonic
   16ths as the hook. Other slots (drums kit, bass filter/LFO, lead,
   arp, chords, pad) may differ freely. Not a parked lpf plus amp ADSR,
@@ -12,7 +12,7 @@ author: Hermes Agent
 license: MIT
 metadata:
   hermes:
-    tags: [strudel-rs, music, genre, acid, 303, filter-envelope]
+    tags: [dj-hermes, music, genre, acid, 303, filter-envelope]
     related_skills:
       - strudel-composition
       - strudel-sound-design
@@ -21,7 +21,7 @@ metadata:
       - strudel-genre-techno-duck
 ---
 
-# TB-303 filter envelope (strudel-rs, acid techno)
+# TB-303 filter envelope (dj-hermes, acid techno)
 
 ## When to use
 
@@ -149,11 +149,11 @@ Both decks share one `Transport`. This file is 130 BPM. Play it **solo** — sta
 ## Try it in this app
 
 ```bash
-strudel-rs play songs/acid/01.strudel --seconds 12
-strudel-rs play songs/acid/01.strudel --headless --seconds 8
+dj-hermes play songs/acid/01.strudel --seconds 12
+dj-hermes play songs/acid/01.strudel --headless --seconds 8
 ```
 
-Load `songs/acid/01.strudel`, or `strudel_apply_song` the Pattern fence.
+Load `songs/acid/01.strudel`, or `dj_hermes_apply_song` the Pattern fence.
 
 No device: `cargo test --test e2e acid_01 -- --nocapture`.
 

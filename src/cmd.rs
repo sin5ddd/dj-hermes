@@ -56,7 +56,7 @@ bare text           send to Hermes (DJ assistant)
 /…                  local command (e.g. /bpm 128, /a house 01, /viz)
 ";
 
-/// Help for `strudel-rs play` (one song on deck A; no mix / xfade / B).
+/// Help for `dj-hermes play` (one song on deck A; no mix / xfade / B).
 pub const HELP_PLAY: &str = "\
 # local commands (live TUI: prefix with / )
 <genre> <n>         load bundled slot (e.g. /house 01 → songs/house/01.strudel)
@@ -83,7 +83,7 @@ Esc                 dismiss suggest (or quit when prompt empty)
 bare text           send to Hermes (play assistant)
 /…                  local command (e.g. /bpm 128, /house 01, /load house/01, /viz)
 
-play is one song (deck A). mix / xfade / deck B: use `strudel-rs dj`.
+play is one song (deck A). mix / xfade / deck B: use `dj-hermes dj`.
 ";
 
 /// Help body for the current session (overlay / `help` command).
@@ -106,7 +106,7 @@ fn preprocess_play_line(line: &str) -> Result<String, String> {
     let head = args[0];
     if parse_deck(head) == Some(1) {
         return Err(
-            "play は1曲（デッキ A）です。デッキ B は `strudel-rs dj` を使ってください。".into(),
+            "play は1曲（デッキ A）です。デッキ B は `dj-hermes dj` を使ってください。".into(),
         );
     }
     if matches!(head, "mix" | "x" | "xfade") {
@@ -917,7 +917,7 @@ mod tests {
     #[test]
     fn save_writes_user_library_without_load() {
         let _home_guard = crate::song::lock_test_home();
-        let home = std::env::temp_dir().join(format!("strudel_cmd_save_{}", std::process::id()));
+        let home = std::env::temp_dir().join(format!("dj_hermes_cmd_save_{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&home);
         std::fs::create_dir_all(&home).unwrap();
         std::env::set_var("HOME", &home);
@@ -933,7 +933,7 @@ mod tests {
         assert!(rx.try_recv().is_err(), "TUI save must not LoadSong");
         let expected = home
             .join(".config")
-            .join("strudel-rs")
+            .join("dj-hermes")
             .join("songs")
             .join("visitor-mem.strudel");
         let written = std::fs::read_to_string(&expected).unwrap();
@@ -982,6 +982,6 @@ mod tests {
         let h = r.messages.join("\n");
         assert!(h.contains("/load"), "{h}");
         assert!(!h.contains("xfade to the other deck"), "{h}");
-        assert!(h.contains("strudel-rs dj"), "{h}");
+        assert!(h.contains("dj-hermes dj"), "{h}");
     }
 }

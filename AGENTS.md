@@ -1,20 +1,18 @@
-# AGENTS.md — strudel-rs
+# AGENTS.md — dj-hermes
 
 このリポジトリで作業する AI エージェント向けのプロジェクト概要と実装上の制約です。
-詳細なタスク分解は `docs/plans/2026-07-27_020000-strudel-rs-final.md` を正本とします。
-**完了タスクの詳細手順**は `docs/plans/done/` に切り出し済み（索引: `docs/plans/done/README.md`）。
 
 ---
 
 ## 何を作るか
 
-**strudel-rs** は、Strudel 記法で書かれた曲ファイルをリアルタイム演奏する Rust 製 CLI です。
+**dj-hermes** は、Strudel 記法で書かれた曲ファイルをリアルタイム演奏する Rust 製 CLI です。
 
 | 利用者       | 操作手段                                                                          |
 | ------------ | --------------------------------------------------------------------------------- |
 | 人間（編集） | 演奏はオンメモリ。ディスク反映は明示 save。エディタ変更を鳴らすには `/a load` または `/a reload` |
 | 人間（操作） | live TUI: 自然文→Hermes、`/` 付きでローカルコマンド。`--text` は rustyline 裸コマンド |
-| LLM / Hermes | TUI から `hermes -z`（`play` は `play-hermes`、`dj` は `dj-hermes`）+ MCP。HTTP API の `POST /mcp`（stdio `strudel-rs mcp` は非推奨デバッグ用） |
+| LLM / Hermes | TUI から `hermes -z`（`play` は `play-hermes`、`dj` は `dj-hermes`）+ MCP。HTTP API の `POST /mcp`（stdio `dj-hermes mcp` は非推奨デバッグ用） |
 
 主な体験:
 
@@ -34,7 +32,7 @@
 
 ```
 // @title smoke
-// @by strudel-rs
+// @by dj-hermes
 setcpm(30)
 // drums (space = sequence, comma = simultaneous)
 $: s("[bd hh [bd,sd] hh]*2").gain(0.75)
@@ -99,7 +97,7 @@ Song をロードして鳴らす再生ユニット ×2。両デッキは同一 T
 ```
 
 - コマンド経路: `crossbeam` のチャネル（SPSC 想定）
-- **演奏 CLI は手動起動**。Hermes 向け MCP は演奏プロセスの **`POST /mcp`（Streamable HTTP）**。stdio `strudel-rs mcp` は非推奨。audio の多重起動をツール経路から起こさない
+- **演奏 CLI は手動起動**。Hermes 向け MCP は演奏プロセスの **`POST /mcp`（Streamable HTTP）**。stdio `dj-hermes mcp` は非推奨。audio の多重起動をツール経路から起こさない
 - 単一バイナリ + サブコマンド（`play` / `mcp` / `list` 等）。別 crate の workspace 分割はしない
 
 ---
@@ -107,8 +105,8 @@ Song をロードして鳴らす再生ユニット ×2。両デッキは同一 T
 ## リポジトリ構成（目標）
 
 ```
-strudel-rust/                 # このリポジトリのルート
-├── Cargo.toml                # package name: strudel-rs
+dj-hermes/                 # このリポジトリのルート
+├── Cargo.toml                # package name: dj-hermes
 ├── src/
 │   ├── main.rs               # サブコマンド分岐
 │   ├── backend.rs            # AudioBackend + NullBackend
@@ -131,7 +129,6 @@ strudel-rust/                 # このリポジトリのルート
 ├── songs/                    # デモ曲 (.strudel)
 ├── samples/                  # WAV (bd, sd, hh 等・Sonic Pi 由来 CC0。カスタム追加可)
 ├── tests/                    # e2e 等（NullBackend 駆動）
-├── docs/plans/               # 実装プラン（正本）
 └── hermes_push.sh            # Hermes 向け HTTP ラッパ（後段タスク）
 ```
 
@@ -182,10 +179,10 @@ Release プロファイル目安（プラン）: `opt-level = 3`, `lto = true`, 
 ### CLI / REPL 例
 
 ```
-./strudel-rs play songs/house/01.strudel   # 1 デッキ live UI + Hermes (play-hermes) + API(:17878)
-./strudel-rs play songs/house/01.strudel --midi-only --midi-port SEQTRAK
-./strudel-rs dj songs/house/01.strudel songs/four-on-the-floor/01.strudel   # 2 デッキ + mix
-# または空起動: ./strudel-rs dj
+./dj-hermes play songs/house/01.strudel   # 1 デッキ live UI + Hermes (play-hermes) + API(:17878)
+./dj-hermes play songs/house/01.strudel --midi-only --midi-port SEQTRAK
+./dj-hermes dj songs/house/01.strudel songs/four-on-the-floor/01.strudel   # 2 デッキ + mix
+# または空起動: ./dj-hermes dj
 # play プロンプト: /load …    dj プロンプト: /a load … / b load … / x 4
 ```
 
@@ -200,13 +197,13 @@ Release プロファイル目安（プラン）: `opt-level = 3`, `lto = true`, 
 Mixer: `mixer_eq` / `mixer_filter` / `mixer_crossfader` / `xfade` / `mix` / `set_bpm`  
 Deck: `load_song` / `apply_song` / `list_songs` / `save_song` / `mute` / `head`  
 Transport: `hush` / `status`  
-（いずれも `strudel_*` プレフィックス。コード直書きの `set_code` は MCP から削除済み。鳴らす全文は `apply_song`、曲ファイルは `load_song`、残すのは `save_song`）
+（いずれも `dj_hermes_*` プレフィックス。コード直書きの `set_code` は MCP から削除済み。鳴らす全文は `apply_song`、曲ファイルは `load_song`、残すのは `save_song`）
 
 Hermes 登録例:
 
 ```yaml
 mcp_servers:
-    strudel:
+    dj-hermes:
         url: "http://127.0.0.1:17878/mcp"
 ```
 
@@ -229,7 +226,7 @@ Rust の build/test/clippy 実行時は、利用可能なら `cargo-runner` ス�
 
 ## 作業ルール（このリポジトリ）
 
-1. **プラン正本:** `docs/plans/2026-07-27_020000-strudel-rs-final.md`。タスクを飛ばしたり、未承認のスコープ拡大をしない。
+1. **スコープ:** 未承認の機能追加をしない。
 2. **コミット:** ユーザーが明示的に依頼するまで **git の** commit / stage / push をしない（グローバル規則）。このリポジトリは **git のみ**（Git LFS で `samples/**/*.wav`）。jj をコロケートしない。公式 jj は Git LFS の smudge をしないため、作業コピーが pointer と実 WAV で食い違う。
 3. **品質:** 触ったモジュールのテストを通す。audio スレッド内でアロケーションやロック待ちを増やさないよう注意する。PR 前は CI 相当をローカルで通す（下記 **fmt 必須**）。
 4. **エラー:** パース失敗で演奏を止めない。API/REPL の両方で失敗理由を返す。
@@ -264,7 +261,7 @@ cargo test
 
 | 項目               | 状態                                                   |
 | ------------------ | ------------------------------------------------------ |
-| リポジトリ         | GitHub private（`sin5ddd/strudel-rust`）+ CI/CD 基盤   |
+| リポジトリ         | GitHub private（`sin5ddd/dj-hermes`）+ CI/CD 基盤   |
 | cargo プロジェクト | Task 1–19 + Task 21 + Task 23–26 完了 |
 | 実装タスク         | Task 20 任意 → Task 22 計測（Task 25 viz 完了）      |
 
@@ -273,4 +270,4 @@ cargo test
 1. Task 22: リソース計測 + README 展示手順
 2. Task 20（任意）: 汎用 ctl スクリプト + MCP クライアント設定例（Hermes 専用ランタイムは作らない）
 
-詰まった点・設計判断はプラン末尾の「詰まりログ」「追加メモ」「Risks / Open Questions」に追記する。
+

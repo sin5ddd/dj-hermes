@@ -30,11 +30,11 @@ pub use crate::song::sanitize_song_path;
 /// Default listen port (10000s; avoids commonly busy 7878).
 pub const DEFAULT_API_PORT: u16 = 17878;
 
-/// Environment variable for default port override (`STRUDEL_API_PORT`).
-pub const ENV_API_PORT: &str = "STRUDEL_API_PORT";
+/// Environment variable for default port override (`DJ_HERMES_API_PORT`).
+pub const ENV_API_PORT: &str = "DJ_HERMES_API_PORT";
 
 /// Environment variable for full base URL (MCP / scripts): e.g. `http://127.0.0.1:17878`.
-pub const ENV_API_BASE: &str = "STRUDEL_API";
+pub const ENV_API_BASE: &str = "DJ_HERMES_API";
 
 #[derive(Clone)]
 pub struct AppState {
@@ -131,7 +131,7 @@ pub struct LoadReq {
     pub deck: String,
 }
 
-/// Save a song under `~/.config/strudel-rs/songs/` only (does not change playback).
+/// Save a song under `~/.config/dj-hermes/songs/` only (does not change playback).
 #[derive(Deserialize)]
 pub struct SaveSongReq {
     /// Basename (e.g. `visitor-dark` or `visitor-dark.strudel`).
@@ -510,13 +510,13 @@ pub struct GenreInfo {
 
 #[derive(Serialize)]
 pub struct ListSongsRes {
-    /// Basenames in `~/.config/strudel-rs/songs/` (MCP save target).
+    /// Basenames in `~/.config/dj-hermes/songs/` (MCP save target).
     pub user_library: Vec<String>,
     /// Slot refs (`house/01`) when `?genre=` is set; empty in the default listing.
     pub bundled: Vec<String>,
     /// Bundled genre folders and counts.
     pub genres: Vec<GenreInfo>,
-    /// How to pass `path` to `/song/load` / `strudel_load_song`.
+    /// How to pass `path` to `/song/load` / `dj_hermes_load_song`.
     pub load_hint: String,
 }
 
@@ -663,7 +663,7 @@ fn save_content_from_req(
     }
 }
 
-/// Persist a song into the user library (`~/.config/strudel-rs/songs/` only).
+/// Persist a song into the user library (`~/.config/dj-hermes/songs/` only).
 /// Does not change playback.
 async fn save_song(
     State(s): State<AppState>,
@@ -1084,7 +1084,7 @@ mod tests {
         assert!(ct.starts_with("application/json"), "{ct}");
         let body = json_body(res).await;
         let v: serde_json::Value = serde_json::from_str(&body).unwrap();
-        assert_eq!(v["result"]["serverInfo"]["name"], "strudel-rs");
+        assert_eq!(v["result"]["serverInfo"]["name"], "dj-hermes");
         assert_eq!(v["result"]["protocolVersion"], "2025-03-26");
     }
 
@@ -1111,7 +1111,7 @@ mod tests {
     async fn mcp_tools_call_eq_queues_command() {
         let (state, rx) = test_state();
         let app = router(state);
-        let body = r#"{"jsonrpc":"2.0","id":9,"method":"tools/call","params":{"name":"strudel_mixer_eq","arguments":{"deck":"B","hi":0.8}}}"#;
+        let body = r#"{"jsonrpc":"2.0","id":9,"method":"tools/call","params":{"name":"dj_hermes_mixer_eq","arguments":{"deck":"B","hi":0.8}}}"#;
         let res = app
             .oneshot(
                 Request::builder()
@@ -1232,7 +1232,7 @@ mod tests {
     #[tokio::test]
     async fn save_song_writes_user_library_without_load() {
         let _home_guard = lock_home();
-        let home = std::env::temp_dir().join(format!("strudel_save_home_{}", std::process::id()));
+        let home = std::env::temp_dir().join(format!("dj_hermes_save_home_{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&home);
         std::fs::create_dir_all(&home).unwrap();
         // Force user_songs_dir under temp home (HOME wins over USERPROFILE).
@@ -1264,7 +1264,7 @@ mod tests {
         assert_eq!(status, StatusCode::OK, "{body_text}");
         let expected = home
             .join(".config")
-            .join("strudel-rs")
+            .join("dj-hermes")
             .join("songs")
             .join("visitor-dark.strudel");
         assert!(expected.is_file(), "{}", expected.display());
@@ -1309,7 +1309,7 @@ mod tests {
         assert!(rx.try_recv().is_err());
         let broken = home
             .join(".config")
-            .join("strudel-rs")
+            .join("dj-hermes")
             .join("songs")
             .join("broken.strudel");
         assert!(!broken.is_file(), "must not write on parse error");
@@ -1320,7 +1320,8 @@ mod tests {
     #[tokio::test]
     async fn apply_song_queues_load_without_write() {
         let _home_guard = lock_home();
-        let home = std::env::temp_dir().join(format!("strudel_apply_home_{}", std::process::id()));
+        let home =
+            std::env::temp_dir().join(format!("dj_hermes_apply_home_{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&home);
         std::fs::create_dir_all(&home).unwrap();
         std::env::set_var("HOME", &home);
@@ -1350,7 +1351,7 @@ mod tests {
             }
             _ => panic!("expected LoadSong"),
         }
-        let lib = home.join(".config").join("strudel-rs").join("songs");
+        let lib = home.join(".config").join("dj-hermes").join("songs");
         if lib.is_dir() {
             let leftover: Vec<_> = std::fs::read_dir(&lib)
                 .unwrap()
@@ -1381,7 +1382,7 @@ mod tests {
     #[tokio::test]
     async fn save_song_snapshots_deck_without_load() {
         let _home_guard = lock_home();
-        let home = std::env::temp_dir().join(format!("strudel_snap_home_{}", std::process::id()));
+        let home = std::env::temp_dir().join(format!("dj_hermes_snap_home_{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&home);
         std::fs::create_dir_all(&home).unwrap();
         std::env::set_var("HOME", &home);
@@ -1422,7 +1423,7 @@ mod tests {
         assert_eq!(status, StatusCode::OK, "{text}");
         let expected = home
             .join(".config")
-            .join("strudel-rs")
+            .join("dj-hermes")
             .join("songs")
             .join("snap-mem.strudel");
         let written = std::fs::read_to_string(&expected).unwrap();
@@ -1435,7 +1436,8 @@ mod tests {
     #[tokio::test]
     async fn patch_track_save_true_does_not_write() {
         let _home_guard = lock_home();
-        let home = std::env::temp_dir().join(format!("strudel_patch_home_{}", std::process::id()));
+        let home =
+            std::env::temp_dir().join(format!("dj_hermes_patch_home_{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&home);
         std::fs::create_dir_all(&home).unwrap();
         std::env::set_var("HOME", &home);
@@ -1482,7 +1484,7 @@ mod tests {
         let status = res.status();
         let text = json_body(res).await;
         assert_eq!(status, StatusCode::OK, "{text}");
-        let lib = home.join(".config").join("strudel-rs").join("songs");
+        let lib = home.join(".config").join("dj-hermes").join("songs");
         if lib.is_dir() {
             let leftover: Vec<_> = std::fs::read_dir(&lib)
                 .unwrap()

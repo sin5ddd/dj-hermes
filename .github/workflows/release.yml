@@ -18,18 +18,22 @@ jobs:
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            artifact: strudel-rs-x86_64-unknown-linux-gnu
-            bin: strudel-rs
+            artifact: dj-hermes-x86_64-unknown-linux-gnu.tar.gz
+            bin: dj-hermes
+            archive: tar
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            artifact: strudel-rs-x86_64-pc-windows-msvc.exe
-            bin: strudel-rs.exe
+            artifact: dj-hermes-x86_64-pc-windows-msvc.zip
+            bin: dj-hermes.exe
+            archive: zip
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          lfs: true
       - uses: dtolnay/rust-toolchain@stable
       - name: Install ALSA dev
-        if: runner.os == 'Linux'
+        if: runner.os == "Linux"
         run: |
           sudo apt-get update
           sudo apt-get install -y libasound2-dev
@@ -38,11 +42,23 @@ jobs:
           key: release-${{ matrix.target }}
       - name: cargo build --release
         run: cargo build --release
-      - name: Stage binary
+      - name: Stage bundle
         shell: bash
         run: |
-          mkdir -p dist
-          cp "target/release/${{ matrix.bin }}" "dist/${{ matrix.artifact }}"
+          set -euo pipefail
+          python -c "p=open('samples/bd/00.wav','rb').read(12); assert p[:4]==b'RIFF' and p[8:12]==b'WAVE', p"
+          rm -rf dist
+          mkdir -p dist/dj-hermes/docs/profile
+          cp "target/release/${{ matrix.bin }}" "dist/dj-hermes/${{ matrix.bin }}"
+          cp -R songs dist/dj-hermes/songs
+          cp -R samples dist/dj-hermes/samples
+          cp -R docs/profile/dj-hermes dist/dj-hermes/docs/profile/dj-hermes
+          cd dist
+          if [ "${{ matrix.archive }}" = "zip" ]; then
+            python -m zipfile -c "${{ matrix.artifact }}" dj-hermes
+          else
+            tar -czf "${{ matrix.artifact }}" dj-hermes
+          fi
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v3
         with:

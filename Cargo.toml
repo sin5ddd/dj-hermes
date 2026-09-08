@@ -1,16 +1,19 @@
 [package]
-name = "strudel-rs"
+name = "dj-hermes"
 version = "0.1.0"
 edition = "2021"
 description = "Strudel notation live-performance CLI (dual deck, bar-quantize)"
 license = "MIT OR Apache-2.0"
+repository = "https://github.com/sin5ddd/dj-hermes"
+homepage = "https://github.com/sin5ddd/dj-hermes"
+readme = "README.md"
 
 [lib]
-name = "strudel_rs"
+name = "dj_hermes"
 path = "src/lib.rs"
 
 [[bin]]
-name = "strudel-rs"
+name = "dj-hermes"
 path = "src/main.rs"
 
 [dependencies]

@@ -6,46 +6,46 @@ author: Hermes Agent
 license: MIT
 metadata:
   hermes:
-    tags: [strudel-rs, dj, mixer, xfade, fill, switch]
+    tags: [dj-hermes, dj, mixer, xfade, fill, switch]
     related_skills:
       - strudel-composition
       - strudel-live-edit
       - strudel-sound-design
 ---
 
-# strudel-rs DJ ミックス（1 コマンド）
+# dj-hermes DJ ミックス（1 コマンド）
 
 ## Overview
 
-2 デッキのつなぎは **`strudel_mix` を 1 回**。EQ を 4 回呼ばない。曲ソースを `apply_song` / `patch_track` しない。
+2 デッキのつなぎは **`dj_hermes_mix` を 1 回**。EQ を 4 回呼ばない。曲ソースを `apply_song` / `patch_track` しない。
 
 ドラムの `<>` フィルは **strudel-live-edit**。こちらは Mixer のフィル。
 
 ## 手順
 
-1. **`strudel_status`** — どちらが主電源か、両デッキに曲があるか、`mix` が動いていないか
+1. **`dj_hermes_status`** — どちらが主電源か、両デッキに曲があるか、`mix` が動いていないか
 2. 下の表で `move` / `kind` / `to` を決める
-3. **`strudel_mix` を 1 回だけ**呼ぶ
+3. **`dj_hermes_mix` を 1 回だけ**呼ぶ
 4. 新しい mix は前のジョブをキャンセルする。ライザー中に long を重ねない
 
-`strudel_hush` は呼ばない（オペレータの `/hush`）。
+`dj_hermes_hush` は呼ばない（オペレータの `/hush`）。
 
 ## ルーティング
 
 | 言い方 | 呼び出し |
 | --- | --- |
-| ロングでつないで / ゆっくり B へ | `strudel_mix(move="long", to="B")`（既定 8 小節、帯域分け EQ） |
-| カットイン / いきなり A | `strudel_mix(move="cut", to="A")`（次の小節、EQ を flat に戻す） |
-| フェーダーを途中で止めて | `strudel_mix(move="hold")`（即時。pos は動かさない） |
-| ディレイのフィルから B | `strudel_mix(move="fill", kind="delay", to="B")` |
-| ローパスで絞ってカット | `strudel_mix(move="fill", kind="lpf", to="B")` |
-| 点滅してカット | `strudel_mix(move="fill", kind="flash", to="B")` |
-| ライザー入れてカット | `strudel_mix(move="fill", kind="riser", to="B")` |
-| B から 8 分でスイッチして A | `strudel_mix(move="fill", kind="switch", to="A", grid="8n")` |
-| エコーで消して B へ | `strudel_mix(move="fill", kind="echo", to="B")` |
-| ハイパスで薄くしてカット | `strudel_mix(move="fill", kind="hpf", to="B")` |
-| ロールしてから A | `strudel_mix(move="fill", kind="roll", to="A", grid="8n")` |
-| インパクト入れてカット | `strudel_mix(move="fill", kind="drop", to="B")` |
+| ロングでつないで / ゆっくり B へ | `dj_hermes_mix(move="long", to="B")`（既定 8 小節、帯域分け EQ） |
+| カットイン / いきなり A | `dj_hermes_mix(move="cut", to="A")`（次の小節、EQ を flat に戻す） |
+| フェーダーを途中で止めて | `dj_hermes_mix(move="hold")`（即時。pos は動かさない） |
+| ディレイのフィルから B | `dj_hermes_mix(move="fill", kind="delay", to="B")` |
+| ローパスで絞ってカット | `dj_hermes_mix(move="fill", kind="lpf", to="B")` |
+| 点滅してカット | `dj_hermes_mix(move="fill", kind="flash", to="B")` |
+| ライザー入れてカット | `dj_hermes_mix(move="fill", kind="riser", to="B")` |
+| B から 8 分でスイッチして A | `dj_hermes_mix(move="fill", kind="switch", to="A", grid="8n")` |
+| エコーで消して B へ | `dj_hermes_mix(move="fill", kind="echo", to="B")` |
+| ハイパスで薄くしてカット | `dj_hermes_mix(move="fill", kind="hpf", to="B")` |
+| ロールしてから A | `dj_hermes_mix(move="fill", kind="roll", to="A", grid="8n")` |
+| インパクト入れてカット | `dj_hermes_mix(move="fill", kind="drop", to="B")` |
 | 4 分でスイッチ | `grid="4n"` |
 
 `to` は **着地先**。スイッチの最初のマスは着地の反対（B から始めて A へ）。
@@ -56,10 +56,10 @@ flash は outgoing だけ消す。switch は AB を 100:0 ↔ 0:100 で交互。
 
 ## やってはいけないこと
 
-- `strudel_mixer_eq` を 4 回積んでロングを再現する
-- ミックスのために `strudel_apply_song` / `strudel_save_song` / `strudel_patch_track`
+- `dj_hermes_mixer_eq` を 4 回積んでロングを再現する
+- ミックスのために `dj_hermes_apply_song` / `dj_hermes_save_song` / `dj_hermes_patch_track`
 - ロールのために `apply_song` で同じヒットを並べない
 - 174 DnB と 124 house をつなぐ（BPM は共有。creative README と同じ）
 - 片デッキに曲がないのに long / switch
 
-両デッキに曲が無いときは先に `strudel_load_song`。フレーズ頭から出したいときは `strudel_head` してから mix。
+両デッキに曲が無いときは先に `dj_hermes_load_song`。フレーズ頭から出したいときは `dj_hermes_head` してから mix。

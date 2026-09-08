@@ -1,7 +1,7 @@
 ---
 name: strudel-genre-chill
 description: >-
-  Use when writing chill / downtempo for strudel-rs: 80–100 BPM feel,
+  Use when writing chill / downtempo for dj-hermes: 80–100 BPM feel,
   soft drums, bs:hf floor only (do not stack bs:su). Not ambient and
   not chill-pop.
 version: 5.1.0
@@ -9,14 +9,14 @@ author: Hermes Agent
 license: MIT
 metadata:
   hermes:
-    tags: [strudel-rs, music, genre, chill]
+    tags: [dj-hermes, music, genre, chill]
     related_skills:
       - strudel-composition
       - strudel-sound-design
       - strudel-data-format
 ---
 
-# strudel-rs × チル / ダウンテンポ
+# dj-hermes × チル / ダウンテンポ
 
 ## Overview
 
@@ -100,4 +100,4 @@ Pattern はグリッド・次数・スロットの見本。新規曲は下表か
 
 - [ ] 7–8 本（drums / bass / lead / hook / arp / chords / pad。任意 perc）
 - [ ] 4 小節 `.scale("<…>")`。ドラムは 1 本。`.s()` は音色パレット
-- [ ] `strudel_apply_song(content, deck)`。save は残す指示のときだけ
+- [ ] `dj_hermes_apply_song(content, deck)`。save は残す指示のときだけ

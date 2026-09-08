@@ -1,7 +1,7 @@
 ---
 name: strudel-genre-dnb-reese-mid-stab
 description: >-
-  Use when writing a Drum and Bass loop in strudel-rs with the bundled
+  Use when writing a Drum and Bass loop in dj-hermes with the bundled
   mid Reese sample and hollow-fifth stab: 174 BPM, square C2 sub,
   bs:rm at C4:minor, plk:s5 degrees 4/7 as the hook. Not saw-Reese.
   8 $: tracks. Do not DJ-pair with 124 house.
@@ -10,7 +10,7 @@ author: Hermes Agent
 license: MIT
 metadata:
   hermes:
-    tags: [strudel-rs, music, genre, dnb, reese, stab]
+    tags: [dj-hermes, music, genre, dnb, reese, stab]
     related_skills:
       - strudel-composition
       - strudel-sound-design
@@ -18,7 +18,7 @@ metadata:
       - strudel-genre-dnb
 ---
 
-# DnB: square sub + bs:rm + hollow-fifth stab (strudel-rs)
+# DnB: square sub + bs:rm + hollow-fifth stab (dj-hermes)
 
 ## When to use
 
@@ -165,13 +165,13 @@ No `.compressor` on a `$:` — that writes the **mixer master** (last-write) and
 ## Try it in this app
 
 ```bash
-strudel-rs play songs/dnb-reese/01.strudel --seconds 12
-strudel-rs play songs/dnb-reese/01.strudel --headless --seconds 8
+dj-hermes play songs/dnb-reese/01.strudel --seconds 12
+dj-hermes play songs/dnb-reese/01.strudel --headless --seconds 8
 ```
 
 Play **solo**. Do not `dj` this file with a 124 house or 126 techno song.
 
-Load `songs/dnb-reese/01.strudel`, or `strudel_apply_song` the Pattern fence.
+Load `songs/dnb-reese/01.strudel`, or `dj_hermes_apply_song` the Pattern fence.
 
 No device: `cargo test --test e2e dnb_reese_01 -- --nocapture`.
 

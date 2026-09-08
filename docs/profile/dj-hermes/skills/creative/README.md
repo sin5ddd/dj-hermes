@@ -1,4 +1,4 @@
-# Musicality skills (strudel-rs)
+# Musicality skills (dj-hermes)
 
 Assistant-agnostic recipes for this engine: **to make music of type X, write Strudel like Y**.
 
@@ -107,7 +107,7 @@ Bundled one-shots: `samples/bd`, `sd`, `hh`, `oh`, `cp` (`samples/cp/00.wav`), p
 - Mixer faders + per-deck Hi/Mid/Lo EQ (shelves at 6 kHz / 1 kHz / 200 Hz) + master LPF/HPF.
 - Crossfade: `gainA = cos(θ)`, `gainB = sin(θ)` for `θ` in `0 … π/2` (`mixer.rs`). Starts on a bar boundary; `hush` is immediate.
 - `.compressor(...)` on a `$:` is **mixer master**, last-write (`engine.rs`) — not a track insert. It will squash the kick.
-- Try a pair **at the same BPM**: `strudel-rs dj songs/house/01.strudel songs/four-on-the-floor/01.strudel` (both `setcpm(124/4)`) then `/x 4`. A second file at another `setcpm` does not keep its own tempo. Do not pair 174 DnB with 126 techno.
+- Try a pair **at the same BPM**: `dj-hermes dj songs/house/01.strudel songs/four-on-the-floor/01.strudel` (both `setcpm(124/4)`) then `/x 4`. A second file at another `setcpm` does not keep its own tempo. Do not pair 174 DnB with 126 techno.
 
 ## Skills in this tree
 
@@ -117,12 +117,12 @@ Cross-cutting:
 | --- | --- | --- |
 | [strudel-composition](./strudel-composition/SKILL.md) | 7–8 `$:` tracks, 4-bar phrases (Future Bass: 9 tracks / 16-bar scale; Minimal Techno: 8 tracks / 16-bar mute), mini-notation | `songs/<genre>/01.strudel` |
 | [strudel-data-format](./strudel-data-format/SKILL.md) | `.strudel` save/load shape | — |
-| [strudel-sound-design](./strudel-sound-design/SKILL.md) | Synths, FX, live 2-op FM, factory PCM stems | — (inline recipes; apply via `strudel_apply_song`) |
+| [strudel-sound-design](./strudel-sound-design/SKILL.md) | Synths, FX, live 2-op FM, factory PCM stems | — (inline recipes; apply via `dj_hermes_apply_song`) |
 | [strudel-pcm-catalog](./strudel-pcm-catalog/SKILL.md) | rust-fm-synthe `part:slug`（`bd:8b`, `hh:cl`）。意味は INDEX | — |
 | [strudel-minor-scale-loop](./strudel-minor-scale-loop/SKILL.md) | Short minor bass + triad | — (inline recipe; 124 clock pairs with house / four-on-the-floor) |
-| [strudel-mood-bright-dark](./strudel-mood-bright-dark/SKILL.md) | Brighter/darker (mode, voicing, register, sample, filter) — not a genre change | — (inline pair; apply via `strudel_apply_song`) |
+| [strudel-mood-bright-dark](./strudel-mood-bright-dark/SKILL.md) | Brighter/darker (mode, voicing, register, sample, filter) — not a genre change | — (inline pair; apply via `dj_hermes_apply_song`) |
 | [strudel-live-edit](./strudel-live-edit/SKILL.md) | Natural language → one-track / one-method live edits | — |
-| [strudel-dj-mix](./strudel-dj-mix/SKILL.md) | A/B mix macros (`strudel_mix` one call: long / cut / fill / switch / hold) | — |
+| [strudel-dj-mix](./strudel-dj-mix/SKILL.md) | A/B mix macros (`dj_hermes_mix` one call: long / cut / fill / switch / hold) | — |
 
 Play 専用（このツリーには置かない）: [strudel-seqtrak](../../../play-hermes/skills/creative/strudel-seqtrak/SKILL.md) — Yamaha SEQTRAK への MIDI（`play --midi` / `--midi-only`）。`dj-hermes` にはコピーしない。
 
@@ -156,26 +156,26 @@ From the repo root (needs `songs/` and `samples/`):
 
 ```bash
 # Highlight TUI (q / Esc to quit)
-strudel-rs play songs/four-on-the-floor/01.strudel --seconds 12
+dj-hermes play songs/four-on-the-floor/01.strudel --seconds 12
 
 # No TTY / CI
-strudel-rs play songs/house/01.strudel --headless --seconds 8
+dj-hermes play songs/house/01.strudel --headless --seconds 8
 
 # Dual deck — both files must share one setcpm (here 124/4)
-strudel-rs dj songs/house/01.strudel songs/four-on-the-floor/01.strudel
+dj-hermes dj songs/house/01.strudel songs/four-on-the-floor/01.strudel
 
-strudel-rs play songs/dnb/01.strudel --seconds 12
-strudel-rs play songs/techno-duck/01.strudel --headless --seconds 8
+dj-hermes play songs/dnb/01.strudel --seconds 12
+dj-hermes play songs/techno-duck/01.strudel --headless --seconds 8
 
 # Dual deck — both files must share one setcpm (here 126/4). Do not pair with 174 DnB or 70 ambient.
-strudel-rs dj songs/techno-duck/01.strudel songs/electro/01.strudel
+dj-hermes dj songs/techno-duck/01.strudel songs/electro/01.strudel
 
-strudel-rs play songs/acid/01.strudel --seconds 12
-strudel-rs play songs/acid/01.strudel --headless --seconds 8
+dj-hermes play songs/acid/01.strudel --seconds 12
+dj-hermes play songs/acid/01.strudel --headless --seconds 8
 
 # 174 DnB with sampled mid Reese — play solo. Do not pair with 124 house.
-strudel-rs play songs/dnb-reese/01.strudel --seconds 12
-strudel-rs play songs/dnb-reese/01.strudel --headless --seconds 8
+dj-hermes play songs/dnb-reese/01.strudel --seconds 12
+dj-hermes play songs/dnb-reese/01.strudel --headless --seconds 8
 ```
 
 Headless hosts without an audio device: `cargo test --test e2e` renders through `Engine::process` (no ALSA).

@@ -5,10 +5,10 @@
 use std::fs;
 use std::path::PathBuf;
 
-use strudel_rs::engine::{Command, Engine};
-use strudel_rs::mixer::{FillKind, MixAction, MixCommand, MixGrid};
-use strudel_rs::sample::{SampleBank, SAMPLE_ROOT_HZ};
-use strudel_rs::song::parse_song;
+use dj_hermes::engine::{Command, Engine};
+use dj_hermes::mixer::{FillKind, MixAction, MixCommand, MixGrid};
+use dj_hermes::sample::{SampleBank, SAMPLE_ROOT_HZ};
+use dj_hermes::song::parse_song;
 
 const SR: u32 = 48_000;
 /// Shared clock for the exhibit DJ pair (house-01 + four-on-the-floor-01).
@@ -26,7 +26,7 @@ fn samples_dir() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("samples")
 }
 
-fn load_song_file(name: &str) -> strudel_rs::song::Song {
+fn load_song_file(name: &str) -> dj_hermes::song::Song {
     let path = song_path(name);
     let text = fs::read_to_string(&path).unwrap_or_else(|e| panic!("read {}: {e}", path.display()));
     parse_song(&text, path.to_string_lossy().as_ref())
@@ -99,7 +99,7 @@ fn clip_rail_ratio(buf: &[f32]) -> f32 {
     n as f32 / buf.len() as f32
 }
 
-fn track<'a>(song: &'a strudel_rs::song::Song, name: &str) -> &'a strudel_rs::song::Track {
+fn track<'a>(song: &'a dj_hermes::song::Song, name: &str) -> &'a dj_hermes::song::Track {
     song.tracks
         .iter()
         .find(|t| t.name == name || t.name.starts_with(name))
@@ -132,7 +132,7 @@ fn all_bundled_songs_parse() {
     let dir = songs_dir();
     assert!(dir.is_dir(), "songs/ missing at {}", dir.display());
     let mut count = 0;
-    for path in strudel_rs::song::collect_song_files(&dir) {
+    for path in dj_hermes::song::collect_song_files(&dir) {
         if path.extension().and_then(|e| e.to_str()) != Some("strudel") {
             continue;
         }
@@ -259,7 +259,7 @@ fn dnb_01_mix_rules() {
             t.code.mini_src
         );
     }
-    let evs = strudel_rs::mini::events(&drums.code.pattern, 0);
+    let evs = dj_hermes::mini::events(&drums.code.pattern, 0);
     assert!(
         evs.iter().any(|e| e.start >= 0.5),
         "break should occupy the second half of the bar, starts={:?}",
@@ -738,7 +738,7 @@ fn dnb_reese_01_mid_glue() {
         );
     }
 
-    let evs = strudel_rs::mini::events(&drums.code.pattern, 0);
+    let evs = dj_hermes::mini::events(&drums.code.pattern, 0);
     assert!(
         evs.iter().any(|e| e.start >= 0.5),
         "break should occupy the second half of the bar, starts={:?}",

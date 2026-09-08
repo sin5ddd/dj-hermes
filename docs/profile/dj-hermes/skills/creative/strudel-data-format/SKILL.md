@@ -1,22 +1,22 @@
 ---
 name: strudel-data-format
-description: "Use when writing .strudel files for strudel-rs apply/save (MCP): 7–8 $: tracks, 4-bar phrases."
+description: "Use when writing .strudel files for dj-hermes apply/save (MCP): 7–8 $: tracks, 4-bar phrases."
 version: 5.0.0
 author: Hermes Agent
 license: MIT
 metadata:
   hermes:
-    tags: [strudel-rs, music, file-format, metadata, live-coding]
+    tags: [dj-hermes, music, file-format, metadata, live-coding]
     related_skills:
       - strudel-composition
       - strudel-sound-design
 ---
 
-# strudel-rs 曲ファイル形式
+# dj-hermes 曲ファイル形式
 
 ## Overview
 
-strudel-rs は `.strudel` テキストをパースして再生する。鳴らすのは MCP **`strudel_apply_song`**（無書き込み）。ディスク保存は **`strudel_save_song`** のみ（file ツール不可、明示指示までしない）。書き込み先は `~/.config/strudel-rs/songs/<name>.strudel` のみ。
+dj-hermes は `.strudel` テキストをパースして再生する。鳴らすのは MCP **`dj_hermes_apply_song`**（無書き込み）。ディスク保存は **`dj_hermes_save_song`** のみ（file ツール不可、明示指示までしない）。書き込み先は `~/.config/dj-hermes/songs/<name>.strudel` のみ。
 
 **曲の長さの目安**: トラック **7–8 本**、4 小節フレーズ（`.scale("<…>")` / 4 子の `<>`）。16 小節 `cat` は非既定（→ strudel-composition）。
 
@@ -58,14 +58,14 @@ $: s("<~ ~ ~ perc:cm>").gain(0.18)
 3. **必須**: 1 本以上の **`$:` 行**（トラック）。直前の `// name` がトラック名  
 4. ドラムは原則 **1 本の `s(...)`**。新規は **7–8 本**（→ strudel-composition）  
 
-## strudel_apply_song
+## dj_hermes_apply_song
 
 | 引数 | 意味 |
 | --- | --- |
 | `content` | 上の全文 |
 | `deck` | `A` / `B` — 次小節でロード。ディスクに書かない |
 
-## strudel_save_song
+## dj_hermes_save_song
 
 | 引数 | 意味 |
 | --- | --- |
@@ -74,9 +74,9 @@ $: s("<~ ~ ~ perc:cm>").gain(0.18)
 | `deck` | 任意 `A` / `B` — content 省略時のスナップショット元。ロードしない |
 | `overwrite` | 既定 true |
 
-**ライブ時**: 鳴らすのは apply。同じファイルへ残すのは来場者が残してと言ったときだけ。save は演奏を変えない。保存済みを鳴らすのは `strudel_load_song(path=<basename>, deck)`（`songs/` プレフィックス無し。ユーザーライブラリ → 同梱 `songs/` の順）。
+**ライブ時**: 鳴らすのは apply。同じファイルへ残すのは来場者が残してと言ったときだけ。save は演奏を変えない。保存済みを鳴らすのは `dj_hermes_load_song(path=<basename>, deck)`（`songs/` プレフィックス無し。ユーザーライブラリ → 同梱 `songs/` の順）。
 
-## strudel_load_song
+## dj_hermes_load_song
 
 | 引数 | 意味 |
 | --- | --- |
@@ -92,7 +92,7 @@ $: s("<~ ~ ~ perc:cm>").gain(0.18)
 
 ## Pitfalls
 
-1. チャットにコードを書いて終わり → 必ず `strudel_apply_song`
+1. チャットにコードを書いて終わり → 必ず `dj_hermes_apply_song`
 2. `name` に日本語や `/` → ASCII の basename のみ  
 3. content に `stack` を入れる → パース失敗  
 4. 16 小節 `cat` を毎回書く → 4 小節は `.scale("<…>")` と `<>`。`cat` は最大 8 引数  
@@ -103,4 +103,4 @@ $: s("<~ ~ ~ perc:cm>").gain(0.18)
 - [ ] 各トラックが `$:` で始まる  
 - [ ] 7–8 本（drums / bass 1–2 / lead / hook / arp / chords / pad）  
 - [ ] 4 小節フレーズ。ドラムは統合記法  
-- [ ] `strudel_apply_song(content, deck)` を実行した。save は「残して」と言われたときだけ
+- [ ] `dj_hermes_apply_song(content, deck)` を実行した。save は「残して」と言われたときだけ

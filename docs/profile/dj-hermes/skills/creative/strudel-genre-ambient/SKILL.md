@@ -1,7 +1,7 @@
 ---
 name: strudel-genre-ambient
 description: >-
-  Use when writing ambient for strudel-rs: thin or no kick, pad as
+  Use when writing ambient for dj-hermes: thin or no kick, pad as
   primary, rest-heavy melody, low gain, around 70 BPM. Not chill
   drums and not house clap.
 version: 5.1.0
@@ -9,14 +9,14 @@ author: Hermes Agent
 license: MIT
 metadata:
   hermes:
-    tags: [strudel-rs, music, genre, ambient]
+    tags: [dj-hermes, music, genre, ambient]
     related_skills:
       - strudel-composition
       - strudel-sound-design
       - strudel-data-format
 ---
 
-# strudel-rs × アンビエント
+# dj-hermes × アンビエント
 
 ## Overview
 
@@ -100,4 +100,4 @@ Pattern はグリッド・次数・スロットの見本。新規曲は下表か
 
 - [ ] 7–8 本（drums / bass / lead / hook / arp / chords / pad。任意 perc）
 - [ ] 4 小節 `.scale("<…>")`。ドラムは 1 本。pad が主。`.s()` は音色パレット
-- [ ] `strudel_apply_song(content, deck)`。save は残す指示のときだけ
+- [ ] `dj_hermes_apply_song(content, deck)`。save は残す指示のときだけ

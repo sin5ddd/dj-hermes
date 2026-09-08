@@ -1,7 +1,7 @@
 ---
 name: strudel-genre-future-bass
 description: >-
-  Use when writing Future Bass for strudel-rs: 140 BPM half-time 2-step,
+  Use when writing Future Bass for dj-hermes: 140 BPM half-time 2-step,
   16-bar loop (not 4-bar), refrain lead, long strings track, J-pop 王道
   plus reverse and bass cliché so songs do not share one progression.
   Kawaii bells/supersaw. Not four-on-the-floor.
@@ -10,7 +10,7 @@ author: Hermes Agent
 license: MIT
 metadata:
   hermes:
-    tags: [strudel-rs, music, genre, future-bass, kawaii, j-pop]
+    tags: [dj-hermes, music, genre, future-bass, kawaii, j-pop]
     related_skills:
       - strudel-composition
       - strudel-sound-design
@@ -20,7 +20,7 @@ metadata:
       - strudel-genre-techno-duck
 ---
 
-# strudel-rs × Future Bass（Kawaii / J-pop 王道載せ）
+# dj-hermes × Future Bass（Kawaii / J-pop 王道載せ）
 
 ## Overview
 
@@ -169,7 +169,7 @@ PCM は `C4:`（`SAMPLE_ROOT_HZ` は C4）。シンセサブを足して `bs:su`
 4. サブは `bs:su` 1 本、orbit 2。wobble を主役にしない
 5. duck はキックだけ。ハットに duckorbit 禁止。**9 本**（strings を足す）
 
-鳴らすのは `strudel_apply_song(content, deck)`（次小節、無書き込み）。`strudel_save_song` は残す指示のときだけ。
+鳴らすのは `dj_hermes_apply_song(content, deck)`（次小節、無書き込み）。`dj_hermes_save_song` は残す指示のときだけ。
 
 ## Variations（同じ文法）
 
@@ -210,4 +210,4 @@ PCM は `C4:`（`SAMPLE_ROOT_HZ` は C4）。シンセサブを足して `bs:su`
 - [ ] chords `[0,4,9]`。進行は **A A' B C**（小室／カノンは名前付きの 16 小節差し替え）
 - [ ] `bs:su` は `C4:`、orbit 2、サブ 1 本。ハットに duckorbit なし。strings も orbit 2
 - [ ] `.s()` は音色パレット（ベル／ガラス／スーパーソー／ストリングス役を役割で変える）
-- [ ] `strudel_apply_song(content, deck)`（save は残す指示のときだけ）
+- [ ] `dj_hermes_apply_song(content, deck)`（save は残す指示のときだけ）

@@ -199,7 +199,7 @@ fn utf8_char_len(first: u8) -> usize {
 pub fn format_header(model: &HighlightModel, global_sample: u64, bar: u64, pos: f64) -> String {
     let secs = global_sample as f64 / model.sample_rate.max(1) as f64;
     format!(
-        "strudel-rs  {}  ·  {:.0} BPM  ·  bar {}  ·  pos {:.2}  ·  t={:.1}s",
+        "dj-hermes  {}  ·  {:.0} BPM  ·  bar {}  ·  pos {:.2}  ·  t={:.1}s",
         model.title, model.bpm, bar, pos, secs
     )
 }

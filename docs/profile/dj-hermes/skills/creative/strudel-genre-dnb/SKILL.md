@@ -1,7 +1,7 @@
 ---
 name: strudel-genre-dnb
 description: >-
-  Use when writing a Drum and Bass loop in strudel-rs: 174 BPM, break in
+  Use when writing a Drum and Bass loop in dj-hermes: 174 BPM, break in
   front of the sub, split Reese (square sub + saw mid as bass + bass-mid).
   Never use sample db. 8 $: tracks, play solo at 174.
 version: 5.1.0
@@ -9,7 +9,7 @@ author: Hermes Agent
 license: MIT
 metadata:
   hermes:
-    tags: [strudel-rs, music, genre, dnb, reese]
+    tags: [dj-hermes, music, genre, dnb, reese]
     related_skills:
       - strudel-composition
       - strudel-sound-design
@@ -17,7 +17,7 @@ metadata:
       - strudel-genre-dnb-reese-mid-stab
 ---
 
-# Drum and Bass (strudel-rs)
+# Drum and Bass (dj-hermes)
 
 ## When to use
 
@@ -111,11 +111,11 @@ Both decks share one `Transport`. This file is 174 BPM. Do **not** pair it with 
 
 ```bash
 # From the repo root (needs samples/bd, sd, hh, oh)
-strudel-rs play songs/dnb/01.strudel --seconds 12
-strudel-rs play songs/dnb/01.strudel --headless --seconds 8
+dj-hermes play songs/dnb/01.strudel --seconds 12
+dj-hermes play songs/dnb/01.strudel --headless --seconds 8
 ```
 
-Load `songs/dnb/01.strudel`, or `strudel_apply_song` the Pattern fence. Play **solo** at 174.
+Load `songs/dnb/01.strudel`, or `dj_hermes_apply_song` the Pattern fence. Play **solo** at 174.
 
 No audio device: `cargo test --test e2e dnb_01 -- --nocapture` renders through `Engine::process`.
 

@@ -1,4 +1,4 @@
-//! MIDI output for `strudel-rs play` (notes, 18.3 CC, Bank Select + Program Change).
+//! MIDI output for `dj-hermes play` (notes, 18.3 CC, Bank Select + Program Change).
 //!
 //! Audio thread only `try_send`s. A dedicated thread talks to `midir`.
 //! Linux BLE MIDI is an ALSA sequencer port the OS already exposed — this
@@ -215,7 +215,7 @@ fn midi_worker(rx: Receiver<MidiEvent>, mut sink: Box<dyn MidiSink>) {
 
 /// Names of current MIDI output ports (index matches `--midi-port`).
 pub fn list_output_ports() -> Result<Vec<String>, String> {
-    let out = MidiOutput::new("strudel-rs").map_err(|e| format!("midi: {e}"))?;
+    let out = MidiOutput::new("dj-hermes").map_err(|e| format!("midi: {e}"))?;
     let mut names = Vec::new();
     for p in out.ports() {
         names.push(out.port_name(&p).unwrap_or_else(|_| "(unnamed)".into()));
@@ -270,7 +270,7 @@ pub fn connect(spec: Option<&str>) -> Result<MidiHandle, String> {
 }
 
 fn open_connection(spec: Option<&str>) -> Result<MidiOutputConnection, String> {
-    let out = MidiOutput::new("strudel-rs").map_err(|e| format!("midi: {e}"))?;
+    let out = MidiOutput::new("dj-hermes").map_err(|e| format!("midi: {e}"))?;
     let ports = out.ports();
     if ports.is_empty() {
         return Err("no MIDI output ports".into());
@@ -311,7 +311,7 @@ fn open_connection(spec: Option<&str>) -> Result<MidiOutputConnection, String> {
         .port_name(&ports[idx])
         .unwrap_or_else(|_| format!("port {idx}"));
     eprintln!("midi: connected {name}");
-    out.connect(&ports[idx], "strudel-rs")
+    out.connect(&ports[idx], "dj-hermes")
         .map_err(|e| format!("midi connect {name}: {e}"))
 }
 

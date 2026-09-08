@@ -1,7 +1,7 @@
 ---
 name: strudel-genre-minimal-techno
 description: >-
-  Use when writing Minimal Techno for strudel-rs: 126 BPM, 8 sparse
+  Use when writing Minimal Techno for dj-hermes: 126 BPM, 8 sparse
   tracks, 16-bar mute map (kick stays; others rest in sections), offbeat
   open hats `[~ oh]*4`, dark FX one-shots. Not a house [~ cp]*2 backbeat;
   not on-beat `hh*8`; not all loops on at once.
@@ -10,7 +10,7 @@ author: Hermes Agent
 license: MIT
 metadata:
   hermes:
-    tags: [strudel-rs, music, genre, minimal-techno]
+    tags: [dj-hermes, music, genre, minimal-techno]
     related_skills:
       - strudel-composition
       - strudel-sound-design
@@ -18,7 +18,7 @@ metadata:
       - strudel-pcm-catalog
 ---
 
-# strudel-rs × ミニマルテクノ
+# dj-hermes × ミニマルテクノ
 
 ## Overview
 
@@ -52,7 +52,7 @@ metadata:
 | pad | off | off | 9 だけ | off |
 | fx | 4 ラジオ | 7 暗いリバースシンバル | 9 クラング | 13 サブドロップ、16 スイープ |
 
-`strudel_mute` はライブで一時的に落とす用。曲のフォームにはしない。
+`dj_hermes_mute` はライブで一時的に落とす用。曲のフォームにはしない。
 
 ## Pattern
 
@@ -123,7 +123,7 @@ PCM ベースは `C4:`（native）。シンセサブは `C2:`。
 5. 8 本目は `// fx`。長い FX はセクション境界だけ
 6. 本数は 8。3–5 本に削らない。全トラック常時オンにもしない
 
-鳴らすのは `strudel_apply_song(content, deck)`（次小節、無書き込み）。`strudel_save_song` は残す指示のときだけ（演奏は変えない）。
+鳴らすのは `dj_hermes_apply_song(content, deck)`（次小節、無書き込み）。`dj_hermes_save_song` は残す指示のときだけ（演奏は変えない）。
 
 ## Variations（同じ文法）
 
@@ -145,7 +145,7 @@ PCM ベースは `C4:`（native）。シンセサブは `C2:`。
 5. レイヤー過多やメロの埋めすぎで隙間が消える
 6. 新規 apply でフェンスの `.s()` を全コピーする。スーパーソーや Rhodes を載せる
 7. 7 本を 16 小節ずっとオンにする（展開が無くなる）
-8. `strudel_mute` やミキサー mute を曲のフォームにする
+8. `dj_hermes_mute` やミキサー mute を曲のフォームにする
 9. `fx:gb` / `fx:fc` / `fx:up` / `fx:rb` など明るい／ガバの FX
 10. 16 引数の `cat`。`<~@4 [0 ~ 3 ~]@12>` のように `@` でミュート小節を稼ぐ（このエンジンではサイクル選択の長さにならない）
 11. `<>` の中で 1 小節ループをブラケット無しにする（空白が 16 子を壊す）
@@ -158,4 +158,4 @@ PCM ベースは `C4:`（native）。シンセサブは `C2:`。
 - [ ] ドラムは 1 本のカンマ層。ハットは裏拍オープン `[~ oh]*4`。`[~ cp]*2` も `hh*8` / `hh*4` も書いていない
 - [ ] 隙間と低 gain が残っている。`.s()` は音色パレット。FX はダークワンショット
 - [ ] 長い FX は連続小節に置いていない。`note()` は FX に付けていない
-- [ ] `strudel_apply_song(content, deck)`（save は残す指示のときだけ）
+- [ ] `dj_hermes_apply_song(content, deck)`（save は残す指示のときだけ）

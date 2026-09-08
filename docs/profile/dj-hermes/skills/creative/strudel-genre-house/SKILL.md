@@ -1,7 +1,7 @@
 ---
 name: strudel-genre-house
 description: >-
-  Use when writing a house loop in strudel-rs: clap on 2 and 4
+  Use when writing a house loop in dj-hermes: clap on 2 and 4
   ([~ cp]*2), not a snare and not stacked with sd, plus the C-minor
   FM pluck at C4:minor as the hook. 7–8 $: tracks, 4-bar phrase.
   Not kick-front techno.
@@ -10,7 +10,7 @@ author: Hermes Agent
 license: MIT
 metadata:
   hermes:
-    tags: [strudel-rs, music, genre, house, clap]
+    tags: [dj-hermes, music, genre, house, clap]
     related_skills:
       - strudel-composition
       - strudel-sound-design
@@ -20,7 +20,7 @@ metadata:
       - strudel-mood-bright-dark
 ---
 
-# House clap backbeat (strudel-rs)
+# House clap backbeat (dj-hermes)
 
 ## When to use
 
@@ -158,14 +158,14 @@ No `.compressor` on a `$:` — that writes the **mixer master** (last-write) and
 ## Try it in this app
 
 ```bash
-strudel-rs play songs/house/01.strudel --seconds 12
-strudel-rs play songs/house/01.strudel --headless --seconds 8
+dj-hermes play songs/house/01.strudel --seconds 12
+dj-hermes play songs/house/01.strudel --headless --seconds 8
 
 # Dual deck — both files are setcpm(124/4). Do not pair a different BPM.
-strudel-rs dj songs/house/01.strudel songs/four-on-the-floor/01.strudel
+dj-hermes dj songs/house/01.strudel songs/four-on-the-floor/01.strudel
 ```
 
-Load `songs/house/01.strudel`, or `strudel_apply_song` the Pattern fence.
+Load `songs/house/01.strudel`, or `dj_hermes_apply_song` the Pattern fence.
 
 No device: `cargo test --test e2e house_01 -- --nocapture`.
 

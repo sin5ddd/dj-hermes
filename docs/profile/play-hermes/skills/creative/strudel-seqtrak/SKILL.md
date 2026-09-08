@@ -1,25 +1,25 @@
 ---
 name: strudel-seqtrak
 description: >-
-  Use when writing strudel-rs for Yamaha SEQTRAK over MIDI (play --midi /
+  Use when writing dj-hermes for Yamaha SEQTRAK over MIDI (play --midi /
   --midi-only): channel map, // @midi bank/pc, and 18.3 CC knobs.
 version: 1.0.0
 author: Hermes Agent
 license: MIT
 metadata:
   hermes:
-    tags: [strudel-rs, music, midi, seqtrak, exhibit]
+    tags: [dj-hermes, music, midi, seqtrak, exhibit]
     related_skills:
       - strudel-composition
       - strudel-sound-design
       - strudel-live-edit
 ---
 
-# strudel-rs → SEQTRAK（MIDI）
+# dj-hermes → SEQTRAK（MIDI）
 
 ## Overview
 
-`strudel-rs play` がヒットを **MIDI** に出す。本体の音色は SEQTRAK 側。ソフトシンセのレシピ（`.bank`、PCM `bd:hf`、wavetable）は **選ばれない**。
+`dj-hermes play` がヒットを **MIDI** に出す。本体の音色は SEQTRAK 側。ソフトシンセのレシピ（`.bank`、PCM `bd:hf`、wavetable）は **選ばれない**。
 
 | CLI | ソフトシンセ | MIDI |
 | --- | --- | --- |
@@ -30,9 +30,9 @@ metadata:
 `dj` と `play --repl` は MIDI 対象外（デッキは A だけ）。SysEx / MIDI クロックは送らない。
 
 ```bash
-strudel-rs play --midi-list
-strudel-rs play songs/house/01.strudel --midi-port SEQTRAK
-strudel-rs play songs/house/01.strudel --midi-only --midi-port SEQTRAK
+dj-hermes play --midi-list
+dj-hermes play songs/house/01.strudel --midi-port SEQTRAK
+dj-hermes play songs/house/01.strudel --midi-only --midi-port SEQTRAK
 ```
 
 USB は class-compliant。Linux の BLE MIDI は、OS が ALSA シーケンサに出していれば `--midi-list` に並ぶ（アプリは GATT を話さない）。Windows の BLE MIDI は対象外。BLE のペアリングは `bluetoothctl` など OS 側。
@@ -43,7 +43,7 @@ USB は class-compliant。Linux の BLE MIDI は、OS が ALSA シーケンサ�
 - チャンネルや SOUND SELECT（Bank + Program Change）を曲に書く
 - `.lpf` / `.gain` などを本体のツマミ（CC）に載せたい
 
-Don't use for: `strudel-rs dj` の A/B ミックス、PCM キットの `.bank`、SysEx での音色内部。
+Don't use for: `dj-hermes dj` の A/B ミックス、PCM キットの `.bank`、SysEx での音色内部。
 
 ## チャンネル（1 始まり）
 
@@ -145,4 +145,4 @@ DX にするなら 2 本目以降のシンセに `.fm(3)` を付ける（ch10）
 - [ ] ドラムは短い `bd`/`sd`/`hh`（Bank/PC が要るなら `$:` を分ける）
 - [ ] ピッチは次数 + `.scale`。`.fm` は DX 用
 - [ ] `@midi` の msb/lsb/pc はオペレータ既知の値だけ
-- [ ] 鳴らすのは `strudel_apply_song`。save は残す指示のときだけ
+- [ ] 鳴らすのは `dj_hermes_apply_song`。save は残す指示のときだけ

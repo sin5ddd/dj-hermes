@@ -1,7 +1,7 @@
 ---
 name: strudel-genre-progressive-house
 description: >-
-  Use when writing Progressive House for strudel-rs: 128 BPM, clap on 2
+  Use when writing Progressive House for dj-hermes: 128 BPM, clap on 2
   and 4 ([~ cp]*2), long pad and arp, C-minor / F-dorian 4-bar phrase.
   Not kick-front techno.
 version: 5.1.0
@@ -9,14 +9,14 @@ author: Hermes Agent
 license: MIT
 metadata:
   hermes:
-    tags: [strudel-rs, music, genre, progressive-house]
+    tags: [dj-hermes, music, genre, progressive-house]
     related_skills:
       - strudel-composition
       - strudel-sound-design
       - strudel-data-format
 ---
 
-# strudel-rs × プログレッシブハウス
+# dj-hermes × プログレッシブハウス
 
 ## Overview
 
@@ -84,7 +84,7 @@ Pattern はグリッド・次数・スロットの見本。新規曲は下表か
 4. 進行は 4 小節 C minor → C minor → F dorian → C minor
 5. 上物を増やしすぎない（リード / フック / arp は掛け合い）
 
-鳴らすのは `strudel_apply_song(content, deck)`（次小節、無書き込み）。`strudel_save_song` は残す指示のときだけ（演奏は変えない）。
+鳴らすのは `dj_hermes_apply_song(content, deck)`（次小節、無書き込み）。`dj_hermes_save_song` は残す指示のときだけ（演奏は変えない）。
 
 ## Pitfalls
 
@@ -102,4 +102,4 @@ Pattern はグリッド・次数・スロットの見本。新規曲は下表か
 - [ ] 4 小節フレーズ（`.scale("<…>")` が 4 個）
 - [ ] ドラムは 1 本。`[~ cp]*2` がある（`sd` と重ねていない）
 - [ ] 4 つ打ち + パッド。PCM ベースは `C4:`。`.s()` は音色パレット
-- [ ] `strudel_apply_song(content, deck)`（save は残す指示のときだけ）
+- [ ] `dj_hermes_apply_song(content, deck)`（save は残す指示のときだけ）

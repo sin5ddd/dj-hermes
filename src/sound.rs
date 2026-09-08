@@ -169,7 +169,7 @@ mod tests {
 
     #[test]
     fn resolves_sample_from_bank() {
-        let dir: PathBuf = std::env::temp_dir().join("strudel_test_sound_bank");
+        let dir: PathBuf = std::env::temp_dir().join("dj_hermes_test_sound_bank");
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
         write_test_wav(&dir.join("bd.wav"), 48_000);
@@ -206,7 +206,7 @@ mod tests {
 
     #[test]
     fn banked_name_resolution() {
-        let dir: PathBuf = std::env::temp_dir().join("strudel_test_bank_prefix");
+        let dir: PathBuf = std::env::temp_dir().join("dj_hermes_test_bank_prefix");
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
         write_test_wav(&dir.join("tr808_bd.wav"), 48_000);

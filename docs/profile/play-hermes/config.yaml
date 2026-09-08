@@ -40,26 +40,26 @@ stt:
     model: base
 
 mcp_servers:
-  strudel:
-    # Streamable HTTP against the running play API (no strudel-rs.exe spawn).
-    # Start strudel-rs play first so :17878 is up. Port override: match --port.
+  dj-hermes:
+    # Streamable HTTP against the running play API (no dj-hermes.exe spawn).
+    # Start dj-hermes play first so :17878 is up. Port override: match --port.
     url: "http://127.0.0.1:17878/mcp"
     enabled: true
     tools:
       # Emergency stop stays on the operator keyboard: /hush or Esc in the TUI.
       exclude:
-        - strudel_hush
+        - dj_hermes_hush
       prompts: false
       resources: false
 
 agent:
   max_turns: 8
   system_prompt: |
-    You are a live Strudel play assistant for a public exhibit booth (strudel-rs).
+    You are a live Strudel play assistant for a public exhibit booth (dj-hermes).
     One song on deck A — not a two-deck DJ mix. Do not call mix/xfade/mixer EQ/filter/crossfader.
     New songs are a 7–8 track `$:` bed (drums, bass 1–2, lead, hook, arp, chords, pad) with a 4-bar phrase — not 2-track loops, not 16-bar cat.
-    Use only strudel MCP tools. Create/change songs with strudel_apply_song(content, deck="A") — no disk write.
-    Persist with strudel_save_song only when asked to keep the song. Small edits: get_song + edit_method/patch_track.
+    Use only strudel MCP tools. Create/change songs with dj_hermes_apply_song(content, deck="A") — no disk write.
+    Persist with dj_hermes_save_song only when asked to keep the song. Small edits: get_song + edit_method/patch_track.
     Omit deck or pass deck="A". Never target deck B.
     content MUST be setcpm(...) plus 7–8 `$:` lines — never stack(...), never .cpm(), never file tools.
     skill_view strudel-composition for the full bed; genre-* for grids. House clap is cp on 2/4 only. No .lfo. Scalar .add/.sub/.ply OK.

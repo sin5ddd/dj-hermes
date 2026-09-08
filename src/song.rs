@@ -9,9 +9,9 @@ use crate::code::{edit_method_on_code, parse_code, MethodEditOp, PatternCode};
 /// Default directory for bare song names (relative to process working directory).
 pub const DEFAULT_SONGS_DIR: &str = "songs";
 
-/// User song library under the home directory: `~/.config/strudel-rs/songs`.
+/// User song library under the home directory: `~/.config/dj-hermes/songs`.
 /// This is the **only** path where API/MCP may write songs.
-pub const USER_SONGS_REL: &str = ".config/strudel-rs/songs";
+pub const USER_SONGS_REL: &str = ".config/dj-hermes/songs";
 
 /// Max UTF-8 byte size for song content accepted by save.
 pub const MAX_SONG_CONTENT_BYTES: usize = 256 * 1024;
@@ -96,7 +96,7 @@ pub struct Song {
 /// Preferred Strudel-like format (copy-paste friendly):
 /// ```text
 /// // @title smoke
-/// // @by strudel-rs
+/// // @by dj-hermes
 /// setcpm(30)
 /// // kick
 /// $: s("bd*4").gain(0.9)
@@ -152,7 +152,7 @@ pub fn home_dir() -> Result<PathBuf, String> {
     Err("cannot resolve home directory (HOME / USERPROFILE unset)".into())
 }
 
-/// Absolute path to `~/.config/strudel-rs/songs`.
+/// Absolute path to `~/.config/dj-hermes/songs`.
 pub fn user_songs_dir() -> Result<PathBuf, String> {
     Ok(home_dir()?.join(USER_SONGS_REL))
 }
@@ -186,7 +186,7 @@ pub fn list_song_basenames_in(dir: &Path) -> Vec<String> {
     out
 }
 
-/// User-library song basenames (`~/.config/strudel-rs/songs/`).
+/// User-library song basenames (`~/.config/dj-hermes/songs/`).
 pub fn list_user_library_songs() -> Vec<String> {
     user_songs_dir()
         .map(|d| list_song_basenames_in(&d))
@@ -380,8 +380,8 @@ pub fn bundled_slot_path(genre: &str, nn: &str) -> PathBuf {
         .join(format!("{nn}.strudel"))
 }
 
-/// Hint for `GET /songs` / `strudel_list_songs`.
-pub const SONGS_LOAD_HINT: &str = "Bundled: strudel_load_song path=\"house/01\" (or legacy house-01). Filter with genre=\"house\" to list numbers. User library: basename only (visitor-dnb), no songs/ prefix.";
+/// Hint for `GET /songs` / `dj_hermes_list_songs`.
+pub const SONGS_LOAD_HINT: &str = "Bundled: dj_hermes_load_song path=\"house/01\" (or legacy house-01). Filter with genre=\"house\" to list numbers. User library: basename only (visitor-dnb), no songs/ prefix.";
 
 /// Snapshot for list_songs (HTTP + MCP).
 #[derive(Debug, Clone)]
@@ -494,7 +494,7 @@ fn has_dir_component(path: &Path) -> bool {
 
 /// Candidate paths for a user-supplied song reference (order = preference).
 ///
-/// - Bare names (no directory): **user library** (`~/.config/strudel-rs/songs`) →
+/// - Bare names (no directory): **user library** (`~/.config/dj-hermes/songs`) →
 ///   [`DEFAULT_SONGS_DIR`] → cwd.
 /// - Genre slots (`house/01`, `house-01`): user-library basename first, then
 ///   `songs/<genre>/<nn>.strudel`, then the legacy flat `songs/<genre>-<nn>.strudel`.
@@ -502,7 +502,7 @@ fn has_dir_component(path: &Path) -> bool {
 /// - Paths with a directory (e.g. `songs/foo.strudel`): try the path as written,
 ///   then also resolve the **basename** the same way as a bare name. Models often
 ///   pass `songs/<saved-name>` for user-library tracks that only live under
-///   `~/.config/strudel-rs/songs/`.
+///   `~/.config/dj-hermes/songs/`.
 pub fn song_path_candidates(input: &str) -> Result<Vec<PathBuf>, String> {
     let _ = sanitize_song_path(input)?;
     let p = Path::new(input.trim());
@@ -1534,7 +1534,7 @@ bass: note("c2 eb2 g2 bb2").s("sawtooth").lpf(400).gain(0.7)
     }
 
     #[test]
-    fn parses_strudel_style() {
+    fn parses_dj_hermes_style() {
         let text = r#"
 // @title smoke
 setcpm(30)
@@ -1558,7 +1558,7 @@ $: note("c2 eb2 g2 bb2").s("sawtooth").lpf(400).gain(0.55)
     }
 
     #[test]
-    fn parses_strudel_metadata_tags() {
+    fn parses_dj_hermes_metadata_tags() {
         let text = r#"
 // @title My Cool Song
 // @by John Doe <https://example.com>
@@ -1911,7 +1911,7 @@ $: s("hh*8").gain(0.3)
     }
 
     #[test]
-    fn song_path_candidates_strudel_before_txt_with_dir() {
+    fn song_path_candidates_dj_hermes_before_txt_with_dir() {
         let c = song_path_candidates("demos/pad").unwrap();
         assert_eq!(c[0], PathBuf::from("demos/pad.strudel"));
         assert_eq!(c[1], PathBuf::from("demos/pad.txt"));
@@ -2002,8 +2002,8 @@ $: s("hh*8").gain(0.3)
     }
 
     #[test]
-    fn resolve_prefers_strudel_when_both_exist() {
-        let dir = std::env::temp_dir().join("strudel_resolve_both");
+    fn resolve_prefers_dj_hermes_when_both_exist() {
+        let dir = std::env::temp_dir().join("dj_hermes_resolve_both");
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(dir.join("songs")).unwrap();
         std::fs::write(

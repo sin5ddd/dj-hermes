@@ -3,8 +3,6 @@
 展示ブース用の **隔離プロファイル** サンプルです。  
 個人用 Hermes 設定・キー・memory を混ぜず、**strudel MCP 操作 + Strudel 作曲スキル**だけを LLM に渡します。
 
-運用手順の本編は [docs/exhibit/README.md](../../exhibit/README.md) を参照。
-
 ## このディレクトリに含まれるもの
 
 | ファイル / ディレクトリ | 内容 |
@@ -18,7 +16,7 @@
 **含めないもの（マシン固有・秘密）**
 
 - `.env` / `auth.json` / OAuth トークン
-- 絶対パス（`strudel-rs` のフルパス）
+- 絶対パス（`dj-hermes` のフルパス）
 - `model.provider` / API キー
 - `sessions/` / `state.db` / `memories/` / キャッシュ
 
@@ -77,7 +75,7 @@ mkdir -p "$PROFILE_DIR/skills"
 cp -R docs/profile/dj-hermes/skills/creative "$PROFILE_DIR/skills/"
 
 # 3) 演奏 API が http://127.0.0.1:17878 で生きていること
-#    （strudel-rs dj / play。ポートを変えたら config の url も合わせる）
+#    （dj-hermes dj / play。ポートを変えたら config の url も合わせる）
 
 # 4) 展示用モデル・認証（個人用と分離推奨）
 hermes --profile dj-hermes model
@@ -89,7 +87,7 @@ hermes --profile dj-hermes skills list --source local --enabled-only
 #   → strudel-composition など 22 本
 hermes --profile dj-hermes mcp list
 # dj/play 起動後（MCP は HTTP /mcp — exe spawn なし）:
-hermes --profile dj-hermes mcp test strudel
+hermes --profile dj-hermes mcp test dj-hermes
 ```
 
 Windows（PowerShell 例）:
@@ -114,8 +112,8 @@ hermes --profile dj-hermes skills list --source local --enabled-only
 1. **専用 profile**（個人用と混ぜない）
 2. **内蔵 toolset は skills 以外 off** + `agent.disabled_toolsets` で x_search 等の自動有効化も封じる  
    （`skills` は skill_view 用に **許可**。shell / file は禁止のまま）
-3. MCP は **strudel のみ**、`strudel_hush` は exclude（緊急停止はオペレータの `/hush` / Esc）
-4. **バンドル skills は載せない**（`.no-bundled-skills`）。同梱は strudel 作曲用 22 本だけ（**strudel-rs 記法のみ**）
+3. MCP は **strudel のみ**、`dj_hermes_hush` は exclude（緊急停止はオペレータの `/hush` / Esc）
+4. **バンドル skills は載せない**（`.no-bundled-skills`）。同梱は strudel 作曲用 22 本だけ（**dj-hermes 記法のみ**）
 5. `skills.write_approval: true` で skill ファイルの作成・編集をオペレータ承認制に
 6. `hermes tools disable` を後から再実行すると `platform_toolsets` が書き換わることがある → 変更後は必ず `tools list` で確認
 7. **`tools.tool_search.enabled: off`** — MCP を tool_search の後ろに隠さない（ローカル小モデル向け）
@@ -128,7 +126,7 @@ skills / SOUL / MCP は次で揃えている:
 - content = `setcpm(...)` + **7–8 本**の `$:`（`stack` / `.cpm` 禁止）
 - 既定は 4 小節フレーズ（`.scale("<…>")` / 4 子の `<>`）。長尺 `cat` は非既定
 - ライブ編集はオンメモリ（get_song + edit_method / patch_track、または apply_song）
-- ディスク保存は明示時のみ `strudel_save_song`（演奏は変えない）
+- ディスク保存は明示時のみ `dj_hermes_save_song`（演奏は変えない）
 - 未実装メソッド（`.lfo`）や未同梱 `cp` は例に出さない。スカラー `.add` / `.sub` / `.ply` は可
 - 自然言語編集は skill `strudel-live-edit`
 
@@ -138,7 +136,7 @@ skills / SOUL / MCP は次で揃えている:
 
 ```bash
 # 例: 生きている config をサニタイズして上書き（手作業推奨）
-# - mcp_servers.strudel.url → http://127.0.0.1:17878/mcp（command/args は使わない）
+# - mcp_servers.dj-hermes.url → http://127.0.0.1:17878/mcp（command/args は使わない）
 # - model / base_url セクション削除
 # - .env / auth.json はコピーしない
 # - skills/creative は puredata-hermes 側と diff を見て同期
@@ -146,6 +144,4 @@ skills / SOUL / MCP は次で揃えている:
 
 ## 関連
 
-- [docs/exhibit/README.md](../../exhibit/README.md) — ブース手順
-- [docs/exhibit/hermes-dj-hermes.yaml.example](../../exhibit/hermes-dj-hermes.yaml.example) — 旧スニペット（本ディレクトリが正本）
 - 元スキル置き場（開発）: `puredata-hermes/skills/creative/strudel-*`

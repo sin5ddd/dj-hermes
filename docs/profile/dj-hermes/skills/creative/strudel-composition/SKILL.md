@@ -1,12 +1,12 @@
 ---
 name: strudel-composition
-description: "Use when writing a strudel-rs song: 7–8 $: tracks (drums, bass 1–2, three melody instruments, chords, pad), 4-bar phrases, strudel_apply_song (save only to persist)."
+description: "Use when writing a dj-hermes song: 7–8 $: tracks (drums, bass 1–2, three melody instruments, chords, pad), 4-bar phrases, dj_hermes_apply_song (save only to persist)."
 version: 5.4.2
 author: Hermes Agent
 license: MIT
 metadata:
   hermes:
-    tags: [strudel-rs, music, composition, mini-notation, live-coding, drums]
+    tags: [dj-hermes, music, composition, mini-notation, live-coding, drums]
     related_skills:
       - strudel-data-format
       - strudel-sound-design
@@ -16,14 +16,14 @@ metadata:
       - strudel-live-edit
 ---
 
-# strudel-rs 作曲（Composition）— 8 トラック / 4 小節フレーズ
+# dj-hermes 作曲（Composition）— 8 トラック / 4 小節フレーズ
 
 ## Overview
 
-strudel-rs の曲は **`$:` を重ねたループを、演奏しながら 1 本ずつ書き換える**。  
+dj-hermes の曲は **`$:` を重ねたループを、演奏しながら 1 本ずつ書き換える**。  
 **新規 apply / プリセット**は薄い 2–5 本では足りない。DSP に余裕がある前提で、**7–8 本・4 小節フレーズ**を既定にする。
 
-- 演奏形式: `setcpm` + **`$:` トラック**のみ（鳴らすのは `strudel_apply_song`）
+- 演奏形式: `setcpm` + **`$:` トラック**のみ（鳴らすのは `dj_hermes_apply_song`）
 - mini-notation は文字列の中だけ（`s("...")` / `note("...")`）
 - **新規の既定: 7–8 本**（ドラム＋ベース 1～2＋メロディ楽器 3＋コード＋パッド）
 - **繰り返し周期の既定は 4 小節**（1 サイクル＝1 小節のまま。`.scale("<…>")` と 4 子以上の `<>` で周期を延ばす）。**Future Bass** は 16 小節の `.scale`（16 子。`cat` ではない → **strudel-genre-future-bass**）。**Minimal Techno** は 16 小節のミュートマップ（各トラックの `<>` 16 子。和声の `.scale` は 4 子のままでよい → **strudel-genre-minimal-techno**）
@@ -33,13 +33,13 @@ strudel-rs の曲は **`$:` を重ねたループを、演奏しながら 1 本�
 
 | 場面 | 既定 |
 | --- | --- |
-| 新規曲・プリセット（`strudel_apply_song`） | 7–8 本、4 小節フレーズ（Future Bass は 9 本・16 小節 scale。Minimal Techno は 8 本・16 小節ミュート） |
+| 新規曲・プリセット（`dj_hermes_apply_song`） | 7–8 本、4 小節フレーズ（Future Bass は 9 本・16 小節 scale。Minimal Techno は 8 本・16 小節ミュート） |
 | 来場者の一言編集 | **1 トラック or 1 メソッド**（全文を作り直さない） |
 | 同梱 `songs/<genre>/` | 7–8 本、4 小節フレーズ（Future Bass は 9 本・16 小節 scale。Minimal Techno は 8 本・16 小節ミュート） |
 
 ## スロット（`$:` 本数の正本）
 
-コメント名は短く固定する（`strudel_patch_track` / live-edit の対象名）。
+コメント名は短く固定する（`dj_hermes_patch_track` / live-edit の対象名）。
 
 | # | コメント | 役割 |
 | --- | --- | --- |
@@ -142,14 +142,14 @@ $: note("0 0 2 4").scale("C2:minor").s("sawtooth").lpf(450).gain(0.5)
 
 ## ライブ編集ワークフロー（必須）
 
-1. 初回: 正本に近い **7–8 本** content を `strudel_apply_song(content, deck)`（ディスクに書かない）
-2. 来場者の要望: **`strudel_get_song(deck)`** → **1 トラック or 1 メソッド**だけ
-   - パラメータ 1 個 → `strudel_edit_method`
-   - 1 本の `$:` 差し替え/追加 → `strudel_patch_track`
-   - 全文 `strudel_apply_song` は大規模変更・新規のみ。残す指示のときだけ `strudel_save_song`
+1. 初回: 正本に近い **7–8 本** content を `dj_hermes_apply_song(content, deck)`（ディスクに書かない）
+2. 来場者の要望: **`dj_hermes_get_song(deck)`** → **1 トラック or 1 メソッド**だけ
+   - パラメータ 1 個 → `dj_hermes_edit_method`
+   - 1 本の `$:` 差し替え/追加 → `dj_hermes_patch_track`
+   - 全文 `dj_hermes_apply_song` は大規模変更・新規のみ。残す指示のときだけ `dj_hermes_save_song`
 3. バー境界で反映される（チャットにコードだけ書いて終わりにしない）
-   - `strudel_edit_method`: `op` は `set` / `add` / `remove`。`method` はドット無し（`lpf`）。`args` は括弧の中身（`400` や `sine.rangex(500,4000)`）
-   - `strudel_patch_track`: `op` は `replace` / `remove` / `append`
+   - `dj_hermes_edit_method`: `op` は `set` / `add` / `remove`。`method` はドット無し（`lpf`）。`args` は括弧の中身（`400` や `sine.rangex(500,4000)`）
+   - `dj_hermes_patch_track`: `op` は `replace` / `remove` / `append`
 
 | 来場者の言い方 | 変更例 |
 | --- | --- |
@@ -313,11 +313,11 @@ $: note("0 2 4 0").scale("C3:minor").s("piano-acoustic_soft").gain(0.35)
 
 ## Pitfalls
 
-1. チャットにコードだけ書いて終わりにしない → `strudel_apply_song`（save は残す指示のときだけ。save は演奏を変えない）
+1. チャットにコードだけ書いて終わりにしない → `dj_hermes_apply_song`（save は残す指示のときだけ。save は演奏を変えない）
 2. `stack(...).cpm(170)` を content に入れる → 400
 3. `.vib("<1 4>")` など未対応メソッドへ `"<...>"` を渡す → パース失敗（`.lpf("<…>")` と `sine.rangex` は可）
 4. mini に `bd(3,8)` や `-` 休符（休符は `~` のみ。`(` は unexpected char）
-5. 毎回フル曲を `strudel_save_song` で書き直して差分が巨大になる（save は演奏を変えない。鳴らすのは apply / patch / edit_method）
+5. 毎回フル曲を `dj_hermes_save_song` で書き直して差分が巨大になる（save は演奏を変えない。鳴らすのは apply / patch / edit_method）
 6. ドラムをフルファイル名で書く → 読めない。短い part + `.bank`
 7. `{bank}-{part}.wav` とハイフン連結 → 正は `{bank}_{part}`
 8. 1 小節 1 音のフック（`4 ~ ~ ~`）を既定にする → 4 子の `<>` か 4 小節 scale

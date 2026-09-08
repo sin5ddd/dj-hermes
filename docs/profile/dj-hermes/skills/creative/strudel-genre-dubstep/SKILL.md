@@ -1,7 +1,7 @@
 ---
 name: strudel-genre-dubstep
 description: >-
-  Use when writing Dubstep for strudel-rs: 140 BPM half-time drums,
+  Use when writing Dubstep for dj-hermes: 140 BPM half-time drums,
   wobble bass via .lpf(sine.rangex(...)). No second sub under the
   wobble. Not four-on-the-floor and not .lfo().
 version: 5.1.0
@@ -9,7 +9,7 @@ author: Hermes Agent
 license: MIT
 metadata:
   hermes:
-    tags: [strudel-rs, music, genre, dubstep]
+    tags: [dj-hermes, music, genre, dubstep]
     related_skills:
       - strudel-composition
       - strudel-sound-design
@@ -17,7 +17,7 @@ metadata:
       - strudel-genre-future-bass
 ---
 
-# strudel-rs × ダブステップ
+# dj-hermes × ダブステップ
 
 ## Overview
 
@@ -89,7 +89,7 @@ wobble は **1 本**（`sawtooth`+`.lpf(sine.rangex(80, 600))` または `bs:wb`
 4. キックとサブの同時打は gain でキックを前に（drums 0.72 / bass 0.5）
 5. ピッチトラックは 4 小節 `.scale("<C:minor C:minor G:phrygian C:minor>")`
 
-鳴らすのは `strudel_apply_song(content, deck)`（次小節、無書き込み）。`strudel_save_song` は残す指示のときだけ（演奏は変えない）。
+鳴らすのは `dj_hermes_apply_song(content, deck)`（次小節、無書き込み）。`dj_hermes_save_song` は残す指示のときだけ（演奏は変えない）。
 
 ## Pitfalls
 
@@ -106,4 +106,4 @@ wobble は **1 本**（`sawtooth`+`.lpf(sine.rangex(80, 600))` または `bs:wb`
 - [ ] 4 小節フレーズ（`.scale("<…>")` が 4 個）
 - [ ] ドラムは 1 本。ハーフタイム（`bd*4` ではない）
 - [ ] wobble は `.lpf(sine.rangex(...))` または `bs:wb`。サブは 1 本。lead は別の `.s()`
-- [ ] `strudel_apply_song(content, deck)`（save は残す指示のときだけ）
+- [ ] `dj_hermes_apply_song(content, deck)`（save は残す指示のときだけ）

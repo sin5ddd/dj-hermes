@@ -1,9 +1,9 @@
 # Hermes プロファイル見本: `play-hermes`
 
-`strudel-rs play` 用の **隔離プロファイル** サンプルです。  
+`dj-hermes play` 用の **隔離プロファイル** サンプルです。  
 1 曲を live 編集します。DJ ミックス（xfade / mix / デッキ B）は扱いません。
 
-運用の共通手順は [docs/exhibit/README.md](../../exhibit/README.md) と [docs/profile/dj-hermes/README.md](../dj-hermes/README.md) を参照。
+運用の共通手順は [docs/profile/dj-hermes/README.md](../dj-hermes/README.md) を参照。
 
 ## このディレクトリに含まれるもの
 
@@ -20,7 +20,7 @@
 **含めないもの（マシン固有・秘密）**
 
 - `.env` / `auth.json` / OAuth トークン
-- 絶対パス（`strudel-rs` のフルパス）
+- 絶対パス（`dj-hermes` のフルパス）
 - `model.provider` / API キー
 - `sessions/` / `state.db` / `memories/` / キャッシュ
 
@@ -67,6 +67,6 @@ Copy-Item -Recurse -Force docs\profile\play-hermes\skills\creative\strudel-seqtr
 hermes --profile play-hermes model
 ```
 
-演奏本体は `strudel-rs play`（既定プロファイル `play-hermes`）。`dj` はこれまでどおり `dj-hermes` です。
+演奏本体は `dj-hermes play`（既定プロファイル `play-hermes`）。`dj` はこれまでどおり `dj-hermes` です。
 
-SEQTRAK 展示は `strudel-rs play --midi-only --midi-port SEQTRAK`（ポート確認は `play --midi-list`）。スキルは **strudel-seqtrak**。
+SEQTRAK 展示は `dj-hermes play --midi-only --midi-port SEQTRAK`（ポート確認は `play --midi-list`）。スキルは **strudel-seqtrak**。

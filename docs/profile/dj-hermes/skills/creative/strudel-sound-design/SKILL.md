@@ -1,14 +1,14 @@
 ---
 name: strudel-sound-design
 description: >-
-  Use when designing synths, samples, banks, or effects for strudel-rs
+  Use when designing synths, samples, banks, or effects for dj-hermes
   (live 2-op FM, factory PCM stems, not full Strudel REPL).
 version: 4.2.0
 author: Hermes Agent
 license: MIT
 metadata:
   hermes:
-    tags: [strudel-rs, music, sound-design, synthesis, effects, fm, samples]
+    tags: [dj-hermes, music, sound-design, synthesis, effects, fm, samples]
     related_skills:
       - strudel-data-format
       - strudel-composition
@@ -31,11 +31,11 @@ metadata:
       - strudel-genre-chill-pop
 ---
 
-# strudel-rs サウンドメイク（Sound Design）
+# dj-hermes サウンドメイク（Sound Design）
 
 ## Overview
 
-この Skill は **strudel-rs**（Rust 自前 DSP）向け。WebAudio 版 Strudel REPL の全機能は持たない。  
+この Skill は **dj-hermes**（Rust 自前 DSP）向け。WebAudio 版 Strudel REPL の全機能は持たない。  
 音源・メソッドは実装済みのものだけ。パターンの長さ・本数・ライブ差分は **strudel-composition**（新規は 7–8 本・4 小節フレーズ。ライブ差分は 1 トラック）。
 
 **サンプル配置の正本（disk）:** リポジトリ `samples/LAYOUT.md`（bank キー・フルネーム・gitignore）。
@@ -48,7 +48,7 @@ metadata:
 | **音程 / pad / lead / piano / FX** | **フルネーム** | 付けない | `s("pad-ambient_drone01")` / `s("piano-acoustic_soft")` |
 
 **ライブで触るとわかりやすいツマミ**: `.lpf` / `.lpq` / `.hpf` / `.bpf` / `.gain` / ADSR / `.room` / `.delay` / `.fm` / `.vib`  
-スカラーを 1 つ変えるときは `strudel_edit_method`（または `strudel_apply_song`）。`strudel_save_song` は残す指示のときだけ（演奏は変えない）。
+スカラーを 1 つ変えるときは `dj_hermes_edit_method`（または `dj_hermes_apply_song`）。`dj_hermes_save_song` は残す指示のときだけ（演奏は変えない）。
 
 **本家にあって未実装の一覧:** `docs/strudel-gap-synths-fx.md`。例に **`.lfo` は書かない**。  
 **明暗（キーの印象）は scale モードを優先**（→ **strudel-mood-bright-dark**）。`.lpf` は音色の副次。
@@ -64,7 +64,7 @@ Don't use for: パターン記法の詳細（→ strudel-composition）、曲フ
 
 ## 重要: 本家 Strudel との差
 
-| 項目 | strudel-rs |
+| 項目 | dj-hermes |
 | --- | --- |
 | メソッド引数 | **スカラー**、**ミニ数値パターン**（`.lpf("<400 1200>")`）、**LFO**（`.lpf(sine.rangex(500,4000))`）。`vib` 等はまだスカラーのみ |
 | 未知メソッド | パースエラー → その行は落ちる（演奏は継続） |
@@ -457,7 +457,7 @@ $: note("c3 e3 g3 c4").s("sawtooth").orbit(2).gain(0.35).lpf(900)
 
 ---
 
-## 明示的に使わない（本家にあって strudel-rs に無い）
+## 明示的に使わない（本家にあって dj-hermes に無い）
 
 | カテゴリ | 例 |
 | --- | --- |
@@ -473,7 +473,7 @@ $: note("c3 e3 g3 c4").s("sawtooth").orbit(2).gain(0.35).lpf(900)
 
 ---
 
-## 信号のイメージ（strudel-rs）
+## 信号のイメージ（dj-hermes）
 
 1. 音源（波形 / ノイズ / wt / サンプル）
 2. パーボイス: FM・vib・noise mix・ADSR・biquad lpf/hpf/bpf・penv/lpenv
@@ -499,7 +499,7 @@ $: note("0 2 4 7").scale("C3:minor").s("sawtooth").lpf(900).orbit(2).gain(0.35)
   .attack(0.05).decay(0.2).sustain(0.6).release(0.2)
 ```
 
-ライブ差分例: パッドの `.lpf(900)` → `600`、または bass `.fm(3)` → `5` は `strudel_edit_method(op=set)`。残すときだけ `strudel_save_song`。
+ライブ差分例: パッドの `.lpf(900)` → `600`、または bass `.fm(3)` → `5` は `dj_hermes_edit_method(op=set)`。残すときだけ `dj_hermes_save_song`。
 
 ---
 
@@ -532,7 +532,7 @@ $: note("0 2 4 7").scale("C3:minor").s("sawtooth").lpf(900).orbit(2).gain(0.35)
 
 Live `.fm` / `.fmh` is **only** for **time-varying lead and bass synths**. Drums and one-shots are **PCM** (`s("bd")`, `s("cp")`, `s("plk:lp")`, `s("plk:s5")`, …). Do not build pluck / bell / metal-hit as live 2-op one-shots.
 
-Apply the inline FM recipe with `strudel_apply_song` (`setcpm(124/4)`). How to trigger issue #21 batch 1 factory stems (`C4:…` / unpitched FX): [Factory PCM batch 1](#factory-pcm-batch-1).
+Apply the inline FM recipe with `dj_hermes_apply_song` (`setcpm(124/4)`). How to trigger issue #21 batch 1 factory stems (`C4:…` / unpitched FX): [Factory PCM batch 1](#factory-pcm-batch-1).
 
 ## When to use
 
@@ -674,14 +674,14 @@ No `.compressor` (mixer master, last-write). No `.duckorbit`. No square sub. No 
 ## Try it in this app
 
 ```bash
-# Apply the inline recipe with strudel_apply_song.
+# Apply the inline recipe with dj_hermes_apply_song.
 # Existing 124 pair:
-strudel-rs dj songs/house/01.strudel songs/four-on-the-floor/01.strudel
+dj-hermes dj songs/house/01.strudel songs/four-on-the-floor/01.strudel
 ```
 
 No device: `cargo test --test e2e house_01 -- --nocapture`.
 
-Live TUI: apply the inline recipe with `strudel_apply_song`.
+Live TUI: apply the inline recipe with `dj_hermes_apply_song`.
 
 ## Variations (still this syntax)
 
@@ -963,7 +963,7 @@ $: note("0 ~ 0 ~").scale("C4:minor").s("pf:ff").gain(0.25)
 $: s("<fx:up ~ ~ ~>").gain(0.3)
 ```
 
-Apply the inline recipe with `strudel_apply_song`. `songs/house/01.strudel` is a live factory-PCM house floor.
+Apply the inline recipe with `dj_hermes_apply_song`. `songs/house/01.strudel` is a live factory-PCM house floor.
 
 ### Dark Reese (different bed, same 124 clock)
 
@@ -976,7 +976,7 @@ $: s("bd*4, [~ cp]*2, [~ hh]*4").gain(0.65)
 $: note("0 3 0 <0 -1>").scale("C4:minor").s("bs:dk").gain(0.35)
 ```
 
-Apply the inline recipe with `strudel_apply_song`. Play **solo**. Do not `dj` this
+Apply the inline recipe with `dj_hermes_apply_song`. Play **solo**. Do not `dj` this
 with the floor or the lead (those files already have `bs:hf`).
 
 ### Lead only (same clock, not stacked on the floor pad)
@@ -992,20 +992,20 @@ $: note("0 0 4 0").scale("C4:minor").s("bs:hf").gain(0.45)
 $: note("4 ~ 7 4").scale("C4:minor").s("ld:ss").gain(0.28).cut(1)
 ```
 
-Apply the inline recipe with `strudel_apply_song`. Shared `setcpm(124/4)` so the
+Apply the inline recipe with `dj_hermes_apply_song`. Shared `setcpm(124/4)` so the
 floor + lead pair can `dj`. Do not add pad or `bs:dk` on this file.
 
 ## Try it in this app
 
 ```bash
-# Apply the inline factory-PCM recipes with strudel_apply_song.
+# Apply the inline factory-PCM recipes with dj_hermes_apply_song.
 # Existing 124 pair:
-strudel-rs dj songs/house/01.strudel songs/four-on-the-floor/01.strudel
+dj-hermes dj songs/house/01.strudel songs/four-on-the-floor/01.strudel
 ```
 
 No device: `cargo test --test e2e house_01 -- --nocapture`.
 
-Live TUI: apply the inline recipes with `strudel_apply_song`.
+Live TUI: apply the inline recipes with `dj_hermes_apply_song`.
 
 ## Do not
 

@@ -205,7 +205,7 @@ $: note("0 4 7 4").scale("C3:minor").s("sawtooth").gain(0.5)
     fn write_wav_roundtrip_header() {
         let bank = SampleBank::empty();
         let bounce = bounce_song(saw_loop(), &bank, RENDER_SR, 1, 1).unwrap();
-        let dir = std::env::temp_dir().join("strudel_bounce_wav");
+        let dir = std::env::temp_dir().join("dj_hermes_bounce_wav");
         let _ = fs::create_dir_all(&dir);
         let path = dir.join("saw.wav");
         write_wav_i16_stereo(&path, bounce.sample_rate, &bounce.samples).unwrap();

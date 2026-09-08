@@ -42,7 +42,7 @@ pub enum XFadeTick {
     },
 }
 
-/// `strudel_mix` / `POST /mix` action (hold is a separate immediate command).
+/// `dj_hermes_mix` / `POST /mix` action (hold is a separate immediate command).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum MixAction {
     Long,

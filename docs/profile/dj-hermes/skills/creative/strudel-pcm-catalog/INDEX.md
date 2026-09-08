@@ -1,6 +1,6 @@
 # rust-fm-synthe PCM index
 
-strudel-rs の呼び出しは `s("<part>:<slug>")`。音程楽器は `note(...).scale("C4:…").s("<part>:<slug>")`。
+dj-hermes の呼び出しは `s("<part>:<slug>")`。音程楽器は `note(...).scale("C4:…").s("<part>:<slug>")`。
 
 `in_bank=yes` は `samples/<part>/<slug>.wav` があるキー。`in_bank=no` は未作成（ファイルが無いので曲には書かない）。現行カタログのキーはすべて `yes`（`dr` / `ld` / `pf` / `ps` の長尺を含む）。
 

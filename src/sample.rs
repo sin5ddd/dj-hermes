@@ -687,7 +687,7 @@ mod tests {
 
     #[test]
     fn loads_wav() {
-        let dir = std::env::temp_dir().join("strudel_test_samples_load");
+        let dir = std::env::temp_dir().join("dj_hermes_test_samples_load");
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
         write_test_wav(&dir.join("bd.wav"), 48_000);
@@ -700,7 +700,7 @@ mod tests {
 
     #[test]
     fn n_picks_variation() {
-        let dir = std::env::temp_dir().join("strudel_test_samples_n");
+        let dir = std::env::temp_dir().join("dj_hermes_test_samples_n");
         let _ = std::fs::remove_dir_all(&dir);
         let bd = dir.join("bd");
         std::fs::create_dir_all(&bd).unwrap();
@@ -717,7 +717,7 @@ mod tests {
 
     #[test]
     fn stem_picks_named_variation() {
-        let dir = std::env::temp_dir().join("strudel_test_samples_stem");
+        let dir = std::env::temp_dir().join("dj_hermes_test_samples_stem");
         let _ = std::fs::remove_dir_all(&dir);
         let bd = dir.join("bd");
         std::fs::create_dir_all(&bd).unwrap();
@@ -734,7 +734,7 @@ mod tests {
 
     #[test]
     fn loads_git_lfs_pointer() {
-        let dir = std::env::temp_dir().join("strudel_test_samples_lfs");
+        let dir = std::env::temp_dir().join("dj_hermes_test_samples_lfs");
         let _ = std::fs::remove_dir_all(&dir);
         let samples = dir.join("samples");
         std::fs::create_dir_all(&samples).unwrap();
@@ -776,7 +776,7 @@ mod tests {
 
     #[test]
     fn git_lfs_pointer_without_object_is_skipped() {
-        let dir = std::env::temp_dir().join("strudel_test_samples_lfs_missing");
+        let dir = std::env::temp_dir().join("dj_hermes_test_samples_lfs_missing");
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
         let wav_path = dir.join("bd.wav");

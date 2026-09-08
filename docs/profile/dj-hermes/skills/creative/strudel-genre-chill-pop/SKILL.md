@@ -1,7 +1,7 @@
 ---
 name: strudel-genre-chill-pop
 description: >-
-  Use when writing chill-pop for strudel-rs: Japanese city pop
+  Use when writing chill-pop for dj-hermes: Japanese city pop
   (IV–iii–ii–I 下降, maj7, Rhodes), 95–110 BPM. Not EDM I–I–IV–I,
   not 王道進行, not downtempo chill, not house [~ cp]*2.
 version: 6.2.0
@@ -9,14 +9,14 @@ author: Hermes Agent
 license: MIT
 metadata:
   hermes:
-    tags: [strudel-rs, music, genre, chill-pop, city-pop]
+    tags: [dj-hermes, music, genre, chill-pop, city-pop]
     related_skills:
       - strudel-composition
       - strudel-sound-design
       - strudel-data-format
 ---
 
-# strudel-rs × チルポップ（日本のシティポップ）
+# dj-hermes × チルポップ（日本のシティポップ）
 
 ## Overview
 
@@ -118,7 +118,7 @@ Pattern はグリッド・次数・スロットの見本。新規曲は下表か
 - メロ／コード／パッドに `triangle` / `sine` / `sawtooth` を使わない
 - 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`）は毎小節撃たない。`plk:*` / `ep:*` / `perc:*` / `bs:*`、波形、`wt_*`、ライブ `.fm` も使える
 
-鳴らすのは `strudel_apply_song(content, deck)`（次小節、無書き込み）。`strudel_save_song` は残す指示のときだけ。
+鳴らすのは `dj_hermes_apply_song(content, deck)`（次小節、無書き込み）。`dj_hermes_save_song` は残す指示のときだけ。
 
 ## Variations（同じ文法）
 
@@ -150,4 +150,4 @@ Pattern はグリッド・次数・スロットの見本。新規曲は下表か
 - [ ] 4 小節 **シティポップ下降** `<F:lydian E:phrygian D:dorian C:major>`（循環／ツーファイブは名前付き差し替え）
 - [ ] chords `[0,2,6]`。lead は順次＋次数 6。PCM は C4 帯。pad はパレット（`pf:ff` なら `note("0")`）
 - [ ] ドラムは 1 本。ハウス `cp` なし。`.s()` は音色パレット
-- [ ] `strudel_apply_song(content, deck)`。save は残す指示のときだけ
+- [ ] `dj_hermes_apply_song(content, deck)`。save は残す指示のときだけ

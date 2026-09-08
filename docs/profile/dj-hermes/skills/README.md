@@ -1,4 +1,4 @@
-# Strudel skills（プロファイル同梱・strudel-rs 専用）
+# Strudel skills（プロファイル同梱・dj-hermes 専用）
 
 展示用 profile `dj-hermes` が使う **ローカル skills** です。  
 本家 Strudel REPL 記法は含みません。保存形式は `setcpm` + `$:` のみ。
@@ -15,7 +15,7 @@ skills/
   creative/
     strudel-composition/   # 正本（7–8 本 + 4 小節フレーズ + mini）
     strudel-live-edit/     # 自然言語 → 差分編集（メロディ/フィル/転調/明暗）
-    strudel-dj-mix/        # A/B ミックス（strudel_mix 1 呼び）
+    strudel-dj-mix/        # A/B ミックス（dj_hermes_mix 1 呼び）
     strudel-data-format/   # ファイル形式
     strudel-sound-design/  # 音色・FX・サンプル用法（bank / フルネーム）・役割レシピ
     strudel-pcm-catalog/   # rust-fm-synthe part:slug（INDEX 付き）

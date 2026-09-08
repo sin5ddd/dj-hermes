@@ -4,7 +4,7 @@
 //! events for the live UI to `HermesHandle::enqueue`.
 //!
 //! Default STT is Hermes local Whisper (`transcribe_recording` in the Hermes
-//! venv). `STRUDEL_STT_BASE_URL` opts into OpenAI-compatible
+//! venv). `DJ_HERMES_STT_BASE_URL` opts into OpenAI-compatible
 //! `POST {base}/v1/audio/transcriptions` (the exhibit box, not a cloud vendor).
 
 use std::fs;
@@ -70,7 +70,7 @@ impl VoiceMode {
     }
 }
 
-/// Env-independent STT backend pick (`STRUDEL_STT_BASE_URL` nonempty → HTTP).
+/// Env-independent STT backend pick (`DJ_HERMES_STT_BASE_URL` nonempty → HTTP).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BackendKind {
     Hermes,
@@ -92,7 +92,7 @@ pub enum SttBackend {
         agent_root: PathBuf,
         profile: String,
     },
-    /// `STRUDEL_STT_BASE_URL` only (issue #46 option 2 / HP).
+    /// `DJ_HERMES_STT_BASE_URL` only (issue #46 option 2 / HP).
     Http {
         base_url: String,
         api_key: String,
@@ -119,37 +119,37 @@ impl SttConfig {
     /// Build from env. Always `Some` (Hermes backend when URL is unset).
     pub fn from_env() -> Option<Self> {
         let language =
-            env_nonempty("STRUDEL_STT_LANGUAGE").unwrap_or_else(|| DEFAULT_LANGUAGE.to_string());
-        let timeout = env_nonempty("STRUDEL_STT_TIMEOUT_SECS")
+            env_nonempty("DJ_HERMES_STT_LANGUAGE").unwrap_or_else(|| DEFAULT_LANGUAGE.to_string());
+        let timeout = env_nonempty("DJ_HERMES_STT_TIMEOUT_SECS")
             .and_then(|s| s.parse::<u64>().ok())
             .filter(|&n| n > 0)
             .map(Duration::from_secs)
             .unwrap_or(Duration::from_secs(DEFAULT_TIMEOUT_SECS));
-        let max_recording_secs = env_nonempty("STRUDEL_VOICE_MAX_SECS")
+        let max_recording_secs = env_nonempty("DJ_HERMES_VOICE_MAX_SECS")
             .and_then(|s| s.parse::<f32>().ok())
             .filter(|&n| n > 0.0)
             .unwrap_or(DEFAULT_MAX_RECORDING_SECS);
-        let mode = VoiceMode::parse(&env_nonempty("STRUDEL_VOICE_MODE").unwrap_or_default());
-        let silence_threshold = env_nonempty("STRUDEL_VOICE_SILENCE_THRESHOLD")
+        let mode = VoiceMode::parse(&env_nonempty("DJ_HERMES_VOICE_MODE").unwrap_or_default());
+        let silence_threshold = env_nonempty("DJ_HERMES_VOICE_SILENCE_THRESHOLD")
             .and_then(|s| s.parse::<f32>().ok())
             .filter(|&n| n > 0.0)
             .unwrap_or(DEFAULT_SILENCE_THRESHOLD);
-        let silence_secs = env_nonempty("STRUDEL_VOICE_SILENCE_SECS")
+        let silence_secs = env_nonempty("DJ_HERMES_VOICE_SILENCE_SECS")
             .and_then(|s| s.parse::<f32>().ok())
             .filter(|&n| n > 0.0)
             .unwrap_or(DEFAULT_SILENCE_SECS);
 
         let backend =
-            match select_backend_kind(std::env::var("STRUDEL_STT_BASE_URL").ok().as_deref()) {
+            match select_backend_kind(std::env::var("DJ_HERMES_STT_BASE_URL").ok().as_deref()) {
                 BackendKind::Http => {
-                    let base_url = env_nonempty("STRUDEL_STT_BASE_URL")
+                    let base_url = env_nonempty("DJ_HERMES_STT_BASE_URL")
                         .unwrap_or_default()
                         .trim_end_matches('/')
                         .to_string();
                     SttBackend::Http {
                         base_url,
-                        api_key: env_nonempty("STRUDEL_STT_API_KEY").unwrap_or_default(),
-                        model: env_nonempty("STRUDEL_STT_MODEL")
+                        api_key: env_nonempty("DJ_HERMES_STT_API_KEY").unwrap_or_default(),
+                        model: env_nonempty("DJ_HERMES_STT_MODEL")
                             .unwrap_or_else(|| DEFAULT_MODEL.to_string()),
                     }
                 }
@@ -212,7 +212,7 @@ pub fn transcription_url(base_url: &str) -> String {
 }
 
 pub fn resolve_hermes_python(hermes_bin: &Path) -> Option<PathBuf> {
-    if let Some(p) = env_nonempty("STRUDEL_HERMES_PYTHON") {
+    if let Some(p) = env_nonempty("DJ_HERMES_HERMES_PYTHON") {
         let pb = PathBuf::from(p);
         if pb.is_file() {
             return Some(pb);
@@ -832,7 +832,7 @@ fn start_mic(config: &SttConfig, always_on: bool) -> Result<MicBuffer, String> {
 
     let samples = Arc::new(Mutex::new(Vec::with_capacity(max_samples.min(48_000 * 8))));
     let samples_cb = Arc::clone(&samples);
-    let err_fn = |e| eprintln!("strudel-rs voice input stream error: {e}");
+    let err_fn = |e| eprintln!("dj-hermes voice input stream error: {e}");
 
     let stream = match sample_format {
         SampleFormat::F32 => build_input_stream::<f32>(
@@ -1119,7 +1119,7 @@ fn transcribe_via_hermes(config: &SttConfig, wav: &[u8]) -> Result<String, Strin
         .duration_since(std::time::UNIX_EPOCH)
         .map(|d| d.as_millis())
         .unwrap_or(0);
-    let wav_path = std::env::temp_dir().join(format!("strudel-rs-voice-{pid}-{millis}.wav"));
+    let wav_path = std::env::temp_dir().join(format!("dj-hermes-voice-{pid}-{millis}.wav"));
     fs::write(&wav_path, wav).map_err(|e| format!("write wav: {e}"))?;
 
     struct RemoveOnDrop(PathBuf);
@@ -1324,7 +1324,7 @@ mod tests {
     #[test]
     fn resolve_hermes_python_from_install_layout() {
         let root = std::env::temp_dir().join(format!(
-            "strudel-rs-py-{}",
+            "dj-hermes-py-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())

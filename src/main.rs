@@ -1,4 +1,4 @@
-//! strudel-rs — play .strudel songs (highlight TUI, headless, or dj live).
+//! dj-hermes — play .strudel songs (highlight TUI, headless, or dj live).
 
 use std::io::{stdout, Write};
 use std::path::{Path, PathBuf};
@@ -14,21 +14,21 @@ use crossterm::terminal::{
     disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
 };
 use crossterm::{cursor, execute, terminal, QueueableCommand};
-use strudel_rs::api::{self, AppState, DEFAULT_API_PORT};
-use strudel_rs::bounce::{
+use dj_hermes::api::{self, AppState, DEFAULT_API_PORT};
+use dj_hermes::bounce::{
     bounce_song, write_wav_i16_stereo, DEFAULT_MEASURE_BARS, DEFAULT_WARMUP_BARS, RENDER_SR,
 };
-use strudel_rs::cmd::{new_deck_paths, DeckPaths};
-use strudel_rs::engine::{Command, Engine};
-use strudel_rs::highlight::{
+use dj_hermes::cmd::{new_deck_paths, DeckPaths};
+use dj_hermes::engine::{Command, Engine};
+use dj_hermes::highlight::{
     active_spans, bar_index, bar_pos, format_header, render_ansi, HighlightModel,
 };
-use strudel_rs::live_ui;
-use strudel_rs::mcp;
-use strudel_rs::repl;
-use strudel_rs::sample::SampleBank;
-use strudel_rs::session::SessionKind;
-use strudel_rs::song::{parse_song, resolve_song_path};
+use dj_hermes::live_ui;
+use dj_hermes::mcp;
+use dj_hermes::repl;
+use dj_hermes::sample::SampleBank;
+use dj_hermes::session::SessionKind;
+use dj_hermes::song::{parse_song, resolve_song_path};
 
 fn main() {
     let mut args: Vec<String> = std::env::args().skip(1).collect();
@@ -41,25 +41,25 @@ fn main() {
     match cmd.as_str() {
         "play" => {
             if let Err(e) = cmd_play(&args) {
-                eprintln!("strudel-rs play: {e}");
+                eprintln!("dj-hermes play: {e}");
                 std::process::exit(1);
             }
         }
         "dj" => {
             if let Err(e) = cmd_dj(&args) {
-                eprintln!("strudel-rs dj: {e}");
+                eprintln!("dj-hermes dj: {e}");
                 std::process::exit(1);
             }
         }
         "mcp" => {
             if let Err(e) = mcp::run() {
-                eprintln!("strudel-rs mcp: {e}");
+                eprintln!("dj-hermes mcp: {e}");
                 std::process::exit(1);
             }
         }
         "render" => {
             if let Err(e) = cmd_render(&args) {
-                eprintln!("strudel-rs render: {e}");
+                eprintln!("dj-hermes render: {e}");
                 std::process::exit(1);
             }
         }
@@ -75,15 +75,15 @@ fn main() {
 fn print_usage() {
     eprintln!(
         "\
-strudel-rs — Strudel live CLI
+dj-hermes — Strudel live CLI
 
 Usage:
-  strudel-rs play [SONG] [--headless] [--seconds N] [--port N] [--no-api]
+  dj-hermes play [SONG] [--headless] [--seconds N] [--port N] [--no-api]
                  [--midi] [--midi-only] [--midi-port NAME|INDEX] [--midi-list]
-  strudel-rs dj [SONG_A] [SONG_B] [--port N] [--no-api] [--text]
-  strudel-rs play --repl [SONG_A] [SONG_B]   (same 2-deck live UI as dj; compatibility)
-  strudel-rs render SONG --out PATH [--bars N] [--warmup-bars N] [--samples-dir DIR]
-  strudel-rs mcp
+  dj-hermes dj [SONG_A] [SONG_B] [--port N] [--no-api] [--text]
+  dj-hermes play --repl [SONG_A] [SONG_B]   (same 2-deck live UI as dj; compatibility)
+  dj-hermes render SONG --out PATH [--bars N] [--warmup-bars N] [--samples-dir DIR]
+  dj-hermes mcp
 
   SONG          song path or bare name (default dir: songs/; .strudel/.txt optional)
                 play default: songs/house/01.strudel
@@ -91,7 +91,7 @@ Usage:
   --seconds N   stop after N seconds (play + --headless, or timed highlight without prompt)
   --headless    no TUI: meta log only (for scripts / non-TTY)
   --highlight   kept for compatibility (play default is live TUI which includes highlight)
-  --repl        alias path into 2-deck live UI (prefer: strudel-rs dj …)
+  --repl        alias path into 2-deck live UI (prefer: dj-hermes dj …)
   --repl-text   text-only REPL (same as: dj --text)
   --text        with dj: rustyline text REPL instead of highlight live UI
 
@@ -103,21 +103,21 @@ Usage:
   render        offline bounce to 16-bit stereo WAV (no device, no API). Default
                 1 warmup bar + 16 measure bars at 48 kHz. For LUFS factory gate.
 
-  --port N      HTTP API port (default {DEFAULT_API_PORT}; env STRUDEL_API_PORT)
+  --port N      HTTP API port (default {DEFAULT_API_PORT}; env DJ_HERMES_API_PORT)
   --no-api      do not start HTTP API
-  -d, --debug   Hermes debug log to file (default: ./strudel-rs.debug.log)
-  --debug-log P path for -d (env: STRUDEL_DEBUG_LOG; e.g. C:\\temp\\strudel-debug.log)
+  -d, --debug   Hermes debug log to file (default: ./dj-hermes.debug.log)
+  --debug-log P path for -d (env: DJ_HERMES_DEBUG_LOG; e.g. C:\\temp\\strudel-debug.log)
 
-  strudel-rs mcp
+  dj-hermes mcp
                 DEPRECATED debug stdio bridge → HTTP API.
-                Hermes: set mcp_servers.strudel.url to http://127.0.0.1:PORT/mcp
+                Hermes: set mcp_servers.dj-hermes.url to http://127.0.0.1:PORT/mcp
 
   Default play is a 1-deck live session (highlight + » prompt + Hermes).
   Quit: q / Esc. --headless loops until Ctrl+C (or --seconds).
   dj: left=A / right=B highlight, » prompt at bottom.
   Live TUI input:
     bare text     → Hermes (play: profile play-hermes; dj: dj-hermes; needs API + MCP)
-    F12           → voice (Hermes STT → Hermes; optional STRUDEL_STT_BASE_URL)
+    F12           → voice (Hermes STT → Hermes; optional DJ_HERMES_STT_BASE_URL)
     /cmd …        → local (play: /house 01  /bpm 128; dj: /a house 01  /x 4)
     --no-hermes   → bare text is local again (text REPL always local)
   Flags: --no-hermes  --no-voice  --hermes-bin PATH  --hermes-profile NAME  -d/--debug
@@ -136,7 +136,6 @@ Examples:
   # API: curl http://127.0.0.1:{DEFAULT_API_PORT}/status
 
 Samples: ./samples (or <song>/../samples). CC0 kit docs in samples/LICENSE.md.
-Exhibit Hermes setup: docs/exhibit/README.md
 "
     );
 }
@@ -158,10 +157,10 @@ struct LiveSessionOpts {
     voice_enabled: bool,
     /// Hermes spawn/wait I/O tracing (`-d` / `--debug`).
     debug: bool,
-    /// Override debug log path (`--debug-log` / `STRUDEL_DEBUG_LOG`).
+    /// Override debug log path (`--debug-log` / `DJ_HERMES_DEBUG_LOG`).
     debug_log: Option<PathBuf>,
     /// MIDI worker; keep alive for the session. `play --midi` only.
-    midi_handle: Option<strudel_rs::midi::MidiHandle>,
+    midi_handle: Option<dj_hermes::midi::MidiHandle>,
     /// Skip synth/sample voices; MIDI still fires (`play --midi-only`).
     midi_only: bool,
 }
@@ -267,7 +266,7 @@ fn parse_live_session_args(args: &[String]) -> Result<Option<LiveSessionOpts>, S
 }
 
 fn print_midi_ports() -> Result<(), String> {
-    let names = strudel_rs::midi::list_output_ports()?;
+    let names = dj_hermes::midi::list_output_ports()?;
     if names.is_empty() {
         eprintln!("no MIDI output ports");
     } else {
@@ -278,7 +277,7 @@ fn print_midi_ports() -> Result<(), String> {
     Ok(())
 }
 
-fn attach_midi(engine: &mut Engine, handle: Option<&strudel_rs::midi::MidiHandle>) {
+fn attach_midi(engine: &mut Engine, handle: Option<&dj_hermes::midi::MidiHandle>) {
     if let Some(h) = handle {
         engine.set_midi(h.sender());
     }
@@ -432,7 +431,7 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
         return Err("MIDI output is play-only (not `play --repl` or `dj`)".into());
     }
     let midi_handle = if midi {
-        match strudel_rs::midi::connect(midi_port.as_deref()) {
+        match dj_hermes::midi::connect(midi_port.as_deref()) {
             Ok(h) => Some(h),
             Err(e) if midi_only => {
                 return Err(format!("midi-only: {e}"));
@@ -546,7 +545,7 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
     engine.load_song_immediate(0, song);
 
     if !highlight {
-        eprintln!("strudel-rs play");
+        eprintln!("dj-hermes play");
         eprintln!("  song:    {}", song_path.display());
         eprintln!("  title:   {title}");
         eprintln!("  bpm:     {bpm}");
@@ -747,7 +746,7 @@ fn cmd_live_session(opts: LiveSessionOpts) -> Result<(), String> {
         )?;
     } else {
         eprintln!(
-            "strudel-rs dj --text  |  {sample_rate} Hz, {channels} ch, {sample_format:?}  |  samples {}",
+            "dj-hermes dj --text  |  {sample_rate} Hz, {channels} ch, {sample_format:?}  |  samples {}",
             samples_dir.display()
         );
         repl::run(cmd_tx, deck_paths, Some(Arc::clone(&engine)));
@@ -759,28 +758,28 @@ fn cmd_live_session(opts: LiveSessionOpts) -> Result<(), String> {
 
 /// Start voice capture worker (Hermes STT by default; HTTP if URL is set).
 fn start_voice_for_tui(
-    hermes: &strudel_rs::hermes::HermesConfig,
-) -> Option<strudel_rs::voice_input::VoiceHandle> {
-    let mut cfg = strudel_rs::voice_input::SttConfig::from_env()?;
+    hermes: &dj_hermes::hermes::HermesConfig,
+) -> Option<dj_hermes::voice_input::VoiceHandle> {
+    let mut cfg = dj_hermes::voice_input::SttConfig::from_env()?;
 
     if matches!(
         cfg.backend,
-        strudel_rs::voice_input::SttBackend::Hermes { .. }
+        dj_hermes::voice_input::SttBackend::Hermes { .. }
     ) {
-        let Some(python) = strudel_rs::voice_input::resolve_hermes_python(&hermes.bin) else {
+        let Some(python) = dj_hermes::voice_input::resolve_hermes_python(&hermes.bin) else {
             eprintln!(
-                "voice: disabled (Hermes Python が見つからない。STRUDEL_HERMES_PYTHON か STRUDEL_STT_BASE_URL を設定)"
+                "voice: disabled (Hermes Python が見つからない。DJ_HERMES_HERMES_PYTHON か DJ_HERMES_STT_BASE_URL を設定)"
             );
             return None;
         };
-        let Some(agent_root) = strudel_rs::voice_input::hermes_agent_root_from_python(&python)
+        let Some(agent_root) = dj_hermes::voice_input::hermes_agent_root_from_python(&python)
         else {
             eprintln!(
-                "voice: disabled (Hermes Python が見つからない。STRUDEL_HERMES_PYTHON か STRUDEL_STT_BASE_URL を設定)"
+                "voice: disabled (Hermes Python が見つからない。DJ_HERMES_HERMES_PYTHON か DJ_HERMES_STT_BASE_URL を設定)"
             );
             return None;
         };
-        cfg.backend = strudel_rs::voice_input::SttBackend::Hermes {
+        cfg.backend = dj_hermes::voice_input::SttBackend::Hermes {
             python,
             agent_root,
             profile: hermes.profile.clone(),
@@ -790,21 +789,21 @@ fn start_voice_for_tui(
     let mode = cfg.mode;
     let hermes_stt = matches!(
         cfg.backend,
-        strudel_rs::voice_input::SttBackend::Hermes { .. }
+        dj_hermes::voice_input::SttBackend::Hermes { .. }
     );
-    match strudel_rs::voice_input::VoiceHandle::start(cfg) {
+    match dj_hermes::voice_input::VoiceHandle::start(cfg) {
         Ok(h) => {
             match (hermes_stt, mode) {
-                (true, strudel_rs::voice_input::VoiceMode::Vad) => {
+                (true, dj_hermes::voice_input::VoiceMode::Vad) => {
                     eprintln!("voice: VAD listen → Hermes STT → Hermes (F12 pauses)");
                 }
-                (true, strudel_rs::voice_input::VoiceMode::Push) => {
+                (true, dj_hermes::voice_input::VoiceMode::Push) => {
                     eprintln!("voice: F12 push-to-talk → Hermes STT → Hermes");
                 }
-                (false, strudel_rs::voice_input::VoiceMode::Vad) => {
+                (false, dj_hermes::voice_input::VoiceMode::Vad) => {
                     eprintln!("voice: VAD listen → local STT → Hermes (F12 pauses)");
                 }
-                (false, strudel_rs::voice_input::VoiceMode::Push) => {
+                (false, dj_hermes::voice_input::VoiceMode::Push) => {
                     eprintln!("voice: F12 push-to-talk → local STT → Hermes");
                 }
             }
@@ -824,8 +823,8 @@ fn start_hermes_for_tui(
     debug: bool,
     debug_log: Option<PathBuf>,
     session: SessionKind,
-) -> Option<strudel_rs::hermes::HermesHandle> {
-    let mut cfg = strudel_rs::hermes::HermesConfig::from_env();
+) -> Option<dj_hermes::hermes::HermesHandle> {
+    let mut cfg = dj_hermes::hermes::HermesConfig::from_env();
     cfg.session = session;
     if let Some(bin) = hermes_bin {
         cfg.bin = bin;
@@ -833,11 +832,11 @@ fn start_hermes_for_tui(
     if let Some(profile) = hermes_profile {
         cfg.profile = profile;
     } else if session == SessionKind::Play {
-        let env_set = std::env::var("STRUDEL_HERMES_PROFILE")
+        let env_set = std::env::var("DJ_HERMES_HERMES_PROFILE")
             .ok()
             .is_some_and(|s| !s.trim().is_empty());
         if !env_set {
-            cfg.profile = strudel_rs::hermes::PLAY_PROFILE.to_string();
+            cfg.profile = dj_hermes::hermes::PLAY_PROFILE.to_string();
         }
     }
     if debug {
@@ -847,7 +846,7 @@ fn start_hermes_for_tui(
         cfg.debug = true;
         cfg.debug_log_path = p;
     }
-    if !strudel_rs::hermes::hermes_bin_available(&cfg.bin) {
+    if !dj_hermes::hermes::hermes_bin_available(&cfg.bin) {
         eprintln!(
             "warning: hermes binary not found ({}); bare input falls back to local commands",
             cfg.bin.display()
@@ -861,15 +860,15 @@ fn start_hermes_for_tui(
         cfg.bin.display()
     );
     eprintln!(
-        "        timeout={}s  (turns: profile agent.max_turns)  docs: docs/exhibit/README.md",
+        "        timeout={}s  (turns: profile agent.max_turns)",
         cfg.timeout.as_secs()
     );
     if cfg.debug {
-        match strudel_rs::hermes::init_debug_log(&cfg) {
+        match dj_hermes::hermes::init_debug_log(&cfg) {
             Ok(abs) => {
                 cfg.debug_log_path = abs.clone();
                 eprintln!("        debug ON → file {}", abs.display());
-                strudel_rs::hermes::debug_log(
+                dj_hermes::hermes::debug_log(
                     &cfg,
                     format!(
                         "session start profile={} bin={} timeout={}s log={}",
@@ -886,7 +885,7 @@ fn start_hermes_for_tui(
             }
         }
     }
-    Some(strudel_rs::hermes::HermesHandle::start(cfg))
+    Some(dj_hermes::hermes::HermesHandle::start(cfg))
 }
 
 /// Start HTTP API in a background thread when enabled. Keeps `Sender` alive via clone.
@@ -1102,7 +1101,7 @@ fn parse_render_args(args: &[String]) -> Result<RenderOpts, String> {
             }
             "-h" | "--help" => {
                 return Err(
-                    "usage: strudel-rs render SONG --out PATH [--bars N] [--warmup-bars N] [--samples-dir DIR]"
+                    "usage: dj-hermes render SONG --out PATH [--bars N] [--warmup-bars N] [--samples-dir DIR]"
                         .into(),
                 );
             }
@@ -1132,7 +1131,7 @@ fn parse_render_args(args: &[String]) -> Result<RenderOpts, String> {
 fn cmd_render(args: &[String]) -> Result<(), String> {
     if args.iter().any(|a| a == "-h" || a == "--help") {
         eprintln!(
-            "usage: strudel-rs render SONG --out PATH [--bars N] [--warmup-bars N] [--samples-dir DIR]"
+            "usage: dj-hermes render SONG --out PATH [--bars N] [--warmup-bars N] [--samples-dir DIR]"
         );
         return Ok(());
     }

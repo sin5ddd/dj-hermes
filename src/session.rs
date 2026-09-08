@@ -3,10 +3,10 @@
 /// Which live session the CLI / API / MCP / Hermes envelope should assume.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum SessionKind {
-    /// Dual-deck mix (`strudel-rs dj`, `play --repl`).
+    /// Dual-deck mix (`dj-hermes dj`, `play --repl`).
     #[default]
     Dj,
-    /// Single song on deck A (`strudel-rs play`).
+    /// Single song on deck A (`dj-hermes play`).
     Play,
 }
 

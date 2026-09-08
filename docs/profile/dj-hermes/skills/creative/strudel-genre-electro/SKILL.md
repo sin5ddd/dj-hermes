@@ -1,7 +1,7 @@
 ---
 name: strudel-genre-electro
 description: >-
-  Use when writing Electro for strudel-rs: 126 BPM, mechanical
+  Use when writing Electro for dj-hermes: 126 BPM, mechanical
   four-on-the-floor, short square bass, supersaw hook, pitched parts
   two octaves below typical C4 PCM. Not house clap-front, not a thin
   zap hook, and not sparse minimal-techno.
@@ -10,14 +10,14 @@ author: Hermes Agent
 license: MIT
 metadata:
   hermes:
-    tags: [strudel-rs, music, genre, electro]
+    tags: [dj-hermes, music, genre, electro]
     related_skills:
       - strudel-composition
       - strudel-sound-design
       - strudel-data-format
 ---
 
-# strudel-rs × エレクトロ
+# dj-hermes × エレクトロ
 
 ## Overview
 
@@ -95,7 +95,7 @@ Pattern はグリッド・次数・スロットの見本。新規曲は下表か
 4. ピッチトラックは 4 小節 `.scale`。オクターブは **bass/lead/hook/chords/pad = C2、arp = C3**（他ジャンルの C4/C5 から 2 オクターブ下）
 5. ハットは乾いたまま（長い room をドラムに載せない）
 
-鳴らすのは `strudel_apply_song(content, deck)`（次小節、無書き込み）。`strudel_save_song` は残す指示のときだけ（演奏は変えない）。
+鳴らすのは `dj_hermes_apply_song(content, deck)`（次小節、無書き込み）。`dj_hermes_save_song` は残す指示のときだけ（演奏は変えない）。
 
 ## Variations（同じ文法）
 
@@ -123,4 +123,4 @@ Pattern はグリッド・次数・スロットの見本。新規曲は下表か
 - [ ] フックはスーパーソー（`ld:ss` / `ld:st` / `ld:us`）。lead と重ねない
 - [ ] 帯域は bass/lead/hook/chords/pad `C2:`、arp `C3:`（PCM も `C4:` に上げない）
 - [ ] `.s()` は音色パレット
-- [ ] `strudel_apply_song(content, deck)`（save は残す指示のときだけ）
+- [ ] `dj_hermes_apply_song(content, deck)`（save は残す指示のときだけ）

@@ -1,7 +1,7 @@
 ---
 name: strudel-genre-techno-duck
 description: >-
-  Use when writing a techno loop in strudel-rs with kick sidechain: duck
+  Use when writing a techno loop in dj-hermes with kick sidechain: duck
   pad and bass on the same orbit, short duckattack (0.03–0.05), techno
   grid bd*4 + offbeat hats, no per-track compressor (it is master last-write).
   8 $: tracks (kick+hats count as drums), 4-bar phrase, no clap.
@@ -10,7 +10,7 @@ author: Hermes Agent
 license: MIT
 metadata:
   hermes:
-    tags: [strudel-rs, music, genre, techno, sidechain, duck]
+    tags: [dj-hermes, music, genre, techno, sidechain, duck]
     related_skills:
       - strudel-composition
       - strudel-sound-design
@@ -19,7 +19,7 @@ metadata:
       - strudel-genre-house
 ---
 
-# Sidechain ducking (strudel-rs, techno)
+# Sidechain ducking (dj-hermes, techno)
 
 ## When to use
 
@@ -119,14 +119,14 @@ Both decks share one `Transport`. This file is 126 BPM — pair it with `songs/e
 ## Try it in this app
 
 ```bash
-strudel-rs play songs/techno-duck/01.strudel --seconds 12
-strudel-rs play songs/techno-duck/01.strudel --headless --seconds 8
+dj-hermes play songs/techno-duck/01.strudel --seconds 12
+dj-hermes play songs/techno-duck/01.strudel --headless --seconds 8
 
 # Dual deck — both files are setcpm(126/4)
-strudel-rs dj songs/techno-duck/01.strudel songs/electro/01.strudel
+dj-hermes dj songs/techno-duck/01.strudel songs/electro/01.strudel
 ```
 
-Load `songs/techno-duck/01.strudel`, or `strudel_apply_song` the Pattern fence.
+Load `songs/techno-duck/01.strudel`, or `dj_hermes_apply_song` the Pattern fence.
 
 No device: `cargo test --test e2e techno_duck_01 -- --nocapture`.
 

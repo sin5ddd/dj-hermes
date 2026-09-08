@@ -1,21 +1,21 @@
 ---
 name: strudel-genre-lofi-hiphop
 description: >-
-  Use when writing lo-fi hip hop for strudel-rs: 75–90 BPM, dusty
+  Use when writing lo-fi hip hop for dj-hermes: 75–90 BPM, dusty
   bd:lf, keys, slow hats. Not house [~ cp]*2.
 version: 5.1.0
 author: Hermes Agent
 license: MIT
 metadata:
   hermes:
-    tags: [strudel-rs, music, genre, lofi, hiphop]
+    tags: [dj-hermes, music, genre, lofi, hiphop]
     related_skills:
       - strudel-composition
       - strudel-sound-design
       - strudel-data-format
 ---
 
-# strudel-rs × ローファイ・ヒップホップ
+# dj-hermes × ローファイ・ヒップホップ
 
 ## Overview
 
@@ -101,4 +101,4 @@ Pattern はグリッド・次数・スロットの見本。新規曲は下表か
 
 - [ ] 7–8 本（drums / bass / lead / hook / arp / chords / pad。任意 perc）
 - [ ] 4 小節 `.scale("<…>")`。ドラムは 1 本。`.s()` は音色パレット
-- [ ] `strudel_apply_song(content, deck)`。save は残す指示のときだけ
+- [ ] `dj_hermes_apply_song(content, deck)`。save は残す指示のときだけ

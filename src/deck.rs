@@ -942,7 +942,7 @@ bass: note("c3").s("sawtooth").gain(0.9).pan(0)
 
     #[test]
     fn deck_renders_sample_song() {
-        let dir = std::env::temp_dir().join("strudel_deck_samples");
+        let dir = std::env::temp_dir().join("dj_hermes_deck_samples");
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(dir.join("bd")).unwrap();
         write_test_wav(&dir.join("bd").join("00.wav"), 48_000);
@@ -964,7 +964,7 @@ kick: s("bd*4").gain(0.9)
 
     #[test]
     fn deck_renders_part_slug_sample() {
-        let dir = std::env::temp_dir().join("strudel_deck_slug");
+        let dir = std::env::temp_dir().join("dj_hermes_deck_slug");
         let _ = std::fs::remove_dir_all(&dir);
         let bd = dir.join("bd");
         std::fs::create_dir_all(&bd).unwrap();

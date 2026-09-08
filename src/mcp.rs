@@ -1,9 +1,9 @@
-//! MCP server for strudel-rs.
+//! MCP server for dj-hermes.
 //!
 //! **Primary (Hermes):** Streamable HTTP on the play/dj API — `POST /mcp`.
 //! Tools run in-process (Command channel + engine snapshot). No audio devices.
 //!
-//! **Deprecated (debug):** `strudel-rs mcp` stdio bridge → REST (`STRUDEL_API`).
+//! **Deprecated (debug):** `dj-hermes mcp` stdio bridge → REST (`DJ_HERMES_API`).
 //! Prefer HTTP; keep stdio only for manual NDJSON smoke tests.
 //!
 //! Stdio framing (deprecated path):
@@ -28,7 +28,7 @@ use crate::song::{
 };
 
 const PROTOCOL_VERSION: &str = "2025-03-26";
-const SERVER_NAME: &str = "strudel-rs";
+const SERVER_NAME: &str = "dj-hermes";
 const SERVER_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// Wire framing for one MCP stdio session (deprecated debug path).
@@ -62,11 +62,11 @@ impl ToolBackend<'_> {
 }
 
 const MIX_TOOL_NAMES: &[&str] = &[
-    "strudel_mixer_eq",
-    "strudel_mixer_filter",
-    "strudel_mixer_crossfader",
-    "strudel_xfade",
-    "strudel_mix",
+    "dj_hermes_mixer_eq",
+    "dj_hermes_mixer_filter",
+    "dj_hermes_mixer_crossfader",
+    "dj_hermes_xfade",
+    "dj_hermes_mix",
 ];
 
 fn is_mix_tool(name: &str) -> bool {
@@ -117,9 +117,9 @@ pub async fn streamable_http_post(
 /// Run MCP server until stdin EOF. Blocks the calling thread.
 ///
 /// **Deprecated:** use Hermes `url: http://127.0.0.1:17878/mcp` against a running
-/// play/dj process. Kept for manual `printf | strudel-rs mcp` debugging.
+/// play/dj process. Kept for manual `printf | dj-hermes mcp` debugging.
 pub fn run() -> Result<(), String> {
-    eprintln!("strudel-rs mcp: stdio bridge is deprecated; prefer POST /mcp on the play API");
+    eprintln!("dj-hermes mcp: stdio bridge is deprecated; prefer POST /mcp on the play API");
     let base = default_api_base();
     let client = reqwest::blocking::Client::builder()
         .timeout(std::time::Duration::from_secs(10))
@@ -220,7 +220,7 @@ fn tools_list(session: SessionKind) -> Value {
     let mut v = json!({
         "tools": [
             {
-                "name": "strudel_mixer_eq",
+                "name": "dj_hermes_mixer_eq",
                 "description": "Mixer: set deck A/B channel EQ (Hi/Mid/Lo). Values 0..=1, 0.5=flat (±12 dB). Immediate. Provide at least one of hi/mid/lo.",
                 "inputSchema": {
                     "type": "object",
@@ -234,7 +234,7 @@ fn tools_list(session: SessionKind) -> Value {
                 }
             },
             {
-                "name": "strudel_mixer_filter",
+                "name": "dj_hermes_mixer_filter",
                 "description": "Mixer: master LPF/HPF. Pass Hz number to set, or null to bypass. Immediate. Provide at least one of lpf/hpf.",
                 "inputSchema": {
                     "type": "object",
@@ -245,7 +245,7 @@ fn tools_list(session: SessionKind) -> Value {
                 }
             },
             {
-                "name": "strudel_mixer_crossfader",
+                "name": "dj_hermes_mixer_crossfader",
                 "description": "Mixer: set equal-power crossfader position immediately (0=full A, 1=full B). Cancels multi-bar xfade animation.",
                 "inputSchema": {
                     "type": "object",
@@ -256,7 +256,7 @@ fn tools_list(session: SessionKind) -> Value {
                 }
             },
             {
-                "name": "strudel_xfade",
+                "name": "dj_hermes_xfade",
                 "description": "Mixer: crossfade to deck A or B over N bars (starts next bar).",
                 "inputSchema": {
                     "type": "object",
@@ -268,7 +268,7 @@ fn tools_list(session: SessionKind) -> Value {
                 }
             },
             {
-                "name": "strudel_mix",
+                "name": "dj_hermes_mix",
                 "description": "DJ mix move in one call. Prefer this over calling mixer_eq multiple times. move=long: EQ bass-swap + xfade. move=cut: next-bar 100% fader, optional EQ reset. move=fill: delay|lpf|flash|riser|switch|echo|hpf|roll|drop then cut-in. move=hold: freeze xfade. Switch is AB 100:0 chops (not flash). echo=delay wet/fb ramp then cut. hpf=high-pass sweep then cut. roll=beat-repeat then cut. drop=impact one-shot then cut.",
                 "inputSchema": {
                     "type": "object",
@@ -287,7 +287,7 @@ fn tools_list(session: SessionKind) -> Value {
                 }
             },
             {
-                "name": "strudel_set_bpm",
+                "name": "dj_hermes_set_bpm",
                 "description": "Mixer: set master BPM (applies next bar).",
                 "inputSchema": {
                     "type": "object",
@@ -298,8 +298,8 @@ fn tools_list(session: SessionKind) -> Value {
                 }
             },
             {
-                "name": "strudel_load_song",
-                "description": "Deck: load a song onto a deck (next bar). Bundled demos: path=\"house/01\" or legacy \"house-01\". User library: bare basename (visitor-dnb). Searches ~/.config/strudel-rs/songs/ first, then songs/<genre>/<nn>.strudel. After strudel_save_song, load with the same basename (no songs/ prefix). Example: path=\"house/01\", deck=\"A\".",
+                "name": "dj_hermes_load_song",
+                "description": "Deck: load a song onto a deck (next bar). Bundled demos: path=\"house/01\" or legacy \"house-01\". User library: bare basename (visitor-dnb). Searches ~/.config/dj-hermes/songs/ first, then songs/<genre>/<nn>.strudel. After dj_hermes_save_song, load with the same basename (no songs/ prefix). Example: path=\"house/01\", deck=\"A\".",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
@@ -313,8 +313,8 @@ fn tools_list(session: SessionKind) -> Value {
                 }
             },
             {
-                "name": "strudel_apply_song",
-                "description": "Deck: parse full .strudel source and load onto a deck (next bar). Does NOT write disk. Use for new songs and large rewrites. Persist with strudel_save_song only when asked to keep the song. content MUST use setcpm (or setcps) and one or more `$:` track lines — never stack(...), never .cpm().",
+                "name": "dj_hermes_apply_song",
+                "description": "Deck: parse full .strudel source and load onto a deck (next bar). Does NOT write disk. Use for new songs and large rewrites. Persist with dj_hermes_save_song only when asked to keep the song. content MUST use setcpm (or setcps) and one or more `$:` track lines — never stack(...), never .cpm().",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
@@ -328,8 +328,8 @@ fn tools_list(session: SessionKind) -> Value {
                 }
             },
             {
-                "name": "strudel_list_songs",
-                "description": "Deck: list songs. Default returns genres (name + count) and user_library. Pass genre=\"house\" to list bundled slot refs (house/01) in bundled. Use those with strudel_load_song.",
+                "name": "dj_hermes_list_songs",
+                "description": "Deck: list songs. Default returns genres (name + count) and user_library. Pass genre=\"house\" to list bundled slot refs (house/01) in bundled. Use those with dj_hermes_load_song.",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
@@ -341,8 +341,8 @@ fn tools_list(session: SessionKind) -> Value {
                 }
             },
             {
-                "name": "strudel_save_song",
-                "description": "Deck: persist a .strudel song into the user library ONLY (~/.config/strudel-rs/songs/<name>.strudel). Basename only (no paths). Validates before write. Does not change playback. To play, use strudel_apply_song or strudel_load_song. If content omitted, deck is required and the current deck source is written. content MUST use setcpm (or setcps) and one or more `$:` track lines — never stack(...), never .cpm().",
+                "name": "dj_hermes_save_song",
+                "description": "Deck: persist a .strudel song into the user library ONLY (~/.config/dj-hermes/songs/<name>.strudel). Basename only (no paths). Validates before write. Does not change playback. To play, use dj_hermes_apply_song or dj_hermes_load_song. If content omitted, deck is required and the current deck source is written. content MUST use setcpm (or setcps) and one or more `$:` track lines — never stack(...), never .cpm().",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
@@ -367,8 +367,8 @@ fn tools_list(session: SessionKind) -> Value {
                 }
             },
             {
-                "name": "strudel_get_song",
-                "description": "Deck: read the currently loaded song on a deck (full source + per-track chains). Use before strudel_edit_method / strudel_patch_track so other parts are not rewritten.",
+                "name": "dj_hermes_get_song",
+                "description": "Deck: read the currently loaded song on a deck (full source + per-track chains). Use before dj_hermes_edit_method / dj_hermes_patch_track so other parts are not rewritten.",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
@@ -378,8 +378,8 @@ fn tools_list(session: SessionKind) -> Value {
                 }
             },
             {
-                "name": "strudel_patch_track",
-                "description": "Deck: replace/remove/append one `$:` track on the loaded song (other tracks preserved). Applies next bar. Prefer this or strudel_edit_method over full strudel_apply_song for live edits.",
+                "name": "dj_hermes_patch_track",
+                "description": "Deck: replace/remove/append one `$:` track on the loaded song (other tracks preserved). Applies next bar. Prefer this or dj_hermes_edit_method over full dj_hermes_apply_song for live edits.",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
@@ -393,7 +393,7 @@ fn tools_list(session: SessionKind) -> Value {
                 }
             },
             {
-                "name": "strudel_edit_method",
+                "name": "dj_hermes_edit_method",
                 "description": "Deck: set/add/remove one method on a track chain (e.g. method=lpf, args=400 or sine.rangex(500,4000)). Same-name methods: last wins for set/remove. Applies next bar. Prefer over rewriting the whole song.",
                 "inputSchema": {
                     "type": "object",
@@ -409,7 +409,7 @@ fn tools_list(session: SessionKind) -> Value {
                 }
             },
             {
-                "name": "strudel_mute",
+                "name": "dj_hermes_mute",
                 "description": "Deck: mute or unmute a track on a deck (next bar).",
                 "inputSchema": {
                     "type": "object",
@@ -422,7 +422,7 @@ fn tools_list(session: SessionKind) -> Value {
                 }
             },
             {
-                "name": "strudel_head",
+                "name": "dj_hermes_head",
                 "description": "Deck: cue a deck to a 1-based song bar at the next transport bar boundary (DJ head-out). REPL: `b head 33`.",
                 "inputSchema": {
                     "type": "object",
@@ -434,7 +434,7 @@ fn tools_list(session: SessionKind) -> Value {
                 }
             },
             {
-                "name": "strudel_hush",
+                "name": "dj_hermes_hush",
                 "description": "Transport: stop all sound immediately.",
                 "inputSchema": {
                     "type": "object",
@@ -442,7 +442,7 @@ fn tools_list(session: SessionKind) -> Value {
                 }
             },
             {
-                "name": "strudel_status",
+                "name": "dj_hermes_status",
                 "description": "Transport: get decks, BPM, bars, mixer gains, EQ (eq_a/eq_b), filters, crossfader.",
                 "inputSchema": {
                     "type": "object",
@@ -518,7 +518,7 @@ fn tools_call_http(
     args: &Value,
 ) -> Result<Value, Value> {
     let outcome = match name {
-        "strudel_mixer_eq" => {
+        "dj_hermes_mixer_eq" => {
             let deck = arg_str(args, "deck")?;
             let mut body = Map::new();
             body.insert("deck".into(), json!(deck));
@@ -535,7 +535,7 @@ fn tools_call_http(
             }
             http_post(client, &format!("{base}/mixer/eq"), Value::Object(body))
         }
-        "strudel_mixer_filter" => {
+        "dj_hermes_mixer_filter" => {
             let mut body = Map::new();
             for key in ["lpf", "hpf"] {
                 if let Some(v) = args.get(key) {
@@ -550,7 +550,7 @@ fn tools_call_http(
             }
             http_post(client, &format!("{base}/mixer/filter"), Value::Object(body))
         }
-        "strudel_mixer_crossfader" => {
+        "dj_hermes_mixer_crossfader" => {
             let pos = args
                 .get("pos")
                 .and_then(|v| v.as_f64())
@@ -561,7 +561,7 @@ fn tools_call_http(
                 json!({ "pos": pos }),
             )
         }
-        "strudel_xfade" => {
+        "dj_hermes_xfade" => {
             let to = arg_str(args, "to")?;
             let bars = args.get("bars").and_then(|v| v.as_u64()).unwrap_or(4);
             http_post(
@@ -570,7 +570,7 @@ fn tools_call_http(
                 json!({ "to": to, "bars": bars }),
             )
         }
-        "strudel_mix" => {
+        "dj_hermes_mix" => {
             let mut body = Map::new();
             let mv = arg_str(args, "move")?;
             body.insert("move".into(), json!(mv));
@@ -590,14 +590,14 @@ fn tools_call_http(
             }
             http_post(client, &format!("{base}/mix"), Value::Object(body))
         }
-        "strudel_set_bpm" => {
+        "dj_hermes_set_bpm" => {
             let bpm = args
                 .get("bpm")
                 .and_then(|v| v.as_f64())
                 .ok_or_else(|| rpc_error(-32602, "bpm required"))?;
             http_post(client, &format!("{base}/bpm"), json!({ "bpm": bpm }))
         }
-        "strudel_load_song" => {
+        "dj_hermes_load_song" => {
             let path = arg_str(args, "path")?;
             let deck = arg_str(args, "deck")?;
             http_post(
@@ -606,7 +606,7 @@ fn tools_call_http(
                 json!({ "path": path, "deck": deck }),
             )
         }
-        "strudel_apply_song" => {
+        "dj_hermes_apply_song" => {
             let content = arg_str(args, "content")?;
             let deck = arg_str(args, "deck")?;
             http_post(
@@ -615,14 +615,14 @@ fn tools_call_http(
                 json!({ "content": content, "deck": deck }),
             )
         }
-        "strudel_list_songs" => {
+        "dj_hermes_list_songs" => {
             let url = match args.get("genre").and_then(|v| v.as_str()) {
                 Some(g) if is_genre_slug(g) => format!("{base}/songs?genre={g}"),
                 _ => format!("{base}/songs"),
             };
             http_get(client, &url)
         }
-        "strudel_save_song" => {
+        "dj_hermes_save_song" => {
             let name = arg_str(args, "name")?;
             let mut body = Map::new();
             body.insert("name".into(), json!(name));
@@ -637,11 +637,11 @@ fn tools_call_http(
             }
             http_post(client, &format!("{base}/song/save"), Value::Object(body))
         }
-        "strudel_get_song" => {
+        "dj_hermes_get_song" => {
             let deck = arg_str(args, "deck")?;
             http_get(client, &format!("{base}/song?deck={deck}"))
         }
-        "strudel_patch_track" => {
+        "dj_hermes_patch_track" => {
             let deck = arg_str(args, "deck")?;
             let track = arg_str(args, "track")?;
             let op = arg_str(args, "op")?;
@@ -661,7 +661,7 @@ fn tools_call_http(
                 Value::Object(body),
             )
         }
-        "strudel_edit_method" => {
+        "dj_hermes_edit_method" => {
             let deck = arg_str(args, "deck")?;
             let track = arg_str(args, "track")?;
             let op = arg_str(args, "op")?;
@@ -680,7 +680,7 @@ fn tools_call_http(
                 Value::Object(body),
             )
         }
-        "strudel_mute" => {
+        "dj_hermes_mute" => {
             let deck = arg_str(args, "deck")?;
             let track = arg_str(args, "track")?;
             let muted = args
@@ -693,7 +693,7 @@ fn tools_call_http(
                 json!({ "deck": deck, "track": track, "muted": muted }),
             )
         }
-        "strudel_head" => {
+        "dj_hermes_head" => {
             let deck = arg_str(args, "deck")?;
             let bar = args
                 .get("bar")
@@ -708,8 +708,8 @@ fn tools_call_http(
                 json!({ "deck": deck, "bar": bar }),
             )
         }
-        "strudel_hush" => http_post_empty(client, &format!("{base}/hush")),
-        "strudel_status" => http_get(client, &format!("{base}/status")),
+        "dj_hermes_hush" => http_post_empty(client, &format!("{base}/hush")),
+        "dj_hermes_status" => http_get(client, &format!("{base}/status")),
         other => return Err(rpc_error(-32602, format!("unknown tool: {other}"))),
     };
 
@@ -732,26 +732,26 @@ fn tools_call_local(state: &AppState, name: &str, args: &Value) -> Result<Value,
         ));
     }
     let outcome = match name {
-        "strudel_mixer_eq" => local_mixer_eq(state, args),
-        "strudel_mixer_filter" => local_mixer_filter(state, args),
-        "strudel_mixer_crossfader" => local_mixer_crossfader(state, args),
-        "strudel_xfade" => local_xfade(state, args),
-        "strudel_mix" => local_mix(state, args),
-        "strudel_set_bpm" => local_set_bpm(state, args),
-        "strudel_load_song" => local_load_song(state, args),
-        "strudel_apply_song" => local_apply_song(state, args),
-        "strudel_list_songs" => local_list_songs(args),
-        "strudel_save_song" => local_save_song(state, args),
-        "strudel_get_song" => local_get_song(state, args),
-        "strudel_patch_track" => local_patch_track(state, args),
-        "strudel_edit_method" => local_edit_method(state, args),
-        "strudel_mute" => local_mute(state, args),
-        "strudel_head" => local_head(state, args),
-        "strudel_hush" => {
+        "dj_hermes_mixer_eq" => local_mixer_eq(state, args),
+        "dj_hermes_mixer_filter" => local_mixer_filter(state, args),
+        "dj_hermes_mixer_crossfader" => local_mixer_crossfader(state, args),
+        "dj_hermes_xfade" => local_xfade(state, args),
+        "dj_hermes_mix" => local_mix(state, args),
+        "dj_hermes_set_bpm" => local_set_bpm(state, args),
+        "dj_hermes_load_song" => local_load_song(state, args),
+        "dj_hermes_apply_song" => local_apply_song(state, args),
+        "dj_hermes_list_songs" => local_list_songs(args),
+        "dj_hermes_save_song" => local_save_song(state, args),
+        "dj_hermes_get_song" => local_get_song(state, args),
+        "dj_hermes_patch_track" => local_patch_track(state, args),
+        "dj_hermes_edit_method" => local_edit_method(state, args),
+        "dj_hermes_mute" => local_mute(state, args),
+        "dj_hermes_head" => local_head(state, args),
+        "dj_hermes_hush" => {
             let _ = state.tx.send(Command::Hush);
             Ok("ok (204)".into())
         }
-        "strudel_status" => {
+        "dj_hermes_status" => {
             let info: StatusInfo = snapshot(&state.engine);
             serde_json::to_string(&info).map_err(|e| e.to_string())
         }
@@ -785,7 +785,7 @@ fn arg_deck(state: &AppState, args: &Value) -> Result<usize, String> {
         Some(s) => {
             let d = deck_idx(s)?;
             if state.session == SessionKind::Play && d != 0 {
-                Err("play is single-deck (A only); use strudel-rs dj for deck B".into())
+                Err("play is single-deck (A only); use dj-hermes dj for deck B".into())
             } else {
                 Ok(d)
             }
@@ -1236,10 +1236,10 @@ fn local_head(state: &AppState, args: &Value) -> Result<String, String> {
 }
 
 fn parse_content_retry_tool(tool: &str) -> &'static str {
-    if tool == "strudel_apply_song" {
-        "strudel_apply_song"
+    if tool == "dj_hermes_apply_song" {
+        "dj_hermes_apply_song"
     } else {
-        "strudel_save_song"
+        "dj_hermes_save_song"
     }
 }
 
@@ -1249,7 +1249,7 @@ fn format_tool_local_error(err: &str, tool: &str) -> String {
     if lower.contains("song not found") {
         out.push_str(
             "\nHint: bundled path is house/01 or legacy house-01; user-library is a basename (visitor-dnb). \
-Call strudel_list_songs (optional genre=house), then strudel_load_song(path=..., deck=A|B).",
+Call dj_hermes_list_songs (optional genre=house), then dj_hermes_load_song(path=..., deck=A|B).",
         );
     } else {
         let looks_like_song_parse = (lower.contains("expected")
@@ -1292,7 +1292,7 @@ fn format_tool_http_error(base: &str, err: &str, tool: &str) -> String {
     if lower.contains("song not found") {
         out.push_str(
             "\nHint: bundled path is house/01 or legacy house-01; user-library is a basename (visitor-dnb). \
-Call strudel_list_songs (optional genre=house), then strudel_load_song(path=..., deck=A|B).",
+Call dj_hermes_list_songs (optional genre=house), then dj_hermes_load_song(path=..., deck=A|B).",
         );
     } else {
         let looks_like_song_parse = (lower.contains("expected")
@@ -1463,22 +1463,22 @@ mod tests {
         let tools = v["tools"].as_array().unwrap();
         assert_eq!(tools.len(), 17);
         let names: Vec<_> = tools.iter().filter_map(|t| t["name"].as_str()).collect();
-        assert!(!names.contains(&"strudel_set_code"));
-        assert_eq!(names[0], "strudel_mixer_eq");
-        assert_eq!(names[1], "strudel_mixer_filter");
-        assert_eq!(names[2], "strudel_mixer_crossfader");
-        assert!(names.contains(&"strudel_xfade"));
-        assert!(names.contains(&"strudel_mix"));
-        assert!(names.contains(&"strudel_set_bpm"));
-        assert!(names.contains(&"strudel_load_song"));
-        assert!(names.contains(&"strudel_apply_song"));
-        assert!(names.contains(&"strudel_list_songs"));
-        assert!(names.contains(&"strudel_save_song"));
-        assert!(names.contains(&"strudel_get_song"));
-        assert!(names.contains(&"strudel_patch_track"));
-        assert!(names.contains(&"strudel_edit_method"));
-        assert!(names.contains(&"strudel_head"));
-        assert!(names.contains(&"strudel_status"));
+        assert!(!names.contains(&"dj_hermes_set_code"));
+        assert_eq!(names[0], "dj_hermes_mixer_eq");
+        assert_eq!(names[1], "dj_hermes_mixer_filter");
+        assert_eq!(names[2], "dj_hermes_mixer_crossfader");
+        assert!(names.contains(&"dj_hermes_xfade"));
+        assert!(names.contains(&"dj_hermes_mix"));
+        assert!(names.contains(&"dj_hermes_set_bpm"));
+        assert!(names.contains(&"dj_hermes_load_song"));
+        assert!(names.contains(&"dj_hermes_apply_song"));
+        assert!(names.contains(&"dj_hermes_list_songs"));
+        assert!(names.contains(&"dj_hermes_save_song"));
+        assert!(names.contains(&"dj_hermes_get_song"));
+        assert!(names.contains(&"dj_hermes_patch_track"));
+        assert!(names.contains(&"dj_hermes_edit_method"));
+        assert!(names.contains(&"dj_hermes_head"));
+        assert!(names.contains(&"dj_hermes_status"));
         let descs: Vec<_> = tools
             .iter()
             .filter_map(|t| t["description"].as_str())
@@ -1488,7 +1488,7 @@ mod tests {
         assert!(descs.iter().any(|d| d.starts_with("Transport:")));
         let save = tools
             .iter()
-            .find(|t| t["name"] == "strudel_save_song")
+            .find(|t| t["name"] == "dj_hermes_save_song")
             .unwrap();
         let save_desc = save["description"].as_str().unwrap();
         assert!(
@@ -1506,7 +1506,7 @@ mod tests {
         let msg = format_tool_http_error(
             "http://127.0.0.1:17878",
             "error sending request for url (http://127.0.0.1:17878/song/save): connection refused",
-            "strudel_save_song",
+            "dj_hermes_save_song",
         );
         assert!(msg.contains("Is play running"), "{msg}");
         assert!(msg.contains("17878"), "{msg}");
@@ -1517,7 +1517,7 @@ mod tests {
         let msg = format_tool_http_error(
             "http://127.0.0.1:17878",
             "HTTP 400 Bad Request: {\"error\":\"line 1: expected 'name: code' or '$: code'\"}",
-            "strudel_apply_song",
+            "dj_hermes_apply_song",
         );
         assert!(
             !msg.contains("Is play running"),
@@ -1532,7 +1532,7 @@ mod tests {
         let msg = format_tool_http_error(
             "http://127.0.0.1:17878",
             "HTTP 400 Bad Request: {\"error\":\"song not found: songs/house-track.strudel (tried: songs/house-track.strudel)\"}",
-            "strudel_load_song",
+            "dj_hermes_load_song",
         );
         assert!(!msg.contains("Is play running"), "{msg}");
         assert!(
@@ -1563,7 +1563,7 @@ mod tests {
         let resp = handle_rpc(&init, &backend).expect("init reply");
         assert_eq!(resp["id"], 1);
         assert_eq!(resp["result"]["protocolVersion"], "2025-03-26");
-        assert_eq!(resp["result"]["serverInfo"]["name"], "strudel-rs");
+        assert_eq!(resp["result"]["serverInfo"]["name"], "dj-hermes");
 
         let list = json!({
             "jsonrpc": "2.0",
@@ -1583,11 +1583,11 @@ mod tests {
         for mix in MIX_TOOL_NAMES {
             assert!(!names.contains(mix), "{mix} should be hidden in play");
         }
-        assert!(names.contains(&"strudel_apply_song"));
-        assert!(names.contains(&"strudel_set_bpm"));
+        assert!(names.contains(&"dj_hermes_apply_song"));
+        assert!(names.contains(&"dj_hermes_set_bpm"));
         let load = tools
             .iter()
-            .find(|t| t["name"] == "strudel_load_song")
+            .find(|t| t["name"] == "dj_hermes_load_song")
             .unwrap();
         let req = load["inputSchema"]["required"].as_array().unwrap();
         assert!(!req.iter().any(|x| x.as_str() == Some("deck")), "{req:?}");
@@ -1612,7 +1612,7 @@ mod tests {
         }
         let list = tools
             .iter()
-            .find(|t| t["name"] == "strudel_list_songs")
+            .find(|t| t["name"] == "dj_hermes_list_songs")
             .unwrap();
         assert!(
             list.get("inputSchema")
@@ -1622,7 +1622,7 @@ mod tests {
         );
         let get = tools
             .iter()
-            .find(|t| t["name"] == "strudel_get_song")
+            .find(|t| t["name"] == "dj_hermes_get_song")
             .unwrap();
         assert!(
             get.get("inputSchema")
@@ -1641,7 +1641,7 @@ mod tests {
             "id": 1,
             "method": "tools/call",
             "params": {
-                "name": "strudel_apply_song",
+                "name": "dj_hermes_apply_song",
                 "arguments": {
                     "content": "// @title t\nsetcpm(30)\n$: s(\"bd*4\")\n"
                 }
@@ -1659,7 +1659,7 @@ mod tests {
             "id": 2,
             "method": "tools/call",
             "params": {
-                "name": "strudel_xfade",
+                "name": "dj_hermes_xfade",
                 "arguments": { "to": "B" }
             }
         });
@@ -1674,7 +1674,7 @@ mod tests {
             "id": 3,
             "method": "tools/call",
             "params": {
-                "name": "strudel_get_song",
+                "name": "dj_hermes_get_song",
                 "arguments": { "deck": "B" }
             }
         });
@@ -1704,7 +1704,7 @@ mod tests {
             "jsonrpc": "2.0",
             "id": 3,
             "method": "tools/call",
-            "params": { "name": "strudel_status", "arguments": {} }
+            "params": { "name": "dj_hermes_status", "arguments": {} }
         });
         let resp = handle_rpc(&status_msg, &backend).unwrap();
         assert_eq!(resp["result"]["isError"], false);
@@ -1716,7 +1716,7 @@ mod tests {
             "id": 4,
             "method": "tools/call",
             "params": {
-                "name": "strudel_mixer_eq",
+                "name": "dj_hermes_mixer_eq",
                 "arguments": { "deck": "A", "lo": 0.3 }
             }
         });

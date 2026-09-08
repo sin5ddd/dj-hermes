@@ -1,4 +1,4 @@
-//! strudel-rs library: transport, mini-notation, synth, samples, deck, mixer, engine.
+//! dj-hermes library: transport, mini-notation, synth, samples, deck, mixer, engine.
 
 pub mod api;
 pub mod backend;
