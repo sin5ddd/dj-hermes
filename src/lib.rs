@@ -20,6 +20,7 @@ pub mod midi;
 pub mod mini;
 pub mod mixer;
 pub mod repl;
+pub mod resume;
 pub mod sample;
 pub mod scale;
 pub mod session;

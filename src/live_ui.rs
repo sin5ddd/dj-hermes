@@ -248,6 +248,20 @@ impl LiveState {
     }
 }
 
+fn snapshot_dj_then_hush(
+    session: SessionKind,
+    engine: &Arc<Mutex<Engine>>,
+    tx: &Sender<Command>,
+    snap_err: &mut Option<String>,
+) {
+    if !session.single_deck() {
+        if let Err(e) = crate::resume::save_from_engine(engine) {
+            *snap_err = Some(e);
+        }
+    }
+    let _ = tx.send(Command::Hush);
+}
+
 /// Run alternate-screen UI: highlight (top) + command line (bottom).
 /// Returns when the user quits.
 ///
@@ -355,6 +369,7 @@ pub fn run(
     .map_err(|e| format!("enter alternate screen: {e}"))?;
 
     let frame = Duration::from_millis(33);
+    let mut snap_err: Option<String> = None;
     let result = (|| -> Result<(), String> {
         loop {
             while event::poll(Duration::from_millis(0)).unwrap_or(false) {
@@ -377,7 +392,7 @@ pub fn run(
                                 KeyCode::Char('c')
                                     if key.modifiers.contains(KeyModifiers::CONTROL) =>
                                 {
-                                    let _ = tx.send(Command::Hush);
+                                    snapshot_dj_then_hush(session, &engine, &tx, &mut snap_err);
                                     return Ok(());
                                 }
                                 _ => {}
@@ -391,7 +406,7 @@ pub fn run(
 
                         match key.code {
                             KeyCode::Char('c') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                                let _ = tx.send(Command::Hush);
+                                snapshot_dj_then_hush(session, &engine, &tx, &mut snap_err);
                                 return Ok(());
                             }
                             KeyCode::F(12) => {
@@ -409,7 +424,7 @@ pub fn run(
                                 state.invalidate_frame();
                             }
                             KeyCode::Esc if state.input.is_empty() => {
-                                let _ = tx.send(Command::Hush);
+                                snapshot_dj_then_hush(session, &engine, &tx, &mut snap_err);
                                 return Ok(());
                             }
                             KeyCode::F(9) if state.voice_phase != VoicePhase::Recording => {
@@ -476,7 +491,7 @@ pub fn run(
                                     hermes.as_ref(),
                                     automix.as_ref(),
                                 ) {
-                                    let _ = tx.send(Command::Hush);
+                                    snapshot_dj_then_hush(session, &engine, &tx, &mut snap_err);
                                     return Ok(());
                                 }
                             }
@@ -579,6 +594,9 @@ pub fn run(
         LeaveAlternateScreen
     );
     let _ = disable_raw_mode();
+    if let Some(e) = snap_err {
+        eprintln!("resume snapshot: {e}");
+    }
     result
 }
 

@@ -50,7 +50,7 @@ viz [on|off]        toggle body punchcard / highlight (live TUI)
 vfx [on|off]        toggle hit VFX overlay (live TUI; default on). aliases: dopa, flash
 automix [on|off]    idle 5min → Hermes cron mix; off disables
 ↑↓ / Tab / Enter    suggest overlay: select / apply / apply+run (live TUI)
-Esc                 dismiss suggest (or quit when prompt empty)
+Esc                 dismiss suggest (or snapshot A/B + quit when prompt empty; --resume)
 
 # live TUI + Hermes
 bare text           send to Hermes (DJ assistant)

@@ -91,8 +91,8 @@ fn print_usage() {
 dj-hermes — Strudel live CLI
 
 Usage:
-  dj-hermes [SONG_A] [SONG_B] [--port N] [--no-api] [--text]
-  dj-hermes dj [SONG_A] [SONG_B] [--port N] [--no-api] [--text]
+  dj-hermes [SONG_A] [SONG_B] [--port N] [--no-api] [--text] [--resume]
+  dj-hermes dj [SONG_A] [SONG_B] [--port N] [--no-api] [--text] [--resume]
   dj-hermes play [SONG] [--headless] [--seconds N] [--port N] [--no-api]
                  [--midi] [--midi-only] [--midi-port NAME|INDEX] [--midi-list]
   dj-hermes play --repl [SONG_A] [SONG_B]   (same 2-deck live UI as dj; compatibility)
@@ -110,6 +110,7 @@ Usage:
   --repl        alias path into 2-deck live UI (prefer: dj-hermes dj …)
   --repl-text   text-only REPL (same as: dj --text)
   --text        with dj: rustyline text REPL instead of highlight live UI
+  --resume      load last Esc-quit A/B snapshot (~/.config/dj-hermes/resume/)
 
   --midi        play only: notes + CC + Bank/PC to a MIDI port (built-in synth still sounds)
   --midi-only   like --midi, but skip the built-in synth (SEQTRAK exhibit)
@@ -150,6 +151,7 @@ Examples:
   cargo run -- play songs/house/01.strudel --midi-only --midi-port SEQTRAK
   cargo run -- play songs/house/01.strudel --headless --seconds 8 --midi-port \"TouchOSC Bridge\"
   cargo run -- dj songs/house/01.strudel songs/four-on-the-floor/01.strudel
+  cargo run -- --resume                 # last dj Esc snapshot
   cargo run -- render songs/house/01.strudel --out out/house.wav
   cargo run -- dj                          # empty decks; load from »
   # then:  暗くして   or   /house 01   or   /a house 01   or   /x 4
@@ -183,6 +185,8 @@ struct LiveSessionOpts {
     midi_handle: Option<dj_hermes::midi::MidiHandle>,
     /// Skip synth/sample voices; MIDI still fires (`play --midi-only`).
     midi_only: bool,
+    /// Load last Esc-quit A/B snapshot instead of song paths (`dj` only).
+    resume: bool,
 }
 
 /// Parse `dj` / live-session CLI. Returns `Ok(None)` when `--help` was printed.
@@ -197,6 +201,7 @@ fn parse_live_session_args(args: &[String]) -> Result<Option<LiveSessionOpts>, S
     let mut debug = false;
     let mut debug_log: Option<PathBuf> = None;
     let mut cli_port: Option<u16> = None;
+    let mut resume = false;
     let mut i = 0;
     while i < args.len() {
         match args[i].as_str() {
@@ -252,6 +257,9 @@ fn parse_live_session_args(args: &[String]) -> Result<Option<LiveSessionOpts>, S
                 print_usage();
                 return Ok(None);
             }
+            "--resume" => {
+                resume = true;
+            }
             flag if flag.starts_with('-') => {
                 return Err(format!("unknown flag: {flag}"));
             }
@@ -264,6 +272,9 @@ fn parse_live_session_args(args: &[String]) -> Result<Option<LiveSessionOpts>, S
 
     if songs.len() > 2 {
         return Err("too many song paths (expected at most SONG_A SONG_B)".into());
+    }
+    if resume && !songs.is_empty() {
+        return Err("--resume does not take song paths".into());
     }
 
     let mut it = songs.into_iter();
@@ -282,6 +293,7 @@ fn parse_live_session_args(args: &[String]) -> Result<Option<LiveSessionOpts>, S
         debug_log,
         midi_handle: None,
         midi_only: false,
+        resume,
     }))
 }
 
@@ -317,9 +329,19 @@ fn stop_audio_and_midi(engine: &Arc<Mutex<Engine>>, stream: cpal::Stream) {
 }
 
 fn cmd_dj(args: &[String]) -> Result<(), String> {
-    let Some(opts) = parse_live_session_args(args)? else {
+    let Some(mut opts) = parse_live_session_args(args)? else {
         return Ok(());
     };
+    if opts.resume {
+        let (a, b) = dj_hermes::resume::existing_paths()?;
+        if a.is_none() && b.is_none() {
+            return Err(
+                "no resume snapshot (Esc-quit a dj session first, then dj-hermes --resume)".into(),
+            );
+        }
+        opts.song_a = a;
+        opts.song_b = b;
+    }
     cmd_live_session(opts)
 }
 
@@ -485,6 +507,7 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
             debug_log,
             midi_handle: None,
             midi_only: false,
+            resume: false,
         });
     }
 
@@ -516,6 +539,7 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
             debug_log,
             midi_handle,
             midi_only,
+            resume: false,
         });
     }
     let song_path = song_paths.into_iter().next();
@@ -646,6 +670,7 @@ fn cmd_live_session(opts: LiveSessionOpts) -> Result<(), String> {
         debug_log,
         midi_handle: _midi_handle,
         midi_only,
+        resume: _,
     } = opts;
 
     let host = cpal::default_host();
@@ -1341,6 +1366,7 @@ mod tests {
         );
         assert!(!opts.with_highlight);
         assert!(!opts.api_enabled);
+        assert!(!opts.resume);
     }
 
     #[test]
@@ -1348,6 +1374,20 @@ mod tests {
         let err =
             parse_live_session_args(&s(&["a.strudel", "b.strudel", "c.strudel"])).unwrap_err();
         assert!(err.contains("too many"));
+    }
+
+    #[test]
+    fn dj_args_resume_flag() {
+        let opts = parse_live_session_args(&s(&["--resume"])).unwrap().unwrap();
+        assert!(opts.resume);
+        assert!(opts.song_a.is_none());
+        assert!(opts.song_b.is_none());
+    }
+
+    #[test]
+    fn dj_args_resume_rejects_song_paths() {
+        let err = parse_live_session_args(&s(&["--resume", "songs/house/01.strudel"])).unwrap_err();
+        assert!(err.contains("--resume does not take song paths"), "{err}");
     }
 
     #[test]
