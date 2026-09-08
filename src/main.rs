@@ -588,6 +588,10 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
     let (cmd_tx, cmd_rx) = unbounded::<Command>();
     let engine = Arc::new(Mutex::new(engine));
     let bank = Arc::new(bank);
+    let deck_paths = new_deck_paths();
+    if let Ok(mut dp) = deck_paths.lock() {
+        dp[0] = Some(song_path.clone());
+    }
 
     let _api = maybe_start_api(
         api_enabled,
@@ -595,6 +599,7 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
         cmd_tx,
         Arc::clone(&engine),
         SessionKind::Play,
+        deck_paths,
     );
 
     let stream = build_stream(
@@ -719,6 +724,7 @@ fn cmd_live_session(opts: LiveSessionOpts) -> Result<(), String> {
         cmd_tx.clone(),
         Arc::clone(&engine),
         session,
+        deck_paths.clone(),
     );
     if with_highlight && hermes_enabled && !api_enabled {
         eprintln!(
@@ -915,6 +921,7 @@ fn maybe_start_api(
     tx: Sender<Command>,
     engine: Arc<Mutex<Engine>>,
     session: SessionKind,
+    deck_paths: DeckPaths,
 ) -> Option<std::thread::JoinHandle<()>> {
     if !enabled {
         return None;
@@ -923,6 +930,7 @@ fn maybe_start_api(
         tx,
         engine,
         session,
+        deck_paths,
     };
     Some(api::spawn_server(state, port))
 }

@@ -12,6 +12,11 @@ _config_version: 33
 platform_toolsets:
   cli:
     - skills
+  cron:
+    - skills
+
+cron:
+  allow_agent_scheduling: false
 
 # Strudel composition skills ship under skills/creative/ in this sample.
 # Optional: also scan a shared repo without re-copying (path is machine-local):

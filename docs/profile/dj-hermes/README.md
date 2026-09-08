@@ -119,6 +119,15 @@ hermes --profile dj-hermes skills list --source local --enabled-only
 7. **`tools.tool_search.enabled: off`** — MCP を tool_search の後ろに隠さない（ローカル小モデル向け）
 8. 展示はネット不通を想定し **ローカル小モデル** を既定にする
 
+## Automix cron（live DJ のみ）
+
+無操作 5 分後、Hermes cron ジョブ `dj-automix` が 1 分おきにミックスする（3 分に 1 回は同ジャンルの曲変更）。`play` / `--text` / `--headless` では動かない。
+
+- **前提:** dj-hermes プロファイルの cron store を tick する gateway。確認は `hermes --profile dj-hermes cron status`（bare `hermes cron status` は default store）。足りなければ `hermes --profile dj-hermes gateway` か、default config に `gateway.multiplex_profiles: true`。dj-hermes は gateway を起動しない。
+- live DJ で無操作 5 分 → ジョブ `dj-automix` を resume。操作 / `/automix off` で pause。`/automix on` は idle を待たず resume。
+- `cronjob` ツールは無効のまま。`platform_toolsets.cron: [skills]`。`cron.allow_agent_scheduling: false`。ジョブ作成はアプリの CLI。
+- コピー手順に `cron/dj-automix.prompt.txt` は必須ではない（バイナリに焼いてある）。見本として置いてあるだけ。
+
 ## 小モデル向けの曲保存契約
 
 skills / SOUL / MCP は次で揃えている:

@@ -752,7 +752,7 @@ fn tools_call_local(state: &AppState, name: &str, args: &Value) -> Result<Value,
             Ok("ok (204)".into())
         }
         "dj_hermes_status" => {
-            let info: StatusInfo = snapshot(&state.engine);
+            let info: StatusInfo = snapshot(&state.engine, Some(&state.deck_paths));
             serde_json::to_string(&info).map_err(|e| e.to_string())
         }
         other => return Err(rpc_error(-32602, format!("unknown tool: {other}"))),
@@ -972,6 +972,9 @@ fn local_load_song(state: &AppState, args: &Value) -> Result<String, String> {
             song: Box::new(song),
         },
     )?;
+    if let Ok(mut dp) = state.deck_paths.lock() {
+        dp[deck] = Some(resolved.clone());
+    }
     Ok("ok (202)".into())
 }
 
@@ -1439,6 +1442,7 @@ mod tests {
                 tx,
                 engine,
                 session: SessionKind::Dj,
+                deck_paths: crate::cmd::new_deck_paths(),
             },
             rx,
         )
@@ -1452,6 +1456,7 @@ mod tests {
                 tx,
                 engine,
                 session: SessionKind::Play,
+                deck_paths: crate::cmd::new_deck_paths(),
             },
             rx,
         )

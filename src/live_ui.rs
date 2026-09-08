@@ -20,6 +20,7 @@ use crossterm::terminal::{
 };
 use crossterm::{cursor, execute, queue, terminal};
 
+use crate::automix::{AutomixEvent, AutomixHandle, AutomixMode};
 use crate::cmd::{self, DeckPaths, LiveInput};
 use crate::code::note_to_midi;
 use crate::complete::{self, CompleteCtx, CompleteResult};
@@ -334,6 +335,14 @@ pub fn run(
         state.push_log("live UI · drag xfader / Hi Mid Lo EQ (Hermes off)");
     }
 
+    let automix = match hermes.as_ref() {
+        Some(h) if !session.single_deck() => Some(AutomixHandle::start(
+            h.config().bin.clone(),
+            h.config().profile.clone(),
+        )),
+        _ => None,
+    };
+
     enable_raw_mode().map_err(|e| format!("raw mode: {e}"))?;
     let mut out = stdout();
     execute!(
@@ -465,6 +474,7 @@ pub fn run(
                                     sample_rate,
                                     &mut state,
                                     hermes.as_ref(),
+                                    automix.as_ref(),
                                 ) {
                                     let _ = tx.send(Command::Hush);
                                     return Ok(());
@@ -521,7 +531,7 @@ pub fn run(
                             }
                             continue;
                         }
-                        handle_mouse(&mut state, &tx, m);
+                        handle_mouse(&mut state, &tx, m, automix.as_ref());
                     }
                     Ok(Event::Resize(_, _)) => {
                         state.prev_lines.clear();
@@ -533,10 +543,13 @@ pub fn run(
             }
 
             if let Some(ref v) = voice {
-                drain_voice_events(&mut state, v, hermes.as_ref());
+                drain_voice_events(&mut state, v, hermes.as_ref(), automix.as_ref());
             }
             if let Some(ref h) = hermes {
                 drain_hermes_events(&mut state, h);
+            }
+            if let Some(a) = &automix {
+                drain_automix_events(&mut state, a);
             }
 
             if let Ok(eng) = engine.try_lock() {
@@ -554,6 +567,10 @@ pub fn run(
         }
     })();
 
+    if let Some(a) = &automix {
+        a.shutdown();
+    }
+
     let _ = execute!(
         out,
         DisableMouseCapture,
@@ -565,7 +582,12 @@ pub fn run(
     result
 }
 
-fn handle_mouse(state: &mut LiveState, tx: &Sender<Command>, m: crossterm::event::MouseEvent) {
+fn handle_mouse(
+    state: &mut LiveState,
+    tx: &Sender<Command>,
+    m: crossterm::event::MouseEvent,
+    automix: Option<&AutomixHandle>,
+) {
     match m.kind {
         MouseEventKind::Down(MouseButton::Left) => {
             if state.vfx_hit.contains(m.column, m.row) {
@@ -575,6 +597,9 @@ fn handle_mouse(state: &mut LiveState, tx: &Sender<Command>, m: crossterm::event
                 return;
             }
             if !state.session.single_deck() && state.xf_hit.contains(m.column, m.row) {
+                if let Some(a) = automix {
+                    a.touch();
+                }
                 state.drag = DragTarget::Xf;
                 apply_drag(state, tx, m.column);
                 return;
@@ -583,6 +608,9 @@ fn handle_mouse(state: &mut LiveState, tx: &Sender<Command>, m: crossterm::event
                 let decks = if state.session.single_deck() { 1 } else { 2 };
                 for deck in 0..decks {
                     if state.eq_hits[band][deck].contains(m.column, m.row) {
+                        if let Some(a) = automix {
+                            a.touch();
+                        }
                         state.drag = DragTarget::Eq { band, deck };
                         apply_drag(state, tx, m.column);
                         return;
@@ -1585,6 +1613,7 @@ fn pad_clip_ansi(s: &str, width: usize) -> String {
     out
 }
 
+#[allow(clippy::too_many_arguments)]
 fn dispatch_line(
     line: &str,
     tx: &Sender<Command>,
@@ -1593,22 +1622,29 @@ fn dispatch_line(
     sample_rate: u32,
     state: &mut LiveState,
     hermes: Option<&HermesHandle>,
+    automix: Option<&AutomixHandle>,
 ) -> bool {
     let hermes_enabled = hermes.is_some();
     match cmd::classify_live_input(line, hermes_enabled) {
         LiveInput::Empty => true,
         LiveInput::LocalCommand(body) => {
+            if let Some(a) = automix {
+                a.touch();
+            }
             if cmd::is_help_body(&body) {
                 state.help_open = true;
                 state.invalidate_frame();
                 return true;
             }
-            exec_local(&body, tx, deck_paths, engine, sample_rate, state)
+            exec_local(&body, tx, deck_paths, engine, sample_rate, state, automix)
         }
         LiveInput::HermesPrompt(prompt) => {
+            if let Some(a) = automix {
+                a.touch();
+            }
             let Some(h) = hermes else {
                 // Should not happen: classify only returns Hermes when enabled.
-                return exec_local(&prompt, tx, deck_paths, engine, sample_rate, state);
+                return exec_local(&prompt, tx, deck_paths, engine, sample_rate, state, automix);
             };
             match h.enqueue(&prompt) {
                 Ok(()) => {
@@ -1631,7 +1667,14 @@ fn exec_local(
     engine: &Arc<Mutex<Engine>>,
     sample_rate: u32,
     state: &mut LiveState,
+    automix: Option<&AutomixHandle>,
 ) -> bool {
+    if let Some(handle) = automix {
+        if let Some(msg) = apply_automix_command(body, handle) {
+            state.push_log(msg);
+            return true;
+        }
+    }
     // UI-only: VFX overlay (issue #42) — not sent to engine.
     if let Some(msg) = apply_vfx_command(body, state) {
         state.push_log(msg);
@@ -1650,6 +1693,34 @@ fn exec_local(
         state.push_log(m);
     }
     !result.quit
+}
+
+/// Handle `automix` / `automix on|off|status`. Live DJ TUI only.
+fn apply_automix_command(body: &str, handle: &AutomixHandle) -> Option<String> {
+    let mut parts = body.split_whitespace();
+    let head = parts.next()?;
+    if head != "automix" {
+        return None;
+    }
+    match parts.next() {
+        None | Some("status") => {
+            let m = match handle.mode() {
+                AutomixMode::IdleWait => "idle-wait",
+                AutomixMode::Armed => "armed",
+                AutomixMode::Disabled => "off",
+            };
+            Some(format!("automix: {m}"))
+        }
+        Some("on") => {
+            handle.force_on();
+            Some("automix: on".into())
+        }
+        Some("off") => {
+            handle.force_off();
+            Some("automix: off".into())
+        }
+        Some(other) => Some(format!("automix: unknown arg `{other}` (on|off)")),
+    }
 }
 
 /// Handle `vfx` / `dopa` / `flash` (on|off|toggle). Live TUI only.
@@ -1713,7 +1784,25 @@ fn drain_hermes_events(state: &mut LiveState, hermes: &HermesHandle) {
     }
 }
 
-fn drain_voice_events(state: &mut LiveState, voice: &VoiceHandle, hermes: Option<&HermesHandle>) {
+fn drain_automix_events(state: &mut LiveState, automix: &AutomixHandle) {
+    for ev in automix.drain_events() {
+        match ev {
+            AutomixEvent::Paused => state.push_log("automix: off"),
+            AutomixEvent::Resumed => state.push_log("automix: on"),
+            AutomixEvent::Failed(msg) => state.push_log(format!("automix: fail {msg}")),
+            AutomixEvent::GatewayDown => state.push_log(
+                "automix: dj-hermes の cron ticker が止まっている（hermes --profile dj-hermes gateway、または default の gateway.multiplex_profiles: true）",
+            ),
+        }
+    }
+}
+
+fn drain_voice_events(
+    state: &mut LiveState,
+    voice: &VoiceHandle,
+    hermes: Option<&HermesHandle>,
+    automix: Option<&AutomixHandle>,
+) {
     for ev in voice.drain_events() {
         match ev {
             VoiceEvent::ListeningStarted => {
@@ -1748,6 +1837,9 @@ fn drain_voice_events(state: &mut LiveState, voice: &VoiceHandle, hermes: Option
                 if let Some(h) = hermes {
                     match h.enqueue(&text) {
                         Ok(()) => {
+                            if let Some(a) = automix {
+                                a.touch();
+                            }
                             let q = h.queue_len();
                             state.push_log(format!("hermes: queued (n={q})"));
                         }

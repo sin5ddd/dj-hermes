@@ -1,6 +1,7 @@
 //! dj-hermes library: transport, mini-notation, synth, samples, deck, mixer, engine.
 
 pub mod api;
+pub mod automix;
 pub mod backend;
 pub mod bounce;
 pub mod cmd;

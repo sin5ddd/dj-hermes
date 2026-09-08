@@ -3,7 +3,7 @@
 //! Binds to `127.0.0.1` only. Default port is [`DEFAULT_API_PORT`] (10000s range).
 
 use std::convert::Infallible;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
 use axum::extract::State;
@@ -14,13 +14,14 @@ use axum::{Json, Router};
 use crossbeam::channel::Sender;
 use serde::{Deserialize, Serialize};
 
+use crate::cmd::DeckPaths;
 use crate::code::parse_code;
 use crate::engine::{Command, Engine};
 use crate::mixer::{FillKind, MixAction, MixCommand, MixGrid, MixStatus};
 use crate::session::SessionKind;
 use crate::song::{
-    ensure_user_songs_dir, parse_song, resolve_song_path, resolve_user_song_save_path,
-    song_listing, Song, Track, MAX_SONG_CONTENT_BYTES,
+    ensure_user_songs_dir, parse_bundled_slot, parse_song, resolve_song_path,
+    resolve_user_song_save_path, song_listing, Song, Track, MAX_SONG_CONTENT_BYTES,
 };
 use axum::extract::Query;
 
@@ -42,6 +43,7 @@ pub struct AppState {
     pub engine: Arc<Mutex<Engine>>,
     /// Play hides mix MCP tools and defaults omitted `deck` to A.
     pub session: SessionKind,
+    pub deck_paths: DeckPaths,
 }
 
 /// Channel EQ slider positions (0..=1, 0.5 = flat).
@@ -76,6 +78,10 @@ impl EqBands {
 pub struct StatusInfo {
     pub deck_a: Option<String>,
     pub deck_b: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub slot_a: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub slot_b: Option<String>,
     pub bpm: f64,
     pub playing: bool,
     /// Shared transport bar index (0-based).
@@ -343,9 +349,14 @@ fn conflict(e: impl Into<String>) -> (StatusCode, Json<ErrRes>) {
     (StatusCode::CONFLICT, Json(ErrRes { error: e.into() }))
 }
 
-pub(crate) fn snapshot(engine: &Arc<Mutex<Engine>>) -> StatusInfo {
+pub(crate) fn snapshot(engine: &Arc<Mutex<Engine>>, deck_paths: Option<&DeckPaths>) -> StatusInfo {
+    let (slot_a, slot_b) = slots_from_paths(deck_paths);
     let Ok(e) = engine.lock() else {
-        return StatusInfo::default();
+        return StatusInfo {
+            slot_a,
+            slot_b,
+            ..StatusInfo::default()
+        };
     };
     let deck_a = e.decks[0].song_title().map(|s| s.to_string());
     let deck_b = e.decks[1].song_title().map(|s| s.to_string());
@@ -354,6 +365,8 @@ pub(crate) fn snapshot(engine: &Arc<Mutex<Engine>>) -> StatusInfo {
     StatusInfo {
         deck_a,
         deck_b,
+        slot_a,
+        slot_b,
         bpm: e.transport.bpm,
         playing,
         bar,
@@ -368,6 +381,25 @@ pub(crate) fn snapshot(engine: &Arc<Mutex<Engine>>) -> StatusInfo {
         crossfader: e.mixer.crossfader_pos(),
         mix: e.mixer.mix_status().map(MixStatusInfo::from_mixer),
     }
+}
+
+fn slots_from_paths(deck_paths: Option<&DeckPaths>) -> (Option<String>, Option<String>) {
+    let Some(dp) = deck_paths else {
+        return (None, None);
+    };
+    let Ok(g) = dp.lock() else {
+        return (None, None);
+    };
+    (
+        bundled_slot_label(g[0].as_ref()),
+        bundled_slot_label(g[1].as_ref()),
+    )
+}
+
+fn bundled_slot_label(path: Option<&PathBuf>) -> Option<String> {
+    let p = path?;
+    let (genre, nn) = parse_bundled_slot(&p.to_string_lossy())?;
+    Some(format!("{genre}/{nn}"))
 }
 
 fn parse_phrase(v: u32) -> Result<u32, String> {
@@ -494,6 +526,9 @@ async fn load_song(
         song: Box::new(song),
     })
     .map_err(|e| bad(e.to_string()))?;
+    if let Ok(mut dp) = s.deck_paths.lock() {
+        dp[deck] = Some(path.clone());
+    }
     Ok(StatusCode::ACCEPTED)
 }
 
@@ -893,7 +928,7 @@ async fn mixer_crossfader(
 }
 
 async fn get_status(State(s): State<AppState>) -> Json<StatusInfo> {
-    Json(snapshot(&s.engine))
+    Json(snapshot(&s.engine, Some(&s.deck_paths)))
 }
 
 async fn health() -> &'static str {
@@ -904,10 +939,11 @@ async fn events(
     State(s): State<AppState>,
 ) -> Sse<impl tokio_stream::Stream<Item = Result<Event, Infallible>>> {
     let engine = Arc::clone(&s.engine);
+    let deck_paths = Arc::clone(&s.deck_paths);
     let st = async_stream::stream! {
         let mut last = String::new();
         loop {
-            let info = snapshot(&engine);
+            let info = snapshot(&engine, Some(&deck_paths));
             let cur = serde_json::to_string(&info).unwrap_or_else(|_| "{}".into());
             if cur != last {
                 last = cur.clone();
@@ -1031,6 +1067,7 @@ mod tests {
                 tx,
                 engine,
                 session: SessionKind::Dj,
+                deck_paths: crate::cmd::new_deck_paths(),
             },
             rx,
         )
@@ -1836,5 +1873,29 @@ b: note("c3").s("sawtooth").gain(0.8)
         assert_eq!(deck_idx("A").unwrap(), 0);
         assert_eq!(deck_idx("b").unwrap(), 1);
         assert!(deck_idx("C").is_err());
+    }
+
+    #[test]
+    fn snapshot_slot_a_from_bundled_path() {
+        let engine = Arc::new(Mutex::new(Engine::new(44100, 120.0)));
+        let dp = crate::cmd::new_deck_paths();
+        {
+            let mut g = dp.lock().unwrap();
+            g[0] = Some(PathBuf::from("songs/house/01.strudel"));
+        }
+        let info = snapshot(&engine, Some(&dp));
+        let json = serde_json::to_value(&info).unwrap();
+        assert_eq!(json["slot_a"], "house/01");
+        assert!(json.get("slot_b").is_none());
+    }
+
+    #[test]
+    fn snapshot_omits_slot_without_path() {
+        let engine = Arc::new(Mutex::new(Engine::new(44100, 120.0)));
+        let dp = crate::cmd::new_deck_paths();
+        let info = snapshot(&engine, Some(&dp));
+        let json = serde_json::to_value(&info).unwrap();
+        assert!(json.get("slot_a").is_none());
+        assert!(json.get("slot_b").is_none());
     }
 }
