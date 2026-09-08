@@ -30,44 +30,57 @@ use dj_hermes::sample::SampleBank;
 use dj_hermes::session::SessionKind;
 use dj_hermes::song::{parse_song, resolve_song_path};
 
-fn main() {
-    let mut args: Vec<String> = std::env::args().skip(1).collect();
-    if args.is_empty() {
-        print_usage();
-        std::process::exit(0);
-    }
+#[derive(Debug, PartialEq, Eq)]
+enum CliAction {
+    Help,
+    Dj(Vec<String>),
+    Play(Vec<String>),
+    Mcp,
+    Render(Vec<String>),
+}
 
-    let cmd = args.remove(0);
-    match cmd.as_str() {
-        "play" => {
-            if let Err(e) = cmd_play(&args) {
+fn classify_args(args: &[String]) -> CliAction {
+    let Some(first) = args.first().map(|s| s.as_str()) else {
+        return CliAction::Dj(Vec::new());
+    };
+    match first {
+        "help" | "-h" | "--help" => CliAction::Help,
+        "play" if args.len() == 1 => CliAction::Help,
+        "play" => CliAction::Play(args[1..].to_vec()),
+        "dj" => CliAction::Dj(args[1..].to_vec()),
+        "mcp" => CliAction::Mcp,
+        "render" => CliAction::Render(args[1..].to_vec()),
+        _ => CliAction::Dj(args.to_vec()),
+    }
+}
+
+fn main() {
+    let args: Vec<String> = std::env::args().skip(1).collect();
+    match classify_args(&args) {
+        CliAction::Help => print_usage(),
+        CliAction::Dj(rest) => {
+            if let Err(e) = cmd_dj(&rest) {
+                eprintln!("dj-hermes: {e}");
+                std::process::exit(1);
+            }
+        }
+        CliAction::Play(rest) => {
+            if let Err(e) = cmd_play(&rest) {
                 eprintln!("dj-hermes play: {e}");
                 std::process::exit(1);
             }
         }
-        "dj" => {
-            if let Err(e) = cmd_dj(&args) {
-                eprintln!("dj-hermes dj: {e}");
-                std::process::exit(1);
-            }
-        }
-        "mcp" => {
+        CliAction::Mcp => {
             if let Err(e) = mcp::run() {
                 eprintln!("dj-hermes mcp: {e}");
                 std::process::exit(1);
             }
         }
-        "render" => {
-            if let Err(e) = cmd_render(&args) {
+        CliAction::Render(rest) => {
+            if let Err(e) = cmd_render(&rest) {
                 eprintln!("dj-hermes render: {e}");
                 std::process::exit(1);
             }
-        }
-        "help" | "-h" | "--help" => print_usage(),
-        other => {
-            eprintln!("unknown command: {other}");
-            print_usage();
-            std::process::exit(1);
         }
     }
 }
@@ -78,16 +91,19 @@ fn print_usage() {
 dj-hermes — Strudel live CLI
 
 Usage:
+  dj-hermes [SONG_A] [SONG_B] [--port N] [--no-api] [--text]
+  dj-hermes dj [SONG_A] [SONG_B] [--port N] [--no-api] [--text]
   dj-hermes play [SONG] [--headless] [--seconds N] [--port N] [--no-api]
                  [--midi] [--midi-only] [--midi-port NAME|INDEX] [--midi-list]
-  dj-hermes dj [SONG_A] [SONG_B] [--port N] [--no-api] [--text]
   dj-hermes play --repl [SONG_A] [SONG_B]   (same 2-deck live UI as dj; compatibility)
   dj-hermes render SONG --out PATH [--bars N] [--warmup-bars N] [--samples-dir DIR]
   dj-hermes mcp
 
+  (no args)     DJ, empty decks (same as: dj-hermes dj)
+  play          with no extra args: this help (same as --help)
   SONG          song path or bare name (default dir: songs/; .strudel/.txt optional)
-                play default: songs/house/01.strudel
-  SONG_A/B      optional decks for dj (A then B; omit both to start empty)
+                play with a SONG: 1-deck; default file songs/house/01.strudel
+  SONG_A/B      optional decks (A then B; omit both to start empty)
   --seconds N   stop after N seconds (play + --headless, or timed highlight without prompt)
   --headless    no TUI: meta log only (for scripts / non-TTY)
   --highlight   kept for compatibility (play default is live TUI which includes highlight)
@@ -123,6 +139,10 @@ Usage:
   Flags: --no-hermes  --no-voice  --hermes-bin PATH  --hermes-profile NAME  -d/--debug
 
 Examples:
+  cargo run --                             # DJ, empty decks
+  cargo run -- songs/house/01.strudel songs/four-on-the-floor/01.strudel
+  cargo run -- play                        # this help
+  cargo run -- --help
   cargo run -- play songs/house/01.strudel
   cargo run -- play songs/house/01.strudel --headless --seconds 8
   cargo run -- play songs/house/01.strudel --midi
@@ -1203,6 +1223,85 @@ mod tests {
 
     fn s(args: &[&str]) -> Vec<String> {
         args.iter().map(|a| (*a).to_string()).collect()
+    }
+
+    #[test]
+    fn classify_args_empty_is_dj() {
+        assert_eq!(classify_args(&s(&[])), CliAction::Dj(vec![]));
+    }
+
+    #[test]
+    fn classify_args_play_alone_is_help() {
+        assert_eq!(classify_args(&s(&["play"])), CliAction::Help);
+    }
+
+    #[test]
+    fn classify_args_long_help_is_help() {
+        assert_eq!(classify_args(&s(&["--help"])), CliAction::Help);
+    }
+
+    #[test]
+    fn classify_args_short_help_is_help() {
+        assert_eq!(classify_args(&s(&["-h"])), CliAction::Help);
+    }
+
+    #[test]
+    fn classify_args_help_word_is_help() {
+        assert_eq!(classify_args(&s(&["help"])), CliAction::Help);
+    }
+
+    #[test]
+    fn classify_args_play_with_song_is_play() {
+        assert_eq!(
+            classify_args(&s(&["play", "songs/house/01.strudel"])),
+            CliAction::Play(s(&["songs/house/01.strudel"]))
+        );
+    }
+
+    #[test]
+    fn classify_args_dj_prefix_strips_cmd() {
+        assert_eq!(
+            classify_args(&s(&["dj", "a.strudel"])),
+            CliAction::Dj(s(&["a.strudel"]))
+        );
+    }
+
+    #[test]
+    fn classify_args_two_song_paths_are_dj() {
+        assert_eq!(
+            classify_args(&s(&[
+                "songs/house/01.strudel",
+                "songs/four-on-the-floor/01.strudel"
+            ])),
+            CliAction::Dj(s(&[
+                "songs/house/01.strudel",
+                "songs/four-on-the-floor/01.strudel"
+            ]))
+        );
+    }
+
+    #[test]
+    fn classify_args_text_flag_is_dj() {
+        assert_eq!(
+            classify_args(&s(&["--text"])),
+            CliAction::Dj(s(&["--text"]))
+        );
+    }
+
+    #[test]
+    fn classify_args_mcp_is_mcp() {
+        assert_eq!(classify_args(&s(&["mcp"])), CliAction::Mcp);
+    }
+
+    #[test]
+    fn classify_args_render_keeps_rest() {
+        let rest = s(&["s.strudel", "--out", "o.wav"]);
+        assert_eq!(
+            classify_args(&s(&["render", "s.strudel", "--out", "o.wav"])),
+            CliAction::Render(rest.clone())
+        );
+        assert!(!rest.iter().any(|a| a == "play"));
+        assert_eq!(rest.len(), 3);
     }
 
     #[test]
