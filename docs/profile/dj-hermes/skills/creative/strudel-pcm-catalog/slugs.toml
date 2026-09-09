@@ -1,5 +1,6 @@
-# rust-fm-synthe preset id → strudel part + 2–3 char slug.
-# Unique per part. skip=true means no extra WAV (use alias key instead).
+# rust-fm-synthe preset id → strudel part + 2–3 char slug
+# (`vc:yeah` is 4 chars). Unique per part. skip=true means no extra WAV
+# (use alias key instead).
 
 [e]
 "bd-808-boom" = { part = "bd", slug = "8b" }
@@ -376,3 +377,9 @@
 "ps-spark-evolve" = { part = "ps", slug = "se" }
 "ps-starlight" = { part = "ps", slug = "sl" }
 "ps-twinkle" = { part = "ps", slug = "tw" }
+"vl-na" = { part = "vc", slug = "na" }
+"vl-pa" = { part = "vc", slug = "pa" }
+"vl-ra" = { part = "vc", slug = "ra" }
+"vl-tu" = { part = "vc", slug = "tu" }
+"vl-ya" = { part = "vc", slug = "ya" }
+"vl-yeah" = { part = "vc", slug = "yeah" }

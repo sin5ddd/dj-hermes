@@ -78,6 +78,7 @@ The Pattern fence is one example of grid, degrees, and slots. For a **new** appl
 | arp | sparse perc | `perc:tm`, `perc:ti`, `perc:st` | a second bass |
 | chords | `[0,2,4]` on orbit 2 | `ep:ky`, `plk:sf` | `triangle` |
 | pad | orbit 2 | `pf:pu`, `pf:cs`, `pf:or`, `pf:ff`+`note("0")` | `dr:hr`, music box |
+| vox | replace `// arp` (stay 8). dry, `.cut(1)` | `vc:tu`, `vc:na` at `C4:` | 9th track, 16th wall, invent a vocal WAV |
 
 | Piece | Role |
 | --- | --- |

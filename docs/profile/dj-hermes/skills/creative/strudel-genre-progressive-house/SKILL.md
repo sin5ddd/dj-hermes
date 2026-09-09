@@ -71,6 +71,7 @@ Pattern はグリッド・次数・スロットの見本。新規曲は下表か
 | arp | | `plk:hd`、`plk:aj` | 毎小節の 16s パッド |
 | chords | `[0,2,4]` | `ep:ky`、`ep:wr`、`plk:sm` | `triangle` |
 | pad | 長い上物 | `pf:hz`、`pf:wm`、`pf:ju`、`ld:fp` を `<>`、`pf:ff`+`note("0")` | `dr:hr`、gabber、wobble |
+| vox | 任意 8 本目 `// vox`。`.cut(1)` | `vc:pa`、`vc:ya` at `C4:` | 16 分埋め、毎小節 `vc:yeah`、自前 WAV を invent |
 
 ## Why
 
@@ -98,7 +99,7 @@ Pattern はグリッド・次数・スロットの見本。新規曲は下表か
 
 ## Checklist
 
-- [ ] 7 本（// drums // bass // lead // hook // arp // chords // pad）
+- [ ] 7 本（// drums // bass // lead // hook // arp // chords // pad）。任意 8 本目は `// vox`
 - [ ] 4 小節フレーズ（`.scale("<…>")` が 4 個）
 - [ ] ドラムは 1 本。`[~ cp]*2` がある（`sd` と重ねていない）
 - [ ] 4 つ打ち + パッド。PCM ベースは `C4:`。`.s()` は音色パレット

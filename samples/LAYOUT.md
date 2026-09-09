@@ -194,6 +194,7 @@ samples/
 | piano / EP | `note("…").scale("…").s("piano-acoustic_soft")` |
 | FX one-shot | `s("fx-riser_short01")` |
 | 同梱 FM catalog | `s("bd:8b")` / `note("0").scale("C4:minor").s("bs:hf")` |
+| ボーカルチョップ | `s("vc:pa")` / `note("0").scale("C4:minor").s("vc:ya").cut(1)` |
 
 ---
 
@@ -201,7 +202,7 @@ samples/
 
 1. `samples/pad/ambient/drone.wav` のような **深い階層**（エンジンは読まない）  
 2. 1 フォルダに `bd-*.wav` と `sd-*.wav` を混在（全部 **同じ sound の変種**になる）  
-3. mini 内で `TR808:bd`（bank が左）。カタログは `bd:8b`（part が左、slug は 2〜3 字）  
+3. mini 内で `TR808:bd`（bank が左）。カタログは `bd:8b`（part が左、slug は 2〜3 字。**`vc:yeah` だけ 4 字**）  
 4. `.bank("tr808-hard")` なのにファイルが `tr808-hard-bd.wav`（ハイフン連結）— 正は **`tr808-hard_bd`**  
 5. 波形名の流用（`sine.wav` 等）
 

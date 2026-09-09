@@ -72,17 +72,18 @@ Pattern はグリッド・次数・スロットの見本。新規曲は下表か
 | arp | perc 疎 | `perc:cm`、`perc:tg` | 16 分埋め |
 | chords | 疎 | `ep:mt`、薄い `ld:fp` を `<>` | `triangle`、`[0,2,4]` 連打 |
 | pad | **主** | `dr:ad`、`dr:fg`、`pf:cl`、`pf:wa`、`ps:sh`、`dr:uw`（`<>`） | スーパーソー、`bd*4` の上に載せるだけ |
+| vox | 任意。疎、gain 低、`.cut(1)` か `<>` | `vc:na`、`vc:ra` at `C4:` | 16 分 EDM チョップ、毎小節 `vc:yeah`、自前 WAV を invent |
 
 ## レシピ
 
-- トラックは 7 本: `// drums` `// bass` `// lead` `// hook` `// arp` `// chords` `// pad`（任意で perc。このフェンスでは arp が perc）
+- トラックは 7 本: `// drums` `// bass` `// lead` `// hook` `// arp` `// chords` `// pad`（任意で perc または vox。このフェンスでは arp が perc）
 - ドラムは 1 本の `$:`。キック／スネア／ハットに分けない
 - ピッチトラックは 4 小節 `.scale("<C4:minor C4:minor G4:dorian C4:minor>")`（コードは C3、パッドは C4）
 - PCM は `C4:`。シンセサブは `C2:`。`bs:su` と `bs:hf` は重ねない
 - キックは `bd:lf` を 1 拍だけ、gain 0.18。無しでもよい
 - パッドが主。音色パレットの pad（`pf:ff` なら `note("0")`）。コードは 3 音まで
 - メロ（lead / hook）は休符多め、gain 0.10–0.16
-- 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`）は毎小節撃たない。`plk:*` / `ep:*` / `perc:*` / `bs:*`、波形、`wt_*`、ライブ `.fm` も使える
+- 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`）は毎小節撃たない。`plk:*` / `ep:*` / `perc:*` / `bs:*` / `vc:*`、波形、`wt_*`、ライブ `.fm` も使える
 
 ## Pitfalls
 
@@ -98,6 +99,6 @@ Pattern はグリッド・次数・スロットの見本。新規曲は下表か
 
 ## Checklist
 
-- [ ] 7–8 本（drums / bass / lead / hook / arp / chords / pad。任意 perc）
+- [ ] 7–8 本（drums / bass / lead / hook / arp / chords / pad。任意 perc または vox）
 - [ ] 4 小節 `.scale("<…>")`。ドラムは 1 本。pad が主。`.s()` は音色パレット
 - [ ] `dj_hermes_apply_song(content, deck)`。save は残す指示のときだけ

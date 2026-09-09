@@ -4,7 +4,7 @@ description: >-
   Use when writing chill-pop for dj-hermes: Japanese city pop
   (IV–iii–ii–I 下降, maj7, Rhodes), 95–110 BPM. Not EDM I–I–IV–I,
   not 王道進行, not downtempo chill, not house [~ cp]*2.
-version: 6.2.0
+version: 6.3.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -27,7 +27,7 @@ metadata:
 来場者が「チルポップ」と言ったら下表の **シティポップ下降** を書く。単語だけでは Western の I–V–vi–IV や EDM の I–I–IV–I に落ちる。アニソンの **王道進行** は [strudel-genre-kawaii-future-bass](../strudel-genre-kawaii-future-bass/SKILL.md) 側。スーパーソーの Future Bass は [strudel-genre-future-bass](../strudel-genre-future-bass/SKILL.md)。
 
 チル（短調ダウンテンポ）よりコードが前面。ハウス clap は使わない。
-`songs/chill-pop/01.strudel` はこのフェンスと同じ（7 本）。
+`songs/chill-pop/01.strudel` はこのフェンスと同じ（8 本。`// vox` 込み）。
 
 ## When
 
@@ -52,7 +52,7 @@ metadata:
 
 ## Pattern
 
-7 本。進行は **シティポップ下降**。メロは順次進行＋ 7 度（次数 6）。アニソンの長い `@` にはしない。
+8 本（`// vox` 込み）。進行は **シティポップ下降**。メロは順次進行＋ 7 度（次数 6）。アニソンの長い `@` にはしない。
 
 ```
 // @title visitor-chill-pop
@@ -78,6 +78,9 @@ $: note("[0,2,6] ~ [0,2,6] ~").scale("<F4:lydian E4:phrygian D4:dorian C4:major>
 // pad — pf:ff is already a fifth; do not write [0,4]
 $: note("0").scale("<F4:lydian E4:phrygian D4:dorian C4:major>")
   .s("pf:ff").gain(0.14).room(0.3).orbit(2)
+// vox — sparse city-pop grain, not 16th EDM
+$: note("~ 0 ~ ~  ~ ~ ~ ~").scale("<F4:lydian E4:phrygian D4:dorian C4:major>")
+  .s("vc:na").gain(0.12).cut(1)
 ```
 
 `ep:rs` / `ep:mt` / `bs:su` / `pf:ff` は C3 録音。native にするには `.scale("C4:…")` 帯（このフェンスは F4 始まり）。コードはポリフォニックなので `.cut` しない。
@@ -95,6 +98,7 @@ Pattern はグリッド・次数・スロットの見本。新規曲は下表か
 | arp | ナイロン／爪 | `plk:ny`、`plk:hp`、`plk:kt` | `plk:dt` |
 | chords | `[0,2,6]` | `ep:mt`、`ep:ky`、`plk:ep` | `[0,4,9]`、`triangle` |
 | pad | | `pf:iv`、`pf:ln`、`pf:cl`、`pf:wa`、`pf:ff`+`note("0")` | `ld:ss`、gabber、`dr:hr`、王道進行 |
+| vox | 任意。色として疎、`.cut(1)` | `vc:na` at `C4:` | 16 分 EDM チョップ、ドロップの `vc:yeah`、自前 WAV を invent |
 
 ## Why
 
@@ -110,7 +114,7 @@ Pattern はグリッド・次数・スロットの見本。新規曲は下表か
 
 ## レシピ
 
-- トラックは 7 本: `// drums` `// bass` `// lead` `// hook` `// arp` `// chords` `// pad`（任意で perc）
+- トラックは 8 本: `// drums` `// bass` `// lead` `// hook` `// arp` `// chords` `// pad` `// vox`（新規 apply は 7 本でも可。perc は足さない）
 - ドラムは 1 本の `$:`。キック／スネア／ハットに分けない。ハウス `cp` は載せない
 - 進行は **シティポップ下降**（来場者が循環／ツーファイブと名前を出したら差し替え）
 - ピッチトラックは 4 小節 `.scale("<F:lydian E:phrygian D:dorian C:major>")`（PCM は C4 帯、arp は C5）
@@ -118,7 +122,7 @@ Pattern はグリッド・次数・スロットの見本。新規曲は下表か
 - コードは `[0,2,6]` を 3 音まで。パッドは音色パレット（`pf:ff` なら `note("0")`）
 - フックは `ep:rs`（C4 帯）。リード `plk:ps` と arp `plk:ny` に `.cut(1)`
 - メロ／コード／パッドに `triangle` / `sine` / `sawtooth` を使わない
-- 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`）は毎小節撃たない。`plk:*` / `ep:*` / `perc:*` / `bs:*`、波形、`wt_*`、ライブ `.fm` も使える
+- 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`）は毎小節撃たない。`plk:*` / `ep:*` / `perc:*` / `bs:*` / `vc:*`、波形、`wt_*`、ライブ `.fm` も使える
 
 鳴らすのは `dj_hermes_apply_song(content, deck)`（次小節、無書き込み）。`dj_hermes_save_song` は残す指示のときだけ。
 
@@ -148,7 +152,7 @@ Pattern はグリッド・次数・スロットの見本。新規曲は下表か
 
 ## Checklist
 
-- [ ] 7–8 本（drums / bass / lead / hook / arp / chords / pad。任意 perc）
+- [ ] 8 本 bundled（drums / bass / lead / hook / arp / chords / pad / vox）。新規 apply は 7 本でも可
 - [ ] 4 小節 **シティポップ下降** `<F:lydian E:phrygian D:dorian C:major>`（循環／ツーファイブは名前付き差し替え）
 - [ ] chords `[0,2,6]`。lead は順次＋次数 6。PCM は C4 帯。pad はパレット（`pf:ff` なら `note("0")`）
 - [ ] ドラムは 1 本。ハウス `cp` なし。`.s()` は音色パレット

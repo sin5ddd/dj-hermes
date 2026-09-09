@@ -19,7 +19,7 @@ skills/
     strudel-dj-hype/       # フロアを沸かせて（状況 → mix 1 回）
     strudel-data-format/   # ファイル形式
     strudel-sound-design/  # 音色・FX・サンプル用法（bank / フルネーム）・役割レシピ
-    strudel-pcm-catalog/   # rust-fm-synthe part:slug（INDEX 付き）
+    strudel-pcm-catalog/   # rust-fm-synthe part:slug（INDEX 付き。vc: 含む）
     strudel-genre-*/       # ジャンル別スロット（グリッド + 本数は各 Skill）
 ```
 

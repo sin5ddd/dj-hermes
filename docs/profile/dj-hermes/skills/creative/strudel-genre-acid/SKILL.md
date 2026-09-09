@@ -94,6 +94,7 @@ The Pattern fence is one example of grid, degrees, and slots. Keep the **303 on 
 | arp | sparse perc | `perc:mh`, `perc:tm`, `perc:st`, `perc:tk`, `perc:cb`, `perc:sk` | a second 303 |
 | chords | `[0,4]` | `ep:mt`, `plk:sf`, `plk:s5`, `ep:ky`, `plk:an` | `triangle`, major stab `plk:sm` / `plk:s3` on this minor bed |
 | pad | | `pf:pu`, `dr:pd` / `dr:fg` with `<>`, `pf:cs`, `pf:fo`, `pf:ff`+`note("0")` | `ps:mx`, house Rhodes |
+| vox | not on the 303 hook. arp swap or 8th `// vox`. `.cut(1)` | `vc:pa`, `vc:tu` at `C4:` | second 303, `vc:yeah` every bar, invent a vocal WAV |
 
 | Piece | Role |
 | --- | --- |

@@ -3,7 +3,7 @@ name: strudel-pcm-catalog
 description: >-
   Use when choosing a rust-fm-synthe PCM one-shot for dj-hermes
   (bd:8b, hh:cl, bs:ht, vc:pa, and other part:slug keys). Not for live 2-op .fm.
-version: 1.2.0
+version: 1.3.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -21,7 +21,7 @@ metadata:
 
 ## Overview
 
-`samples/<part>/<slug>.wav` を `s("<part>:<slug>")` で鳴らす。slug は **2〜3 字**。意味（name / description）は **[INDEX.md](./INDEX.md)** が正本。曲を書く前に INDEX で slug を確認する。
+`samples/<part>/<slug>.wav` を `s("<part>:<slug>")` で鳴らす。slug は **2〜3 字**（**`vc:yeah` だけ 4 字**）。意味（name / description）は **[INDEX.md](./INDEX.md)** が正本。曲を書く前に INDEX で slug を確認する。
 
 同梱デフォルト（Sonic Pi）は残してある。`s("bd")` は今までどおり `samples/bd/00.wav`。
 
@@ -162,12 +162,12 @@ Apply the inline recipe with `dj_hermes_apply_song`. `songs/house/01.strudel` us
 | `vc:ya` | や行の滑り。フック |
 | `vc:yeah` | yeah（i→e、1 Hz トレモロ） |
 
-リズムは `s("vc:pa vc:na vc:tu")`。移調は `note("0").scale("C4:minor").s("vc:pa")`。連打は `.cut(1)`。
+リズムは `s("vc:pa vc:na vc:tu")`。移調は `note("0").scale("C4:minor").s("vc:pa")`。連打は `.cut(1)`。録音は C4 なので `C4:` が native C4（C3 録音の `plk:` とは聞こえるオクターブが違う）。全ジャンルで使ってよい。スロットと本数は **strudel-composition** のボーカルチョップ。ジャンルの芯（303 / Reese / `[~ cp]*2`）は奪わない。`vc:yeah` はドロップの掛け声で毎小節撃たない。
 
 ## Rules
 
 1. 新規 PCM は `part:slug`。フルネームでリズムを埋めない
-2. ドラムは `note()` なし。音程は `C4:…`。FX は bare `s("…")`
+2. ドラムは `note()` なし。音程 PCM は `C4:…`。FX は bare `s("…")`。`vc:` はリズムなら bare、移調するなら `note()` + `C4:`
 3. 長いワンショットを毎小節撃たない
 4. `.bank` と `part:slug` を同じ `$:` で混ぜない
 5. `in_bank=no`（未作成）を content に書かない
@@ -175,7 +175,7 @@ Apply the inline recipe with `dj_hermes_apply_song`. `songs/house/01.strudel` us
 
 ## Do not
 
-- `bd:808-boom` のような長い slug（ディスクは `8b.wav`）
+- `bd:808-boom` のような長い slug（ディスクは `8b.wav`）。`vc:yeah` 以外の 4 字 slug を invent する
 - 純数字 slug を新しく足す（`bd:2` は index）
 - 同梱 `bd/00.wav` を上書きする
 - `stack()` / `.cpm()` / ライブ `.fm` で 4-op プリセットを再現しようとする

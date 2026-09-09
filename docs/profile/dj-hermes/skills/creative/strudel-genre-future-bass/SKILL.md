@@ -6,7 +6,7 @@ description: >-
   8th-note bass, 16-bar anthem loop, equal-weight <> children, hat
   rolls only at phrase ends. Not 王道, not kawaii bells, not four-on-the-floor,
   not hh*16 every 4 bars, not kick-only bass.
-version: 8.0.0
+version: 8.1.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -63,7 +63,7 @@ metadata:
 
 ## 進行（16 小節。王道は使わない）
 
-親キー A 短調（アンセムの定番 i–VI–III–VII = Am–F–C–G）。次数は固定、`.scale("<…>")` の **16 子**が 1 コード／小節。pitched 全部で同じ 16 小節（オクターブだけトラックで変えてよい）。PCM は `C4:` 帯。arp は C5。
+親キー A 短調（アンセムの定番 i–VI–III–VII = Am–F–C–G）。次数は固定、`.scale("<…>")` の **16 子**が 1 コード／小節。pitched 全部で同じ 16 小節（オクターブだけトラックで変えてよい）。PCM は `C4:` 帯。`vc:` の arp も C4（プラック代用だけ C5）。
 
 4 小節ブロックを 4 つ並べる。**新規曲を 4 小節の使い回しにしない。王道 IV–V–iii–vi は kawaii Skill。**
 
@@ -86,7 +86,7 @@ metadata:
 
 モードはダイアトニック（i=minor、VI=lydian、III=major、VII=mixolydian、v=phrygian）。`F4:major` にすると Bb が入って親キーを外れる。
 
-既定 16 子（pitched にこれを載せる。arp はオクターブ 5）:
+既定 16 子（pitched にこれを載せる。`vc:` の arp も同じ C4 帯）:
 
 ```
 <A4:minor F4:lydian C4:major G4:mixolydian A4:minor F4:lydian C4:major G4:mixolydian C4:major G4:mixolydian A4:minor F4:lydian A4:minor G4:mixolydian F4:lydian E4:phrygian>
@@ -155,10 +155,10 @@ $: note("<[~ 4 ~ 7  ~ 9 7 4] [~ 7 4 9  7 ~ 4 2] [4 ~ 9 7  ~ 4 2 0] [~ 4 7 9  4 7
 $: note("<[~ 7 ~ 11  ~ 9 ~ 7] [~ 11 ~ 9  ~ 7 ~ 4] [7 ~ 11 9  ~ 7 4 2] [~ 9 ~ 7  ~ 4 ~ 11] [7 11 ~ 12  11 7 9 7] [~ 11 ~ 12  9 ~ 7 4] [7 12 ~ 11  9 ~ 12 7] [7 11 12 9  11 7 4 2] [~ 12 ~ 9  ~ 7 ~ 4] [~ 11 ~ 7  ~ 4 ~ 0] [~ 9 ~ 4  ~ 7 ~ 2] [~ 7 ~ 4  ~ 2 ~ 0] [7 11 ~ 12  11 7 9 7] [~ 11 ~ 12  9 ~ 7 4] [7 12 ~ 11  9 ~ 12 7] [7 11 12 9  11 7 4 2]>")
   .scale("<A4:minor F4:lydian C4:major G4:mixolydian A4:minor F4:lydian C4:major G4:mixolydian C4:major G4:mixolydian A4:minor F4:lydian A4:minor G4:mixolydian F4:lydian E4:phrygian>")
   .s("ld:st").gain(0.18).cut(1)
-// arp — busy euro-flash 8ths (not glass bell)
-$: note("<[0 4 7 12  7 4 0 7] [0 7 4 12  7 0 4 7] [4 0 7 12  4 7 0 4] [0 7 12 4  7 4 0 12] [0 4 7 12  9 7 4 0] [4 7 12 7  4 0 7 12] [0 4 12 7  4 7 0 4] [7 12 4 0  7 4 12 7]>")
-  .scale("<A5:minor F5:lydian C5:major G5:mixolydian A5:minor F5:lydian C5:major G5:mixolydian C5:major G5:mixolydian A5:minor F5:lydian A5:minor G5:mixolydian F5:lydian E5:phrygian>")
-  .s("ld:ap").gain(0.12).cut(1)
+// arp — catalog vocal chop at C4 (not a 10th track, not C5)
+$: note("<[~ 0 ~ ~  ~ 4 ~ ~] [~ ~ 0 ~  ~ ~ 4 ~] [0 ~ ~ 4  ~ 0 ~ ~] [~ 4 ~ ~  0 ~ ~ 7] [~ 0 ~ 4  ~ ~ 0 ~] [4 ~ ~ ~  ~ 0 ~ 4] [~ ~ 0 ~  4 ~ ~ ~] [0 ~ 4 ~  ~ ~ 0 ~]>")
+  .scale("<A4:minor F4:lydian C4:major G4:mixolydian A4:minor F4:lydian C4:major G4:mixolydian C4:major G4:mixolydian A4:minor F4:lydian A4:minor G4:mixolydian F4:lydian E4:phrygian>")
+  .s("vc:pa").gain(0.14).cut(1)
 // chords — bounced supersaw add9 [0,4,8]; 4-bar
 $: note("<[[0,4,8] ~ ~ [0,4,8]  [0,4,8] ~ [0,4,8] ~] [[0,2,8] ~ [0,2,8] ~  ~ [0,4,8] ~ [0,4,8]] [[0,4,8] ~ ~ [0,4,8]  [0,2,8] ~ [0,2,8] ~] [[0,4,8] ~ [0,4,8] [0,4,8]  ~ [0,2,8] ~ ~]>")
   .scale("<A4:minor F4:lydian C4:major G4:mixolydian A4:minor F4:lydian C4:major G4:mixolydian C4:major G4:mixolydian A4:minor F4:lydian A4:minor G4:mixolydian F4:lydian E4:phrygian>")
@@ -196,10 +196,11 @@ Pattern はグリッド・次数・スロットの見本。新規曲は下表か
 | bass | 8 分ルート＋オクターブ。`bs:sw` / `bs:ht` / `bs:8s`+`.cut(1)` at `C4:` | `bs:su`+`.cut(1)`（8 分のとき） | `0 ~ 0 ~` を既定、サブ重ね、`bs:wb` 主役、1 小節ループ |
 | lead | スーパーソー 16 小節リフレイン。子はウェイト 8 | `ld:ss`、`ld:st`、`ld:an`、`ld:us` | ベル、`ld:mx`、`plk:ch`、303、`ld:gr`、ウェイト 9 の `@` |
 | hook | ソーのスタブ | `ld:st`、`ld:an`、`plk:ss`（lead が `ld:ss` のとき） | `plk:mx`、`plk:bl`、`plk:mb`、オルゴール |
-| arp | 忙しい 8 分 | `ld:ap`、`ld:sw`、`plk:s5` | `plk:fg` / `plk:fc` ガラス（kawaii 側）、1 小節使い回し |
+| arp | 忙しい 8 分、**または** カタログ `vc:` チョップ | `ld:ap`、`ld:sw`、`plk:s5`、`vc:pa` / `vc:ya` at `C4:` + `.cut(1)` | `plk:fg` / `plk:fc` ガラス（kawaii 側）、1 小節使い回し、10 本目の `// vox`、自前 WAV を invent |
 | chords | `[0,4,8]` add9。跳ねる 8 分のスーパーソー | `[0,2,8]`、`plk:ss`、`ld:st`（lead と別 slug） | `[0,2,4]` 三和音、`[0,4,9]` を add9 と呼ぶ、ベルコード |
 | pad | 広いソー床を間引く | `pf:sp`、`dr:sl` 以外の薄い `pf:*` | `ps:mx`、`ps:gb`（キラキラは kawaii）、gabber、毎小節撃つ |
 | strings | 低いスーパーソードローン。pad とずらす | `dr:sl`、`dr:rw`、`ld:an`（lead が `ld:ss` のとき） | `ld:cr` クワイア、`ld:mx`、violin を invent、`ld:ss`（lead と被る） |
+| vox | arp 差し替え（**9 本のまま**）。`.cut(1)` | `vc:pa`、`vc:ya`、`s("<vc:yeah ~ ~ ~>")` at `C4:` | 10 本目、16 分埋め、毎小節 `vc:yeah` |
 
 ## Why
 
@@ -242,6 +243,7 @@ PCM は `C4:`。シンセサブを `bs:sw` と重ねない。
 | スタブを厚く | hook を `ld:an`（lead は `ld:ss` のまま） |
 | DnB 時計 | `setcpm(174/4)` にして drums を [strudel-genre-dnb](../strudel-genre-dnb/SKILL.md) の break `*2` に差し替え。**174 は solo** |
 | Kawaii にしたい | この Skill を使わない。**strudel-genre-kawaii-future-bass** |
+| カタログチョップ | arp を `vc:pa` + `.cut(1)` + **`C4:`**（10 本目は足さない。arp の `C5:` に上げない） |
 
 ## Pitfalls
 
@@ -263,6 +265,7 @@ PCM は `C4:`。シンセサブを `bs:sw` と重ねない。
 16. lead `[4@2 7 9@2  7 4 2 0]`（ウェイト 9）
 17. `[0,4,9]` を add9 と呼ぶ。9 度は次数 **8**
 18. lead と chords の両方を `ld:ss` にする
+19. `vc:` を arp の `C5:` に上げる、または 10 本目の `// vox` を足す
 
 ## Checklist
 

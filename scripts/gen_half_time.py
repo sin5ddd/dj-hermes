@@ -134,18 +134,18 @@ HOOK_KW = [
     "<[~ 9 12 ~  11 9 ~ 12] [9 ~ 11 12  7 ~ 9 11] [~ 12 7 9  11 4 12 ~] [11 9 ~ 7  12 4 ~ 11] [9 12 11 9  ~ 12 11 7] [11 9 12 ~  9 11 7 12] [12 11 ~ 9  12 7 11 9] [11 12 9 11  7 12 9 4] [9 ~ 4 12  ~ 7 0 9] [~ 11 7 0  4 ~ 9 2] [12 4 ~ 7  0 2 4 ~] [~ 7 0 4  2 9 4 0] [9 12 11 9  ~ 12 11 7] [11 9 12 ~  9 11 7 12] [12 11 ~ 9  12 7 11 9] [11 12 9 11  7 12 9 4]>",
 ]
 
-ARP_FB = [
-    "<[0 4 7 12  7 4 0 7] [0 7 4 12  7 0 4 7] [4 0 7 12  4 7 0 4] [0 7 12 4  7 4 0 12] [0 4 7 12  9 7 4 0] [4 7 12 7  4 0 7 12] [0 4 12 7  4 7 0 4] [7 12 4 0  7 4 12 7]>",
-    "<[0 7 12 7  4 12 0 4] [7 0 12 4  7 12 4 0] [4 12 7 0  12 4 7 12] [0 4 12 7  12 0 7 4] [7 4 0 12  4 7 12 0] [12 7 4 0  7 12 0 4] [0 12 4 7  12 7 4 12] [4 0 7 12  0 7 12 4]>",
-    "<[0 4 12 7  16 12 7 4] [4 0 7 12  7 16 4 0] [0 12 4 16  7 4 12 7] [12 7 0 4  16 7 4 12] [0 7 16 12  4 12 7 0] [7 12 4 16  0 4 12 7] [4 16 7 0  12 0 7 4] [12 0 4 7  16 4 0 12]>",
-    "<[7 12 4 0  12 7 16 7] [4 7 0 12  7 4 12 0] [0 12 7 16  4 7 0 12] [12 4 0 7  16 12 7 4] [7 0 12 4  0 7 12 16] [4 12 7 0  12 4 16 7] [0 7 4 12  16 0 7 4] [12 16 7 4  0 12 4 7]>",
+VOX_FB = [
+    "<[~ 0 ~ ~  ~ 4 ~ ~] [~ ~ 0 ~  ~ ~ 4 ~] [0 ~ ~ 4  ~ 0 ~ ~] [~ 4 ~ ~  0 ~ ~ 7] [~ 0 ~ 4  ~ ~ 0 ~] [4 ~ ~ ~  ~ 0 ~ 4] [~ ~ 0 ~  4 ~ ~ ~] [0 ~ 4 ~  ~ ~ 0 ~]>",
+    "<[0 ~ ~ ~  ~ ~ 4 ~] [~ 0 ~ ~  4 ~ ~ ~] [~ ~ 0 ~  ~ 4 ~ ~] [4 ~ ~ 0  ~ ~ ~ 7] [0 ~ 4 ~  ~ ~ ~ ~] [~ ~ ~ 0  ~ 4 ~ ~] [~ 0 ~ ~  ~ ~ 4 ~] [0 ~ ~ 4  ~ ~ 0 ~]>",
+    "<[~ ~ 0 ~  ~ ~ ~ 4] [~ 0 ~ 4  ~ ~ ~ ~] [0 ~ ~ ~  4 ~ ~ ~] [~ ~ 4 ~  0 ~ ~ 7] [~ 0 ~ ~  ~ 4 ~ ~] [4 ~ 0 ~  ~ ~ ~ ~] [~ ~ ~ 0  ~ ~ 4 ~] [0 ~ ~ ~  ~ 4 ~ 0]>",
+    "<[~ 0 ~ 4  ~ ~ ~ ~] [0 ~ ~ ~  ~ ~ 4 ~] [~ ~ 0 4  ~ ~ ~ ~] [~ 4 ~ ~  ~ 0 ~ ~] [0 ~ ~ 4  ~ ~ ~ 7] [~ ~ 0 ~  ~ ~ ~ 4] [4 ~ ~ ~  0 ~ ~ ~] [~ 0 ~ ~  4 ~ ~ 0]>",
 ]
 
-ARP_KW = [
-    "<[0 4 ~ 7  4 ~ 9 4] [0 ~ 4 7  ~ 4 12 7] [4 0 7 ~  4 9 ~ 4] [0 7 4 0  ~ 4 7 12] [0 4 7 ~  9 4 ~ 7] [4 ~ 0 7  4 12 ~ 4] [0 4 ~ 9  7 4 0 4] [7 4 0 ~  4 7 12 4]>",
-    "<[0 ~ 7 4  9 ~ 4 0] [4 7 ~ 12  4 0 7 ~] [~ 4 0 9  7 ~ 4 12] [7 0 4 ~  12 4 0 7] [0 9 4 7  ~ 4 0 9] [4 ~ 7 12  0 4 ~ 7] [9 4 0 ~  7 12 4 0] [~ 7 4 9  0 4 7 12]>",
-    "<[4 0 ~ 7  ~ 9 4 0] [0 7 4 ~  12 ~ 4 7] [7 ~ 0 4  9 4 7 ~] [4 12 0 7  ~ 4 0 9] [0 4 9 ~  7 0 4 12] [~ 9 4 0  7 12 ~ 4] [4 7 0 9  ~ 0 4 7] [12 4 ~ 0  7 4 9 0]>",
-    "<[0 7 ~ 4  12 4 ~ 7] [4 ~ 0 9  7 4 12 ~] [~ 4 7 0  9 ~ 4 0] [7 12 4 0  ~ 7 4 9] [0 ~ 9 4  7 12 0 4] [4 7 ~ 0  12 ~ 7 4] [9 0 4 7  ~ 4 12 0] [~ 0 7 4  9 4 0 7]>",
+VOX_KW = [
+    "<[~ 0 ~ ~  ~ ~ ~ ~] [0 ~ ~ ~  ~ 4 ~ ~] [~ ~ 0 ~  ~ ~ ~ ~] [~ 4 ~ ~  ~ ~ 0 ~] [0 ~ ~ ~  ~ ~ 4 ~] [~ ~ ~ 0  ~ ~ ~ ~] [~ 0 ~ 4  ~ ~ ~ ~] [4 ~ ~ ~  ~ 0 ~ ~]>",
+    "<[0 ~ ~ ~  ~ ~ ~ ~] [~ ~ 0 ~  ~ ~ ~ 4] [~ 0 ~ ~  ~ ~ ~ ~] [~ ~ ~ 4  ~ 0 ~ ~] [0 ~ ~ 4  ~ ~ ~ ~] [~ ~ 0 ~  ~ ~ ~ ~] [~ 4 ~ ~  0 ~ ~ ~] [~ ~ ~ 0  ~ 4 ~ ~]>",
+    "<[~ ~ 0 ~  ~ ~ ~ ~] [~ 0 ~ ~  ~ ~ 4 ~] [0 ~ ~ ~  ~ ~ ~ ~] [~ ~ 4 ~  ~ ~ 0 ~] [~ 0 ~ ~  ~ ~ ~ 4] [4 ~ ~ ~  ~ ~ 0 ~] [~ ~ ~ 0  ~ ~ ~ ~] [0 ~ 4 ~  ~ ~ ~ ~]>",
+    "<[~ 0 ~ 4  ~ ~ ~ ~] [~ ~ ~ 0  ~ ~ ~ ~] [0 ~ ~ ~  ~ 4 ~ ~] [~ ~ 0 ~  ~ ~ ~ 4] [~ 4 ~ ~  ~ ~ ~ ~] [0 ~ ~ ~  ~ ~ 0 ~] [~ ~ 4 ~  ~ 0 ~ ~] [~ 0 ~ ~  ~ ~ 4 ~]>",
 ]
 
 CHORDS = [
@@ -188,9 +188,9 @@ $: note("<[~ 7 ~ 11  ~ 9 ~ 7] [~ 11 ~ 9  ~ 7 ~ 4] [7 ~ 11 9  ~ 7 4 2] [~ 9 ~ 7  
   .scale("<A4:minor F4:lydian C4:major G4:mixolydian A4:minor F4:lydian C4:major G4:mixolydian C4:major G4:mixolydian A4:minor F4:lydian A4:minor G4:mixolydian F4:lydian E4:phrygian>")
   .s("ld:st").gain(0.18).cut(1)
 // arp
-$: note("<[0 4 7 12  7 4 0 7] [0 7 4 12  7 0 4 7] [4 0 7 12  4 7 0 4] [0 7 12 4  7 4 0 12] [0 4 7 12  9 7 4 0] [4 7 12 7  4 0 7 12] [0 4 12 7  4 7 0 4] [7 12 4 0  7 4 12 7]>")
-  .scale("<A5:minor F5:lydian C5:major G5:mixolydian A5:minor F5:lydian C5:major G5:mixolydian C5:major G5:mixolydian A5:minor F5:lydian A5:minor G5:mixolydian F5:lydian E5:phrygian>")
-  .s("ld:ap").gain(0.12).cut(1)
+$: note("<[~ 0 ~ ~  ~ 4 ~ ~] [~ ~ 0 ~  ~ ~ 4 ~] [0 ~ ~ 4  ~ 0 ~ ~] [~ 4 ~ ~  0 ~ ~ 7] [~ 0 ~ 4  ~ ~ 0 ~] [4 ~ ~ ~  ~ 0 ~ 4] [~ ~ 0 ~  4 ~ ~ ~] [0 ~ 4 ~  ~ ~ 0 ~]>")
+  .scale("<A4:minor F4:lydian C4:major G4:mixolydian A4:minor F4:lydian C4:major G4:mixolydian C4:major G4:mixolydian A4:minor F4:lydian A4:minor G4:mixolydian F4:lydian E4:phrygian>")
+  .s("vc:pa").gain(0.14).cut(1)
 // chords
 $: note("<[[0,4,8] ~ ~ [0,4,8]  [0,4,8] ~ [0,4,8] ~] [[0,2,8] ~ [0,2,8] ~  ~ [0,4,8] ~ [0,4,8]] [[0,4,8] ~ ~ [0,4,8]  [0,2,8] ~ [0,2,8] ~] [[0,4,8] ~ [0,4,8] [0,4,8]  ~ [0,2,8] ~ ~]>")
   .scale("<A4:minor F4:lydian C4:major G4:mixolydian A4:minor F4:lydian C4:major G4:mixolydian C4:major G4:mixolydian A4:minor F4:lydian A4:minor G4:mixolydian F4:lydian E4:phrygian>")
@@ -223,9 +223,9 @@ $: note("<[~ 11 ~ 12  ~ 9 ~ 11] [~ 12 ~ 9  ~ 11 ~ 7] [~ 11 ~ 12  ~ 9 ~ 4] [~ 9 ~
   .scale("<F4:lydian G4:mixolydian E4:phrygian A4:minor F4:lydian G4:mixolydian E4:phrygian A4:minor A4:minor E4:phrygian G4:mixolydian F4:lydian C4:major B4:locrian A4:minor G4:mixolydian>")
   .s("plk:mx").gain(0.18).cut(1)
 // arp
-$: note("<[0 4 ~ 7  4 ~ 9 4] [0 ~ 4 7  ~ 4 12 7] [4 0 7 ~  4 9 ~ 4] [0 7 4 0  ~ 4 7 12] [0 4 7 ~  9 4 ~ 7] [4 ~ 0 7  4 12 ~ 4] [0 4 ~ 9  7 4 0 4] [7 4 0 ~  4 7 12 4]>")
-  .scale("<F5:lydian G5:mixolydian E5:phrygian A5:minor F5:lydian G5:mixolydian E5:phrygian A5:minor A5:minor E5:phrygian G5:mixolydian F5:lydian C5:major B5:locrian A5:minor G5:mixolydian>")
-  .s("plk:fg").gain(0.14).cut(1)
+$: note("<[~ 0 ~ ~  ~ ~ ~ ~] [0 ~ ~ ~  ~ 4 ~ ~] [~ ~ 0 ~  ~ ~ ~ ~] [~ 4 ~ ~  ~ ~ 0 ~] [0 ~ ~ ~  ~ ~ 4 ~] [~ ~ ~ 0  ~ ~ ~ ~] [~ 0 ~ 4  ~ ~ ~ ~] [4 ~ ~ ~  ~ 0 ~ ~]>")
+  .scale("<F4:lydian G4:mixolydian E4:phrygian A4:minor F4:lydian G4:mixolydian E4:phrygian A4:minor A4:minor E4:phrygian G4:mixolydian F4:lydian C4:major B4:locrian A4:minor G4:mixolydian>")
+  .s("vc:ya").gain(0.14).cut(1)
 // chords
 $: note("<[[0,4,8] ~ ~ [0,4,8]  [0,4,8] ~ [0,4,8] ~] [[0,2,8] ~ [0,2,8] ~  ~ [0,4,8] ~ [0,4,8]] [[0,4,8] ~ ~ [0,4,8]  [0,2,8] ~ [0,2,8] ~] [[0,4,8] ~ [0,4,8] [0,4,8]  ~ [0,2,8] ~ ~]>")
   .scale("<F4:lydian G4:mixolydian E4:phrygian A4:minor F4:lydian G4:mixolydian E4:phrygian A4:minor A4:minor E4:phrygian G4:mixolydian F4:lydian C4:major B4:locrian A4:minor G4:mixolydian>")
@@ -254,7 +254,7 @@ HALF_TIME_PALETTES = {
         "bass": ["bs:sw", "bs:ht", "bs:8s", "bs:su"],
         "lead": ["ld:ss", "ld:st", "ld:an", "ld:us"],
         "hook": ["ld:st", "ld:an", "plk:ss"],
-        "arp": ["ld:ap", "ld:sw", "plk:s5"],
+        "arp": ["vc:pa", "vc:ya", "vc:tu"],
         "chords": ["plk:ss", "ld:st"],
         "pad": ["pf:sp", "pf:ff", "pf:fo", "pf:cs", "pf:hz", "pf:ju"],
         "strings": ["dr:sl", "dr:rw", "ld:an"],
@@ -269,7 +269,7 @@ HALF_TIME_PALETTES = {
         "bass": ["bs:ht", "bs:8s", "bs:su"],
         "lead": ["ld:mx", "ld:gl", "ld:cy", "square"],
         "hook": ["plk:mx", "plk:ch", "plk:bl", "plk:mb"],
-        "arp": ["plk:fg", "plk:fc"],
+        "arp": ["vc:ya", "vc:na", "vc:pa"],
         "chords": ["plk:ch", "plk:sm"],
         "pad": ["ps:mx", "ps:gb", "pf:ga", "pf:sp"],
         "strings": ["ld:cr", "pf:ca", "pf:hl", "pf:wm"],
@@ -386,7 +386,7 @@ def hats_for(kick_name: str) -> str:
 def palette_fb(n: int) -> dict[str, str]:
     leads = ["ld:ss", "ld:st", "ld:an", "ld:us"]
     basses = ["bs:sw", "bs:ht", "bs:8s", "bs:su"]
-    arps = ["ld:ap", "ld:sw", "plk:s5"]
+    arps = ["vc:pa", "vc:ya", "vc:tu"]
     pads = ["pf:sp", "pf:ff", "pf:fo", "pf:cs", "pf:hz", "pf:ju"]
     i = n - 1
     lead = leads[i % 4]
@@ -437,14 +437,14 @@ def palette_kw(n: int) -> dict[str, str]:
     leads = ["ld:mx", "ld:gl", "ld:cy", "square"]
     basses = ["bs:ht", "bs:8s", "bs:su"]
     hooks = ["plk:mx", "plk:ch", "plk:bl", "plk:mb"]
-    arps = ["plk:fg", "plk:fc"]
+    arps = ["vc:ya", "vc:na", "vc:pa"]
     pads = ["ps:mx", "ps:gb", "pf:ga", "pf:sp"]
     strings_opts = ["ld:cr", "pf:ca", "pf:hl", "pf:wm"]
     i = n - 1
     lead = leads[i % 4]
     bass = basses[i % 3]
     hook = hooks[(i // 2) % 4]
-    arp = arps[i % 2]
+    arp = arps[i % len(arps)]
     pad = pads[(i // 3) % 4]
     strings = strings_opts[(i * 3) % 4]
     chords = "plk:sm" if hook == "plk:ch" else "plk:ch"
@@ -561,7 +561,6 @@ def render_variant(genre: str, n: int) -> str:
     variant = idx // 10
     pairs = form_pairs(genre, variant, n)
     scale4 = scale_inner(pairs, 4)
-    scale5 = scale_inner(pairs, 5)
     lead = lead_pattern(n)
     chords = CHORDS[idx % len(CHORDS)]
     pad = PAD_GATES[idx % len(PAD_GATES)]
@@ -572,7 +571,7 @@ def render_variant(genre: str, n: int) -> str:
         pal = palette_fb(n)
         bass = BASS_FB[idx % len(BASS_FB)]
         hook = HOOK_FB[idx % len(HOOK_FB)]
-        arp = ARP_FB[idx % len(ARP_FB)]
+        arp = VOX_FB[idx % len(VOX_FB)]
         bass_gain = "0.42"
         pad_gain, pad_room = "0.14", "0.25"
         str_extra = ""
@@ -580,7 +579,7 @@ def render_variant(genre: str, n: int) -> str:
         pal = palette_kw(n)
         bass = BASS_KW[idx % len(BASS_KW)]
         hook = HOOK_KW[idx % len(HOOK_KW)]
-        arp = ARP_KW[idx % len(ARP_KW)]
+        arp = VOX_KW[idx % len(VOX_KW)]
         bass_gain = "0.4"
         pad_gain, pad_room = "0.16", "0.35"
         str_extra = ".room(0.45)"
@@ -613,8 +612,8 @@ $: note("{hook}")
   .s("{pal["hook"]}").gain(0.18).cut(1)
 // arp
 $: note("{arp}")
-  .scale("{scale5}")
-  .s("{pal["arp"]}").gain(0.12).cut(1)
+  .scale("{scale4}")
+  .s("{pal["arp"]}").gain(0.14).cut(1)
 // chords
 $: note("{chords}")
   .scale("{scale4}")

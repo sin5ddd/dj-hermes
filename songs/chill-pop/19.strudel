@@ -21,3 +21,6 @@ $: note("[0,2,6] ~ [0,2,6] ~").scale("<Bb4:major G5:mixolydian C5:mixolydian F5:
 // pad
 $: note("<0 ~ ~ ~>").scale("<Bb4:major G5:mixolydian C5:mixolydian F5:mixolydian>")
   .s("pf:wa").cut(1).gain(0.14).room(0.3).orbit(2)
+// vox
+$: note("~ 0 ~ ~  ~ ~ ~ ~").scale("<Bb4:major G5:mixolydian C5:mixolydian F5:mixolydian>")
+  .s("vc:na").gain(0.12).cut(1)

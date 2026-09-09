@@ -18,9 +18,9 @@ $: note("<[~ 7 ~ 11  ~ 9 ~ 7] [~ 11 ~ 9  ~ 7 ~ 4] [7 ~ 11 9  ~ 7 4 2] [~ 9 ~ 7  
   .scale("<Bb4:major F5:mixolydian G5:minor Eb5:lydian Bb4:major F5:mixolydian G5:minor Eb5:lydian Eb5:lydian G5:minor F5:mixolydian Bb4:major G5:minor F5:mixolydian Eb5:lydian D5:phrygian>")
   .s("ld:an").gain(0.18).cut(1)
 // arp
-$: note("<[0 4 7 12  7 4 0 7] [0 7 4 12  7 0 4 7] [4 0 7 12  4 7 0 4] [0 7 12 4  7 4 0 12] [0 4 7 12  9 7 4 0] [4 7 12 7  4 0 7 12] [0 4 12 7  4 7 0 4] [7 12 4 0  7 4 12 7]>")
-  .scale("<Bb5:major F6:mixolydian G6:minor Eb6:lydian Bb5:major F6:mixolydian G6:minor Eb6:lydian Eb6:lydian G6:minor F6:mixolydian Bb5:major G6:minor F6:mixolydian Eb6:lydian D6:phrygian>")
-  .s("ld:sw").gain(0.12).cut(1)
+$: note("<[~ 0 ~ ~  ~ 4 ~ ~] [~ ~ 0 ~  ~ ~ 4 ~] [0 ~ ~ 4  ~ 0 ~ ~] [~ 4 ~ ~  0 ~ ~ 7] [~ 0 ~ 4  ~ ~ 0 ~] [4 ~ ~ ~  ~ 0 ~ 4] [~ ~ 0 ~  4 ~ ~ ~] [0 ~ 4 ~  ~ ~ 0 ~]>")
+  .scale("<Bb4:major F5:mixolydian G5:minor Eb5:lydian Bb4:major F5:mixolydian G5:minor Eb5:lydian Eb5:lydian G5:minor F5:mixolydian Bb4:major G5:minor F5:mixolydian Eb5:lydian D5:phrygian>")
+  .s("vc:ya").gain(0.14).cut(1)
 // chords
 $: note("<[[0,4,8] ~ ~ [0,4,8]  [0,4,8] ~ [0,4,8] ~] [[0,2,8] ~ [0,2,8] ~  ~ [0,4,8] ~ [0,4,8]] [[0,4,8] ~ ~ [0,4,8]  [0,2,8] ~ [0,2,8] ~] [[0,4,8] ~ [0,4,8] [0,4,8]  ~ [0,2,8] ~ ~]>")
   .scale("<Bb4:major F5:mixolydian G5:minor Eb5:lydian Bb4:major F5:mixolydian G5:minor Eb5:lydian Eb5:lydian G5:minor F5:mixolydian Bb4:major G5:minor F5:mixolydian Eb5:lydian D5:phrygian>")

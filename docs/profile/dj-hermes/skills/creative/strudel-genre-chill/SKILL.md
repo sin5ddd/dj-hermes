@@ -73,17 +73,18 @@ Pattern はグリッド・次数・スロットの見本。新規曲は下表か
 | arp | | `plk:hp`、`plk:kl` | `plk:dt` |
 | chords | `[0,2,4]` | `ep:rs`、`ep:mt` | シティポップ maj7 を既定に、`triangle` |
 | pad | | `pf:cl`、`pf:ln`、`dr:fg` を `<>`、`pf:ff`+`note("0")` | gabber、`dr:hr` |
+| vox | 任意 8 本目 `// vox`。疎、`.cut(1)` | `vc:na`、`vc:ra` at `C4:` | 16 分埋め、毎小節 `vc:yeah`、自前 WAV を invent |
 
 ## レシピ
 
-- トラックは 7 本: `// drums` `// bass` `// lead` `// hook` `// arp` `// chords` `// pad`（任意で perc）
+- トラックは 7 本: `// drums` `// bass` `// lead` `// hook` `// arp` `// chords` `// pad`（任意で perc または vox）
 - ドラムは 1 本の `$:`。キック／スネア／ハットに分けない。キックは間引き、ハットは `[~ hh]*4`
 - ピッチトラックは 4 小節 `.scale("<C4:minor C4:minor F4:dorian C4:minor>")`（PCM は C4、arp は C5）
 - PCM は `C4:`。フロアは `bs:hf` だけ（サブ同士を重ねない）
 - コードは 3 音まで。パッドは音色パレット（`pf:ff` なら `note("0")`）
 - メロ／コード／パッドに `triangle` / `sine` / `wt_organ` を使わない
 - メロは掛け合い。gain 0.12–0.18。プラックに `.cut(1)`
-- 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`）は毎小節撃たない。`plk:*` / `ep:*` / `perc:*` / `bs:*`、波形、`wt_*`、ライブ `.fm` も使える
+- 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`）は毎小節撃たない。`plk:*` / `ep:*` / `perc:*` / `bs:*` / `vc:*`、波形、`wt_*`、ライブ `.fm` も使える
 
 ## Pitfalls
 
@@ -98,6 +99,6 @@ Pattern はグリッド・次数・スロットの見本。新規曲は下表か
 
 ## Checklist
 
-- [ ] 7–8 本（drums / bass / lead / hook / arp / chords / pad。任意 perc）
+- [ ] 7–8 本（drums / bass / lead / hook / arp / chords / pad。任意 perc または vox）
 - [ ] 4 小節 `.scale("<…>")`。ドラムは 1 本。`.s()` は音色パレット
 - [ ] `dj_hermes_apply_song(content, deck)`。save は残す指示のときだけ

@@ -5,7 +5,7 @@ description: >-
   ([~ cp]*2), not a snare and not stacked with sd, plus the C-minor
   FM pluck at C4:minor as the hook. 7–8 $: tracks, 4-bar phrase.
   Not kick-front techno.
-version: 5.1.0
+version: 5.3.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -26,7 +26,7 @@ metadata:
 
 - The request is **house**: four-on-the-floor kick, **clap on 2 and 4**, offbeat hats, ~124 BPM.
 - You need the bundled house clap (`s("cp")` → `samples/cp/00.wav`) and/or the C3 FM pluck (`s("plk:lp")`) as the **hook**.
-- New apply / preset: **7 `$:` tracks** (one bass, no perc required). Do not ship a 2-track loop.
+- New apply / preset: **7–8 `$:` tracks** (one bass, no perc required). Bundled 01 includes `// vox`. Do not ship a 2-track loop.
 - You are **not** writing kick-front techno (`bd*4, [~ hh]*4` with no clap) — that is [strudel-genre-four-on-the-floor](../strudel-genre-four-on-the-floor/SKILL.md).
 - You are **not** stacking `sd` on the same 2/4 hits. You are **not** using `plk:s5` or `bs:rm` (next DnB skill). You are **not** adding `bs:su`.
 
@@ -56,9 +56,12 @@ $: note("[0,2,4] ~ [0,2,4] ~").scale("<C4:minor C4:minor G4:dorian C4:minor>")
 // pad
 $: note("0").scale("<C4:minor C4:minor G4:dorian C4:minor>")
   .s("pf:ff").gain(0.16).room(0.3).orbit(2)
+// vox
+$: note("~ 0 ~ ~  ~ 4 ~ ~").scale("<C4:minor C4:minor G4:dorian C4:minor>")
+  .s("vc:pa").gain(0.14).cut(1)
 ```
 
-This fence is the new target (7 tracks: one bass, so perc is not required). Do not “improve” the hook degrees `4 ~ 7 4  2 0 ~ -1` or the clap grid `[~ cp]*2`. Do not add `bs:su`.
+This fence is the new target (8 tracks: one bass, vox instead of perc). Do not “improve” the hook degrees `4 ~ 7 4  2 0 ~ -1` or the clap grid `[~ cp]*2`. Do not add `bs:su`.
 
 `songs/house/01.strudel` matches this fence (grid and hook degrees). New apply picks `.s()` from the palette below.
 
@@ -75,6 +78,7 @@ The Pattern fence is one example of grid, degrees, and slots. For a **new** appl
 | arp | | `plk:hd`, `plk:aj`, `plk:hb` | a 16s pad every bar |
 | chords | `[0,2,4]` | `ep:ky`, `ep:wr`, `plk:sm` | `triangle`; `pf:ff` as a triad |
 | pad | | `pf:ju`, `pf:mn`, `pf:cs`, `pf:fo`, `pf:ff`+`note("0")` | `dr:hr` / `wf`, `ps:mx` |
+| vox | optional 8th `// vox` (instead of perc). `.cut(1)` | `vc:pa`, `vc:ya`, `vc:na` at `C4:` | 16th wall, `vc:yeah` every bar, invent a vocal WAV |
 
 | Piece | Role |
 | --- | --- |
@@ -183,7 +187,7 @@ Do not add `[~ sd]*2`. Do not drop the clap onto the techno skill song. Do not a
 
 ## Checklist
 
-- [ ] `setcpm(124/4)` + **7 `$:`** (drums, bass, lead, hook, arp, chords, pad). 7 is OK; do not add perc or `bs:su` to make 8
+- [ ] `setcpm(124/4)` + **8 `$:`** bundled (drums, bass, lead, hook, arp, chords, pad, vox). New apply may stay 7. 8th is `// vox` (`vc:`), not perc and not `bs:su`
 - [ ] 4-bar phrase on pitched tracks (`.scale("<C4:minor C4:minor G4:dorian C4:minor>")` and octave variants)
 - [ ] Clap grid `[~ cp]*2`. Hook degrees `4 ~ 7 4  2 0 ~ -1`. Do not rewrite either
 - [ ] PCM pitched at `C4:`. One bass (no stacked sub). Chords max 3 notes. Pad from the palette (`pf:ff` uses `note("0")`)

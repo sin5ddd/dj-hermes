@@ -74,17 +74,18 @@ Pattern はグリッド・次数・スロットの見本。新規曲は下表か
 | chords | `[0,2,4]` | `ep:mt` | `triangle` |
 | pad | | `pf:cl`、`dr:th` を `<>`、`pf:ff`+`note("0")` | gabber、`ld:an` |
 | perc（任意） | | `fx:ck` を 4 小節に 1 | 毎小節のクラックル |
+| vox | perc の代わりの 8 本目。疎、`.cut(1)` | `vc:na` at `C4:`（`.lpf` 可） | 16 分 EDM チョップ、毎小節 `vc:yeah`、自前 WAV を invent |
 
 ## レシピ
 
-- トラックは 7 本: `// drums` `// bass` `// lead` `// hook` `// arp` `// chords` `// pad`（任意で perc）
+- トラックは 7 本: `// drums` `// bass` `// lead` `// hook` `// arp` `// chords` `// pad`（任意で perc **または** vox）
 - ドラムは 1 本の `$:`。キック／スネア／ハットに分けない。`bd:lf` + 遅いハット
 - ピッチトラックは 4 小節 `.scale("<C4:minor C4:minor F4:dorian C4:minor>")`（コード・パッドは C3、arp は C5）
 - PCM は `C4:`。シンセサブは `C2:`。フロアは `bs:su` だけ（`bs:hf` と重ねない）
 - フックは `ep:rs`（C3 録音 → native は C4 スケール）。リードは `plk:lf`
 - コードは 3 音まで。パッドは音色パレット（`pf:ff` なら `note("0")`）
 - メロ／コード／パッドに `triangle` / `sine` を使わない
-- 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`）は毎小節撃たない。`plk:*` / `ep:*` / `perc:*` / `bs:*`、波形、`wt_*`、ライブ `.fm` も使える
+- 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`）は毎小節撃たない。`plk:*` / `ep:*` / `perc:*` / `bs:*` / `vc:*`、波形、`wt_*`、ライブ `.fm` も使える
 
 ## Pitfalls
 
@@ -99,6 +100,6 @@ Pattern はグリッド・次数・スロットの見本。新規曲は下表か
 
 ## Checklist
 
-- [ ] 7–8 本（drums / bass / lead / hook / arp / chords / pad。任意 perc）
+- [ ] 7–8 本（drums / bass / lead / hook / arp / chords / pad。任意 perc または vox）
 - [ ] 4 小節 `.scale("<…>")`。ドラムは 1 本。`.s()` は音色パレット
 - [ ] `dj_hermes_apply_song(content, deck)`。save は残す指示のときだけ

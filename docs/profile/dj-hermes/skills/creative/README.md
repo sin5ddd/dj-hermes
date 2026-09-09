@@ -99,7 +99,7 @@ Genre in this repo is mostly **tempo + drum grid + register + filter**, not a hi
 | `.room` / `.delay` | Space (orbit-shared FX, ids 1–4 per deck) |
 | `.duckorbit` | Kick ducks **that orbit** (put pad **and** bass on it). `duckattack` is recover time |
 
-Bundled one-shots: `samples/bd`, `sd`, `hh`, `oh`, `cp` (`samples/cp/00.wav`), plus factory FM wavs as `part:slug` (`plk:lp`, `plk:s5`, `plk:s3`, `bs:rm`, `bs:hf`, `bs:su`, `bs:dk`, `pf:ff`, `ld:ss`, `fx:up` / `fx:nr` / `fx:id` / `fx:sd` — how to play each: [strudel-sound-design](./strudel-sound-design/SKILL.md) (Factory PCM batch 1) and [strudel-pcm-catalog](./strudel-pcm-catalog/SKILL.md)). Live 2-op FM is `.s("sine").fm(…)` — not those wavs. `db` is not a sample. Unknown names fail resolve (performance continues). `stack()`, `.cpm()`, and a bare `s("...")` line without `$:` are not song format.
+Bundled one-shots: `samples/bd`, `sd`, `hh`, `oh`, `cp` (`samples/cp/00.wav`), plus factory FM wavs as `part:slug` (`plk:lp`, `plk:s5`, `plk:s3`, `bs:rm`, `bs:hf`, `bs:su`, `bs:dk`, `pf:ff`, `ld:ss`, `fx:up` / `fx:nr` / `fx:id` / `fx:sd`, **`vc:pa` / `vc:na` / `vc:ra` / `vc:tu` / `vc:ya` / `vc:yeah`** — how to play each: [strudel-sound-design](./strudel-sound-design/SKILL.md) (Factory PCM batch 1) and [strudel-pcm-catalog](./strudel-pcm-catalog/SKILL.md)). Vocal chops (`vc:`) are allowed in every genre (slot/count: [strudel-composition](./strudel-composition/SKILL.md)). Live 2-op FM is `.s("sine").fm(…)` — not those wavs. `db` is not a sample. Unknown names fail resolve (performance continues). `stack()`, `.cpm()`, and a bare `s("...")` line without `$:` are not song format.
 
 ## DJ / mix
 
@@ -118,7 +118,7 @@ Cross-cutting:
 | [strudel-composition](./strudel-composition/SKILL.md) | 7–8 `$:` tracks, 4-bar phrases (Future Bass / Kawaii Future Bass: 9 tracks / 16-bar scale; Minimal: 14–16 tracks / 16-bar mute of non-rhythm), mini-notation | `songs/<genre>/01.strudel` |
 | [strudel-data-format](./strudel-data-format/SKILL.md) | `.strudel` save/load shape | — |
 | [strudel-sound-design](./strudel-sound-design/SKILL.md) | Synths, FX, live 2-op FM, factory PCM stems | — (inline recipes; apply via `dj_hermes_apply_song`) |
-| [strudel-pcm-catalog](./strudel-pcm-catalog/SKILL.md) | rust-fm-synthe `part:slug`（`bd:8b`, `hh:cl`）。意味は INDEX | — |
+| [strudel-pcm-catalog](./strudel-pcm-catalog/SKILL.md) | rust-fm-synthe `part:slug`（`bd:8b`, `hh:cl`, `vc:pa`）。意味は INDEX | — |
 | [strudel-minor-scale-loop](./strudel-minor-scale-loop/SKILL.md) | Short minor bass + triad | — (inline recipe; 124 clock pairs with house / four-on-the-floor) |
 | [strudel-mood-bright-dark](./strudel-mood-bright-dark/SKILL.md) | Brighter/darker (mode, voicing, register, sample, filter) — not a genre change | — (inline pair; apply via `dj_hermes_apply_song`) |
 | [strudel-live-edit](./strudel-live-edit/SKILL.md) | Natural language → one-track / one-method live edits | — |

@@ -74,6 +74,7 @@ Keep **square `C2` + `bs:rm` at `C4:` + hook `plk:s5` degrees `~ 4 ~ <7 4>`**. F
 | arp | | `plk:dt`, `plk:nn`, `perc:st` | a third Reese |
 | chords | `[0,4]` | `ep:mt`, `plk:sf` | a major third on the hollow stab |
 | pad | | `pf:fo`, `dr:rd` with `<>`, `pf:ff`+`note("0")` | music box, Rhodes |
+| vox | replace `// arp` (stay 8). do not touch hook `plk:s5`. `.cut(1)` | `vc:tu`, `vc:pa` at `C4:` | 9th track, rewriting 4/7, invent a vocal WAV |
 
 | Piece | Role |
 | --- | --- |

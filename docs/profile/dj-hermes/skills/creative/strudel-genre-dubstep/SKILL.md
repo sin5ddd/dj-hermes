@@ -77,6 +77,7 @@ wobble は **1 本**（`sawtooth`+`.lpf(sine.rangex(80, 600))` または `bs:wb`
 | arp | | `plk:dt` | オルゴール |
 | chords | `[0,4]` | `ep:mt`、`plk:sf` | `triangle`、maj7 |
 | pad | | `dr:rd` / `pf:fo` を `<>`、`pf:ff`+`note("0")` | `ps:mx`、`ep:rs` |
+| vox | 任意 8 本目、または arp 差し替え。`.cut(1)` | `vc:tu`、`s("<vc:yeah ~ ~ ~>")` at `C4:` | 16 分埋め、毎小節 `vc:yeah`、自前 WAV を invent |
 
 ## Why
 
@@ -103,7 +104,7 @@ wobble は **1 本**（`sawtooth`+`.lpf(sine.rangex(80, 600))` または `bs:wb`
 
 ## Checklist
 
-- [ ] 7 本（// drums // bass // lead // hook // arp // chords // pad）。bass-mid は置かない
+- [ ] 7 本（// drums // bass // lead // hook // arp // chords // pad）。bass-mid は置かない。任意 8 本目は `// vox`
 - [ ] 4 小節フレーズ（`.scale("<…>")` が 4 個）
 - [ ] ドラムは 1 本。ハーフタイム（`bd*4` ではない）
 - [ ] wobble は `.lpf(sine.rangex(...))` または `bs:wb`。サブは 1 本。lead は別の `.s()`

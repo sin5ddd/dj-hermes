@@ -6,7 +6,7 @@ description: >-
     kawaii bells, 16-bar loop, equal-weight <> children, hat rolls only
     at phrase ends. Not supersaw-anthem Future Bass, not four-on-the-floor,
     not hh*16 every 4 bars, not kick-only bass.
-version: 1.0.0
+version: 1.2.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -63,7 +63,7 @@ metadata:
 
 ## 進行（16 小節。Hermes は名前で書く）
 
-親キー C。次数は固定、`.scale("<…>")` の **16 子**が 1 コード／小節。pitched 全部で同じ 16 小節。PCM は `C4:` 帯。arp は C5。
+親キー C。次数は固定、`.scale("<…>")` の **16 子**が 1 コード／小節。pitched 全部で同じ 16 小節。PCM は `C4:` 帯。`vc:` の arp も C4（ガラス代用だけ C5）。
 
 4 小節ブロックを 4 つ並べる。**新規曲を 4 小節王道の繰り返しにしない。**
 
@@ -89,7 +89,7 @@ metadata:
 
 モードは C のダイアトニック（IV=lydian、V=mixolydian、iii=phrygian、vi=minor、I=major、vii=locrian）。`F4:major` にすると Bb が入る。
 
-既定 16 子（arp はオクターブ 5）:
+既定 16 子（`vc:` の arp も同じ C4 帯）:
 
 ```
 <F4:lydian G4:mixolydian E4:phrygian A4:minor F4:lydian G4:mixolydian E4:phrygian A4:minor A4:minor E4:phrygian G4:mixolydian F4:lydian C4:major B4:locrian A4:minor G4:mixolydian>
@@ -181,14 +181,14 @@ $: note(
     .s("plk:mx")
     .gain(0.18)
     .cut(1);
-// arp — glass pluck as vocal-chop stand-in; 8-bar
+// arp — catalog vocal chop at C4 (not a 10th track, not glass C5)
 $: note(
-    "<[0 4 ~ 7  4 ~ 9 4] [0 ~ 4 7  ~ 4 12 7] [4 0 7 ~  4 9 ~ 4] [0 7 4 0  ~ 4 7 12] [0 4 7 ~  9 4 ~ 7] [4 ~ 0 7  4 12 ~ 4] [0 4 ~ 9  7 4 0 4] [7 4 0 ~  4 7 12 4]>",
+    "<[~ 0 ~ ~  ~ ~ ~ ~] [0 ~ ~ ~  ~ 4 ~ ~] [~ ~ 0 ~  ~ ~ ~ ~] [~ 4 ~ ~  ~ ~ 0 ~] [0 ~ ~ ~  ~ ~ 4 ~] [~ ~ ~ 0  ~ ~ ~ ~] [~ 0 ~ 4  ~ ~ ~ ~] [4 ~ ~ ~  ~ 0 ~ ~]>",
 )
     .scale(
-        "<F5:lydian G5:mixolydian E5:phrygian A5:minor F5:lydian G5:mixolydian E5:phrygian A5:minor A5:minor E5:phrygian G5:mixolydian F5:lydian C5:major B5:locrian A5:minor G5:mixolydian>",
+        "<F4:lydian G4:mixolydian E4:phrygian A4:minor F4:lydian G4:mixolydian E4:phrygian A4:minor A4:minor E4:phrygian G4:mixolydian F4:lydian C4:major B4:locrian A4:minor G4:mixolydian>",
     )
-    .s("plk:fg")
+    .s("vc:ya")
     .gain(0.14)
     .cut(1);
 // chords — add9 [0,4,8] on a short sparkle, not a supersaw wall
@@ -246,10 +246,11 @@ $: note("<~ ~ 0 ~ ~ ~ 0 ~ 0 ~ ~ ~ ~ ~ 0 ~>")
 | bass     | 8 分ルート追い。`bs:ht` / `bs:8s`+`.cut(1)` at `C4:` | `bs:su`+`.cut(1)`                                   | `0 ~ 0 ~` を既定、サブ重ね、`bs:wb`、`bs:sw` を主役（ソーベースは future-bass） |
 | lead     | メロディックなリフレイン。子はウェイト 8             | `ld:mx`、`ld:gl`、`ld:cy`、`.s("square").lpf(3200)` | `ld:ss` / `ld:an` の壁、303、`ld:gr`、ウェイト 9 の `@`                         |
 | hook     | kawaii ベル                                          | `plk:mx`、`plk:ch`、`plk:bl`、`plk:mb`              | `ld:st` ソースタブ、wobble、`plk:dt`                                            |
-| arp      | ガラス／チョップ代用。8 子以上                       | `plk:fg`、`plk:fc`                                  | `ld:ap` 忙しいソー arp（future-bass 側）、ボーカル WAV を invent                |
+| arp      | ガラス、**またはカタログ `vc:` チョップ**。8 子以上   | `plk:fg`、`plk:fc`、`vc:ya` / `vc:na` / `vc:pa` at `C4:` + `.cut(1)` | `ld:ap` 忙しいソー arp（future-bass 側）、自前ボーカル WAV を invent            |
 | chords   | `[0,4,8]` add9。短いキラキラ                         | `[0,2,8]`、`plk:ch`、`plk:sm`                       | `[0,2,4]`、`[0,4,9]` を add9 と呼ぶ、`plk:ss` ソー壁                            |
 | pad      | **キラキラがこのジャンルの芯**                       | `ps:mx`、`ps:gb`、`pf:ga`、`pf:sp`                  | `dr:sl` 低いソー、gabber、毎小節撃つ、strings と同じオンオフ                    |
 | strings  | クワイア／広いキラキラ。pad とずらす                 | `ld:cr`、`pf:ca`、`pf:hl`、`pf:wm`                  | `dr:sl`、`ld:ss`、violin を invent、毎小節撃つ                                  |
+| vox      | arp 差し替え（**9 本のまま**）。`.cut(1)`             | `vc:ya`、`vc:na`、`vc:pa` at `C4:`                  | 10 本目、16 分埋め、毎小節 `vc:yeah`、自前 WAV を invent                        |
 
 ## Why
 
@@ -265,7 +266,7 @@ $: note("<~ ~ 0 ~ ~ ~ 0 ~ 0 ~ ~ ~ ~ ~ 0 ~>")
 
 **add9 `[0,4,8]`。** 0=根、4=5 度、8=9 度。`[0,4,9]` は 10 度。
 
-**ヴォーカルチョップ。** 歌サンプルは無い。短い `plk:fg` を arp に置く。
+**ヴォーカルチョップ。** カタログ `vc:ya` / `vc:na` / `vc:pa` を arp に置いてよい（録音 C4、**scale も `C4:`**、`.cut(1)`）。ガラス arp の `C5:` に上げない。ガラス `plk:fg` は代用のまま残してよい。自前の歌 WAV は invent しない。10 本目の `// vox` は足さない。
 
 **duck。** キックが orbit 2 を潰す。lead / hook はドライ。ハットに `duckorbit` 禁止。
 
@@ -297,6 +298,7 @@ PCM は `C4:`。
 | ストリングスを空気に         | strings を `pf:ca` / `pf:hl`                                  |
 | リード動機                   | lift / fall / skip / hold（ウェイト 8）                       |
 | スーパーソーのフェスにしたい | この Skill を使わない。**strudel-genre-future-bass**          |
+| カタログチョップ             | arp を `vc:ya` + `.cut(1)` + **`C4:`**（10 本目は足さない）   |
 
 ## Pitfalls
 
@@ -318,6 +320,7 @@ PCM は `C4:`。
 16. lead `[4@2 7 9@2  7 4 2 0]`（ウェイト 9）
 17. `[0,4,9]` を add9 と呼ぶ
 18. Future Bass のアンセム進行を「王道」として書く
+19. `vc:` を arp の `C5:` に上げる、または 10 本目の `// vox` を足す
 
 ## Checklist
 
@@ -329,5 +332,5 @@ PCM は `C4:`。
 - [ ] lead がリフレイン。**各 `<>` 子のウェイトが 8**。スーパーソーの壁ではない
 - [ ] chords `[0,4,8]`。pad はキラキラ。hook はベル
 - [ ] ベース PCM は `C4:`、orbit 2、1 本。ハットに duckorbit なし
-- [ ] `.s()` は音色パレット（ベル／ガラス／キラキラパッド）
+- [ ] `.s()` は音色パレット（ベル／ガラス／キラキラパッド。チョップはカタログ `vc:`、自前 WAV は invent しない）
 - [ ] `dj_hermes_apply_song(content, deck)`（save は残す指示のときだけ）

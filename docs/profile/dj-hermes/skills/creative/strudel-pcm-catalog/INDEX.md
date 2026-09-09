@@ -147,8 +147,8 @@ dj-hermes の呼び出しは `s("<part>:<slug>")`。音程楽器は `note(...).s
 | `fx:dl` | yes | `fx-downlifter` | fx-downlifter | ダウンリフター。トーンが落ちてフィルタが閉じる。 | 72 | 1.8 |
 | `fx:dn` | yes | `fx-downlifter-noise` | fx-downlifter-noise | ノイズのダウンリフター。砂が落ちて閉じる。 | 60 | 2.0 |
 | `fx:fl` | yes | `fx-fall` | fx-fall | 急なフォール。レーザー寄りの落下。短め。 | 67 | 1.2 |
-| `fx:fa` | yes | `fx-formant-ah` | fx-formant-ah | アー母音のFXヒット。リードではなくワンショットの声。 | 60 | 0.7 |
-| `fx:fo` | yes | `fx-formant-oh` | fx-formant-oh | オー母音のFXヒット。低いフォルマント。 | 55 | 0.75 |
+| `fx:fa` | yes | `fx-formant-ah` | fx-formant-ah | アー母音のFXヒット。フォルマント合成 + 5度コーラス。リードではない。 | 60 | 0.7 |
+| `fx:fo` | yes | `fx-formant-oh` | fx-formant-oh | オー母音のFXヒット。フォルマント合成（低いF1/F2）+ 5度コーラス。 | 55 | 0.75 |
 | `fx:fc` | yes | `fx-frenchcore-ns` | fx-frenchcore-ns | フレンチコアのノイズスネアFX。スネアバンクではなくトランジション用の割れ。 | 67 | 0.5 |
 | `fx:gb` | yes | `fx-gabber-stab` | fx-gabber-stab | ガバのスタブFX。リードではなく短い歪みヒット。 | 55 | 0.38 |
 | `fx:gs` | yes | `fx-glass-smash` | fx-glass-smash | ガラス破砕。高整数比とインハーモニックの短いスマッシュ。 | 84 | 0.7 |
@@ -456,7 +456,7 @@ dj-hermes の呼び出しは `s("<part>:<slug>")`。音程楽器は `note(...).s
 
 ## `vc`
 
-C4 のフォルマント合成ワンショット（約 3.2 秒）。EDM ボーカルチョップ用。リズムは bare `s("vc:pa")`（録音ピッチのまま）。移調は `note("0").scale("C4:minor").s("vc:pa")`。16 分連打は `.cut(1)` か `begin`/`end`。コーラスに 5 度が乗っている（`vc:yeah` はオク下も）。
+C4 のフォルマント合成ワンショット（約 3.2 秒）。どのジャンルでも使えるボーカルチョップ。リズムは bare `s("vc:pa")`（録音ピッチのまま）。移調は `note("0").scale("C4:minor").s("vc:pa")`。録音が C4 なので `C4:` が native C4。16 分連打は `.cut(1)` か `begin`/`end`。コーラスに 5 度が乗っている（`vc:yeah` はオク下も）。スロットと本数は strudel-composition。
 
 | call | in_bank | id | name | description | note | dur |
 | --- | --- | --- | --- | --- | --- | --- |

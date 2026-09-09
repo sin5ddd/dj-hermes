@@ -3,7 +3,7 @@ name: strudel-sound-design
 description: >-
   Use when designing synths, samples, banks, or effects for dj-hermes
   (live 2-op FM, factory PCM stems, not full Strudel REPL).
-version: 4.2.0
+version: 4.3.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -203,6 +203,7 @@ $: s("fx-riser_short01")
 | **Lead** | `lead-*` フル名 | `ld:ss` / `plk:*` at `C4:`。`triangle` にしない |
 | **Piano / EP** | `piano-acoustic_*` / `piano-electric_*` フル名 + `note`+`.scale` | `ep:rs` / `ep:ky` / `ep:mt` at `C4:` |
 | **FX** | `fx-*` / `atmo-*` フル名 | `white`/`pink` + 短 ADSR + hpf |
+| **Vocal chop** | カタログ `vc:*`（`C4:` + `.cut(1)`） | 無い。自前 WAV を invent しない。波形で代用しない |
 | **Drums** | 短い part + `.bank("…")` | `bd` `sd` `hh` `oh` `cp` |
 
 ドラムは **1 本の `s(...)` に統合**（スペース=順、カンマ=同時）。詳細は strudel-composition。
@@ -625,7 +626,7 @@ $: note("0 0 3 0").scale("C2:minor")
 
 ## PCM one-shots (not live FM)
 
-Pluck, bell, and metal-hit were dropped from live 2-op. Trigger the factory / kit wavs. `SAMPLE_ROOT_HZ` is **261.63 Hz (C4)** (the comment in `sample.rs` says C3). Bundled FM wavs are **C3** recordings — write **`C4:…`**.
+Pluck, bell, and metal-hit were dropped from live 2-op. Trigger the factory / kit wavs. `SAMPLE_ROOT_HZ` is **261.63 Hz (C4)** (the comment in `sample.rs` says C3). Bundled FM wavs are **C3** recordings — write **`C4:…`**. Vocal chops `vc:` are recorded **C4**; `C4:…` is still native (you hear C4).
 
 This demo does **not** stack those one-shots on the growl (mids fill up). Keep them PCM when you need them elsewhere.
 
@@ -637,6 +638,7 @@ This demo does **not** stack those one-shots on the growl (mids fill up). Keep t
 | Hollow fifth | `plk:s5` | Transposes C–G (no third). Sparse degrees, low gain. Dark-side stab if you must — **prefer none** on this mix | Inventing a third; `stab-fm-fifth` |
 | Major stab | `plk:s3` | Already a **C–E–G** triad wav: `note("0 ~ 0 ~").s("plk:s3")` | On this **minor** demo (E vs Eb); `note("[0,2,4]")` **triples** it |
 | EP one-shot | `ep:ky` | PCM tine (#37). Not the live lead | Using it as the evolving lead; live EP recipe |
+| Vocal chop | `vc:pa` / `vc:na` / `vc:ra` / `vc:tu` / `vc:ya` / `vc:yeah` | Recorded **C4**. `note("0").scale("C4:minor")` is native C4. Always `.cut(1)` on grid chops. Any genre (slot/count: strudel-composition) | Invent a vocal WAV; 16ths without `.cut(1)`; `vc:yeah` every bar |
 
 `expand_chord("c3'maj")` is not called by the deck. `note("c3'maj")` is the **root only**.
 
@@ -881,6 +883,28 @@ $: s("<fx:sd ~ ~ ~>").gain(0.35)
 not a bass note. Wrong keys (`fx-riser-noise`, `fx_uplifter`) fail resolve;
 the current performance continues.
 
+### `vc:` — vocal chops, recorded C4 (~3.2 s)
+
+Keys: `vc:pa` / `vc:na` / `vc:ra` / `vc:tu` / `vc:ya` / `vc:yeah`
+(`samples/vc/<slug>.wav`). Factory formant one-shots. **Every genre** may
+use them (slot and track count: **strudel-composition**). Do not invent a
+vocal WAV.
+
+Unlike batch-1 plucks (C3 recordings), these files are **C4** (INDEX
+`note` 60). `.scale("C4:…")` on degree 0 is still ratio 1.0, so you hear
+**native C4**. Writing `C3:…` dumps them an octave. Electro's pitched
+`C2:` rule does **not** apply to `vc:`.
+
+```
+setcpm(124/4)
+$: note("0 ~ 4 ~").scale("C4:minor").s("vc:pa").gain(0.14).cut(1)
+$: s("<vc:yeah ~ ~ ~>").gain(0.16).cut(1)
+```
+
+The wav is ~3.2 s. Grid chops need `.cut(1)` (or `.begin` / `.end`).
+`vc:yeah` is a drop shout — not every bar. Bare `s("vc:pa")` plays the
+recording unpitched.
+
 ## Why C4 vs recorded C2 / C3
 
 The engine does not know the recording key. It always divides by **C4**.
@@ -893,6 +917,10 @@ ratio drops to 0.5 or 0.25 and the floor disappears an octave (or two).
 A C3 pad / Reese / supersaw works the same way: `C4:…` = native C3.
 `C3:…` dumps them into the bass register. That is why `plk:lp` and
 `bs:rm` already use `C4:minor` — same constant, same rule.
+
+A C4 vocal chop (`vc:`) is recorded at C4. `C4:…` is native **C4** (heard
+C4, not the C3 of a pluck). Electro still writes other pitched parts at
+`C2:` / `C3:`; `vc:` stays `C4:`.
 
 ## Why FX have no `note()`
 
@@ -952,6 +980,8 @@ Old flat stems at `samples/<stem>.wav` are gone.
 | `samples/fx/id.wav` | `fx:id` | `fx-impact_dnb` / `fx-impact-dnb` |
 | `samples/fx/sd.wav` | `fx:sd` | `fx-sub_drop` / `fx-sub-drop` |
 | `samples/fx/up.wav` | `fx:up` | `fx-uplifter` / `fx_uplifter` |
+| `samples/vc/pa.wav` | `vc:pa` | `vl-pa` / `vocal-pa` |
+| `samples/vc/yeah.wav` | `vc:yeah` | `vl-yeah` / `vc:ye` |
 
 No `.bank(...)` on these names. This batch did not add a `bd/` kit. User extras
 may still use a full stem (`pad-ambient_drone01`).
@@ -1034,6 +1064,7 @@ Live TUI: apply the inline recipes with `dj_hermes_apply_song`.
 - Rewrite `bs:rm` / `plk:lp` / live 2-op recipes to these stems.
 - Add a `bd/` bank or a third-party drum kit from this batch.
 - Write old flats (`bass-fm_house`, `pad-fm_fifth`, `reese-dark`, `fx-uplifter`) or hyphen swaps (`bass-fm-house`, `pad-fm-fifth`, `reese_dark`, `fx-riser-noise`).
+- Invent a vocal WAV, or fire `vc:` 16ths without `.cut(1)`, or put `vc:` at `C2:` (Electro).
 - Put `.compressor` on a `$:` in this recipe (per-voice insert; omit here).
 - Pair these 124 files with 174 DnB or 126 techno (shared clock).
 - `stack()` / `.cpm(124)`.

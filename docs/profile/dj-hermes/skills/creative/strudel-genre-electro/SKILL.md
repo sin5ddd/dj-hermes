@@ -23,7 +23,7 @@ metadata:
 
 機械的なキックとスネア、短い square ベース、太いスーパーソーのフック。この Skill のテンポは **126 BPM**（目安 120–130）。ハウスのクラップ先行でも、休符だらけのミニマルでもない。
 
-帯域は他ジャンルの PCM `C4:` より **だいたい 2 オクターブ下**。ベースは `C2:` が床。lead / hook / chords / pad も `C2:`。arp は `C3:`。PCM も `C4:` に戻さない（native C4 を 2 オクターブ下げて鳴らす）。
+帯域は他ジャンルの PCM `C4:` より **だいたい 2 オクターブ下**。ベースは `C2:` が床。lead / hook / chords / pad も `C2:`。arp は `C3:`。PCM も `C4:` に戻さない（native C4 を 2 オクターブ下げて鳴らす）。**例外: ボーカルチョップ `vc:` だけは `C4:`**（録音が C4。C2 に落とすと声が床になる）。
 
 ## When
 
@@ -80,6 +80,7 @@ Pattern はグリッド・次数・スロットの見本。新規曲は下表か
 | arp | `C3:` | `plk:cv`、`perc:zp` | ナイロン `plk:ny`、`C5:` |
 | chords | `C2:` | `plk:sf`、`plk:s5`、`plk:sp` を `<>` | `ep:rs`、`triangle`、`C4:` |
 | pad | `C2:` | `pf:pu`、`ld:hf` を `<>`、`pf:ff`+`note("0")` | `pf:al`、オルゴール、Rhodes、`C4:` |
+| vox | **`C4:` のみ**（他 pitched の C2 ルール対象外）。任意 8 本目。`.cut(1)` | `vc:tu`、`vc:pa` | `C2:` / `C3:` に落とす、`C5:`、16 分埋め、自前 WAV を invent |
 
 ## Why
 
@@ -92,7 +93,7 @@ Pattern はグリッド・次数・スロットの見本。新規曲は下表か
 1. キック / スネア / ハットはカンマで 1 本
 2. ベースは短い square（シンセサブ）**または** `bs:dq` 1 つ。どちらも **`C2:`**。ADSR を短くする
 3. フックはスーパーソー（`ld:ss` / `ld:st` / `ld:us`）。長い `ld:` は `.cut(1)`
-4. ピッチトラックは 4 小節 `.scale`。オクターブは **bass/lead/hook/chords/pad = C2、arp = C3**（他ジャンルの C4/C5 から 2 オクターブ下）
+4. ピッチトラックは 4 小節 `.scale`。オクターブは **bass/lead/hook/chords/pad = C2、arp = C3**（他ジャンルの C4/C5 から 2 オクターブ下）。**`vc:` だけ `C4:`**
 5. ハットは乾いたまま（長い room をドラムに載せない）
 
 鳴らすのは `dj_hermes_apply_song(content, deck)`（次小節、無書き込み）。`dj_hermes_save_song` は残す指示のときだけ（演奏は変えない）。
@@ -103,6 +104,7 @@ Pattern はグリッド・次数・スロットの見本。新規曲は下表か
 | --- | --- |
 | フックを zap に | `ld:ss` を `ld:zp`（既定にはしない。帯域は `C2:` のまま） |
 | ハットを細かく | `hh*8` を `hh*16` |
+| チョップ | 8 本目 `// vox` を **`C4:`**（他 pitched は C2/C3 のまま） |
 
 ## Pitfalls
 
@@ -112,15 +114,15 @@ Pattern はグリッド・次数・スロットの見本。新規曲は下表か
 4. アンビエント寄りの長い release
 5. square サブの上に `bs:su` を重ねる
 6. フックを `ld:zp` や `square`+`penv` の既定にする。lead と hook の両方を `ld:ss` にする
-7. pitched を `C4:` / `C5:` に書く（他ジャンルの PCM native ルールをそのまま使う）。ベースを `C0:` にする
+7. pitched を `C4:` / `C5:` に書く（他ジャンルの PCM native ルールをそのまま使う）。ベースを `C0:` にする。**`vc:` を `C2:` に落とす**
 
 ## Checklist
 
-- [ ] 7 本（// drums // bass // lead // hook // arp // chords // pad）
+- [ ] 7 本（// drums // bass // lead // hook // arp // chords // pad）。任意 8 本目は `// vox`（`C4:`）
 - [ ] 4 小節フレーズ（`.scale("<…>")` が 4 個）
 - [ ] ドラムは 1 本のカンマ層
 - [ ] 機械的な 4 つ打ち + 2/4 スネア（クラップ先行にしない）
 - [ ] フックはスーパーソー（`ld:ss` / `ld:st` / `ld:us`）。lead と重ねない
-- [ ] 帯域は bass/lead/hook/chords/pad `C2:`、arp `C3:`（PCM も `C4:` に上げない）
+- [ ] 帯域は bass/lead/hook/chords/pad `C2:`、arp `C3:`（PCM も `C4:` に上げない）。`vc:` だけ `C4:`
 - [ ] `.s()` は音色パレット
 - [ ] `dj_hermes_apply_song(content, deck)`（save は残す指示のときだけ）

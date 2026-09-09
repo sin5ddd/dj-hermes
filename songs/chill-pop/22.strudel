@@ -21,3 +21,6 @@ $: note("[0,2,6] ~ [0,2,6] ~").scale("<E4:dorian A4:mixolydian D4:major B4:minor
 // pad
 $: note("<0 ~ ~ ~>").scale("<E4:dorian A4:mixolydian D4:major B4:minor>")
   .s("pf:ln").cut(1).gain(0.14).room(0.3).orbit(2)
+// vox
+$: note("~ 0 ~ ~  ~ ~ ~ ~").scale("<E4:dorian A4:mixolydian D4:major B4:minor>")
+  .s("vc:na").gain(0.12).cut(1)

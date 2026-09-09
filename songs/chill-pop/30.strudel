@@ -21,3 +21,6 @@ $: note("[0,2,6] ~ [0,2,6] ~").scale("<C#5:dorian F#5:mixolydian B4:major Ab5:mi
 // pad
 $: note("0").scale("<C#5:dorian F#5:mixolydian B4:major Ab5:minor>")
   .s("pf:ff").gain(0.14).room(0.3).orbit(2)
+// vox
+$: note("~ 0 ~ ~  ~ ~ ~ ~").scale("<C#5:dorian F#5:mixolydian B4:major Ab5:minor>")
+  .s("vc:ya").gain(0.12).cut(1)

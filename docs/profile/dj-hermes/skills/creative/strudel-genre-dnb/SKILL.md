@@ -77,6 +77,7 @@ The Pattern fence is one example of grid, degrees, and slots. Keep the **Reese s
 | arp | sparse perc | `perc:st`, `perc:tm` | a third mid oscillator |
 | chords | `[0,4]` | `plk:s5`, `ep:mt` | `triangle`, maj7 city-pop |
 | pad | | `pf:fo`, `dr:rd` with `<>`, `pf:ff`+`note("0")` | music box, Rhodes, `ps:mx` |
+| vox | replace `// arp` (stay 8). amen gaps, `.cut(1)` | `vc:tu`, `vc:pa` at `C4:` | 9th track, 16th wall, invent a vocal WAV |
 
 Keep drums on **one** `$:` (comma layers). Do not use `stack()`.
 

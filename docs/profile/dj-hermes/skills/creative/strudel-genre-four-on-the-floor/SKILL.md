@@ -101,6 +101,7 @@ The Pattern fence is one example of grid, degrees, and slots. For a **new** appl
 | arp | | `plk:ac`, `plk:pk`, `perc:st` | 16s pad every bar |
 | chords | `[0,2,4]` | `ep:ky`, `plk:sf` | `triangle`; `ep:rs` |
 | pad | | `pf:pu`, `pf:cs`, `pf:or`, `pf:ff`+`note("0")` | `dr:hr`, music box, Rhodes |
+| vox | optional 8th `// vox` or arp swap. `.cut(1)` | `vc:tu`, `vc:na` at `C4:` | 16th wall, `vc:yeah` shout every bar, invent a vocal WAV |
 
 Bass is a synth sub at **C2** (`sawtooth` + `lpf(400)`), or a palette PCM bass at **C4:**. Do not stack another sub (`bs:su` / `bs:hf` / `bs:dk` / a second `square`+low lpf). PCM lead/hook/arp/chords/pad stay at **C4/C5**. Chords max 3 notes. Pad from the palette (`pf:ff` uses `note("0")`). Lead / hook / arp rest on different slots.
 

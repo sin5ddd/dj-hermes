@@ -99,6 +99,9 @@ $: note("[0,2,4] ~ [0,2,4] ~").scale("<C4:minor C4:minor G4:dorian C4:minor>")
 // pad
 $: note("0").scale("<C4:minor C4:minor G4:dorian C4:minor>")
   .s("pf:ff").gain(0.16).room(0.3).orbit(2)
+// vox
+$: note("~ 0 ~ ~  ~ 4 ~ ~").scale("<C4:minor C4:minor G4:dorian C4:minor>")
+  .s("vc:pa").gain(0.14).cut(1)
 '''
 
 FENCES["four-on-the-floor"] = r'''// @title sine-pulse
@@ -272,6 +275,9 @@ $: note("[0,2,6] ~ [0,2,6] ~").scale("<F4:lydian E4:phrygian D4:dorian C4:major>
 // pad
 $: note("0").scale("<F4:lydian E4:phrygian D4:dorian C4:major>")
   .s("pf:ff").gain(0.14).room(0.3).orbit(2)
+// vox
+$: note("~ 0 ~ ~  ~ ~ ~ ~").scale("<F4:lydian E4:phrygian D4:dorian C4:major>")
+  .s("vc:na").gain(0.12).cut(1)
 '''
 
 FENCES["chill"] = r'''// @title chill-01
@@ -496,6 +502,7 @@ PALETTES: dict[str, dict[str, list]] = {
         "arp": ["plk:aj", "plk:hb", "plk:hd"],
         "chords": ["ep:wr", "plk:sm", "ep:ky"],
         "pad": ["pf:ju", "pf:mn", "pf:cs", "pf:fo", "pf:ff"],
+        "vox": ["vc:pa", "vc:ya", "vc:na"],
     },
     "four-on-the-floor": {
         "drums": [
@@ -582,6 +589,7 @@ PALETTES: dict[str, dict[str, list]] = {
         "arp": ["plk:hp", "plk:kt", "plk:ny"],
         "chords": ["ep:ky", "plk:ep", "ep:mt"],
         "pad": ["pf:iv", "pf:ln", "pf:cl", "pf:wa", "pf:ff"],
+        "vox": ["vc:na", "vc:pa", "vc:ya"],
     },
     "chill": {
         "drums": [
@@ -740,7 +748,7 @@ PCM_MIN_OCT = {
 WAVEFORMS = {"sawtooth", "square", "sine", "triangle", "wt_organ", "wt_bright", "wt_sine"}
 KIT_ATOMS = {"bd", "sd", "hh", "oh", "cp"}
 LONG_PLK = {"plk:fp", "plk:sp"}
-PCM_PARTS = {"plk", "ep", "ld", "pf", "ps", "dr", "bs", "perc", "tom"}
+PCM_PARTS = {"plk", "ep", "ld", "pf", "ps", "dr", "bs", "perc", "tom", "vc"}
 STRIP_SYNTH = [
     "fmatt",
     "fmdec",
@@ -774,10 +782,11 @@ PITCHED_SLOTS = {
     "perc",
     "tom",
     "metal",
+    "vox",
 }
 TRACK_HEADER = re.compile(r"^// ([a-z][a-z0-9-]*)\n", re.M)
 DOT_S = re.compile(r'\.s\("([^"]+)"\)')
-INDEX_CALL = re.compile(r"`([a-z]{2,4}:[a-z0-9]{1,3})`")
+INDEX_CALL = re.compile(r"`([a-z]{2,4}:[a-z0-9]{1,4})`")
 
 _INDEX_KEYS: set[str] | None = None
 
@@ -1065,7 +1074,7 @@ def apply_pitched_sound(
         if new == "square" and ".lpf(" not in chunk:
             chunk = inject_after_s(chunk, ".lpf(3200)")
     if slot != "chords" and (
-        is_long(new) or new.startswith(("plk:", "ld:"))
+        is_long(new) or new.startswith(("plk:", "ld:", "vc:"))
     ):
         chunk = ensure_cut1(chunk)
     if slot in {"pad", "chords", "strings"}:
@@ -1334,7 +1343,7 @@ def validate(path: Path, text: str) -> None:
     if re.search(r"\bdb\b", text):
         raise SystemExit(f"{path}: sample db is silent")
     keys = index_keys()
-    slug_re = re.compile(r"([a-z]{2,4}:[a-z0-9]{1,3})")
+    slug_re = re.compile(r"([a-z]{2,4}:[a-z0-9]{1,4})")
     for sound in DOT_S.findall(text):
         if sound in WAVEFORMS or sound in KIT_ATOMS:
             continue
@@ -1360,6 +1369,10 @@ def validate(path: Path, text: str) -> None:
         return chunk
 
     map_tracks(text, collect)
+    if genre in {"house", "chill-pop", "future-bass", "kawaii-future-bass"}:
+        if "vc:" not in text:
+            raise SystemExit(f"{path}: expected catalog vc: chop")
+        validate_vc(path, text)
     if path.parent.name in {"future-bass", "kawaii-future-bass"}:
         validate_half_time(path, text)
     if path.parent.name == "minimal":
@@ -1396,7 +1409,7 @@ def validate_minimal(path: Path, text: str) -> None:
     if "hh*16" in text or "hh*8" in text or "[~ cp]*2" in text:
         raise SystemExit(f"{path}: forbidden hat/clap grid")
     keys = index_keys()
-    for slug in re.findall(r"([a-z]{2,4}:[a-z0-9]{1,3})", text):
+    for slug in re.findall(r"([a-z]{2,4}:[a-z0-9]{1,4})", text):
         if slug not in keys:
             raise SystemExit(f"{path}: unknown slug {slug}")
 
@@ -1459,6 +1472,31 @@ def apply_minimal_post(text: str, n: int) -> str:
         return chunk
 
     return map_tracks(text, on_track)
+
+
+def validate_vc(path: Path, text: str) -> None:
+    octs: dict[str, tuple[list[int], bool]] = {}
+
+    def check(name: str, chunk: str) -> str:
+        sound = dot_s(chunk) or ""
+        is_vc = "vc:" in sound or "vc:" in chunk
+        found = [int(m.group(2)) for m in SCALE_TOKEN.finditer(chunk)]
+        octs[name] = (found, is_vc)
+        if is_vc and ".cut(" not in chunk:
+            raise SystemExit(f"{path}: vc: on {name} needs .cut(1)")
+        return chunk
+
+    map_tracks(text, check)
+    bass_octs = octs.get("bass", ([], False))[0]
+    if not bass_octs:
+        return
+    for name, (found, is_vc) in octs.items():
+        if not is_vc or not found:
+            continue
+        if found != bass_octs:
+            raise SystemExit(
+                f"{path}: vc: on {name} scale octaves {found} != bass {bass_octs}"
+            )
 
 
 def validate_half_time(path: Path, text: str) -> None:

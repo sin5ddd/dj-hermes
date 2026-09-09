@@ -101,6 +101,6 @@ $: s("<~ ~ ~ perc:cm>").gain(0.18)
 
 - [ ] `setcpm` がある  
 - [ ] 各トラックが `$:` で始まる  
-- [ ] 7–8 本（drums / bass 1–2 / lead / hook / arp / chords / pad）。ジャンル例外は composition  
+- [ ] 7–8 本（drums / bass 1–2 / lead / hook / arp / chords / pad。8 本目は perc または **vox**）。ジャンル例外は composition  
 - [ ] 4 小節フレーズ。ドラムは統合記法  
 - [ ] `dj_hermes_apply_song(content, deck)` を実行した。save は「残して」と言われたときだけ

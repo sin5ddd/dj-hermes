@@ -1,7 +1,7 @@
 ---
 name: strudel-live-edit
 description: "Use when editing a playing dj-hermes song from natural language: add melody, drum fill, modulate/transpose, brighter/darker."
-version: 1.3.0
+version: 1.4.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -52,6 +52,7 @@ dj_hermes_edit_method(deck="A", track="hat", op="remove", method="gain")
 | 言い方の例 | 対象 | 操作の要約 |
 | --- | --- | --- |
 | メロディ足して / lead 欲しい | 空いている `// lead` / `// hook` / `// arp`。既に 3 本あるときは 1 本を差し替え。**ミニマルは次数を増やさず `// synth` / `// pluck` をオン** | 次数 + `.scale` + `@` で長め音。新規全文は composition / ジャンル Skill |
+| ボーカル / チョップ足して | **`// vox`**（カタログ `vc:`）。7 本床なら perc の代わりに append。8 本上限・Future Bass / Kawaii は **arp を `vc:` に差し替え**。ミニマルは texture 差し替えか 15–16 本目 | `vc:pa` 等 + `.cut(1)` + `C4:`。自前 WAV を invent しない。→ **strudel-composition** ボーカルチョップ |
 | フィル入れて / ブレイク | `// drums` の `s(...)` | `<>` でフィル層 / `*` / `.ply(n)`。Mixer のディレイ/スイッチは **strudel-dj-mix** |
 | 転調 / キー上げ下げ | 全 `.scale` の **ルート** | ルート変更 or `.scale("<…>")` 進行（pitched 全部で揃える） |
 | 移調 / 半音上げ / 度数上げ | pitched の `$:` | **`.add(n)` / `.sub(n)`**（次数 or 半音） |

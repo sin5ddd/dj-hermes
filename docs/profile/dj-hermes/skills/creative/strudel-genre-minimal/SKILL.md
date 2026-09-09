@@ -60,8 +60,9 @@ metadata:
 | 14 | `// drone` | ミュート | 長い `dr:`。撃つ小節は少ない |
 | 15 | `// texture` | ミュート | ノイズ／エアのワンショット |
 | 16 | `// fx` | ミュート | ダークな FX ワンショット |
+| — | `// vox` | ミュート | 任意。ボーカルチョップ（`vc:`）。`// texture` 差し替え、または 15–16 本目 |
 
-14 本にするときは `// clap` と `// texture` を落とす。13 本以下にしない。キック・ohh・bass を 1 本の `// drums` に戻さない。
+14 本にするときは `// clap` と `// texture` を落とす。13 本以下にしない。キック・ohh・bass を 1 本の `// drums` に戻さない。`// vox` を足すときは texture を落とすか、14 本の clap を残して 15 本にする（上限 16）。
 
 ## ミュートマップ（16 小節）
 
@@ -83,6 +84,7 @@ metadata:
 | drone | off | 5 だけ | 9 だけ | off |
 | texture | off | 7 だけ | 11 だけ | off |
 | fx | 4 ラジオ | 7 暗いリバースシンバル | 9 クラング | 13 サブドロップ、16 スイープ |
+| vox（任意） | off | 6 または 8 | 10 | off |
 
 ターン（13–14）は **キック + OHH + ベースだけ**。そこへ CHH やシンセを残さない。`dj_hermes_mute` はライブ用。曲のフォームにはしない。
 
@@ -189,6 +191,7 @@ Pattern はグリッド・次数・ミュートの見本。スロットごとに
 | drone | 金属／ホラー床。5 と 9 | `dr:mb`、`dr:hr`、`dr:md`、`dr:id` | `dr:sl` ソー壁、毎小節 |
 | texture | 短い砂／エア | `fx:ha`、`fx:nh`、`fx:ck`、`fx:wd` | ライザーを毎 4 小節 |
 | fx | 16 子のダークワンショット（`note()` なし） | `fx:rd`、`fx:rk`、`fx:ry`、`fx:rl`、`fx:cg`、`fx:mc`、`fx:sd`、`fx:sw`、`fx:dn`、`fx:nb`、`fx:wh` | `fx:gb`、`fx:fc`、`fx:up`、`fx:rb`、`fx:rs`、毎小節、ライザーに `note()` |
+| vox | ミュート対象。疎、`.cut(1)` | `vc:tu`、`vc:na` at `C4:` | 16 分埋め、`vc:yeah` アンセム、キック / ohh / bass を落とす、自前 WAV を invent |
 
 ## Why
 
@@ -226,6 +229,7 @@ PCM ベースは `C4:`（native）。シンセサブは `C2:`。どちらも `.l
 | ラジオをノイズに | 4 小節目を `fx:nh` / `fx:ck` |
 | リバースを長く | 7 小節目を `fx:rl`（3.8 秒。8 小節は休符） |
 | 14 本 | `// clap` と `// texture` を置かない |
+| チョップ | `// texture` を `// vox`（`vc:tu`）に差し替え。16 子ミュート。キック / ohh / bass は常時 |
 
 ## Pitfalls
 
