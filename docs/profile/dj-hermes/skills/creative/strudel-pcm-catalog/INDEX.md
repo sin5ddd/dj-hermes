@@ -350,36 +350,36 @@ dj-hermes の呼び出しは `s("<part>:<slug>")`。音程楽器は `note(...).s
 
 | call | in_bank | id | name | description | note | dur |
 | --- | --- | --- | --- | --- | --- | --- |
-| `plk:ac` | yes | `pl-acid-short` | acid short pluck | アシッド。レゾで明るいミッド。短い（0.36秒）。ソー＋高いQのLP。 | 48 | 0.36 |
-| `plk:am` | yes | `pl-ambient-soft` | ambient soft pluck | アンビエント。柔らかく暗い〜中庸。やや長いワンショット（1.18秒）。サステインほぼなし。 | 60 | 1.18 |
-| `plk:aj` | yes | `pl-arp-major` | arp major pluck | アルペジオ。長3度（5:4）で明るい。極短い（0.30秒）。 | 67 | 0.3 |
-| `plk:an` | yes | `pl-arp-minor` | arp minor pluck | アルペジオ。短3度（6:5）で中庸の明るさ。極短い（0.30秒）。 | 67 | 0.3 |
-| `plk:bp` | yes | `pl-bass-pluck` | bass pluck | ベースプラック。暗い。短い（0.48秒）。ソー＋低いLP。C3。 | 48 | 0.48 |
-| `plk:ch` | yes | `pl-chime-high` | chime high pluck | チャイム。非常に明るい高域。中短（0.85秒）。高い非整数比。 | 72 | 0.85 |
-| `plk:cv` | yes | `pl-clav-funk` | clav funk pluck | ファンククラビ。ミッド明るく鼻にかかったBP。極短い（0.28秒）。パルス＋ソー。 | 60 | 0.28 |
-| `plk:nn` | yes | `pl-dnb-neuro` | dnb neuro pluck | ニューロファンク。金属質でミッド暗い。短い（0.33秒）。非整数FM＋BP。 | 50 | 0.33 |
-| `plk:dt` | yes | `pl-dnb-tight` | dnb tight pluck | DnB。タイトでミッド寄りの明るさ。極短い（0.26秒）。パルス＋速いBP。 | 53 | 0.26 |
-| `plk:fc` | yes | `pl-fm-crystal` | fm crystal pluck | クリスタルFM。非常に明るい。中短（0.68秒）。高い比のシリアル。 | 72 | 0.68 |
-| `plk:ep` | yes | `pl-fm-ep` | fm ep pluck | FMエレクトリックピアノ。暖かめで中庸の明るさ。やや長め（0.95秒）。1:14タイン。 | 60 | 0.95 |
-| `plk:fg` | yes | `pl-future-glass` | future glass pluck | フューチャーベース。ガラス質で明るい。中短（0.65秒）。非整数比のシリアルFM。 | 69 | 0.65 |
-| `plk:gm` | yes | `pl-guitar-mute` | guitar mute pluck | ミュートギター。暗く短い。極短い（0.27秒）。ソー＋爪、低いLP。 | 52 | 0.27 |
-| `plk:hp` | yes | `pl-harp-open` | harp open pluck | ハープ。開いた明るさ。やや長いワンショット（1.15秒）。サイン＋5度。 | 67 | 1.15 |
-| `plk:hb` | yes | `pl-house-bright` | house bright pluck | ハウス。明るい。短いワンショット（0.38秒）。ソー＋2:1/3:1のキラッと。 | 64 | 0.38 |
-| `plk:hd` | yes | `pl-house-dry` | house dry pluck | ハウス。ドライで中庸の明るさ。短いワンショット（0.42秒）。単ソー＋控えめLP。 | 60 | 0.42 |
-| `plk:kl` | yes | `pl-kalimba` | kalimba pluck | カリンバ。金属＋木の明るさ。短い（0.58秒）。タインの非整数比。 | 67 | 0.58 |
-| `plk:kt` | yes | `pl-koto` | koto pluck | 箏（琴）。明るく鋭いアタック。中短（0.68秒）。わずかなピッチ落下。 | 64 | 0.68 |
-| `plk:lf` | yes | `pl-lofi-dust` | lofi dust pluck | ローファイ。暗くダストっぽい。中短（0.72秒）。デチューン＋低いLP。 | 55 | 0.72 |
-| `plk:mb` | yes | `pl-mallet-bell` | mallet bell pluck | マレット／ベル。明るく金属質。中短（0.72秒）。非整数のトリプルキャリア。 | 71 | 0.72 |
-| `plk:mm` | yes | `pl-mallet-marimba` | mallet marimba pluck | マレット／木琴。木質で中庸の明るさ。短い（0.48秒）。ハーフサインの胴。 | 65 | 0.48 |
-| `plk:mx` | yes | `pl-musicbox` | musicbox pluck | オルゴール。明るく高い。短い（0.55秒）。奇数倍音のサイン。 | 72 | 0.55 |
-| `plk:pk` | yes | `pl-perc-click` | perc click pluck | パーカッション寄りのクリックプラック。明るく極短い（0.25秒）。パルス＋HP。 | 72 | 0.25 |
-| `plk:ny` | yes | `pl-pop-nylon` | pop nylon pluck | ポップ。ナイロン質でやや暗い。中短（0.52秒）。ハーフサイン＋爪クリック。 | 64 | 0.52 |
-| `plk:ps` | yes | `pl-pop-soft` | pop soft pluck | ポップ。柔らかく中庸の明るさ。中短（0.62秒）。サイン重ね。 | 62 | 0.62 |
-| `plk:rv` | yes | `pl-reverse-swell` | reverse swell pluck | リバーススウェル。中庸の明るさ。唯一やや長いプラック（1.75秒）。遅いアタックのあと消える。 | 60 | 1.75 |
-| `plk:sf` | yes | `pl-stab-fifth` | stab fifth pluck | スタブ。中空5度、中庸の明るさ。短い（0.38秒）。C+Gのみ。 | 55 | 0.38 |
-| `plk:sm` | yes | `pl-stab-major` | stab major pluck | スタブ。長三和音で明るい。短い（0.40秒）。C–E–G。 | 55 | 0.4 |
-| `plk:ss` | yes | `pl-supersaw-short` | supersaw short pluck | EDM。厚いスーパーソーで中庸の明るさ。短い（0.36秒）。ユニゾン5本。 | 55 | 0.36 |
-| `plk:tg` | yes | `pl-trance-gate` | trance gate pluck | トランス。明るくゲートしたスーパーソー。極短い（0.32秒）。速いLP閉じ。 | 60 | 0.32 |
+| `plk:ac` | yes | `pl-acid-short` | acid short pluck | アシッド。レゾで明るいミッド。ワンショット（0.60秒）。ソー＋高いQのLP。 | 48 | 0.60 |
+| `plk:am` | yes | `pl-ambient-soft` | ambient soft pluck | アンビエント。柔らかく暗い〜中庸。ワンショット（0.60秒）。サステインほぼなし。 | 60 | 0.60 |
+| `plk:aj` | yes | `pl-arp-major` | arp major pluck | アルペジオ。長3度（5:4）で明るい。ワンショット（0.60秒）。 | 67 | 0.60 |
+| `plk:an` | yes | `pl-arp-minor` | arp minor pluck | アルペジオ。短3度（6:5）で中庸の明るさ。ワンショット（0.60秒）。 | 67 | 0.60 |
+| `plk:bp` | yes | `pl-bass-pluck` | bass pluck | ベースプラック。暗い。ワンショット（0.60秒）。ソー＋低いLP。C3。 | 48 | 0.60 |
+| `plk:ch` | yes | `pl-chime-high` | chime high pluck | チャイム。非常に明るい高域。ワンショット（0.60秒）。高い非整数比。 | 72 | 0.60 |
+| `plk:cv` | yes | `pl-clav-funk` | clav funk pluck | ファンククラビ。ミッド明るく鼻にかかったBP。ワンショット（0.60秒）。パルス＋ソー。 | 60 | 0.60 |
+| `plk:nn` | yes | `pl-dnb-neuro` | dnb neuro pluck | ニューロファンク。金属質でミッド暗い。ワンショット（0.60秒）。非整数FM＋BP。 | 50 | 0.60 |
+| `plk:dt` | yes | `pl-dnb-tight` | dnb tight pluck | DnB。タイトでミッド寄りの明るさ。ワンショット（0.60秒）。パルス＋速いBP。 | 53 | 0.60 |
+| `plk:fc` | yes | `pl-fm-crystal` | fm crystal pluck | クリスタルFM。非常に明るい。ワンショット（0.60秒）。高い比のシリアル。 | 72 | 0.60 |
+| `plk:ep` | yes | `pl-fm-ep` | fm ep pluck | FMエレクトリックピアノ。暖かめで中庸の明るさ。ワンショット（0.60秒）。1:14タイン。 | 60 | 0.60 |
+| `plk:fg` | yes | `pl-future-glass` | future glass pluck | フューチャーベース。ガラス質で明るい。ワンショット（0.60秒）。非整数比のシリアルFM。 | 69 | 0.60 |
+| `plk:gm` | yes | `pl-guitar-mute` | guitar mute pluck | ミュートギター。暗い。ワンショット（0.60秒）。ソー＋爪、低いLP。 | 52 | 0.60 |
+| `plk:hp` | yes | `pl-harp-open` | harp open pluck | ハープ。開いた明るさ。ワンショット（0.60秒）。サイン＋5度。 | 67 | 0.60 |
+| `plk:hb` | yes | `pl-house-bright` | house bright pluck | ハウス。明るい。ワンショット（0.60秒）。ソー＋2:1/3:1のキラッと。 | 64 | 0.60 |
+| `plk:hd` | yes | `pl-house-dry` | house dry pluck | ハウス。ドライで中庸の明るさ。ワンショット（0.60秒）。単ソー＋控えめLP。 | 60 | 0.60 |
+| `plk:kl` | yes | `pl-kalimba` | kalimba pluck | カリンバ。金属＋木の明るさ。ワンショット（0.60秒）。タインの非整数比。 | 67 | 0.60 |
+| `plk:kt` | yes | `pl-koto` | koto pluck | 箏（琴）。明るく鋭いアタック。ワンショット（0.60秒）。わずかなピッチ落下。 | 64 | 0.60 |
+| `plk:lf` | yes | `pl-lofi-dust` | lofi dust pluck | ローファイ。暗くダストっぽい。ワンショット（0.60秒）。デチューン＋低いLP。 | 55 | 0.60 |
+| `plk:mb` | yes | `pl-mallet-bell` | mallet bell pluck | マレット／ベル。明るく金属質。ワンショット（0.60秒）。非整数のトリプルキャリア。 | 71 | 0.60 |
+| `plk:mm` | yes | `pl-mallet-marimba` | mallet marimba pluck | マレット／木琴。木質で中庸の明るさ。ワンショット（0.60秒）。ハーフサインの胴。 | 65 | 0.60 |
+| `plk:mx` | yes | `pl-musicbox` | musicbox pluck | オルゴール。明るく高い。ワンショット（0.60秒）。奇数倍音のサイン。 | 72 | 0.60 |
+| `plk:pk` | yes | `pl-perc-click` | perc click pluck | パーカッション寄りのクリックプラック。明るいクリックのワンショット（0.60秒）。パルス＋HP。 | 72 | 0.60 |
+| `plk:ny` | yes | `pl-pop-nylon` | pop nylon pluck | ポップ。ナイロン質でやや暗い。ワンショット（0.60秒）。ハーフサイン＋爪クリック。 | 64 | 0.60 |
+| `plk:ps` | yes | `pl-pop-soft` | pop soft pluck | ポップ。柔らかく中庸の明るさ。ワンショット（0.60秒）。サイン重ね。 | 62 | 0.60 |
+| `plk:rv` | yes | `pl-reverse-swell` | reverse swell pluck | リバーススウェル。中庸の明るさ。ワンショット（0.60秒）。遅いアタックのあと消える。 | 60 | 0.60 |
+| `plk:sf` | yes | `pl-stab-fifth` | stab fifth pluck | スタブ。中空5度、中庸の明るさ。ワンショット（0.60秒）。C+Gのみ。 | 55 | 0.60 |
+| `plk:sm` | yes | `pl-stab-major` | stab major pluck | スタブ。長三和音で明るい。ワンショット（0.60秒）。C–E–G。 | 55 | 0.60 |
+| `plk:ss` | yes | `pl-supersaw-short` | supersaw short pluck | EDM。厚いスーパーソーで中庸の明るさ。ワンショット（0.60秒）。ユニゾン5本。 | 55 | 0.60 |
+| `plk:tg` | yes | `pl-trance-gate` | trance gate pluck | トランス。明るくゲートしたスーパーソー。ワンショット（0.60秒）。速いLP閉じ。 | 60 | 0.60 |
 | `plk:fp` | yes | `filter-pluck` | filter-pluck | カットオフADSRで開いて閉じるプラック。低めのLPから3–6 kHz付近まで開く。約8.2秒のホールド。毎小節撃たない。 | 60 | 8.2 |
 | `plk:sp` | yes | `stab-pluck` | stab-pluck | 長いホールドのスタブ／プラック（約8.2秒）。デュアルスタックで芯と倍音を分離。短いワンショットではない。毎小節撃たない。 | 60 | 8.2 |
 | `plk:s5` | yes | `stab-fm-fifth` | stab-fm-fifth | C3の中空DnBスタブ。完全5度（CとG、比1と3/2）の2パーシャルだけ。長3度（E / 5:4）は出さない。 alias `plk:s5` | 48 | 0.34 |
