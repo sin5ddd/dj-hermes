@@ -3,7 +3,7 @@ name: strudel-sound-design
 description: >-
   Use when designing synths, samples, banks, or effects for dj-hermes
   (live 2-op FM, factory PCM stems, not full Strudel REPL).
-version: 4.3.0
+version: 4.4.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -114,7 +114,7 @@ $: note("c3 e3 g3").s("sawtooth").lpf(800).gain(0.4)
 | `brown` | `brownian` |
 
 ```
-$: s("white").gain(0.15).hpf(4000).attack(0.001).decay(0.05).sustain(0).release(0.02)
+$: s("white").adsr("0.001:0.05:0:0.02").hpf(4000).gain(0.15)
 ```
 
 ### オシレータへのノイズ混ぜ（`.noise`）
@@ -184,8 +184,8 @@ $: note("0 2 4 7").scale("C3:minor").s("pad-ambient_drone01")
   .attack(0.2).release(0.5).room(0.45).orbit(1).gain(0.35)
 $: note("7 6 4").scale("C4:minor").s("lead-supersaw_4oct").lpf(3200).gain(0.16)
 // piano / EP（disk: piano-acoustic_soft.wav 等。録音 root ≈ C3）
-$: note("0 2 4 0").scale("C3:minor").s("piano-acoustic_soft").gain(0.35)
-  .attack(0.005).decay(0.3).sustain(0.2).release(0.25)
+$: note("0 2 4 0").scale("C3:minor").s("piano-acoustic_soft")
+  .adsr("0.005:0.3:0.2:0.25").gain(0.35)
 $: note("<0 2 4 7>/2").scale("C4:major").s("piano-electric_rhodes")
   .room(0.3).orbit(1).gain(0.28)
 $: s("fx-riser_short01")
@@ -259,12 +259,14 @@ $: s("[~ hh]*4").gain(0.4)
 
 ### 振幅 ADSR
 
+音量ゲート。`.gain` はピークの大きさで、ADSR はそれに掛かる時間変化。**`.s()` の直後に書く。`.gain()` の後ろに付けない。**
+
 ```
-.attack(0.01) / .decay(0.1) / .sustain(0.5) / .release(0.2)
-.adsr("0.01:0.1:0.5:0.2")
+.s("sawtooth").adsr("0.01:0.1:0.5:0.2").lpf(800).gain(0.3)
+.attack(0.01) / .decay(0.1) / .sustain(0.5) / .release(0.2)  // 個別でも可。位置は同じく .s() 側
 ```
 
-別名: `att` `dec` `sus` `rel`。
+別名: `att` `dec` `sus` `rel`。`.gain(0.3).attack(…)` / `.gain(0.3).adsr(…)` は書かない。
 
 ### scale（次数 → 音高 / コード進行）
 
@@ -495,12 +497,11 @@ setcpm(126/4)
 $: s("bd*4").gain(0.9).duckorbit(2).duckattack(0.04).duckdepth(0.85)
 $: s("[~ hh]*4").gain(0.4)
 // FM ベース（次数）— pad と同じ orbit 2
-$: note("0 0 2 4").scale("C2:minor").s("sine").fm(3).fmh(1.5).lpf(500).gain(0.55)
-  .attack(0.005).decay(0.1).sustain(0.3).release(0.08)
-  .orbit(2)
+$: note("0 0 2 4").scale("C2:minor").s("sine").fm(3).fmh(1.5)
+  .adsr("0.005:0.1:0.3:0.08").lpf(500).gain(0.55).orbit(2)
 // duck されるパッド
-$: note("0 2 4 7").scale("C3:minor").s("sawtooth").lpf(900).orbit(2).gain(0.35)
-  .attack(0.05).decay(0.2).sustain(0.6).release(0.2)
+$: note("0 2 4 7").scale("C3:minor").s("sawtooth").adsr("0.05:0.2:0.6:0.2")
+  .lpf(900).orbit(2).gain(0.35)
 ```
 
 ライブ差分例: パッドの `.lpf(900)` → `600`、または bass `.fm(3)` → `5` は `dj_hermes_edit_method(op=set)`。残すときだけ `dj_hermes_save_song`。
@@ -519,6 +520,7 @@ $: note("0 2 4 7").scale("C3:minor").s("sawtooth").lpf(900).orbit(2).gain(0.35)
 8. **ドラムをフルネームで埋める**（`s("tr808-hard_bd …")`）→ リズムが読めない。短い part + `.bank`。
 9. **bank のファイル名を `{bank}-{part}` にする** → 正は **`{bank}_{part}`**（アンダースコア）。
 10. **深いパス** `pad/ambient/x.wav` → 読まれない。フラット or 1 段フォルダ（LAYOUT.md）。
+11. **`.gain(…).attack(…)` / `.gain(…).adsr(…)`** — amp ADSR は `.s()` の直後。`.gain` はレベルだけ。
 
 ## Verification Checklist
 

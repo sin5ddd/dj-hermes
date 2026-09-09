@@ -4,7 +4,7 @@ description: >-
   Use when writing a Drum and Bass loop in dj-hermes: 174 BPM, break in
   front of the sub, split Reese (square sub + saw mid as bass + bass-mid).
   Never use sample db. 8 $: tracks, play solo at 174.
-version: 5.1.0
+version: 5.1.1
 author: Hermes Agent
 license: MIT
 metadata:
@@ -37,12 +37,10 @@ setcpm(174/4)
 $: s("[bd <~ sd> ~ sd ~ <bd ~> <bd sd> <bd ~>, hh*4, [~@5 oh ~@2]]*2").gain(0.7).lpf(4000)
 // bass
 $: note("0 3 0 <0 -1 0 3>").scale("C2:minor")
-  .s("square").lpf(120).gain(0.42)
-  .attack(0.01).decay(0.5).release(0.4)
+  .s("square").attack(0.01).decay(0.5).release(0.4).lpf(120).gain(0.42)
 // bass-mid
 $: note("0 3 0 <0 -1 0 3>").scale("C2:minor")
-  .s("sawtooth").lpf(1000).gain(0.32)
-  .attack(0.01).decay(0.4).release(0.3)
+  .s("sawtooth").attack(0.01).decay(0.4).release(0.3).lpf(1000).gain(0.32)
 // lead
 $: note("~ 7 ~ <9 7 4 11>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
   .s("ld:ss").gain(0.14).cut(1)

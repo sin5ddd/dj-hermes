@@ -3,7 +3,7 @@ name: strudel-genre-lofi-hiphop
 description: >-
   Use when writing lo-fi hip hop for dj-hermes: 75–90 BPM, dusty
   bd:lf, keys, slow hats. Not house [~ cp]*2.
-version: 5.1.0
+version: 5.1.1
 author: Hermes Agent
 license: MIT
 metadata:
@@ -45,8 +45,7 @@ $: note("~ 4 7 <5 4 0 2>").scale("<C4:minor C4:minor F4:dorian C4:minor>")
   .s("plk:lf").gain(0.18).cut(1)
 // hook
 $: note("[0,2,4] ~ [0,3,5] ~").scale("<C4:minor C4:minor F4:dorian C4:minor>")
-  .s("ep:rs").gain(0.22)
-  .attack(0.05).decay(0.3).sustain(0.5).release(0.3)
+  .s("ep:rs").adsr("0.05:0.3:0.5:0.3").gain(0.22)
 // arp
 $: note("~ 0 4 7  ~ 4 0 2").scale("<C5:minor C5:minor F5:dorian C5:minor>")
   .s("plk:ny").gain(0.12).cut(1)

@@ -4,7 +4,7 @@ description: >-
   Use when writing a techno four-on-the-floor loop in dj-hermes
   (kick on every beat, hats on the offbeats, kick in front).
   7–8 $: tracks, 4-bar phrase, no clap.
-version: 5.1.0
+version: 5.1.1
 author: Hermes Agent
 license: MIT
 metadata:
@@ -67,8 +67,7 @@ setcpm(124/4)
 $: s("bd*4, [~ hh]*4, <~ ~ ~ [~@3 bd ~@4]>").gain(0.62)
 // bass
 $: note("0 0 2 <4 0 3 0>").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
-  .s("sawtooth").lpf(400).gain(0.44)
-  .attack(0.001).decay(0.08).sustain(0.2).release(0.05)
+  .s("sawtooth").adsr("0.001:0.08:0.2:0.05").lpf(400).gain(0.44)
 // lead
 $: note("~ 7 6 <4 9 3 7>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
   .s("ld:ss").gain(0.15).cut(1)

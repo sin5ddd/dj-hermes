@@ -4,7 +4,7 @@ Assistant-agnostic recipes for this engine: **to make music of type X, write Str
 
 These are Hermes-format `SKILL.md` files (`name`, `description` starting with “Use when”, `version`, `author`, `license`, `metadata.hermes`). Folders are named `strudel-*` (genre recipes `strudel-genre-*`). This tree documents how **this repo** turns notation into rhythm, harmony, genre, and DJ mix.
 
-Engine-accurate recipes (formerly unprefixed folders such as `four-on-the-floor`) were merged into the matching `strudel-*` skill, or renamed when there was no overlap. Playable files live under `songs/<genre>/01.strudel` (and `02`…) and follow the 7–8 track bed in [strudel-composition](./strudel-composition/SKILL.md) (Future Bass / Kawaii Future Bass: 9 tracks and a 16-bar `.scale`; Minimal: 14–16 tracks, always-on kick/ohh/bass, 16-bar mute of the rest). This directory is the canonical skill tree and the copy source for the live `dj-hermes` profile. `strudel-live-edit` also lives here (natural-language live edits); it is not a song-recipe skill.
+Engine-accurate recipes (formerly unprefixed folders such as `four-on-the-floor`) were merged into the matching `strudel-*` skill, or renamed when there was no overlap. Playable files live under `songs/<genre>/01.strudel` (and `02`…) and follow the 7–8 track bed in [strudel-composition](./strudel-composition/SKILL.md) (Future Bass / Kawaii Future Bass: 9 tracks and a 16-bar `.scale`; Ambient: 16 tracks and a 16-bar form; Minimal: 14–16 tracks, always-on kick/ohh/bass, 16-bar mute of the rest). This directory is the canonical skill tree and the copy source for the live `dj-hermes` profile. `strudel-live-edit` also lives here (natural-language live edits); it is not a song-recipe skill.
 
 Do not invent syntax from the public Strudel REPL. Only patterns that parse and play here belong in a skill.
 
@@ -115,7 +115,7 @@ Cross-cutting:
 
 | Skill | When | Example song |
 | --- | --- | --- |
-| [strudel-composition](./strudel-composition/SKILL.md) | 7–8 `$:` tracks, 4-bar phrases (Future Bass / Kawaii Future Bass: 9 tracks / 16-bar scale; Minimal: 14–16 tracks / 16-bar mute of non-rhythm), mini-notation | `songs/<genre>/01.strudel` |
+| [strudel-composition](./strudel-composition/SKILL.md) | 7–8 `$:` tracks, 4-bar phrases (Future Bass / Kawaii Future Bass: 9 tracks / 16-bar scale; Ambient: 16 tracks / 16-bar form; Minimal: 14–16 tracks / 16-bar mute of non-rhythm), mini-notation | `songs/<genre>/01.strudel` |
 | [strudel-data-format](./strudel-data-format/SKILL.md) | `.strudel` save/load shape | — |
 | [strudel-sound-design](./strudel-sound-design/SKILL.md) | Synths, FX, live 2-op FM, factory PCM stems | — (inline recipes; apply via `dj_hermes_apply_song`) |
 | [strudel-pcm-catalog](./strudel-pcm-catalog/SKILL.md) | rust-fm-synthe `part:slug`（`bd:8b`, `hh:cl`, `vc:pa`）。意味は INDEX | — |
@@ -134,10 +134,10 @@ Genre recipes (`strudel-genre-*`):
 | [strudel-genre-four-on-the-floor](./strudel-genre-four-on-the-floor/SKILL.md) | Techno kick+offbeat hats (`bd*4, [~ hh]*4`); no clap | `songs/four-on-the-floor/01.strudel` |
 | [strudel-genre-house](./strudel-genre-house/SKILL.md) | House clap on 2/4 (`[~ cp]*2`, not stacked with `sd`) + C4:minor pluck | `songs/house/01.strudel` |
 | [strudel-genre-techno-duck](./strudel-genre-techno-duck/SKILL.md) | Techno kick ducks pad **and** bass; short recover; no track compressor | `songs/techno-duck/01.strudel` |
-| [strudel-genre-acid](./strudel-genre-acid/SKILL.md) | TB-303 hook (`lpenv`); other slots and keys may jump; not a chromatic clone of 01 | `songs/acid/01.strudel` |
+| [strudel-genre-acid](./strudel-genre-acid/SKILL.md) | TB-303 hook (`lpenv`, named chromatic notes, no `.scale`, `.gain(0.3)`); other slots and keys may jump; not a C→D→Eb walk of 01 | `songs/acid/01.strudel` |
 | [strudel-genre-dnb](./strudel-genre-dnb/SKILL.md) | 174 BPM break, drums above sub, square+saw Reese; mini `*2` not `.fast(2)` | `songs/dnb/01.strudel` |
 | [strudel-genre-dnb-reese-mid-stab](./strudel-genre-dnb-reese-mid-stab/SKILL.md) | 174 BPM break, square C2 sub + `bs:rm` at C4 + hollow-fifth stab | `songs/dnb-reese/01.strudel` |
-| [strudel-genre-ambient](./strudel-genre-ambient/SKILL.md) | Ambient | — |
+| [strudel-genre-ambient](./strudel-genre-ambient/SKILL.md) | Ambient: 70 BPM, 16 tracks, 16-bar form (plain / drums / plain / retrograde or cliché), pad primary; not a 4-bar loop, not a key change | `songs/ambient/01.strudel` |
 | [strudel-genre-chill](./strudel-genre-chill/SKILL.md) | Chill / downtempo | — |
 | [strudel-genre-chill-pop](./strudel-genre-chill-pop/SKILL.md) | Japanese city pop: IV–iii–ii–I maj7 + Rhodes; not EDM I–I–IV–I, not 王道 | — |
 | [strudel-genre-dubstep](./strudel-genre-dubstep/SKILL.md) | Dubstep | — |
@@ -185,6 +185,6 @@ Headless hosts without an audio device: `cargo test --test e2e` renders through 
 ## Adding a skill
 
 1. New directory `docs/profile/dj-hermes/skills/creative/strudel-<name>/SKILL.md` (genre recipes: `strudel-genre-<name>`). Hermes YAML: `name`, `description` starting with “Use when”, `version`, `author`, `license`, `metadata.hermes` (`tags`, `related_skills`).
-2. Include: when, the exact `$:` pattern (**7–8 tracks** per strudel-composition, unless the genre skill names an exception — Minimal is 14–16), a **timbre palette** (slot / keep / pick one / forbidden), **why it sounds that way** (cite mini/scale/mixer/duck behavior), and a play/dj command.
+2. Include: when, the exact `$:` pattern (**7–8 tracks** per strudel-composition, unless the genre skill names an exception — Ambient is 16, Minimal is 14–16), a **timbre palette** (slot / keep / pick one / forbidden), **why it sounds that way** (cite mini/scale/mixer/duck behavior), and a play/dj command.
 3. Point at an existing `songs/<genre>/01.strudel` if one exists. Every `songs/**/*.strudel` is parsed by `tests/e2e.rs`.
 4. Fence only syntax this parser accepts (`setcpm` + `$:`. No `stack()` / `.cpm()`). Do not write INDEX `in_bank=no` keys. Long `ld:` / `dr:` / `pf:` / `ps:` exist; do not fire them every bar.

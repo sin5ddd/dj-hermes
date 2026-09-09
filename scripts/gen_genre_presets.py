@@ -62,6 +62,8 @@ ACID_KEYS = [
 PC_NAMES = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"]
 
 SCALE_TOKEN = re.compile(r"([A-G](?:#|b)?)(\d):([A-Za-z]+)")
+# Named pitches in note("c2 eb2") — not scale tokens (C2:minor).
+NOTE_NAME = re.compile(r"(?<![A-Za-z])([A-Ga-g](?:#|b)?)(\d+)(?!:)")
 TITLE_RE = re.compile(r"(// @title )[^\n]+")
 
 # e2e-locked titles for slot 01.
@@ -111,8 +113,7 @@ setcpm(124/4)
 $: s("bd*4, [~ hh]*4, <~ ~ ~ [~@3 bd ~@4]>").gain(0.62)
 // bass
 $: note("0 0 2 <4 0 3 0>").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
-  .s("sawtooth").lpf(400).gain(0.44)
-  .attack(0.001).decay(0.08).sustain(0.2).release(0.05)
+  .s("sawtooth").adsr("0.001:0.08:0.2:0.05").lpf(400).gain(0.44)
 // lead
 $: note("~ 7 6 <4 9 3 7>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
   .s("ld:ss").gain(0.15).cut(1)
@@ -139,8 +140,7 @@ $: s("bd*4").gain(0.9).duckorbit(2).duckattack(0.04).duckdepth(0.85)
 $: s("[~ hh]*4, <~ ~ ~ hh*8>").gain(0.38)
 // bass
 $: note("0 0 2 <4 6 2 0>").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
-  .s("sine").fm(3).fmh(1.5).lpf(500).gain(0.52)
-  .attack(0.005).decay(0.1).sustain(0.3).release(0.08)
+  .s("sine").fm(3).fmh(1.5).adsr("0.005:0.1:0.3:0.08").lpf(500).gain(0.52)
   .orbit(2)
 // lead
 $: note("~ 7 4 <9 7 4 2>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
@@ -168,9 +168,9 @@ $: s("bd*4, [~ hh]*4, <~ ~ ~ [~@3 bd ~@4]>").gain(0.62)
 $: note("0 ~ 0 <0 0 3 0>").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
   .s("sine").lpf(180).gain(0.32)
 // hook
-$: note("0 0 3 0  7 3 2 0  4 4 3 0  -1 3 0 <2 5>")
-  .scale("C2:minor")
+$: note("c2 c2 eb2 e2  g2 eb2 d2 c2  f2 f#2 f2 c2  b1 eb2 c2 <d2 g2>")
   .s("sawtooth")
+  .adsr("0.001:0.1:0.12:0.04")
   .lpf("260 260 720 260  760 260 260 260  260 680 260 260  740 720 260 260")
   .lpq(14)
   .lpenv(3)
@@ -178,11 +178,7 @@ $: note("0 0 3 0  7 3 2 0  4 4 3 0  -1 3 0 <2 5>")
   .lpdecay(0.09)
   .lpsustain(0.05)
   .cut(1)
-  .gain(0.44)
-  .attack(0.001)
-  .decay(0.1)
-  .sustain(0.12)
-  .release(0.04)
+  .gain(0.3)
 // lead
 $: note("~ 7 ~ <9 7 4 12>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
   .s("plk:lp").gain(0.12).cut(1)
@@ -203,12 +199,10 @@ setcpm(174/4)
 $: s("[bd <~ sd> ~ sd ~ <bd ~> <bd sd> <bd ~>, hh*4, [~@5 oh ~@2]]*2").gain(0.7).lpf(4000)
 // bass
 $: note("0 3 0 <0 -1 0 3>").scale("C2:minor")
-  .s("square").lpf(120).gain(0.42)
-  .attack(0.01).decay(0.5).release(0.4)
+  .s("square").attack(0.01).decay(0.5).release(0.4).lpf(120).gain(0.42)
 // bass-mid
 $: note("0 3 0 <0 -1 0 3>").scale("C2:minor")
-  .s("sawtooth").lpf(1000).gain(0.32)
-  .attack(0.01).decay(0.4).release(0.3)
+  .s("sawtooth").attack(0.01).decay(0.4).release(0.3).lpf(1000).gain(0.32)
 // lead
 $: note("~ 7 ~ <9 7 4 11>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
   .s("ld:ss").gain(0.14).cut(1)
@@ -308,25 +302,52 @@ $: note("0").scale("<C4:minor C4:minor F4:dorian C4:minor>")
 FENCES["ambient"] = r'''// @title ambient-01
 // @genre ambient
 setcpm(70/4)
-// drums
-$: s("bd:lf ~ ~ ~").gain(0.18)
-// bass
-$: note("0 ~ ~ <0 0 ~ 0>").scale("<C4:minor C4:minor G4:dorian C4:minor>")
-  .s("bs:su").gain(0.28)
-// lead
-$: note("~ 7 ~ <9 7 4 11>").scale("<C4:minor C4:minor G4:dorian C4:minor>")
-  .s("plk:bl").gain(0.1).cut(1)
-// hook
-$: note("0@2 ~ 4@2 ~").scale("<C4:minor C4:minor G4:dorian C4:minor>")
-  .s("plk:am").gain(0.16).cut(1)
-// arp
-$: s("<~ perc:cm ~ perc:tg>").gain(0.1)
-// chords
-$: note("[0,2,4] ~ ~ ~").scale("<C4:minor C4:minor G4:dorian C4:minor>")
-  .s("ep:mt").gain(0.18)
 // pad
-$: note("0").scale("<C4:minor C4:minor G4:dorian C4:minor>")
-  .s("pf:ff").gain(0.24).room(0.5).orbit(1)
+$: note("0").scale("<C2:minor Ab2:lydian F2:dorian G2:phrygian C2:minor Ab2:lydian F2:dorian G2:phrygian C2:minor Ab2:lydian F2:dorian G2:phrygian G2:phrygian F2:dorian Ab2:lydian C2:minor>")
+  .s("pf:ff").adsr("0.4:0.8:0.7:0.8").cut(1).gain(0.22).room(0.5).orbit(2)
+// bass
+$: note("0 ~ ~ ~").scale("<C4:minor Ab4:lydian F4:dorian G4:phrygian C4:minor Ab4:lydian F4:dorian G4:phrygian C4:minor Ab4:lydian F4:dorian G4:phrygian G4:phrygian F4:dorian Ab4:lydian C4:minor>")
+  .s("bs:su").gain(0.26)
+// chords
+$: note("[0,2,4] ~ ~ ~").scale("<C4:minor Ab4:lydian F4:dorian G4:phrygian C4:minor Ab4:lydian F4:dorian G4:phrygian C4:minor Ab4:lydian F4:dorian G4:phrygian G4:phrygian F4:dorian Ab4:lydian C4:minor>")
+  .s("ep:mt").gain(0.16)
+// lead
+$: note("<[~ 7 ~ ~] [~ ~ 4 ~] [~ 9 ~ 7] [4 ~ ~ ~] [~ 7 ~ ~] [~ ~ 4 ~] [~ 9 ~ 7] [4 ~ ~ ~] [~ 7 ~ ~] [~ ~ 4 ~] [~ 9 ~ 7] [4 ~ ~ ~] [~ ~ ~ 4] [7 ~ 9 ~] [~ 4 ~ ~] [~ ~ 7 ~]>")
+  .scale("<C4:minor Ab4:lydian F4:dorian G4:phrygian C4:minor Ab4:lydian F4:dorian G4:phrygian C4:minor Ab4:lydian F4:dorian G4:phrygian G4:phrygian F4:dorian Ab4:lydian C4:minor>")
+  .s("ld:et").adsr("0.08:0.5:0.6:0.5").cut(1).gain(0.12)
+// hook
+$: note("<[0@2 ~ 4@2 ~] [0@2 ~ 4@2 ~] [0@2 ~ 4@2 ~] [0@2 ~ 4@2 ~] [0@2 ~ 4@2 ~] [0@2 ~ 4@2 ~] [0@2 ~ 4@2 ~] [0@2 ~ 4@2 ~] [0@2 ~ 4@2 ~] [0@2 ~ 4@2 ~] [0@2 ~ 4@2 ~] [0@2 ~ 4@2 ~] [4@2 ~ 0@2 ~] [4@2 ~ 0@2 ~] [4@2 ~ 0@2 ~] [4@2 ~ 0@2 ~]>")
+  .scale("<C4:minor Ab4:lydian F4:dorian G4:phrygian C4:minor Ab4:lydian F4:dorian G4:phrygian C4:minor Ab4:lydian F4:dorian G4:phrygian G4:phrygian F4:dorian Ab4:lydian C4:minor>")
+  .s("plk:am").gain(0.14).cut(1)
+// arp
+$: note("<[~ 4 ~ 7] [~ 4 ~ 7] [~ 4 ~ 7] [~ 4 ~ 7] [~ 4 ~ 7] [~ 4 ~ 7] [~ 4 ~ 7] [~ 4 ~ 7] [~ 4 ~ 7] [~ 4 ~ 7] [~ 4 ~ 7] [~ 4 ~ 7] [7 ~ 4 ~] [7 ~ 4 ~] [7 ~ 4 ~] [7 ~ 4 ~]>")
+  .scale("<C5:minor Ab5:lydian F5:dorian G5:phrygian C5:minor Ab5:lydian F5:dorian G5:phrygian C5:minor Ab5:lydian F5:dorian G5:phrygian G5:phrygian F5:dorian Ab5:lydian C5:minor>")
+  .s("plk:lp").cut(1).gain(0.1)
+// drums
+$: s("<~ ~ ~ ~ [bd:lf ~ ~ ~] [bd:lf ~ ~ ~] [bd:lf ~ ~ ~] [bd:lf ~ ~ ~] ~ ~ ~ ~ ~ ~ ~ ~>").gain(0.18)
+// perc
+$: s("<~ ~ ~ ~ ~ perc:cm ~ perc:tg ~ ~ ~ ~ ~ ~ ~ ~>").gain(0.1)
+// drone
+$: note("<0 ~ ~ ~ ~ ~ ~ ~ 0 ~ ~ ~ ~ ~ ~ ~>").scale("<C2:minor Ab2:lydian F2:dorian G2:phrygian C2:minor Ab2:lydian F2:dorian G2:phrygian C2:minor Ab2:lydian F2:dorian G2:phrygian G2:phrygian F2:dorian Ab2:lydian C2:minor>")
+  .s("dr:ad").adsr("0.5:1.0:0.6:1.0").cut(1).gain(0.1).room(0.45).orbit(2)
+// air
+$: s("<~ ~ ~ fx:ha ~ ~ ~ fx:nh ~ ~ ~ fx:ha ~ ~ ~ fx:wd>").gain(0.1).cut(1)
+// fx
+$: s("<~ ~ ~ ~ ~ ~ ~ fx:wh ~ ~ ~ ~ ~ ~ ~ fx:sw>").gain(0.14).cut(1)
+// bells
+$: note("<~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ [~ 11 ~ ~] ~ [~ 7 ~ ~] ~>").scale("<C5:minor Ab5:lydian F5:dorian G5:phrygian C5:minor Ab5:lydian F5:dorian G5:phrygian C5:minor Ab5:lydian F5:dorian G5:phrygian G5:phrygian F5:dorian Ab5:lydian C5:minor>")
+  .s("plk:bl").gain(0.08).cut(1)
+// vox
+$: s("<~ ~ ~ ~ ~ ~ ~ ~ ~ vc:na ~ ~ ~ ~ ~ ~>").gain(0.1).cut(1)
+// choir
+$: note("<~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ [0@3 ~] [0@3 ~] [0@3 ~] [0@3 ~]>").scale("<C3:minor Ab3:lydian F3:dorian G3:phrygian C3:minor Ab3:lydian F3:dorian G3:phrygian C3:minor Ab3:lydian F3:dorian G3:phrygian G3:phrygian F3:dorian Ab3:lydian C3:minor>")
+  .s("ld:cr").adsr("0.3:0.6:0.7:0.6").cut(1).gain(0.1).room(0.4).orbit(2)
+// counter
+$: note("<~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ [~ 7 ~ ~] [~ ~ 4 ~] [~ 9 ~ 7] [4 ~ ~ ~]>").scale("<C4:minor Ab4:lydian F4:dorian G4:phrygian C4:minor Ab4:lydian F4:dorian G4:phrygian C4:minor Ab4:lydian F4:dorian G4:phrygian G4:phrygian F4:dorian Ab4:lydian C4:minor>")
+  .s("ld:ny").adsr("0.08:0.5:0.6:0.5").cut(1).gain(0.1)
+// swell
+$: note("<~ ~ ~ ~ ~ ~ ~ 0 ~ ~ ~ ~ ~ ~ ~ 0>").scale("<C2:minor Ab2:lydian F2:dorian G2:phrygian C2:minor Ab2:lydian F2:dorian G2:phrygian C2:minor Ab2:lydian F2:dorian G2:phrygian G2:phrygian F2:dorian Ab2:lydian C2:minor>")
+  .s("pf:cl").adsr("0.4:0.8:0.5:0.8").cut(1).gain(0.12).room(0.5).orbit(2)
 '''
 
 FENCES["dubstep"] = r'''// @title dubstep-01
@@ -362,8 +383,7 @@ setcpm(126/4)
 $: s("bd*4, ~ sd ~ sd, hh*8, <~ ~ ~ [bd sd bd sd]>").gain(0.62)
 // bass
 $: note("0 ~ 0 <3 0 0 5>").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
-  .s("square").lpf(500).gain(0.46)
-  .attack(0.001).decay(0.08).sustain(0.15).release(0.04)
+  .s("square").adsr("0.001:0.08:0.15:0.04").lpf(500).gain(0.46)
 // lead
 $: note("~ 7 4 <9 7 12 7>").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
   .s("ld:pu").gain(0.14).cut(1)
@@ -394,8 +414,7 @@ $: note("~ 4 7 <5 4 0 2>").scale("<C4:minor C4:minor F4:dorian C4:minor>")
   .s("plk:lf").gain(0.18).cut(1)
 // hook
 $: note("[0,2,4] ~ [0,3,5] ~").scale("<C4:minor C4:minor F4:dorian C4:minor>")
-  .s("ep:rs").gain(0.22)
-  .attack(0.05).decay(0.3).sustain(0.5).release(0.3)
+  .s("ep:rs").adsr("0.05:0.3:0.5:0.3").gain(0.22)
 // arp
 $: note("~ 0 4 7  ~ 4 0 2").scale("<C5:minor C5:minor F5:dorian C5:minor>")
   .s("plk:ny").gain(0.12).cut(1)
@@ -603,11 +622,18 @@ PALETTES: dict[str, dict[str, list]] = {
         "pad": ["pf:cl", "pf:ln", "dr:fg", "pf:ff"],
     },
     "ambient": {
-        "lead": ["ld:et", "ld:fl", "plk:bl", "ld:si"],
-        "hook": ["ld:cr", "plk:am"],
-        "arp": ["perc:tg", "perc:cm"],
-        "chords": ["ld:fp", "ep:mt"],
-        "pad": ["dr:ad", "dr:fg", "pf:cl", "pf:wa", "ps:sh", "dr:uw", "pf:ff"],
+        "lead": ["ld:et", "ld:fl", "ld:si"],
+        "hook": ["plk:am"],
+        "arp": ["plk:lp", "ld:si", "plk:hp"],
+        "chords": ["ep:mt", "ld:fp"],
+        "pad": ["pf:ff", "pf:cl", "pf:wa", "ps:sh"],
+        "perc": ["perc:cm", "perc:tg", "perc:cb"],
+        "drone": ["dr:ad", "dr:uw", "dr:fg"],
+        "bells": ["plk:bl", "plk:ch"],
+        "vox": ["vc:na", "vc:ra"],
+        "choir": ["ld:cr", "pf:ca"],
+        "counter": ["ld:ny", "plk:ps"],
+        "swell": ["pf:cl", "ps:sh"],
     },
     "dubstep": {
         "drums": [
@@ -783,6 +809,10 @@ PITCHED_SLOTS = {
     "tom",
     "metal",
     "vox",
+    "choir",
+    "counter",
+    "swell",
+    "bells",
 }
 TRACK_HEADER = re.compile(r"^// ([a-z][a-z0-9-]*)\n", re.M)
 DOT_S = re.compile(r'\.s\("([^"]+)"\)')
@@ -905,6 +935,21 @@ def set_method(body: str, name: str, args: str) -> str:
     return inject_after_s(body, f".{name}({args})")
 
 
+# Named chromatic 303 riffs (no .scale). Index 0 matches the fence; 01 keeps it.
+# 10 shapes so 01–10 are distinct; 11–20 / 21–30 reuse the shape with square / accent.
+ACID_HOOK_NOTES = [
+    "c2 c2 eb2 e2  g2 eb2 d2 c2  f2 f#2 f2 c2  b1 eb2 c2 <d2 g2>",
+    "c2 eb2 e2 f2  f#2 f2 eb2 c2  g2 f#2 f2 eb2  e2 f2 g2 <c2 g2>",
+    "c2 c3 c2 eb2  e2 c2 g2 c2  c2 bb1 b1 c2  eb2 g2 f2 <eb2 c2>",
+    "g2 f#2 f2 e2  eb2 d2 c#2 c2  g2 f2 eb2 c2  b1 c2 eb2 <e2 g2>",
+    "c2 g2 c2 g2  eb2 e2 f2 g2  c2 bb1 c2 eb2  g2 f2 eb2 <c2 g2>",
+    "c2 d2 c2 eb2  c2 e2 c2 f2  g2 f#2 g2 eb2  c2 b1 c2 <eb2 g2>",
+    "c2 c2 c3 c2  eb2 e2 c3 c2  f2 f#2 c3 c2  g2 eb2 c2 <d2 c3>",
+    "c2 eb2 g2 eb2  e2 f2 f#2 g2  c2 c2 bb1 b1  c2 eb2 f2 <g2 c3>",
+    "c2 c#2 d2 eb2  e2 eb2 d2 c2  g2 ab2 g2 f2  e2 eb2 c2 <g2 c2>",
+    "c2 g2 eb2 e2  c2 f2 f#2 g2  eb2 c2 b1 c2  g2 f2 eb2 <e2 c2>",
+]
+
 # n=2.. : bass cutoff / LFO. Not applied to 01 (e2e 303 bed).
 ACID_BASS_FILTER = [
     ("120", None),
@@ -941,6 +986,20 @@ def apply_acid_color(text: str, n: int) -> str:
             count=1,
         )
     return text
+
+
+def apply_acid_riff(text: str, n: int) -> str:
+    """Swap the 303 named-note string. 01 stays on the fence riff (index 0)."""
+    if n == 1:
+        return text
+    riff = ACID_HOOK_NOTES[(n - 1) % len(ACID_HOOK_NOTES)]
+
+    def on_hook(name: str, chunk: str) -> str:
+        if name != "hook":
+            return chunk
+        return re.sub(r'note\("[^"]+"\)', f'note("{riff}")', chunk, count=1)
+
+    return map_tracks(text, on_hook)
 
 
 def ensure_cut1(body: str) -> str:
@@ -1070,14 +1129,15 @@ def apply_pitched_sound(
         if is_pcm_key(new) or new.startswith("wt_"):
             chunk = strip_methods(chunk, STRIP_SYNTH)
         if is_pcm_key(new):
-            chunk = bump_scale_oct(chunk, pcm_min_oct)
+            min_oct = 2 if slot in {"pad", "drone", "swell"} else pcm_min_oct
+            chunk = bump_scale_oct(chunk, min_oct)
         if new == "square" and ".lpf(" not in chunk:
             chunk = inject_after_s(chunk, ".lpf(3200)")
     if slot != "chords" and (
         is_long(new) or new.startswith(("plk:", "ld:", "vc:"))
     ):
         chunk = ensure_cut1(chunk)
-    if slot in {"pad", "chords", "strings"}:
+    if slot in {"pad", "chords", "strings"} and ".adsr(" not in chunk:
         thin_slot = "pad" if slot == "strings" else slot
         chunk = maybe_thin_note(chunk, new, thin_slot)
     return chunk
@@ -1138,6 +1198,18 @@ def apply_palette(genre: str, text: str, n: int) -> str:
     return map_tracks(text, apply_one)
 
 
+def check_acid_riffs() -> None:
+    fence = re.search(r'// hook\n\$: note\("([^"]+)"\)', FENCES["acid"])
+    if not fence:
+        raise SystemExit("acid fence missing hook notes")
+    if ACID_HOOK_NOTES[0] != fence.group(1):
+        raise SystemExit("ACID_HOOK_NOTES[0] must match the acid fence hook")
+    for i, riff in enumerate(ACID_HOOK_NOTES):
+        ntok = len(re.sub(r"<[^>]+>", "X", riff).split())
+        if ntok != 16:
+            raise SystemExit(f"ACID_HOOK_NOTES[{i}] has {ntok} tokens, want 16")
+
+
 def check_palette_keys() -> None:
     keys = index_keys()
     for genre, pal in PALETTES.items():
@@ -1160,7 +1232,7 @@ def pc_name(pc: int) -> str:
 
 
 def note_pc(name: str) -> int:
-    letter = name[0]
+    letter = name[0].upper()
     base = {"C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11}[letter]
     i = 1
     while i < len(name):
@@ -1185,12 +1257,20 @@ def transpose_text(text: str, semis: int) -> str:
     if semis == 0:
         return text
 
-    def repl(m: re.Match[str]) -> str:
+    def repl_scale(m: re.Match[str]) -> str:
         name, oct_s, mode = m.group(1), int(m.group(2)), m.group(3)
         new_name, new_oct = transpose_token(name, oct_s, semis)
         return f"{new_name}{new_oct}:{mode}"
 
-    return SCALE_TOKEN.sub(repl, text)
+    def repl_note(m: re.Match[str]) -> str:
+        name, oct_s = m.group(1), int(m.group(2))
+        midi = (oct_s + 1) * 12 + note_pc(name) + semis
+        midi = max(24, min(60, midi))  # C1–C4; keep the 303 off the floor
+        new_name, new_oct = pc_name(midi), midi // 12 - 1
+        return f"{new_name.lower()}{new_oct}"
+
+    text = SCALE_TOKEN.sub(repl_scale, text)
+    return NOTE_NAME.sub(repl_note, text)
 
 
 def scale4(oct_: int, pairs: list[tuple[int, str]]) -> str:
@@ -1272,8 +1352,28 @@ def apply_variant(genre: str, text: str, variant: int) -> str:
         return text.replace("[~ hh]*4", "hh*8")
     if genre == "chill" and variant == 1:
         return text.replace("[~ hh]*4", "[~ hh]*4, perc:sk")
-    if genre == "ambient" and variant >= 1:
-        return text.replace('s("bd:lf ~ ~ ~")', 's("~ ~ ~ ~")')
+    if genre == "ambient" and variant == 1:
+        # Last 4: cliché i–bVII–VI–v instead of retrograde.
+        for old, new in (
+            (
+                "G4:phrygian F4:dorian Ab4:lydian C4:minor>",
+                "C4:minor Bb4:mixolydian Ab4:lydian G4:phrygian>",
+            ),
+            (
+                "G5:phrygian F5:dorian Ab5:lydian C5:minor>",
+                "C5:minor Bb5:mixolydian Ab5:lydian G5:phrygian>",
+            ),
+            (
+                "G2:phrygian F2:dorian Ab2:lydian C2:minor>",
+                "C2:minor Bb2:mixolydian Ab2:lydian G2:phrygian>",
+            ),
+            (
+                "G3:phrygian F3:dorian Ab3:lydian C3:minor>",
+                "C3:minor Bb3:mixolydian Ab3:lydian G3:phrygian>",
+            ),
+        ):
+            text = text.replace(old, new)
+        return text
     if genre == "lofi-hiphop" and variant == 1:
         return text.replace("[~ hh]*4", "[~ hh]*4, perc:cb")
     if genre == "electro" and variant == 1:
@@ -1331,6 +1431,8 @@ def validate(path: Path, text: str) -> None:
         min_n, max_n = 9, 9
     elif genre == "minimal":
         min_n, max_n = 14, 16
+    elif genre == "ambient":
+        min_n, max_n = 14, 16
     else:
         min_n, max_n = 7, 8
     if n < min_n or n > max_n:
@@ -1369,6 +1471,19 @@ def validate(path: Path, text: str) -> None:
         return chunk
 
     map_tracks(text, collect)
+    if genre == "acid":
+
+        def check_acid(name: str, chunk: str) -> str:
+            if name == "hook":
+                if ".scale(" in chunk:
+                    raise SystemExit(f"{path}: 303 hook must not use .scale")
+                if ".gain(0.3)" not in chunk:
+                    raise SystemExit(f"{path}: 303 hook gain should be 0.3")
+                if re.search(r'note\("[0-9-]', chunk):
+                    raise SystemExit(f"{path}: 303 hook must be named notes, not degrees")
+            return chunk
+
+        map_tracks(text, check_acid)
     if genre in {"house", "chill-pop", "future-bass", "kawaii-future-bass"}:
         if "vc:" not in text:
             raise SystemExit(f"{path}: expected catalog vc: chop")
@@ -1566,6 +1681,7 @@ def render(genre: str, n: int) -> str:
     text = apply_palette(genre, text, n)
     if genre == "acid":
         text = apply_acid_color(text, n)
+        text = apply_acid_riff(text, n)
     if genre == "minimal":
         text = apply_minimal_post(text, n)
     text = transpose_text(text, semis)
@@ -1586,6 +1702,7 @@ def main() -> None:
     args = ap.parse_args()
     genres = args.genre or sorted(FENCES)
     check_palette_keys()
+    check_acid_riffs()
     written = 0
     for genre in genres:
         if genre in HOLD:
@@ -1595,6 +1712,7 @@ def main() -> None:
         dest = SONGS / genre
         dest.mkdir(parents=True, exist_ok=True)
         prev_kick = None
+        prev_acid_hook = None
         for n in range(1, 31):
             text = render(genre, n)
             path = dest / f"{n:02d}.strudel"
@@ -1605,6 +1723,12 @@ def main() -> None:
                 if prev_kick and kick == prev_kick:
                     raise SystemExit(f"{path}: same kick string as previous song")
                 prev_kick = kick
+            if genre == "acid":
+                hm = re.search(r'// hook\n\$: note\("([^"]+)"\)', text)
+                hook = hm.group(1) if hm else None
+                if prev_acid_hook and hook == prev_acid_hook:
+                    raise SystemExit(f"{path}: same 303 notes as previous song")
+                prev_acid_hook = hook
             path.write_text(text, encoding="utf-8", newline="\n")
             written += 1
     print(f"wrote {written} songs")

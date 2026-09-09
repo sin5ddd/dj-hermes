@@ -5,7 +5,7 @@ description: >-
   four-on-the-floor, short square bass, supersaw hook, pitched parts
   two octaves below typical C4 PCM. Not house clap-front, not a thin
   zap hook, and not sparse minimal.
-version: 6.0.0
+version: 6.0.1
 author: Hermes Agent
 license: MIT
 metadata:
@@ -42,8 +42,7 @@ setcpm(126/4)
 $: s("bd*4, ~ sd ~ sd, hh*8, <~ ~ ~ [bd sd bd sd]>").gain(0.62)
 // bass
 $: note("0 ~ 0 <3 0 0 5>").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
-  .s("square").lpf(500).gain(0.46)
-  .attack(0.001).decay(0.08).sustain(0.15).release(0.04)
+  .s("square").adsr("0.001:0.08:0.15:0.04").lpf(500).gain(0.46)
 // lead
 $: note("~ 7 4 <9 7 12 7>").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
   .s("ld:pu").gain(0.14).cut(1)

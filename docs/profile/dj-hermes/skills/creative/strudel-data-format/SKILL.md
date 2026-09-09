@@ -1,7 +1,7 @@
 ---
 name: strudel-data-format
 description: "Use when writing .strudel files for dj-hermes apply/save (MCP): 7–8 $: tracks, 4-bar phrases."
-version: 5.0.1
+version: 5.0.2
 author: Hermes Agent
 license: MIT
 metadata:
@@ -18,7 +18,7 @@ metadata:
 
 dj-hermes は `.strudel` テキストをパースして再生する。鳴らすのは MCP **`dj_hermes_apply_song`**（無書き込み）。ディスク保存は **`dj_hermes_save_song`** のみ（file ツール不可、明示指示までしない）。書き込み先は `~/.config/dj-hermes/songs/<name>.strudel` のみ。
 
-**曲の長さの目安**: トラック **7–8 本**、4 小節フレーズ（`.scale("<…>")` / 4 子の `<>`）。16 小節 `cat` は非既定。本数のジャンル例外（Future Bass 9 本、Minimal 14–16 本）は **strudel-composition** / 各 **strudel-genre-***。
+**曲の長さの目安**: トラック **7–8 本**、4 小節フレーズ（`.scale("<…>")` / 4 子の `<>`）。16 小節 `cat` は非既定。本数・長さのジャンル例外（Future Bass / Kawaii 9 本・16 小節、Ambient 16 本・16 小節、Minimal 14–16 本）は **strudel-composition** / 各 **strudel-genre-***。
 
 ## 必須の形（コピー用・8 スロット）
 

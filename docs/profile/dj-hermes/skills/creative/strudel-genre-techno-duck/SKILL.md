@@ -5,7 +5,7 @@ description: >-
   pad and bass on the same orbit, short duckattack (0.03–0.05), techno
   grid bd*4 + offbeat hats, no per-track compressor (master glue is Mixer default).
   8 $: tracks (kick+hats count as drums), 4-bar phrase, no clap.
-version: 5.1.0
+version: 5.1.1
 author: Hermes Agent
 license: MIT
 metadata:
@@ -41,8 +41,7 @@ $: s("bd*4").gain(0.9).duckorbit(2).duckattack(0.04).duckdepth(0.85)
 $: s("[~ hh]*4, <~ ~ ~ hh*8>").gain(0.38)
 // bass
 $: note("0 0 2 <4 6 2 0>").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
-  .s("sine").fm(3).fmh(1.5).lpf(500).gain(0.52)
-  .attack(0.005).decay(0.1).sustain(0.3).release(0.08)
+  .s("sine").fm(3).fmh(1.5).adsr("0.005:0.1:0.3:0.08").lpf(500).gain(0.52)
   .orbit(2)
 // lead
 $: note("~ 7 4 <9 7 4 2>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
