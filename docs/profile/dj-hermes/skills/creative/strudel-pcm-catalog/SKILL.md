@@ -2,8 +2,8 @@
 name: strudel-pcm-catalog
 description: >-
   Use when choosing a rust-fm-synthe PCM one-shot for dj-hermes
-  (bd:8b, hh:cl, bs:ht, and other part:slug keys). Not for live 2-op .fm.
-version: 1.1.0
+  (bd:8b, hh:cl, bs:ht, vc:pa, and other part:slug keys). Not for live 2-op .fm.
+version: 1.2.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -28,10 +28,11 @@ metadata:
 ## When to Use
 
 - キック／スネア／ハット／ベース／プラック／EP／短い FX を **PCM のキャラ付き**で選びたい時
+- ボーカルチョップ（`vc:pa` / `vc:na` / `vc:ra` / `vc:tu` / `vc:ya` / `vc:yeah`）をグリッドに置きたい時
 - 長尺のドローン／リード／パッド（`dr:` / `ld:` / `pf:` / `ps:`）をワンショットで置きたい時
 - `s("bd*4")` のまま音色だけ変えたい時（`bd:hf` など）
 
-Don't use for: ライブ 2-op `.fm`（→ strudel-sound-design）、記法そのもの（→ composition）。長尺は毎小節撃たない（`dr` / `pf` / `ps` は約 16–17 秒、ライザー `fx:fr` / `nr` / `rf` / `rp` / `rw` / `up` は約 15 秒、`ld` と `plk:fp` / `plk:sp` は約 8.2 秒）。
+Don't use for: ライブ 2-op `.fm`（→ strudel-sound-design）、記法そのもの（→ composition）。長尺は毎小節撃たない（`dr` / `pf` / `ps` は約 16–17 秒、ライザー `fx:fr` / `nr` / `rf` / `rp` / `rw` / `up` は約 15 秒、`ld` と `plk:fp` / `plk:sp` は約 8.2 秒、`vc:` は約 3.2 秒なので 16 分連打は `.cut(1)`）。
 
 ## 呼び出し
 
@@ -149,6 +150,19 @@ Apply the inline recipe with `dj_hermes_apply_song`. `songs/house/01.strudel` us
 | `ps:hp` | 奇数倍音のキラキラ |
 
 無いキーは無音（演奏は継続）。`plk:fp` / `plk:sp` も約 8.2 秒なので毎小節撃たない。
+
+### ボーカルチョップ `vc:`（C4、約 3.2 秒）
+
+| call | 向き |
+| --- | --- |
+| `vc:pa` | 破裂の pa。グリッドの頭 |
+| `vc:na` | 弱い「な」。柔らかい粒 |
+| `vc:ra` | 巻き舌のら→あー |
+| `vc:tu` | 破裂の tu。pa より暗い |
+| `vc:ya` | や行の滑り。フック |
+| `vc:yeah` | yeah（i→e、1 Hz トレモロ） |
+
+リズムは `s("vc:pa vc:na vc:tu")`。移調は `note("0").scale("C4:minor").s("vc:pa")`。連打は `.cut(1)`。
 
 ## Rules
 

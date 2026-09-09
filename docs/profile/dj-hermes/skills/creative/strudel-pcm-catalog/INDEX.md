@@ -453,3 +453,16 @@ dj-hermes の呼び出しは `s("<part>:<slug>")`。音程楽器は `note(...).s
 | `tom:hi` | yes | `pc-tom-hi` | high tom | ハイタム。短い膜。キックバンク（bd-*）ではない。 | 62 | 0.38 |
 | `tom:lo` | yes | `pc-tom-lo` | low tom | ロータム。膜の胴。808ブームや bd-* キックではない（ピッチ落下は小さくサブなし）。 | 48 | 0.55 |
 | `tom:md` | yes | `pc-tom-mid` | mid tom | ミッドタム。フロアより高くキックより明るい。 | 55 | 0.45 |
+
+## `vc`
+
+C4 のフォルマント合成ワンショット（約 3.2 秒）。EDM ボーカルチョップ用。リズムは bare `s("vc:pa")`（録音ピッチのまま）。移調は `note("0").scale("C4:minor").s("vc:pa")`。16 分連打は `.cut(1)` か `begin`/`end`。コーラスに 5 度が乗っている（`vc:yeah` はオク下も）。
+
+| call | in_bank | id | name | description | note | dur |
+| --- | --- | --- | --- | --- | --- | --- |
+| `vc:na` | yes | `vl-na` | na chop | 弱い鼻音の「な」。子音は薄く、あ段のフォルマントがすぐ立つ。チョップの柔らかい粒。 | 60 | 3.2 |
+| `vc:pa` | yes | `vl-pa` | pa chop | EDMチョップの「pa」。破裂音のアタック＋あ段。グリッドの頭に置きやすい。 | 60 | 3.2 |
+| `vc:ra` | yes | `vl-ra` | ra chop | 巻き舌の「ら」から長い「あー」。F3 を 1600 Hz 付近まで下げてからあへ戻す。他より子音が厚い。 | 60 | 3.2 |
+| `vc:tu` | yes | `vl-tu` | tu chop | EDMチョップの「tu」。破裂＋う段。pa より暗く短い口。 | 60 | 3.2 |
+| `vc:ya` | yes | `vl-ya` | ya chop | EDMチョップの「ya」。や行の滑りからあ段。フックの呼びかけ向き。 | 60 | 3.2 |
+| `vc:yeah` | yes | `vl-yeah` | yeah chop | EDMチョップの「yeah」。i→e の口の開き＋1 Hz トレモロ。ドロップの掛け声。slug は音節どおり 4 字。 | 60 | 3.2 |

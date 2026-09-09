@@ -64,6 +64,8 @@ the public domain under **CC0 1.0 Universal**. Keys are `s("bd:8b")` etc.
 The map and descriptions live in `docs/profile/dj-hermes/skills/creative/strudel-pcm-catalog/`.
 Do not overwrite the Sonic Pi files `bd/00.wav`, `bd/01.wav`, `sd/00.wav`,
 `sd/01.wav`, `hh/00.wav`, `oh/00.wav`.
+Vocal chops (`samples/vc/*.wav`) are the same factory renders (`vl-pa` etc.),
+C4 (~262 Hz), ~3.2 s, 16-bit mono 48 kHz. Keys are `s("vc:pa")` and so on.
 
 ## Custom samples
 

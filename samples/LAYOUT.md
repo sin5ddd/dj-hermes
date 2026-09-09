@@ -154,6 +154,7 @@ samples/
   fx/up.wav    # unpitched uplifter (~15 s / 8 bars at 130)
   fx/id.wav  # unpitched DnB impact (~0.5 s)
   fx/sd.wav    # unpitched sub drop (~1.1 s)
+  vc/na.wav pa.wav ra.wav tu.wav ya.wav yeah.wav  # C4 vocal chops ~3.2s
   LICENSE.md
   README.md
   LAYOUT.md          # 本ファイル
