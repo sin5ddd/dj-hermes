@@ -159,7 +159,7 @@ fn showcase_songs_use_task23_features() {
     );
     assert!(
         !techno.contains("compressor("),
-        "techno-duck-01 must not set master compressor from a track"
+        "techno-duck-01 omits per-voice compressor"
     );
 
     let house = fs::read_to_string(song_path("house/01.strudel")).unwrap();

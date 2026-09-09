@@ -432,13 +432,15 @@ $: note("c3 e3 g3 c4").s("sawtooth").orbit(2).gain(0.35).lpf(900)
 - `duckattack` / `duckdepth`: 秒 / 0..1。 **126 BPM では recover 0.03–0.05**（0.12 は緩い）。 pad **と** bass を同じ orbit に載せる。kick は default orbit 1。 hat に `duckorbit` を付けない（16th が env を retrigger する）
 - 詳細レシピ: **strudel-genre-techno-duck**
 
-### compressor（マスター、パターンから last-write）
+### compressor（パーボイス insert。マスターは別）
+
+Mixer は起動時からマスターコンプがかかる（`CompressorParams::MIXER_DEFAULT`: threshold −24 dB、ratio 8、knee 8 dB、attack 8 ms、release 100 ms。メイクアップ無し）。トータルのグルー用。パターンからは上書きしない。
 
 ```
 .compressor("-18:3:6:.003:.12")
 ```
 
-パターンの `.compressor` は **mixer master・last-write**（トラック insert ではない）。キックを潰す。レシピでは省略。
+パターンの `.compressor` は **その `$:` のボイスだけ**（ゲイン＋ADSR＋biquad のあと、pan の前）。キックをマスターごと潰さない。ジャンルレシピでは省略（マスターのデフォルトに任せる）。`postgain` は未実装。
 
 ---
 
@@ -477,9 +479,9 @@ $: note("c3 e3 g3 c4").s("sawtooth").orbit(2).gain(0.35).lpf(900)
 ## 信号のイメージ（dj-hermes）
 
 1. 音源（波形 / ノイズ / wt / サンプル）
-2. パーボイス: FM・vib・noise mix・ADSR・biquad lpf/hpf/bpf・penv/lpenv
+2. パーボイス: FM・vib・noise mix・ADSR・biquad lpf/hpf/bpf・penv/lpenv・`.compressor`（任意）
 3. Deck 内 orbit 合算 → orbit delay / room（wet）
-4. Mixer: チャンネル EQ・フェーダー・マスター LPF/HPF・compressor
+4. Mixer: チャンネル EQ・フェーダー・マスター LPF/HPF・常時オン compressor
 
 ---
 
@@ -670,7 +672,7 @@ $: note("[0,4]").scale("C4:minor")
 
 This file is **124** — same clock as house / mood / minor-scale. A leftover **120** file is isolated; **do not DJ-pair 120 with 124** (shared Transport discards the other tempo). Do not pair with 126 techno or 174 DnB.
 
-No `.compressor` (mixer master, last-write). No `.duckorbit`. No square sub. No `bs:rm`. No pluck. No stab.
+No `.compressor` on this recipe (per-voice insert; master glue is Mixer default). No `.duckorbit`. No square sub. No `bs:rm`. No pluck. No stab.
 
 ## Try it in this app
 
@@ -1032,6 +1034,6 @@ Live TUI: apply the inline recipes with `dj_hermes_apply_song`.
 - Rewrite `bs:rm` / `plk:lp` / live 2-op recipes to these stems.
 - Add a `bd/` bank or a third-party drum kit from this batch.
 - Write old flats (`bass-fm_house`, `pad-fm_fifth`, `reese-dark`, `fx-uplifter`) or hyphen swaps (`bass-fm-house`, `pad-fm-fifth`, `reese_dark`, `fx-riser-noise`).
-- Put `.compressor` on a `$:` (mixer master, last-write).
+- Put `.compressor` on a `$:` in this recipe (per-voice insert; omit here).
 - Pair these 124 files with 174 DnB or 126 techno (shared clock).
 - `stack()` / `.cpm(124)`.

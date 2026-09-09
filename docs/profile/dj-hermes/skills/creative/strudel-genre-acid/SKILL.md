@@ -108,7 +108,7 @@ The Pattern fence is one example of grid, degrees, and slots. Keep the **303 on 
 | `.lpattack(0.001)` / `.lpdecay(0.09)` / `.lpsustain(0.05)` | Per-**note** AD toward a closed body. |
 | `.cut(1)` | Steal the previous voice (mono). |
 | amp `.attack` / `.decay` / `.sustain` / `.release` | Gate the oscillator. **Not** a substitute for `lpenv`. |
-| no `.compressor` / no `.duckorbit` | Compressor is mixer last-write. This recipe is the filter, not duck. |
+| no `.compressor` / no `.duckorbit` | Per-voice compressor omitted. This recipe is the filter, not duck. |
 
 ## Why it sounds that way
 

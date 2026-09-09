@@ -67,8 +67,6 @@ pub struct Deck {
     ducks: [DuckState; NUM_ORBITS],
     /// Per-orbit global delay / room (Deck-local; not shared across A/B).
     orbit_fx: [OrbitFx; NUM_ORBITS],
-    /// Last compressor params seen on a spawned hit (Engine may promote to Mixer).
-    pub pending_compressor: Option<CompressorParams>,
     midi_tx: Option<Sender<MidiEvent>>,
     midi_slots: Vec<Option<(u8, u8)>>,
     midi_timed: Vec<(u64, u8, u8)>,
@@ -95,7 +93,6 @@ impl Deck {
             cycle_offset: 0,
             ducks: [DuckState::default(); NUM_ORBITS],
             orbit_fx: std::array::from_fn(|_| OrbitFx::new()),
-            pending_compressor: None,
             midi_tx: None,
             midi_slots: vec![None; MAX_VOICES],
             midi_timed: Vec::new(),
@@ -143,7 +140,6 @@ impl Deck {
         for fx in &mut self.orbit_fx {
             fx.clear();
         }
-        self.pending_compressor = None;
     }
 
     pub fn unload(&mut self) {
@@ -161,7 +157,6 @@ impl Deck {
         for fx in &mut self.orbit_fx {
             fx.clear();
         }
-        self.pending_compressor = None;
     }
 
     /// Offset added to the global bar index when choosing pattern content.
@@ -589,9 +584,6 @@ impl Deck {
         if hit.duck.count > 0 {
             self.trigger_duck(&hit.duck, sr);
         }
-        if let Some(c) = hit.compressor {
-            self.pending_compressor = Some(c);
-        }
         // Last-write-wins orbit FX params (only when pattern uses delay/room).
         if hit.delay > 1e-6 || hit.room > 1e-6 {
             let oi = orbit_index(hit.orbit);
@@ -633,7 +625,8 @@ impl Deck {
                 )
                 .with_adsr_timing(sr, hit.len_samples)
                 .with_pan(hit.pan)
-                .with_cut_track(hit.cut_track);
+                .with_cut_track(hit.cut_track)
+                .with_compressor(hit.compressor, sr);
                 Some(self.alloc_voice(VoiceKind::Synth(Box::new(v))))
             }
             ResolvedSound::Noise(n) => {
@@ -654,7 +647,8 @@ impl Deck {
                 )
                 .with_adsr_timing(sr, hit.len_samples)
                 .with_pan(hit.pan)
-                .with_cut_track(hit.cut_track);
+                .with_cut_track(hit.cut_track)
+                .with_compressor(hit.compressor, sr);
                 Some(self.alloc_voice(VoiceKind::Synth(Box::new(v))))
             }
             ResolvedSound::Wavetable(table) => {
@@ -675,7 +669,8 @@ impl Deck {
                 )
                 .with_adsr_timing(sr, hit.len_samples)
                 .with_pan(hit.pan)
-                .with_cut_track(hit.cut_track);
+                .with_cut_track(hit.cut_track)
+                .with_compressor(hit.compressor, sr);
                 Some(self.alloc_voice(VoiceKind::Synth(Box::new(v))))
             }
             ResolvedSound::Sample(name) => {
@@ -707,8 +702,9 @@ impl Deck {
                 )
                 .with_adsr_timing(sr, hit.len_samples)
                 .with_pan(hit.pan)
-                .with_cut_track(hit.cut_track);
-                Some(self.alloc_voice(VoiceKind::Sample(v)))
+                .with_cut_track(hit.cut_track)
+                .with_compressor(hit.compressor, sr);
+                Some(self.alloc_voice(VoiceKind::Sample(Box::new(v))))
             }
         };
         if let Some(i) = slot {

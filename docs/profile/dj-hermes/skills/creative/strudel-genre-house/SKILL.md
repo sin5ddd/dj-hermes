@@ -91,7 +91,7 @@ The Pattern fence is one example of grid, degrees, and slots. For a **new** appl
 | `.cut(1)` | Steal the previous one-shot (~0.4 s must not overlap itself) |
 | chords `[0,2,4]` on `ep:ky` | PCM triad at **C4**. Do not use `triangle` |
 | pad `pf:ff` `note("0")` | Baked fifth. Do not write `[0,4]`. Orbit 2 |
-| no `.compressor` / no `.duckorbit` | Compressor is mixer last-write. No duck in this recipe |
+| no `.compressor` / no `.duckorbit` | Per-voice compressor omitted. No duck in this recipe |
 
 ## Why `[~ cp]*2`, not `[~ sd]*2`
 
@@ -153,7 +153,7 @@ House in this tree is ~120–128. This file is **124**. Techno kick-front exampl
 
 Both decks share one `Transport`. A DJ pair must use the **same** `setcpm`. Pair this file with `songs/four-on-the-floor/01.strudel` (also `setcpm(124/4)`). Do not pair a techno file that is not 124.
 
-No `.compressor` on a `$:` — that writes the **mixer master** (last-write) and will squash the kick. No duck work in this skill.
+No `.compressor` on a `$:` in this recipe (per-voice insert; master glue is Mixer default). No duck work in this skill.
 
 ## Try it in this app
 

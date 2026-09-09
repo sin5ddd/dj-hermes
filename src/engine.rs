@@ -505,13 +505,6 @@ impl Engine {
             };
             self.mixer.set_riser_pcm(pcm);
         }
-        // Last-write-wins compressor params from either deck's pattern hits.
-        if let Some(c) = self.decks[0]
-            .pending_compressor
-            .or(self.decks[1].pending_compressor)
-        {
-            self.mixer.set_compressor(Some(c), sr);
-        }
         self.mixer.mix(
             &mut self.scratch_out_l[..frames],
             &mut self.scratch_out_r[..frames],
@@ -538,6 +531,7 @@ impl Engine {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::dsp::CompressorParams;
     use crate::mixer::{FillKind, MixAction, MixCommand};
     use crate::song::parse_song;
 
@@ -924,6 +918,9 @@ b: note("{n}").s("sawtooth").gain(0.8)
         e.mixer.gain_b = 0.0;
 
         e.load_song_immediate(0, test_song("c3"));
+        // One bar to spawn voices, one more so the always-on master comp envelope settles.
+        let mut buf = stereo_buf(bar);
+        e.process(&mut buf, &bank);
         let mut buf = stereo_buf(bar);
         e.process(&mut buf, &bank);
         let before = peak(&buf);
@@ -942,6 +939,28 @@ b: note("{n}").s("sawtooth").gain(0.8)
         );
         assert_eq!(e.decks[1].song_title(), Some("t"));
         assert!(e.mixer.gain_b.abs() < 1e-5, "B fader must stay silent");
+    }
+
+    #[test]
+    fn pattern_compressor_does_not_override_mixer_default() {
+        let mut e = Engine::new(48_000, 120.0);
+        let bank = SampleBank::empty();
+        let song = parse_song(
+            r#"setcpm(120/4)
+$: note("c3").s("sawtooth").gain(0.8).compressor("-12:20:0:.0:.05")
+"#,
+            "comp.strudel",
+        )
+        .unwrap();
+        e.load_song_immediate(0, song);
+        let mut buf = stereo_buf(96_000);
+        e.process(&mut buf, &bank);
+        let p = e
+            .mixer
+            .compressor_params()
+            .expect("master default compressor");
+        assert!((p.threshold_db - CompressorParams::MIXER_DEFAULT.threshold_db).abs() < 1e-5);
+        assert!((p.ratio - CompressorParams::MIXER_DEFAULT.ratio).abs() < 1e-5);
     }
 
     #[test]

@@ -84,7 +84,7 @@ Keep **square `C2` + `bs:rm` at `C4:` + hook `plk:s5` degrees `~ 4 ~ <7 4>`**. F
 | `bs:rm` + `C4:minor` | `// bass-mid` — `samples/bs/rm.wav`; native 800–1200 Hz stays |
 | `plk:s5` degrees `4` / `7` | `// hook` — `samples/plk/s5.wav`; hollow C–G transposed (still no third) |
 | `.cut(1)` | Steal the previous stab one-shot |
-| no `.compressor` / no clap | Compressor is mixer last-write. No house `cp` on this grid |
+| no `.compressor` / no clap | Per-voice compressor omitted. No house `cp` on this grid |
 
 ## Why mid is C4, not C2
 
@@ -160,7 +160,7 @@ Drums stay the bundled folder keys `bd` / `sd` / `hh` / `oh`. There is no `db` s
 
 **Chord suffixes:** `note("c3'maj")` still plays the **root only**. This song uses degrees.
 
-No `.compressor` on a `$:` — that writes the **mixer master** (last-write) and will squash the kick. No house clap (`cp`) on this break.
+No `.compressor` on a `$:` in this recipe (per-voice insert; master glue is Mixer default). No house clap (`cp`) on this break.
 
 ## Try it in this app
 

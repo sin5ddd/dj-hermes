@@ -596,7 +596,10 @@ impl Mixer {
             hpf_y_r: 0.0,
             hpf_x_prev_l: 0.0,
             hpf_x_prev_r: 0.0,
-            compressor: None,
+            compressor: Some(crate::dsp::Compressor::new(
+                crate::dsp::CompressorParams::MIXER_DEFAULT,
+                48_000.0,
+            )),
             comp_sr: 48_000.0,
             eq_a: ChannelEq::new(48_000.0),
             eq_b: ChannelEq::new(48_000.0),
@@ -1482,6 +1485,13 @@ impl Mixer {
         let sr = sample_rate.max(1.0);
         self.eq_a.ensure_sr(sr);
         self.eq_b.ensure_sr(sr);
+        if let Some(comp) = self.compressor.as_mut() {
+            if (sr - self.comp_sr).abs() > 1.0 {
+                let p = comp.params;
+                comp.set_params(p, sr);
+                self.comp_sr = sr;
+            }
+        }
         let delay_wet = self.delay_wet;
         let delay_fb = self.delay_fb;
         let fa = self.flash_mul[0];
@@ -1676,6 +1686,45 @@ mod tests {
     }
 
     #[test]
+    fn mixer_starts_with_master_compressor() {
+        let m = Mixer::new();
+        let p = m
+            .compressor_params()
+            .expect("Mixer::new should enable master compressor");
+        assert!((p.threshold_db - CompressorParams::MIXER_DEFAULT.threshold_db).abs() < 1e-5);
+        assert!((p.ratio - CompressorParams::MIXER_DEFAULT.ratio).abs() < 1e-5);
+        assert!(p.threshold_db <= -24.0);
+        assert!(p.ratio >= 8.0);
+    }
+
+    #[test]
+    fn default_compressor_reduces_sustained_peak() {
+        let sr = 48_000.0f32;
+        let n = 4000;
+        let a = vec![0.8f32; n];
+        let b = vec![0.0f32; n];
+
+        let mut dry = Mixer::new();
+        dry.gain_a = 1.0;
+        dry.set_compressor(None, sr);
+        let mut out_dry = vec![0.0f32; n];
+        mix_center(&mut dry, &mut out_dry, &a, &b, sr);
+
+        let mut wet = Mixer::new();
+        wet.gain_a = 1.0;
+        let mut out_wet = vec![0.0f32; n];
+        mix_center(&mut wet, &mut out_wet, &a, &b, sr);
+
+        let peak = |buf: &[f32]| buf[2000..].iter().map(|x| x.abs()).fold(0.0f32, f32::max);
+        let peak_dry = peak(&out_dry);
+        let peak_wet = peak(&out_wet);
+        assert!(
+            peak_wet < peak_dry * 0.7,
+            "default master comp should squash a 0.8 sustain: dry={peak_dry} wet={peak_wet}"
+        );
+    }
+
+    #[test]
     fn compressor_on_mix_reduces_peak() {
         let mut m = Mixer::new();
         m.gain_a = 1.0;
@@ -1703,6 +1752,7 @@ mod tests {
         let mut m = Mixer::new();
         m.gain_a = 1.0;
         m.gain_b = 0.0;
+        m.set_compressor(None, 48_000.0);
         // 1 kHz tone at mid band center — flat EQ should pass nearly unchanged.
         let sr = 48_000.0f32;
         let n = 4000;
@@ -1736,11 +1786,13 @@ mod tests {
 
         let mut flat = Mixer::new();
         flat.gain_a = 1.0;
+        flat.set_compressor(None, sr);
         let mut out_flat = vec![0.0f32; n];
         mix_center(&mut flat, &mut out_flat, &a, &b, sr);
 
         let mut cut = Mixer::new();
         cut.gain_a = 1.0;
+        cut.set_compressor(None, sr);
         cut.set_deck_eq(0, 2, 0.0); // Lo kill
         let mut out_cut = vec![0.0f32; n];
         mix_center(&mut cut, &mut out_cut, &a, &b, sr);
@@ -1917,11 +1969,13 @@ mod tests {
 
         let mut flat = Mixer::new();
         flat.gain_a = 1.0;
+        flat.set_compressor(None, sr);
         let mut out_flat = vec![0.0f32; n];
         mix_center(&mut flat, &mut out_flat, &a, &b, sr);
 
         let mut cut = Mixer::new();
         cut.gain_a = 1.0;
+        cut.set_compressor(None, sr);
         cut.set_deck_eq(0, 0, 0.0);
         let mut out_cut = vec![0.0f32; n];
         mix_center(&mut cut, &mut out_cut, &a, &b, sr);

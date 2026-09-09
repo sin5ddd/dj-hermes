@@ -512,15 +512,22 @@ pub struct CompressorParams {
     pub release: f32,
 }
 
+impl CompressorParams {
+    /// Always-on master glue (`Mixer::new`). Lower threshold and higher ratio
+    /// than a light bus comp. Pattern `.compressor` is per-voice and does not
+    /// override this. No makeup: the mix already sits near the output clip.
+    pub const MIXER_DEFAULT: Self = Self {
+        threshold_db: -24.0,
+        ratio: 8.0,
+        knee_db: 8.0,
+        attack: 0.008,
+        release: 0.10,
+    };
+}
+
 impl Default for CompressorParams {
     fn default() -> Self {
-        Self {
-            threshold_db: -20.0,
-            ratio: 4.0,
-            knee_db: 6.0,
-            attack: 0.003,
-            release: 0.1,
-        }
+        Self::MIXER_DEFAULT
     }
 }
 
@@ -710,6 +717,16 @@ mod tests {
         let p = CompressorParams::parse("-20:20:10:.002:.02").unwrap();
         assert!((p.threshold_db + 20.0).abs() < 1e-5);
         assert!((p.ratio - 20.0).abs() < 1e-5);
+    }
+
+    #[test]
+    fn mixer_default_is_low_threshold_high_ratio() {
+        let p = CompressorParams::MIXER_DEFAULT;
+        assert!((p.threshold_db + 24.0).abs() < 1e-5);
+        assert!((p.ratio - 8.0).abs() < 1e-5);
+        assert!(p.knee_db > 0.0);
+        assert!(p.attack > 0.0);
+        assert!(p.release > 0.0);
     }
 
     #[test]

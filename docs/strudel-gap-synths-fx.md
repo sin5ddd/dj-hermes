@@ -119,7 +119,7 @@
 | `jux` / `juxBy` | **未** | パターン変換寄り |
 | `postgain` / `post` / `dry` | **未** | |
 | `phaser` / `phaserdepth` / `phasercenter` / `phasersweep` | **未** | |
-| `compressor` | **部分** | パターンから設定可だが **マスター寄り last-write**。本家のイベントごとチェーンとは位置が異なる |
+| `compressor` | **部分** | パターン `.compressor` はパーボイス insert（フィルタ後・pan 前）。Mixer 起動時のマスターコンプ（threshold −24 dB / ratio 8）は別系統。本家の `postgain` と Pattern 引数は未 |
 
 ### 2.2 グローバル / orbit FX
 

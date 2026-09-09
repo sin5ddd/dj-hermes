@@ -1,9 +1,9 @@
-//! Soft synth voice: waveforms, noise, wavetable, FM/vib, ADSR, biquad filters.
+//! Soft synth voice: waveforms, noise, wavetable, FM/vib, ADSR, biquad filters, optional compressor.
 
 use std::sync::Arc;
 
 use crate::code::{Adsr, FilterParams, ModParams};
-use crate::dsp::{Biquad, BiquadKind};
+use crate::dsp::{Biquad, BiquadKind, Compressor, CompressorParams};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Wave {
@@ -120,6 +120,7 @@ pub struct Voice {
     pink_b: [f32; 7],
     brown_y: f32,
     rng: u32,
+    compressor: Option<Compressor>,
 }
 
 impl Voice {
@@ -193,6 +194,7 @@ impl Voice {
             pink_b: [0.0; 7],
             brown_y: 0.0,
             rng: 0x1234_5678,
+            compressor: None,
         }
     }
 
@@ -223,6 +225,11 @@ impl Voice {
 
     pub fn with_pan(mut self, pan: f32) -> Self {
         self.pan = pan.clamp(0.0, 1.0);
+        self
+    }
+
+    pub fn with_compressor(mut self, params: Option<CompressorParams>, sr: f32) -> Self {
+        self.compressor = params.map(|p| Compressor::new(p, sr.max(1.0)));
         self
     }
 
@@ -402,6 +409,9 @@ impl Voice {
         }
         if self.use_bpf {
             x = self.bpf.process(x);
+        }
+        if let Some(c) = self.compressor.as_mut() {
+            x = c.process(x);
         }
 
         self.pos += 1;
@@ -899,5 +909,52 @@ mod tests {
             e += s.abs();
         }
         assert!(e > 1.0);
+    }
+
+    #[test]
+    fn voice_compressor_reduces_peak() {
+        let sr = 48_000.0f32;
+        let n = 4000u64;
+        let render = |comp: Option<CompressorParams>| {
+            let mut v = Voice::new(
+                OscSource::Wave(Wave::Sine),
+                220.0,
+                0.9,
+                n,
+                FilterParams::default(),
+                Adsr {
+                    attack: 0.0,
+                    decay: 0.0,
+                    sustain: 1.0,
+                    release: 0.0,
+                },
+                ModParams::default(),
+                1,
+                None,
+            )
+            .with_adsr_timing(sr, n)
+            .with_compressor(comp, sr);
+            let mut peak = 0.0f32;
+            let mut i = 0u64;
+            while let Some(s) = v.next_sample(sr) {
+                if i > 2000 {
+                    peak = peak.max(s.abs());
+                }
+                i += 1;
+            }
+            peak
+        };
+        let dry = render(None);
+        let wet = render(Some(CompressorParams {
+            threshold_db: -12.0,
+            ratio: 20.0,
+            knee_db: 0.0,
+            attack: 0.0,
+            release: 0.05,
+        }));
+        assert!(
+            wet < dry * 0.7,
+            "per-voice compressor should squash a 0.9 sine: dry={dry} wet={wet}"
+        );
     }
 }

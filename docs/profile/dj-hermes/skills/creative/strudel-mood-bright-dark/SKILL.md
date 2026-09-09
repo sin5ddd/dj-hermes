@@ -171,7 +171,7 @@ Amp ADSR (`.attack` / `.decay` / `.sustain` / `.release`) scales loudness after 
 
 - Per-deck 3-band EQ (`mixer.rs`): Hi shelf 6 kHz, Mid peak 1 kHz, Lo shelf 200 Hz. Boost Hi on the bright deck; cut Hi (or Lo) on the dark deck.
 - Master LPF/HPF on the mixer: a low master LPF darkens **both** decks.
-- `.compressor(...)` on a `$:` is **mixer master, last-write** (`engine.rs`). It will squash the kick. It is not a mood tool.
+- `.compressor(...)` on a `$:` is a per-voice insert, not a mood tool. Master glue is Mixer default.
 
 TUI: `/eq a hi 0.8` (brighter A) vs `/eq b hi 0.2` (darker B). That is the booth bright/dark. The files stay as written.
 

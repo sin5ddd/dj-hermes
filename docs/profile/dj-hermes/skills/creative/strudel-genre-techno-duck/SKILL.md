@@ -3,7 +3,7 @@ name: strudel-genre-techno-duck
 description: >-
   Use when writing a techno loop in dj-hermes with kick sidechain: duck
   pad and bass on the same orbit, short duckattack (0.03–0.05), techno
-  grid bd*4 + offbeat hats, no per-track compressor (it is master last-write).
+  grid bd*4 + offbeat hats, no per-track compressor (master glue is Mixer default).
   8 $: tracks (kick+hats count as drums), 4-bar phrase, no clap.
 version: 5.1.0
 author: Hermes Agent
@@ -26,7 +26,7 @@ metadata:
 - The request is **techno at ~126 BPM** with a **pumping pad** and an FM or low bass.
 - You need the **kick in front** of both the pad **and** the sub.
 - Duck split: kick on its own `$:` with `duckorbit`; hats on a second `$:` **without** `duckorbit`. Those two count as drums. Then bass + lead + hook + arp + chords + pad = **8 tracks**. No 9th track. No second bass.
-- You are **not** writing a dry four-on-the-floor with no duck, and you are **not** treating `.compressor` as a track insert.
+- You are **not** writing a dry four-on-the-floor with no duck, and you are **not** adding `.compressor` to this recipe (duck does the pump).
 - You are **not** writing a house backbeat unless you label that variant **house**. Techno: **no clap**.
 
 ## Pattern
@@ -89,7 +89,7 @@ The Pattern fence is one example of grid, degrees, and slots. For a **new** appl
 | `s("[~ hh]*4, <~ ~ ~ hh*8>")` | Techno offbeat hats + 4th-bar fill. **No** clap. **No** `[~ sd]*2` — that is a house backbeat. |
 | bass `0 0 2 <4 6 2 0>` | Same contour as `0 0 2 <4 6>`; 4-bar `<>` |
 | pad `pf:ff` `note("0")` | Baked fifth on orbit 2. Older fence used degrees `0 2 4 7` as a rising pad line |
-| no `.compressor(...)` | Pattern method is **mixer master**, last-write (`engine.rs`) |
+| no `.compressor(...)` | Per-voice insert omitted. Master glue is Mixer default |
 
 ## Why it sounds that way
 
@@ -110,7 +110,7 @@ Hats stay on a **separate** `$:` with no `duckorbit`. If hats shared the kick li
 
 **Techno grid, not house.** The dance pulse here is `bd*4` plus `[~ hh]*4` (kick in front, hats on the offbeats). `[~ sd]*2` puts snares on 2 and 4 — a **house** backbeat. `[~ cp]*2` is also house. Use those only when the request is house.
 
-**`.compressor` on a `$:` is not a track insert.** `deck.rs` stashes `pending_compressor`; `engine.rs` does last-write-wins onto `mixer.set_compressor`. The kick, hats, and both decks go through it after faders and EQ. A bass-line `.compressor("-18:3:6:.003:.12")` therefore **squashes the kick**. Omit it for this recipe. If you want master glue, add `.compressor(...)` as the last method on a late `$:` and know it is the master bus, not that track.
+**`.compressor` on a `$:` is a per-voice insert** (after filters, before pan). It no longer writes the mixer master. Omit it for this recipe — the pump is `duckorbit`, and master glue is Mixer `MIXER_DEFAULT`. Do not put `.compressor` on the bass “to control the low end”; that only squashes that voice.
 
 Lead uses live 2-op FM (`sine` + `.fm` / `.lpenv`) — not a long catalog PCM on every bar. Arp is sparse perc (`perc:tm` / `perc:st`), not a second bass. Do not add `bs:su`.
 
@@ -139,14 +139,14 @@ Live TUI: `/a load techno-duck-01`. Then `/x 4` to crossfade toward B (equal-pow
 | Split low / mid orbits | bass `.orbit(2)`, pad `.orbit(3)`, kick `.duckorbit("2:3")` |
 | Deeper pump | `.duckdepth(0.95)` (still `0.03–0.05` attack) |
 | House backbeat | do **not** add it here — use [strudel-genre-house](../strudel-genre-house/SKILL.md) (`[~ cp]*2`, never stack `sd`) |
-| Master glue | `.compressor("-18:3:6:.003:.12")` on the **last** `$:` — mixer last-write, not a pad insert |
+| Master glue | Mixer always-on (`MIXER_DEFAULT`). Do not add pattern `.compressor` for glue |
 
 ## Rules (do not skip)
 
 1. Duck **pad and bass** (any low layer) on the same orbit as `.duckorbit(N)`.
 2. `.duckattack` in **0.03–0.05** at ~126 BPM.
 3. Techno drums are kick `$:` + hats `$:` = `bd*4` + `[~ hh]*4`. `[~ sd]*2` / `[~ cp]*2` only if you label **house**.
-4. Do not put `.compressor` on the bass — it is master last-write.
+4. Do not put `.compressor` on the bass — duck is the pump; compressor is per-voice.
 5. **8 tracks**: kick, hats, bass, lead, hook, arp, chords, pad. No second bass. No 9th track.
 
 ## Checklist

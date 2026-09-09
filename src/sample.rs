@@ -5,7 +5,7 @@ use std::path::Path;
 use std::sync::Arc;
 
 use crate::code::{Adsr, FilterParams};
-use crate::dsp::{Biquad, BiquadKind};
+use crate::dsp::{Biquad, BiquadKind, Compressor, CompressorParams};
 use crate::synth::Voice;
 
 /// Default root pitch for `note().s("sample")` speed scaling (C3).
@@ -302,7 +302,7 @@ fn decode_wav_bytes(bytes: &[u8], target_sr: u32) -> Result<Vec<f32>, String> {
     Ok(out)
 }
 
-/// One-shot / pitched sample voice with begin/end/speed, ADSR, and biquad filters.
+/// One-shot / pitched sample voice with begin/end/speed, ADSR, biquad filters, optional compressor.
 pub struct SampleVoice {
     data: Arc<Vec<f32>>,
     pos: f64,
@@ -329,6 +329,7 @@ pub struct SampleVoice {
     use_lpf: bool,
     use_hpf: bool,
     timed: bool,
+    compressor: Option<Compressor>,
 }
 
 impl SampleVoice {
@@ -404,6 +405,7 @@ impl SampleVoice {
             use_lpf,
             use_hpf,
             timed: false,
+            compressor: None,
         }
         .with_filters(filter, 48_000.0)
     }
@@ -431,6 +433,11 @@ impl SampleVoice {
 
     pub fn with_pan(mut self, pan: f32) -> Self {
         self.pan = pan.clamp(0.0, 1.0);
+        self
+    }
+
+    pub fn with_compressor(mut self, params: Option<CompressorParams>, sr: f32) -> Self {
+        self.compressor = params.map(|p| Compressor::new(p, sr.max(1.0)));
         self
     }
 
@@ -520,6 +527,9 @@ impl SampleVoice {
         if self.use_hpf {
             x = self.hpf.process(x);
         }
+        if let Some(c) = self.compressor.as_mut() {
+            x = c.process(x);
+        }
         self.pos += self.step;
         self.sample_i += 1;
         if self.stage == 4 {
@@ -574,10 +584,10 @@ impl SampleVoice {
 }
 
 /// Synth or sample voice for the deck pool.
-/// `Voice` is large (filters/mod state); box it to keep the enum small.
+/// Both variants are boxed so the pool slot stays small.
 pub enum VoiceKind {
     Synth(Box<Voice>),
-    Sample(SampleVoice),
+    Sample(Box<SampleVoice>),
 }
 
 impl VoiceKind {
@@ -848,5 +858,56 @@ mod tests {
             "fade after eof: after={after} at_end={at_end}"
         );
         assert!(out.last().copied().unwrap_or(1.0).abs() < 0.05);
+    }
+
+    #[test]
+    fn sample_voice_compressor_reduces_peak() {
+        let sr = 48_000.0f32;
+        let data = Arc::new(vec![0.9f32; 4000]);
+        let render = |comp: Option<CompressorParams>| {
+            let mut v = SampleVoice::new_fx(
+                data.clone(),
+                1.0,
+                0.0,
+                1.0,
+                1.0,
+                1.0,
+                FilterParams::default(),
+                Adsr {
+                    attack: 0.0,
+                    decay: 0.0,
+                    sustain: 1.0,
+                    release: 0.0,
+                },
+                1,
+                None,
+            )
+            .with_adsr_timing(sr, 4000)
+            .with_compressor(comp, sr);
+            let mut peak = 0.0f32;
+            let mut i = 0usize;
+            while let Some(s) = v.next_sample(sr) {
+                if i > 2000 {
+                    peak = peak.max(s.abs());
+                }
+                i += 1;
+                if i > 5000 {
+                    break;
+                }
+            }
+            peak
+        };
+        let dry = render(None);
+        let wet = render(Some(CompressorParams {
+            threshold_db: -12.0,
+            ratio: 20.0,
+            knee_db: 0.0,
+            attack: 0.0,
+            release: 0.05,
+        }));
+        assert!(
+            wet < dry * 0.7,
+            "per-voice compressor should squash a 0.9 sample: dry={dry} wet={wet}"
+        );
     }
 }
