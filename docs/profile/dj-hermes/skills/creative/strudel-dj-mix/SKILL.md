@@ -1,6 +1,6 @@
 ---
 name: strudel-dj-mix
-description: "Use when mixing two decks, long mix, cut-in, fill-in, switch/transformer chops, crossfade hold, つなげる, カットイン, フィル, スイッチ, 次の曲へ, エコー, ハイパス, ロール, echo, hpf, roll."
+description: "Use when mixing two decks, long mix, cut-in, fill-in, switch/transformer chops, crossfade hold, つなげる, カットイン, フィル, スイッチ, 次の曲へ, エコー, ハイパス, ロール, ビニール, echo, hpf, roll, vinyl."
 version: 1.0.0
 author: Hermes Agent
 license: MIT
@@ -52,13 +52,14 @@ metadata:
 | 四分音符のテープを 2 連 | `dj_hermes_mixer_tape(on=true, len="4n", reps=2)` |
 | 速い曲をテープで落として遅い曲へ | 主電源で `mixer_tape(on=true, len="1n")` → 途中で `on=false` → `dj_hermes_mix(move="cut", to=着地)`。BPM は共有のまま |
 | インパクト入れてカット | `dj_hermes_mix(move="fill", kind="drop", to="B")` |
+| ビニール（かすれ＋音程揺れ）してカット | `dj_hermes_mix(move="fill", kind="vinyl", to="B")`（既定 8 小節。バンドパスのかすれが徐々に強くなり、音程 wow のあとカット） |
 | 4 分でスイッチ | `grid="4n"` |
 
 `to` は **着地先**。スイッチの最初のマスは着地の反対（B から始めて A へ）。
 
 flash は outgoing だけ消す。switch は AB を 100:0 ↔ 0:100 で交互。取り違えない。
 
-任意: `bars`（long 既定 8、fill 既定 1、riser 8）、`phrase` 1/4/8、`eq=false`（long で EQ しない）、`reset_eq=false`、`mute_track`（outgoing のトラック名）。
+任意: `bars`（long 既定 8、fill 既定 1、riser / vinyl 8）、`phrase` 1/4/8、`eq=false`（long で EQ しない）、`reset_eq=false`、`mute_track`（outgoing のトラック名）。
 
 ## やってはいけないこと
 

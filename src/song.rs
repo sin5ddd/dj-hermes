@@ -1546,7 +1546,7 @@ bass: note("c2 eb2 g2 bb2").s("sawtooth").lpf(400).gain(0.7)
         let text = std::fs::read_to_string(&path).expect("house/01.strudel");
         let s = parse_song(&text, "songs/house/01.strudel").unwrap();
         assert_eq!(s.title, "warehouse-intro");
-        assert_eq!(s.tracks.len(), 7);
+        assert_eq!(s.tracks.len(), 8);
         assert_eq!(s.tracks[0].name, "drums");
         assert!(
             s.tracks[0].code.mini_src.contains("bd:hf"),

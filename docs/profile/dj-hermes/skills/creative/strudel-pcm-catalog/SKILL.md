@@ -121,6 +121,8 @@ Apply the inline recipe with `dj_hermes_apply_song`. `songs/house/01.strudel` us
 | `plk:dt` | DnB タイト |
 | `ep:ky` | 同梱 EP ワンショット（ライブ lead ではない） |
 | `ep:rs` | 柔らかい Rhodes |
+| `ep:mt` | サス無しピアノ |
+| `ep:pd` | サス有りピアノ |
 
 ### FX `fx:`（`note()` なし）
 

@@ -108,6 +108,9 @@ pub struct StatusInfo {
     /// Operator-held master delay wet 0..=1.
     #[serde(default)]
     pub delay_wet: f32,
+    /// Operator-held vinyl (worn BPF + pitch wow).
+    #[serde(default)]
+    pub vinyl: bool,
     /// Time-repeat note value (`4n`/`8n`/`16n`/`32n`), or omitted when off.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub repeat: Option<String>,
@@ -351,6 +354,12 @@ pub struct MixerTapeReq {
     pub reps: Option<u8>,
 }
 
+/// Master vinyl. `on: true` holds worn BPF + pitch wow; `on: false` clears.
+#[derive(Deserialize)]
+pub struct MixerVinylReq {
+    pub on: bool,
+}
+
 #[derive(Deserialize)]
 pub struct MixerCrossfaderReq {
     /// 0 = full A, 1 = full B (immediate; cancels multi-bar xfade).
@@ -418,6 +427,7 @@ pub(crate) fn snapshot(engine: &Arc<Mutex<Engine>>, deck_paths: Option<&DeckPath
         muted_a: muted_names(&e.decks[0]),
         muted_b: muted_names(&e.decks[1]),
         delay_wet: e.mixer.held_delay_wet(),
+        vinyl: e.mixer.held_vinyl(),
         repeat: e.transport.repeat_div().map(|d| d.as_str().to_string()),
         tape: e.transport.tape_spec().map(|s| s.as_status()),
         mix: e.mixer.mix_status().map(MixStatusInfo::from_mixer),
@@ -475,7 +485,7 @@ pub(crate) fn mix_command_from_req(r: &MixReq) -> Result<Command, String> {
     let fill = match action {
         MixAction::Fill => {
             let k = r.kind.as_deref().ok_or(
-                "kind required for move=fill (delay|lpf|flash|riser|switch|echo|hpf|roll|drop)",
+                "kind required for move=fill (delay|lpf|flash|riser|switch|echo|hpf|roll|drop|vinyl)",
             )?;
             Some(FillKind::parse(k)?)
         }
@@ -980,6 +990,15 @@ async fn mixer_tape(
     Ok(StatusCode::NO_CONTENT)
 }
 
+async fn mixer_vinyl(
+    State(s): State<AppState>,
+    Json(r): Json<MixerVinylReq>,
+) -> Result<StatusCode, (StatusCode, Json<ErrRes>)> {
+    s.tx.send(Command::SetMixerVinyl(r.on))
+        .map_err(|e| bad(e.to_string()))?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
 fn tape_command_from_req(r: &MixerTapeReq) -> Result<Command, String> {
     if !r.on {
         return Ok(Command::SetTapeStop(None));
@@ -1086,6 +1105,7 @@ pub fn router(state: AppState) -> Router {
         .route("/mixer/fx", post(mixer_fx))
         .route("/mixer/repeat", post(mixer_repeat))
         .route("/mixer/tape", post(mixer_tape))
+        .route("/mixer/vinyl", post(mixer_vinyl))
         .route("/mixer/crossfader", post(mixer_crossfader))
         .route("/mix", post(mix))
         .route("/status", get(get_status))
@@ -1850,6 +1870,46 @@ mod tests {
         match rx.try_recv().unwrap() {
             Command::SetCrossfader(p) => assert!((p - 0.35).abs() < 1e-5),
             _ => panic!("expected SetCrossfader"),
+        }
+    }
+
+    #[tokio::test]
+    async fn mixer_vinyl_on_off() {
+        let (state, rx) = test_state();
+        let app = router(state.clone());
+        let res = app
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/mixer/vinyl")
+                    .header("content-type", "application/json")
+                    .body(Body::from(r#"{"on":true}"#))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(res.status(), StatusCode::NO_CONTENT);
+        match rx.try_recv().unwrap() {
+            Command::SetMixerVinyl(true) => {}
+            _ => panic!("expected SetMixerVinyl true"),
+        }
+
+        let app = router(state);
+        let res = app
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/mixer/vinyl")
+                    .header("content-type", "application/json")
+                    .body(Body::from(r#"{"on":false}"#))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(res.status(), StatusCode::NO_CONTENT);
+        match rx.try_recv().unwrap() {
+            Command::SetMixerVinyl(false) => {}
+            _ => panic!("expected SetMixerVinyl false"),
         }
     }
 

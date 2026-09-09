@@ -127,11 +127,12 @@ dj-hermes の呼び出しは `s("<part>:<slug>")`。音程楽器は `note(...).s
 
 | call | in_bank | id | name | description | note | dur |
 | --- | --- | --- | --- | --- | --- | --- |
-| `ep:mt` | yes | `ep-muted` | ep-muted | ミュート／ラウンジEP。LPで暗く、タインは控えめだがアタックに2×/3×は残す。C3。約3.0秒。 | 48 | 3.0 |
-| `ep:rh` | yes | `ep-rhodes-hard` | ep-rhodes-hard | 硬いRhodes。同じ1×胴＋2×/3×タインだがFM指数とベロ感を上げた咬み。C–E–G向き（短3度の比は入れない）。C3。約2.8秒。 | 48 | 2.8 |
-| `ep:rs` | yes | `ep-rhodes-soft` | ep-rhodes-soft | 柔らかいRhodes。アタックでタイン（比2＝約262 Hz、比3＝約392 Hz）が立ち、減衰してサイン寄りの胴（比1＝約131 Hz）へ。C3。約3.2秒。ベル（3.5）ではない。 | 48 | 3.2 |
-| `ep:tb` | yes | `ep-tine-bell` | ep-tine-bell | タイン前のめりEP。2×/3×を強く出すが整数倍のまま（3.5や ld-bell-pluck の非整数比は使わない）。胴（比1）は残す。C3。約2.4秒。 | 48 | 2.4 |
-| `ep:wr` | yes | `ep-wurli` | ep-wurli | ウーリッツァー寄り。パルス／アブサインのモジュレータでミッドの樹皮感。Rhodesより短い（約1.8秒）がクリックではない。タインは2×/3×。C3。 | 48 | 1.8 |
+| `ep:mt` | yes | `ep-muted` | ep-muted | サス無しFMピアノ。サイン×Saw。指数はアタックだけ。C3。約2.0秒。 | 48 | 2.0 |
+| `ep:pd` | yes | `ep-sustain` | ep-sustain | サス有りFMピアノ。サイン×Saw。胴だけペダル。C3。約3.6秒。 | 48 | 3.6 |
+| `ep:rh` | yes | `ep-rhodes-hard` | ep-rhodes-hard | 硬いRhodes。2×の咬みが胴まで残る。短3度なし。C3。約2.8秒。 | 48 | 2.8 |
+| `ep:rs` | yes | `ep-rhodes-soft` | ep-rhodes-soft | 柔らかいRhodes。短いタインのあとコーラス付きサイン胴。C3。約3.2秒。 | 48 | 3.2 |
+| `ep:tb` | yes | `ep-tine-bell` | ep-tine-bell | 明るいアコースティックピアノ。3×/4×前のめり。整数倍のまま。C3。約2.4秒。 | 48 | 2.4 |
+| `ep:wr` | yes | `ep-wurli` | ep-wurli | 短いアコースティックピアノ。スタッカート寄り。約1.8秒。 | 48 | 1.8 |
 | `ep:ky` | yes | `keys-fm_ep` | FM EP one-shot | C3 EP tines (2×/3×). Write C4:…. Not the live 2-op lead. | 48 | 0.88 |
 
 ## `fx`
@@ -151,7 +152,7 @@ dj-hermes の呼び出しは `s("<part>:<slug>")`。音程楽器は `note(...).s
 | `fx:fo` | yes | `fx-formant-oh` | fx-formant-oh | オー母音のFXヒット。フォルマント合成（低いF1/F2）+ 5度コーラス。 | 55 | 0.75 |
 | `fx:fc` | yes | `fx-frenchcore-ns` | fx-frenchcore-ns | フレンチコアのノイズスネアFX。スネアバンクではなくトランジション用の割れ。 | 67 | 0.5 |
 | `fx:gb` | yes | `fx-gabber-stab` | fx-gabber-stab | ガバのスタブFX。リードではなく短い歪みヒット。 | 55 | 0.38 |
-| `fx:gs` | yes | `fx-glass-smash` | fx-glass-smash | ガラス破砕。高整数比とインハーモニックの短いスマッシュ。 | 84 | 0.7 |
+| `fx:gs` | yes | `fx-glass-smash` | fx-glass-smash | ガラス破砕。2–8 kHzの衝突ノイズと破片のリン。ハットではない。 | 84 | 1.15 |
 | `fx:hv` | yes | `fx-hoover-fall` | fx-hoover-fall | フーバー寄りのフォールFX。リードではなく落下ワンショット。 | 55 | 1.3 |
 | `fx:im` | yes | `fx-impact` | fx-impact | ミッド寄りのインパクト。クリック＋胴。サブだけにしない。 | 48 | 0.55 |
 | `fx:id` | yes | `fx-impact-dnb` | fx-impact-dnb | DnBインパクト。タイトなミッドヒット＋短い砂。 | 52 | 0.5 |
@@ -163,16 +164,16 @@ dj-hermes の呼び出しは `s("<part>:<slug>")`。音程楽器は `note(...).s
 | `fx:nh` | yes | `fx-noise-hit` | fx-noise-hit | ホワイト寄りの短いノイズヒット。トップやグリッチ。 | 72 | 0.35 |
 | `fx:pb` | yes | `fx-passby` | fx-passby | 通過音。ピッチが落ち、BPが横切るドップラー風。 | 60 | 1.1 |
 | `fx:rd` | yes | `fx-radio-stab` | fx-radio-stab | ラジオスタブ。狭いBPとパルス。通信ノイズ風。 | 67 | 0.4 |
-| `fx:ra` | yes | `fx-rev-air` | fx-rev-air | エア寄りのリバースハット。ホワイトノイズ＋スーパーソーのHPスウェル。 | 84 | 1.8 |
-| `fx:rc` | yes | `fx-rev-crash` | fx-rev-crash | 明るいリバースクラッシュ。HPが開いて砂状のクラッシュで切れる。 | 76 | 2.1 |
-| `fx:rm` | yes | `fx-rev-crash-metal` | fx-rev-crash-metal | 金属FMのリバースクラッシュ。固定周波数のリンが後半で開く。 | 72 | 2.2 |
-| `fx:ry` | yes | `fx-rev-cym` | fx-rev-cym | クラシックなリバースシンバル。暗いノイズからHP/LPが開き、上昇ピッチでクラッシュへ。 | 72 | 2.6 |
-| `fx:rb` | yes | `fx-rev-cym-bright` | fx-rev-cym-bright | 短い明るいリバースシンバル。BPが上へ開いてスプラッシュ気味。 | 80 | 1.7 |
-| `fx:rk` | yes | `fx-rev-cym-dark` | fx-rev-cym-dark | 暗いリバースシンバル。胴寄り。ライドの逆再生印象。 | 55 | 3.0 |
-| `fx:rl` | yes | `fx-rev-cym-long` | fx-rev-cym-long | 長いダークなリバースライド。3.8秒。ビルドの奥で使う。後で切る前提。 | 60 | 3.8 |
-| `fx:rn` | yes | `fx-rev-cym-noise` | fx-rev-cym-noise | ノイズ寄りのリバースシンバル。ホワイトノイズの砂が開く。 | 67 | 2.4 |
-| `fx:rh` | yes | `fx-rev-hat` | fx-rev-hat | リバースハットのスウェル。短め・明るい。ハイハットの逆再生印象。 | 84 | 1.55 |
-| `fx:rs` | yes | `fx-rev-splash` | fx-rev-splash | 短いリバーススプラッシュ。明るいクラッシュの逆再生。1.5秒。 | 84 | 1.5 |
+| `fx:ra` | yes | `fx-rev-air` | fx-rev-air | エア寄りのリバースハット。音量の逆減衰のみ。 | 84 | 1.8 |
+| `fx:rc` | yes | `fx-rev-crash` | fx-rev-crash | 明るいリバースクラッシュ。音量の逆減衰のみ。 | 76 | 2.1 |
+| `fx:rm` | yes | `fx-rev-crash-metal` | fx-rev-crash-metal | 金属寄りのリバースクラッシュ。固定FM色。音量の逆減衰のみ。 | 72 | 2.2 |
+| `fx:ry` | yes | `fx-rev-cym` | fx-rev-cym | クラシックなリバースシンバル。音量の逆減衰のみ。 | 72 | 2.6 |
+| `fx:rb` | yes | `fx-rev-cym-bright` | fx-rev-cym-bright | 短い明るいリバースシンバル。音量の逆減衰のみ。 | 80 | 1.7 |
+| `fx:rk` | yes | `fx-rev-cym-dark` | fx-rev-cym-dark | 暗いリバースシンバル。ライド寄り。音量の逆減衰のみ。 | 55 | 3.0 |
+| `fx:rl` | yes | `fx-rev-cym-long` | fx-rev-cym-long | 長いダークなリバースシンバル。3.8秒。音量の逆減衰のみ。 | 60 | 3.8 |
+| `fx:rn` | yes | `fx-rev-cym-noise` | fx-rev-cym-noise | ノイズ寄りのリバースシンバル。音量の逆減衰のみ。 | 67 | 2.4 |
+| `fx:rh` | yes | `fx-rev-hat` | fx-rev-hat | リバースハット。音量の逆減衰のみ。 | 84 | 1.55 |
+| `fx:rs` | yes | `fx-rev-splash` | fx-rev-splash | 短いリバーススプラッシュ。1.5秒。音量の逆減衰のみ。 | 84 | 1.5 |
 | `fx:rv` | yes | `fx-rev-verb` | fx-rev-verb | リバースリバーブ風。遅いアタック＋HPのウォッシュ。フェイク。 | 67 | 2.0 |
 | `fx:rf` | yes | `fx-riser-filter` | fx-riser-filter | フィルタ開放のライザー。サブとスタート約100Hzのサインを重ね、カットオフが主役。130 BPMの8小節（約15秒）。 | 60 | 15.0 |
 | `fx:nr` | yes | `fx-riser-noise` | fx-riser-noise | ノイズライザー。サブとスタート約100Hzのサインを重ね、砂が濃くなりピッチも上がる。130 BPMの8小節（約15秒）。 | 55 | 15.0 |

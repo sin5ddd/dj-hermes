@@ -125,6 +125,7 @@
 "ep-rhodes-soft" = { part = "ep", slug = "rs" }
 "ep-tine-bell" = { part = "ep", slug = "tb" }
 "ep-wurli" = { part = "ep", slug = "wr" }
+"ep-sustain" = { part = "ep", slug = "pd" }
 "keys-fm_ep" = { part = "ep", slug = "ky" }
 "pl-acid-short" = { part = "plk", slug = "ac" }
 "pl-ambient-soft" = { part = "plk", slug = "am" }

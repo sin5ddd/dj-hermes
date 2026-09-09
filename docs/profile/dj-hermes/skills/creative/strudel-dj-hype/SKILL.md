@@ -37,16 +37,16 @@ metadata:
 
 `to` = 主電源の fill は同じ曲のドロップ（終わりに同じデッキへスナップ）。
 
-## 状況 → `kind`（既存 9 種だけ）
+## 状況 → `kind`（既存 10 種だけ）
 
-ジャンルは主電源スロットのフォルダ。
+ジャンルは主電源スロットのフォルダ。`kind=vinyl` は既定 8 小節。かすれ（バンドパス）が徐々に強くなり、音程が周期的に揺れてからカットイン。保持の `dj_hermes_mixer_vinyl` は使わない（ドロップ後も残る）。
 
 | 主電源ジャンル | 既定 kind | 代わり（同じ系統を連続しない） |
 | --- | --- | --- |
-| house / four-on-the-floor / techno-duck / progressive-house / acid / electro / minimal | `hpf` または `echo` | `lpf` / `flash` |
+| house / four-on-the-floor / techno-duck / progressive-house / acid / electro / minimal | `hpf` / `echo` / `vinyl` | `lpf` / `flash` |
 | dnb / dnb-reese / dubstep / future-bass | `roll` または `drop` | `riser` |
-| kawaii-future-bass / chill-pop | `riser` | `flash` / `drop` |
-| ambient / chill / lofi-hiphop | `lpf`（切替なら `long`） | roll/drop は使わない |
+| kawaii-future-bass / chill-pop | `riser` | `flash` / `drop` / `vinyl` |
+| ambient / chill / lofi-hiphop | `lpf`（切替なら `long`） | `vinyl`（roll/drop は使わない） |
 
 **`kind=riser` + `to=B` を既定にしない。** B が静かで曲が載っているときだけ `to=B`。
 
@@ -55,4 +55,4 @@ metadata:
 - ブレイク: 主電源の `pad` または `chords` をミュート（キックは残す）
 - ドラムを落としてからドロップ: `drums` をミュート → 次の「沸かせて」で unmute + `drop`
 
-ポストミックスのフィルター／ディレイは `dj_hermes_mixer_filter` / `dj_hermes_mixer_fx`（fill が終わっても残る）。チャンネル EQ は **1.0 = 0 dB、0 = キル**（ブースト無し）。
+ポストミックスのフィルター／ディレイ／ビニール保持は `dj_hermes_mixer_filter` / `dj_hermes_mixer_fx` / `dj_hermes_mixer_vinyl`（fill が終わっても残る。沸かしては使わない）。チャンネル EQ は **1.0 = 0 dB、0 = キル**（ブースト無し）。

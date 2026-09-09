@@ -58,6 +58,8 @@ pub enum Command {
         wet: f32,
         feedback: Option<f32>,
     },
+    /// Master vinyl (static BPF + pitch wow). Immediate. Fill overlays then restores.
+    SetMixerVinyl(bool),
     /// Time-repeat: `Some(div)` starts (immediate, one absolute bar); `None` clears.
     SetTimeRepeat(Option<RepeatDiv>),
     /// Tape-stop: `Some(spec)` starts (immediate); `None` clears.
@@ -277,6 +279,11 @@ impl Engine {
                 let eighth = (60.0 / bpm / 2.0) as f32;
                 let sr = self.transport.sample_rate as f32;
                 self.mixer.set_held_delay(wet, feedback, eighth, sr);
+            }
+            Command::SetMixerVinyl(on) => {
+                let sr = self.transport.sample_rate as f32;
+                self.mixer.set_held_vinyl(on, sr);
+                self.mixer.soften_click(sr);
             }
             Command::SetDeckEq { deck, band, value } => {
                 if deck < 2 && (band as usize) < 3 {
@@ -1154,6 +1161,7 @@ $: note("c3").s("sawtooth").gain(0.8).compressor("-12:20:0:.0:.05")
             FillKind::Hpf,
             FillKind::Roll,
             FillKind::Drop,
+            FillKind::Vinyl,
         ] {
             let mut e = Engine::new(48_000, 120.0);
             let bank = SampleBank::empty();

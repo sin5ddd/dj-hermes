@@ -40,11 +40,12 @@ a x [bars]          xfade to deck A
 b x [bars]          xfade to deck B
 mix long A|B [bars] long mix (EQ bass-swap + xfade, next phrase)
 mix cut A|B         cut-in next bar (EQ reset)
-mix fill <kind> A|B [8n|4n]  delay|lpf|flash|riser|switch|echo|hpf|roll|drop then cut-in
+mix fill <kind> A|B [8n|4n]  delay|lpf|flash|riser|switch|echo|hpf|roll|drop|vinyl then cut-in
 mix hold            freeze xfade now
 filter lpf <hz>|off post-mix LPF (held)
 filter hpf <hz>|off post-mix HPF (held)
 delay <0..1>        post-mix delay wet (held)
+vinyl on|off        post-mix vinyl (held; worn BPF + pitch wow)
 repeat 4n|8n|16n|32n|off  time-repeat (quarter/8th/16th/32nd notes, 1 bar)
 tape [1n|2n|4n|8n] [reps]  tape-stop (immediate). default 1n. 4n 2 = two quarters. off cancels
 bpm <n>             BPM from next bar
@@ -79,6 +80,7 @@ a load|save|…       same verbs with an explicit deck A prefix
 filter lpf <hz>|off post-mix LPF (held)
 filter hpf <hz>|off post-mix HPF (held)
 delay <0..1>        post-mix delay wet (held)
+vinyl on|off        post-mix vinyl (held; worn BPF + pitch wow)
 repeat 4n|8n|16n|32n|off  time-repeat (quarter/8th/16th/32nd notes, 1 bar)
 tape [1n|2n|4n|8n] [reps]  tape-stop (immediate). default 1n. 4n 2 = two quarters. off cancels
 bpm <n>             BPM from next bar
@@ -288,6 +290,7 @@ pub fn exec_in(
         "mix" => return exec_mix(&args, tx, engine),
         "filter" => return exec_filter(&args, tx),
         "delay" => return exec_delay(&args, tx),
+        "vinyl" => return exec_vinyl(&args, tx),
         "repeat" => return exec_repeat(&args, tx),
         "tape" => return exec_tape(&args, tx),
         "x" | "xfade" => {
@@ -658,6 +661,19 @@ fn exec_tape(args: &[&str], tx: &Sender<Command>) -> ExecResult {
     ExecResult::msg(format!("tape {}", spec.as_status()))
 }
 
+fn exec_vinyl(args: &[&str], tx: &Sender<Command>) -> ExecResult {
+    if args.len() < 2 {
+        return ExecResult::msg("usage: vinyl on|off");
+    }
+    let on = match args[1].trim().to_ascii_lowercase().as_str() {
+        "on" | "true" | "1" => true,
+        "off" | "false" | "0" | "none" => false,
+        other => return ExecResult::msg(format!("usage: vinyl on|off (got {other})")),
+    };
+    let _ = tx.send(Command::SetMixerVinyl(on));
+    ExecResult::msg(if on { "vinyl on" } else { "vinyl off" })
+}
+
 fn exec_delay(args: &[&str], tx: &Sender<Command>) -> ExecResult {
     if args.len() < 2 {
         return ExecResult::msg("usage: delay <0..1>");
@@ -696,7 +712,7 @@ fn exec_mix(
     if action == MixAction::Fill {
         if args.len() < 4 {
             return ExecResult::msg(
-                "usage: mix fill delay|lpf|flash|riser|switch|echo|hpf|roll|drop A|B [8n|4n]",
+                "usage: mix fill delay|lpf|flash|riser|switch|echo|hpf|roll|drop|vinyl A|B [8n|4n]",
             );
         }
         let kind = match FillKind::parse(args[2]) {
@@ -1012,6 +1028,18 @@ mod tests {
         match rx.try_recv().unwrap() {
             Command::SetTapeStop(None) => {}
             _ => panic!("expected SetTapeStop None"),
+        }
+        let r = exec("vinyl on", &tx, &paths, None);
+        assert!(r.messages[0].contains("on"));
+        match rx.try_recv().unwrap() {
+            Command::SetMixerVinyl(true) => {}
+            _ => panic!("expected SetMixerVinyl true"),
+        }
+        let r = exec("vinyl off", &tx, &paths, None);
+        assert!(r.messages[0].contains("off"));
+        match rx.try_recv().unwrap() {
+            Command::SetMixerVinyl(false) => {}
+            _ => panic!("expected SetMixerVinyl false"),
         }
     }
 

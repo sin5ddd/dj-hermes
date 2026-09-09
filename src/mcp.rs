@@ -65,6 +65,7 @@ const MIX_TOOL_NAMES: &[&str] = &[
     "dj_hermes_mixer_eq",
     "dj_hermes_mixer_filter",
     "dj_hermes_mixer_fx",
+    "dj_hermes_mixer_vinyl",
     "dj_hermes_mixer_crossfader",
     "dj_hermes_xfade",
     "dj_hermes_mix",
@@ -258,6 +259,17 @@ fn tools_list(session: SessionKind) -> Value {
                 }
             },
             {
+                "name": "dj_hermes_mixer_vinyl",
+                "description": "Mixer: post-mix vinyl (held). Immediate. Static worn band-pass plus pitch wow (uneven rotation). Fill kind=vinyl overlays then restores this. on=false clears. Not fill (8-bar worn-BPF ramp then cut-in).",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "on": { "type": "boolean", "description": "true starts, false clears" }
+                    },
+                    "required": ["on"]
+                }
+            },
+            {
                 "name": "dj_hermes_mixer_repeat",
                 "description": "Mixer: time-repeat playhead (quarter/eighth/16th/32nd notes, not minutes). Immediate. Loops the current note-value slice for one absolute bar then off. Hits and MIDI follow the relative playhead. div=null or off clears. Not fill kind=roll (PCM then cut-in).",
                 "inputSchema": {
@@ -305,16 +317,16 @@ fn tools_list(session: SessionKind) -> Value {
             },
             {
                 "name": "dj_hermes_mix",
-                "description": "DJ mix move in one call. Prefer this over calling mixer_eq multiple times. move=long: EQ bass-swap + xfade. move=cut: next-bar 100% fader, optional EQ reset. move=fill: delay|lpf|flash|riser|switch|echo|hpf|roll|drop then cut-in. move=hold: freeze xfade. Switch is AB 100:0 chops (not flash). echo=delay wet/fb ramp then cut. hpf=high-pass sweep then cut. roll=beat-repeat then cut. drop=impact one-shot then cut.",
+                "description": "DJ mix move in one call. Prefer this over calling mixer_eq multiple times. move=long: EQ bass-swap + xfade. move=cut: next-bar 100% fader, optional EQ reset. move=fill: delay|lpf|flash|riser|switch|echo|hpf|roll|drop|vinyl then cut-in. move=hold: freeze xfade. Switch is AB 100:0 chops (not flash). echo=delay wet/fb ramp then cut. hpf=high-pass sweep then cut. roll=beat-repeat then cut. drop=impact one-shot then cut. vinyl=worn band-pass wet ramps over 8 bars plus pitch wow then cut.",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
                         "move": { "type": "string", "description": "long | cut | fill | hold" },
                         "to": { "type": "string", "description": "A or B (required unless hold)" },
-                        "bars": { "type": "integer", "description": "long default 8, fill default 1 (riser 8)" },
+                        "bars": { "type": "integer", "description": "long default 8, fill default 1 (riser/vinyl 8)" },
                         "eq": { "type": "boolean", "description": "long: apply bass-swap EQ (default true)" },
                         "reset_eq": { "type": "boolean", "description": "cut/fill: flatten EQ at the end (default true)" },
-                        "kind": { "type": "string", "description": "fill only: delay | lpf | flash | riser | switch | echo | hpf | roll | drop" },
+                        "kind": { "type": "string", "description": "fill only: delay | lpf | flash | riser | switch | echo | hpf | roll | drop | vinyl" },
                         "grid": { "type": "string", "description": "switch/flash/roll: 8n or 4n (default 8n)" },
                         "mute_track": { "type": "string", "description": "optional track name to mute on the outgoing deck" },
                         "phrase": { "type": "integer", "description": "1, 4, or 8 — start on that bar boundary (default 1)" }
@@ -598,6 +610,13 @@ fn tools_call_http(
             }
             http_post(client, &format!("{base}/mixer/fx"), Value::Object(body))
         }
+        "dj_hermes_mixer_vinyl" => {
+            let on = args
+                .get("on")
+                .and_then(|v| v.as_bool())
+                .ok_or_else(|| rpc_error(-32602, "on required (boolean)"))?;
+            http_post(client, &format!("{base}/mixer/vinyl"), json!({ "on": on }))
+        }
         "dj_hermes_mixer_repeat" => {
             let mut body = Map::new();
             match args.get("div") {
@@ -810,6 +829,7 @@ fn tools_call_local(state: &AppState, name: &str, args: &Value) -> Result<Value,
         "dj_hermes_mixer_eq" => local_mixer_eq(state, args),
         "dj_hermes_mixer_filter" => local_mixer_filter(state, args),
         "dj_hermes_mixer_fx" => local_mixer_fx(state, args),
+        "dj_hermes_mixer_vinyl" => local_mixer_vinyl(state, args),
         "dj_hermes_mixer_repeat" => local_mixer_repeat(state, args),
         "dj_hermes_mixer_tape" => local_mixer_tape(state, args),
         "dj_hermes_mixer_crossfader" => local_mixer_crossfader(state, args),
@@ -946,6 +966,16 @@ fn local_mixer_fx(state: &AppState, args: &Value) -> Result<String, String> {
             feedback,
         },
     )?;
+    Ok("ok".into())
+}
+
+fn local_mixer_vinyl(state: &AppState, args: &Value) -> Result<String, String> {
+    let on = match args.get("on") {
+        Some(Value::Bool(b)) => *b,
+        None | Some(Value::Null) => return Err("on required (boolean)".into()),
+        Some(_) => return Err("on must be a boolean".into()),
+    };
+    send_cmd(state, Command::SetMixerVinyl(on))?;
     Ok("ok".into())
 }
 
@@ -1629,16 +1659,18 @@ mod tests {
     fn tools_list_mixer_deck_transport_no_set_code() {
         let v = tools_list(SessionKind::Dj);
         let tools = v["tools"].as_array().unwrap();
-        assert_eq!(tools.len(), 20);
+        assert_eq!(tools.len(), 21);
         let names: Vec<_> = tools.iter().filter_map(|t| t["name"].as_str()).collect();
         assert!(!names.contains(&"dj_hermes_set_code"));
         assert_eq!(names[0], "dj_hermes_mixer_eq");
         assert_eq!(names[1], "dj_hermes_mixer_filter");
         assert_eq!(names[2], "dj_hermes_mixer_fx");
-        assert_eq!(names[3], "dj_hermes_mixer_repeat");
-        assert_eq!(names[4], "dj_hermes_mixer_tape");
-        assert_eq!(names[5], "dj_hermes_mixer_crossfader");
+        assert_eq!(names[3], "dj_hermes_mixer_vinyl");
+        assert_eq!(names[4], "dj_hermes_mixer_repeat");
+        assert_eq!(names[5], "dj_hermes_mixer_tape");
+        assert_eq!(names[6], "dj_hermes_mixer_crossfader");
         assert!(names.contains(&"dj_hermes_mixer_fx"));
+        assert!(names.contains(&"dj_hermes_mixer_vinyl"));
         assert!(names.contains(&"dj_hermes_mixer_repeat"));
         assert!(names.contains(&"dj_hermes_mixer_tape"));
         assert!(names.contains(&"dj_hermes_xfade"));
@@ -1745,7 +1777,7 @@ mod tests {
             "method": "tools/list"
         });
         let resp = handle_rpc(&list, &backend).expect("list reply");
-        assert_eq!(resp["result"]["tools"].as_array().unwrap().len(), 20);
+        assert_eq!(resp["result"]["tools"].as_array().unwrap().len(), 21);
     }
 
     #[test]

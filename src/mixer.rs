@@ -1,5 +1,6 @@
 //! Mixer layer: A/B faders, per-deck 3-band EQ, master 1-pole LPF/HPF, compressor, equal-power xfade.
 //! DJ mix macros (fill / switch) live here as a preallocated MixJob.
+//! Vinyl: static band-pass (worn) + post-comp delay-tap pitch wow (tape keeps rate varispeed).
 
 use std::sync::Arc;
 
@@ -28,6 +29,17 @@ const GAIN_RAMP_SEC: f32 = 0.005;
 const DELAY_MAX_SR: f32 = 96_000.0;
 /// Preallocated tape-stop ring (~4 s at 60 BPM). Never `resize` on the audio thread.
 const TAPE_RING_SEC: f32 = 4.0;
+/// Worn-vinyl band-pass (static; cutoff is not an LFO).
+const VINYL_BP_HZ: f32 = 900.0;
+const VINYL_BP_Q: f32 = 0.7;
+/// Held wow: one cycle per 33.3 RPM revolution.
+const VINYL_WOW_HZ: f64 = 33.3 / 60.0;
+/// Vibrato delay midpoint (samples). Must exceed fill amplitude.
+const VINYL_VIBRATO_CENTER: f64 = 900.0;
+/// Delay amplitude → ≈ ±50 cent at [`VINYL_WOW_HZ`] (48 kHz).
+const VINYL_VIBRATO_AMP_HELD: f64 = 400.0;
+/// Fill delay amplitude → ≈ ±100 cent.
+const VINYL_VIBRATO_AMP_FILL: f64 = 800.0;
 
 /// Equal-power crossfade over N bars (sample range).
 #[derive(Debug, Clone)]
@@ -99,6 +111,7 @@ pub enum FillKind {
     Hpf,
     Roll,
     Drop,
+    Vinyl,
 }
 
 impl FillKind {
@@ -113,8 +126,9 @@ impl FillKind {
             "hpf" => Ok(Self::Hpf),
             "roll" | "loop" | "repeat" => Ok(Self::Roll),
             "drop" | "impact" => Ok(Self::Drop),
+            "vinyl" => Ok(Self::Vinyl),
             other => Err(format!(
-                "kind must be delay, lpf, flash, riser, switch, echo, hpf, roll, or drop: {other}"
+                "kind must be delay, lpf, flash, riser, switch, echo, hpf, roll, drop, or vinyl: {other}"
             )),
         }
     }
@@ -130,6 +144,7 @@ impl FillKind {
             Self::Hpf => "hpf",
             Self::Roll => "roll",
             Self::Drop => "drop",
+            Self::Vinyl => "vinyl",
         }
     }
 
@@ -137,6 +152,8 @@ impl FillKind {
         match self {
             // Catalog risers (`fx:fr` / `nr` / `rf` / `rp` / `rw` / `up`) are ~15 s.
             Self::Riser => 8,
+            // Vinyl fill: worn BPF wet ramps over 8 bars, then cut-in.
+            Self::Vinyl => 8,
             _ => 1,
         }
     }
@@ -272,6 +289,13 @@ enum MixJob {
     Roll {
         to_deck: usize,
         reset_eq: bool,
+        end_sample: u64,
+        samples_per_bar: u64,
+    },
+    Vinyl {
+        to_deck: usize,
+        reset_eq: bool,
+        start_sample: u64,
         end_sample: u64,
         samples_per_bar: u64,
     },
@@ -514,6 +538,32 @@ impl Varispeed {
         (ol, or_)
     }
 
+    /// Write 1:1 and read a modulated delay (pitch wow). Tape `process` is rate≤1 only.
+    fn process_vibrato(&mut self, l: f32, r: f32, delay: f64) -> (f32, f32) {
+        let cap = self.cap;
+        let wi = self.write % cap;
+        self.ring_l[wi] = l;
+        self.ring_r[wi] = r;
+        self.write = self.write.wrapping_add(1);
+
+        let d = delay.clamp(1.0, (cap - 2) as f64);
+        if (self.write as f64) < d + 2.0 {
+            self.last_l = l;
+            self.last_r = r;
+            return (l, r);
+        }
+        let pos = self.write as f64 - d;
+        let idx = pos.floor().max(0.0) as usize;
+        let frac = (pos - idx as f64) as f32;
+        let i0 = idx % cap;
+        let i1 = (i0 + 1) % cap;
+        let ol = self.ring_l[i0].mul_add(1.0 - frac, self.ring_l[i1] * frac);
+        let or_ = self.ring_r[i0].mul_add(1.0 - frac, self.ring_r[i1] * frac);
+        self.last_l = ol;
+        self.last_r = or_;
+        (ol, or_)
+    }
+
     fn mix_dry(&mut self, dry_l: f32, dry_r: f32) -> (f32, f32) {
         if !self.fading() {
             return (dry_l, dry_r);
@@ -557,6 +607,13 @@ pub struct Mixer {
     held_hpf: Option<f32>,
     held_delay_wet: f32,
     held_delay_fb: f32,
+    /// Operator-held vinyl (static BPF + wow). Fill overlays then restores this.
+    held_vinyl: bool,
+    vinyl_l: Biquad,
+    vinyl_r: Biquad,
+    vinyl_sr: f32,
+    /// Held wow phase (radians). Fill uses job progress instead; this still advances.
+    vinyl_phase: f64,
     flash_mul: [f32; 2],
     riser_pcm: Option<Arc<Vec<f32>>>,
     riser_idx: usize,
@@ -613,6 +670,11 @@ impl Mixer {
             held_hpf: None,
             held_delay_wet: 0.0,
             held_delay_fb: 0.0,
+            held_vinyl: false,
+            vinyl_l: Biquad::bypass(),
+            vinyl_r: Biquad::bypass(),
+            vinyl_sr: 48_000.0,
+            vinyl_phase: 0.0,
             flash_mul: [1.0, 1.0],
             riser_pcm: None,
             riser_idx: 0,
@@ -704,6 +766,7 @@ impl Mixer {
     /// Stop fill inserts (delay/LPF/flash/riser) without changing faders.
     /// Restores operator-held master FX (does not zero them).
     pub fn clear_job(&mut self) {
+        let was_vinyl = self.job_owns_vinyl();
         self.job = None;
         self.mix_status = None;
         self.flash_mul = [1.0, 1.0];
@@ -713,6 +776,9 @@ impl Mixer {
         self.roll_cap = 0;
         self.roll_i = 0;
         self.restore_held_fx();
+        if was_vinyl {
+            self.fade_vinyl_wow_if_idle(self.comp_sr);
+        }
     }
 
     fn job_owns_lpf(&self) -> bool {
@@ -727,6 +793,28 @@ impl Mixer {
         matches!(self.job, Some(MixJob::Delay { .. } | MixJob::Echo { .. }))
     }
 
+    fn job_owns_vinyl(&self) -> bool {
+        matches!(self.job, Some(MixJob::Vinyl { .. }))
+    }
+
+    fn vinyl_sounding(&self) -> bool {
+        self.held_vinyl || self.job_owns_vinyl()
+    }
+
+    fn ensure_vinyl_bpf(&mut self, sr: f32) {
+        let sr = sr.max(1.0);
+        self.vinyl_sr = sr;
+        self.vinyl_l
+            .set_coeffs(BiquadKind::BandPass, VINYL_BP_HZ, VINYL_BP_Q, sr);
+        self.vinyl_r
+            .set_coeffs(BiquadKind::BandPass, VINYL_BP_HZ, VINYL_BP_Q, sr);
+    }
+
+    fn clear_vinyl_bpf(&mut self) {
+        self.vinyl_l = Biquad::bypass();
+        self.vinyl_r = Biquad::bypass();
+    }
+
     fn restore_held_fx(&mut self) {
         self.lpf_hz = self.held_lpf;
         self.hpf_hz = self.held_hpf;
@@ -735,6 +823,17 @@ impl Mixer {
         if self.held_delay_wet <= 0.0 {
             self.delay_l.clear();
             self.delay_r.clear();
+        }
+        if self.held_vinyl {
+            self.ensure_vinyl_bpf(self.vinyl_sr);
+        } else {
+            self.clear_vinyl_bpf();
+        }
+    }
+
+    fn fade_vinyl_wow_if_idle(&mut self, sr: f32) {
+        if !self.vinyl_sounding() && self.tape.is_none() {
+            self.varispeed.begin_fade_to_dry(sr.max(1.0));
         }
     }
 
@@ -774,6 +873,23 @@ impl Mixer {
 
     pub fn held_delay_wet(&self) -> f32 {
         self.held_delay_wet
+    }
+
+    /// Operator master vinyl (static BPF + pitch wow). Fill overlays then restores this.
+    pub fn set_held_vinyl(&mut self, on: bool, sr: f32) {
+        let was = self.vinyl_sounding();
+        self.held_vinyl = on;
+        if on {
+            self.ensure_vinyl_bpf(sr);
+        }
+        if was && !self.vinyl_sounding() {
+            self.clear_vinyl_bpf();
+            self.fade_vinyl_wow_if_idle(sr);
+        }
+    }
+
+    pub fn held_vinyl(&self) -> bool {
+        self.held_vinyl
     }
 
     /// Louder deck (tie → A). Used to isolate before a fill.
@@ -871,6 +987,7 @@ impl Mixer {
 
     fn finish_job(&mut self, to_deck: usize, reset_eq: bool, sr: f32) {
         let to = if to_deck > 1 { 0 } else { to_deck };
+        let was_vinyl = self.job_owns_vinyl();
         self.flash_mul = [1.0, 1.0];
         self.riser_pcm = None;
         self.riser_idx = 0;
@@ -880,6 +997,9 @@ impl Mixer {
         self.job = None;
         self.mix_status = None;
         self.restore_held_fx();
+        if was_vinyl {
+            self.fade_vinyl_wow_if_idle(sr);
+        }
         if reset_eq {
             self.reset_eq_flat();
         }
@@ -1044,6 +1164,17 @@ impl Mixer {
                     samples_per_bar: spb,
                 });
             }
+            FillKind::Vinyl => {
+                self.ensure_vinyl_bpf(sr);
+                self.soften_click(sr);
+                self.job = Some(MixJob::Vinyl {
+                    to_deck,
+                    reset_eq,
+                    start_sample,
+                    end_sample: end,
+                    samples_per_bar: spb,
+                });
+            }
         }
     }
 
@@ -1059,7 +1190,8 @@ impl Mixer {
                 | MixJob::Echo { end_sample, .. }
                 | MixJob::Hpf { end_sample, .. }
                 | MixJob::Roll { end_sample, .. }
-                | MixJob::Drop { end_sample, .. } => *end_sample,
+                | MixJob::Drop { end_sample, .. }
+                | MixJob::Vinyl { end_sample, .. } => *end_sample,
             };
             if global_sample < end {
                 return None;
@@ -1090,6 +1222,9 @@ impl Mixer {
                     to_deck, reset_eq, ..
                 }
                 | MixJob::Drop {
+                    to_deck, reset_eq, ..
+                }
+                | MixJob::Vinyl {
                     to_deck, reset_eq, ..
                 } => Some((*to_deck, *reset_eq)),
             }
@@ -1153,6 +1288,10 @@ impl Mixer {
                 spb: u64,
             },
             Drop {
+                end: u64,
+                spb: u64,
+            },
+            Vinyl {
                 end: u64,
                 spb: u64,
             },
@@ -1260,6 +1399,14 @@ impl Mixer {
                 end: *end_sample,
                 spb: *samples_per_bar,
             },
+            MixJob::Vinyl {
+                end_sample,
+                samples_per_bar,
+                ..
+            } => Step::Vinyl {
+                end: *end_sample,
+                spb: *samples_per_bar,
+            },
         };
 
         match step {
@@ -1337,6 +1484,7 @@ impl Mixer {
             }
             Step::Roll { end, spb } => self.update_bars_left(global_sample, end, spb),
             Step::Drop { end, spb } => self.update_bars_left(global_sample, end, spb),
+            Step::Vinyl { end, spb } => self.update_bars_left(global_sample, end, spb),
         }
         false
     }
@@ -1497,6 +1645,18 @@ impl Mixer {
         let fa = self.flash_mul[0];
         let fb = self.flash_mul[1];
         let ramping = self.ramp_n > 0 && self.ramp_i < self.ramp_n;
+        let vinyl_on = self.vinyl_sounding();
+        let vinyl_fill = match self.job {
+            Some(MixJob::Vinyl {
+                start_sample,
+                end_sample,
+                ..
+            }) => Some((start_sample, end_sample)),
+            _ => None,
+        };
+        if vinyl_on && (sr - self.vinyl_sr).abs() > 1.0 {
+            self.ensure_vinyl_bpf(sr);
+        }
 
         let lpf_k = self.lpf_hz.map(|cut| {
             let cut = cut.clamp(20.0, sr * 0.45);
@@ -1578,13 +1738,27 @@ impl Mixer {
                 r = self.lpf_y_r;
             }
 
+            if vinyl_on {
+                let bl = self.vinyl_l.process(l);
+                let br = self.vinyl_r.process(r);
+                let wet = if let Some((start, end)) = vinyl_fill {
+                    let denom = end.saturating_sub(start).max(1) as f32;
+                    let abs = head_sample.saturating_add(i as u64);
+                    (abs.saturating_sub(start) as f32 / denom).clamp(0.0, 1.0)
+                } else {
+                    1.0
+                };
+                l = l.mul_add(1.0 - wet, bl * wet);
+                r = r.mul_add(1.0 - wet, br * wet);
+            }
+
             if let Some(comp) = self.compressor.as_mut() {
                 let (cl, cr) = comp.process_stereo(l, r);
                 l = cl;
                 r = cr;
             }
 
-            if self.tape.is_some() || self.varispeed.fading() {
+            if self.tape.is_some() || self.varispeed.fading() || vinyl_on {
                 let abs = head_sample.saturating_add(i as u64);
                 let window = self.tape.filter(|w| abs < w.total_end());
                 if let Some(w) = window {
@@ -1607,6 +1781,17 @@ impl Mixer {
                     let (ol, or_) = self.varispeed.process(l, r, rate);
                     l = ol;
                     r = or_;
+                } else if vinyl_on {
+                    let _ = self.tape.take();
+                    let amp = if vinyl_fill.is_some() {
+                        VINYL_VIBRATO_AMP_FILL
+                    } else {
+                        VINYL_VIBRATO_AMP_HELD
+                    };
+                    let delay = VINYL_VIBRATO_CENTER + amp * self.vinyl_phase.sin();
+                    let (ol, or_) = self.varispeed.process_vibrato(l, r, delay);
+                    l = ol;
+                    r = or_;
                 } else {
                     if self.tape.take().is_some() {
                         self.varispeed.begin_fade_to_dry(sr);
@@ -1614,6 +1799,13 @@ impl Mixer {
                     let (ol, or_) = self.varispeed.mix_dry(l, r);
                     l = ol;
                     r = or_;
+                }
+            }
+
+            if vinyl_on {
+                self.vinyl_phase += std::f64::consts::TAU * VINYL_WOW_HZ / f64::from(sr).max(1.0);
+                if self.vinyl_phase >= std::f64::consts::TAU {
+                    self.vinyl_phase -= std::f64::consts::TAU;
                 }
             }
 
@@ -2063,6 +2255,9 @@ mod tests {
         assert_eq!(FillKind::Roll.default_bars(), 1);
         assert_eq!(FillKind::Drop.default_bars(), 1);
         assert_eq!(FillKind::Riser.default_bars(), 8);
+        assert_eq!(FillKind::parse("vinyl").unwrap(), FillKind::Vinyl);
+        assert_eq!(FillKind::Vinyl.as_str(), "vinyl");
+        assert_eq!(FillKind::Vinyl.default_bars(), 8);
     }
 
     #[test]
@@ -2206,5 +2401,185 @@ mod tests {
             (mean - expected).abs() < expected * 0.08,
             "mean period {mean} expected ~{expected}"
         );
+    }
+
+    fn sine_buf(n: usize, hz: f32, sr: f32) -> Vec<f32> {
+        (0..n)
+            .map(|i| (2.0 * std::f32::consts::PI * hz * i as f32 / sr).sin() * 0.5)
+            .collect()
+    }
+
+    fn tail_energy(buf: &[f32]) -> f32 {
+        let start = buf.len() / 4;
+        buf[start..].iter().map(|x| x * x).sum()
+    }
+
+    #[test]
+    fn vinyl_bpf_cuts_low_sine() {
+        let sr = 48_000.0f32;
+        let n = 8_000;
+        let silent = vec![0.0f32; n];
+        let mut dry = Mixer::new();
+        dry.gain_a = 1.0;
+        dry.set_compressor(None, sr);
+        let low = sine_buf(n, 80.0, sr);
+        let mid = sine_buf(n, 900.0, sr);
+        let mut out_low_dry = vec![0.0f32; n];
+        mix_center(&mut dry, &mut out_low_dry, &low, &silent, sr);
+
+        let mut wet = Mixer::new();
+        wet.gain_a = 1.0;
+        wet.set_compressor(None, sr);
+        wet.set_held_vinyl(true, sr);
+        let mut out_low = vec![0.0f32; n];
+        let mut out_mid = vec![0.0f32; n];
+        mix_center(&mut wet, &mut out_low, &low, &silent, sr);
+        mix_center(&mut wet, &mut out_mid, &mid, &silent, sr);
+
+        let e_low_dry = tail_energy(&out_low_dry);
+        let e_low = tail_energy(&out_low);
+        let e_mid = tail_energy(&out_mid);
+        assert!(
+            e_low < e_low_dry * 0.35,
+            "held vinyl BPF should thin 80 Hz: wet={e_low} dry={e_low_dry}"
+        );
+        assert!(
+            e_mid > e_low * 2.0,
+            "900 Hz should pass more than 80 Hz: mid={e_mid} low={e_low}"
+        );
+    }
+
+    #[test]
+    fn vinyl_fill_bpf_wet_ramps() {
+        let sr = 48_000.0f32;
+        let n = 512usize;
+        let silent = vec![0.0f32; n];
+        let low = sine_buf(n, 80.0, sr);
+        let mut m = Mixer::new();
+        m.gain_a = 1.0;
+        m.set_compressor(None, sr);
+        m.start_fill(
+            FillKind::Vinyl,
+            1,
+            8,
+            true,
+            MixGrid::Eighth,
+            0,
+            1_000.0,
+            120.0,
+            sr,
+        );
+        let mut early_l = vec![0.0f32; n];
+        let mut early_r = vec![0.0f32; n];
+        m.mix(
+            &mut early_l,
+            &mut early_r,
+            &low,
+            &low,
+            &silent,
+            &silent,
+            sr,
+            0,
+        );
+        let mut late_l = vec![0.0f32; n];
+        let mut late_r = vec![0.0f32; n];
+        m.mix(
+            &mut late_l,
+            &mut late_r,
+            &low,
+            &low,
+            &silent,
+            &silent,
+            sr,
+            7_400,
+        );
+        let e_early: f32 = early_l.iter().map(|x| x * x).sum();
+        let e_late: f32 = late_l.iter().map(|x| x * x).sum();
+        assert!(
+            e_late < e_early * 0.7,
+            "fill かすれ should get stronger: early={e_early} late={e_late}"
+        );
+        assert!(m.has_mix_job());
+        assert!(m.tick_job(8_000, sr));
+        assert!(!m.has_mix_job());
+        assert!(!m.held_vinyl());
+    }
+
+    #[test]
+    fn vinyl_held_wow_varies_zero_cross_gaps() {
+        let sr = 48_000.0f32;
+        let n = 48_000usize;
+        let silent = vec![0.0f32; n];
+        let tone = sine_buf(n, 1_000.0, sr);
+        let mut m = Mixer::new();
+        m.gain_a = 1.0;
+        m.set_compressor(None, sr);
+        m.set_held_vinyl(true, sr);
+        let mut out_l = vec![0.0f32; n];
+        let mut out_r = vec![0.0f32; n];
+        m.mix(
+            &mut out_l, &mut out_r, &tone, &tone, &silent, &silent, sr, 0,
+        );
+        let mut crossings = Vec::new();
+        for (i, pair) in out_l.windows(2).enumerate().skip(2_000) {
+            if pair[0] < 0.0 && pair[1] >= 0.0 {
+                crossings.push(i + 1);
+            }
+        }
+        assert!(
+            crossings.len() >= 20,
+            "need several crossings, got {}",
+            crossings.len()
+        );
+        let gaps: Vec<i64> = crossings
+            .windows(2)
+            .map(|w| w[1] as i64 - w[0] as i64)
+            .collect();
+        let min = *gaps.iter().min().unwrap();
+        let max = *gaps.iter().max().unwrap();
+        assert!(max > min, "wow should stretch period: min={min} max={max}");
+    }
+
+    #[test]
+    fn vinyl_held_survives_delay_fill() {
+        let mut m = Mixer::new();
+        m.set_held_vinyl(true, 48_000.0);
+        m.start_fill(
+            FillKind::Delay,
+            1,
+            1,
+            true,
+            MixGrid::Eighth,
+            0,
+            1_000.0,
+            120.0,
+            48_000.0,
+        );
+        assert!(m.held_vinyl());
+        assert!(m.tick_job(1_000, 48_000.0));
+        assert!(m.held_vinyl());
+        assert!(!m.has_mix_job());
+    }
+
+    #[test]
+    fn vinyl_tape_window_then_held_stays() {
+        let sr = 48_000.0f32;
+        let n = 256usize;
+        let silent = vec![0.0f32; n];
+        let low = sine_buf(n, 80.0, sr);
+        let mut m = Mixer::new();
+        m.gain_a = 1.0;
+        m.set_compressor(None, sr);
+        m.set_held_vinyl(true, sr);
+        m.start_tape(0, 64, 1);
+        let mut out_l = vec![0.0f32; n];
+        let mut out_r = vec![0.0f32; n];
+        m.mix(&mut out_l, &mut out_r, &low, &low, &silent, &silent, sr, 0);
+        assert!(m.tape_on() || m.held_vinyl());
+        m.mix(
+            &mut out_l, &mut out_r, &low, &low, &silent, &silent, sr, 200,
+        );
+        assert!(m.held_vinyl());
+        assert!(!m.tape_on());
     }
 }
