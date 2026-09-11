@@ -1,7 +1,7 @@
 ---
 name: strudel-data-format
 description: "Use when writing .strudel files for dj-hermes apply/save (MCP): 7–8 $: tracks, 4-bar phrases."
-version: 5.0.2
+version: 5.1.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -32,19 +32,19 @@ setcpm(124/4)
 // drums
 $: s("bd*4, [~ cp]*2, [~ hh]*4, <~ ~ ~ [~@3 bd ~@4]>").gain(0.55)
 // bass
-$: note("0 0 4 <0 2 4 0>").scale("<C4:minor C4:minor G4:dorian C4:minor>")
+$: note("0 0 4 0  0 2 4 <0 2 4 0>").scale("<C4:minor C4:minor G4:dorian C4:minor>")
   .s("bs:hf").gain(0.42)
 // lead
-$: note("~ 7 6 <4 9 3 7>").scale("<C4:minor C4:minor G4:dorian C4:minor>")
+$: note("7@2 6 4  9@2 7 <4 9 3 7>").scale("<C4:minor C4:minor G4:dorian C4:minor>")
   .s("ld:ss").gain(0.16).cut(1)
 // hook
 $: note("4 ~ 7 4  2 0 ~ -1").scale("<C4:minor C4:minor G4:dorian C4:minor>")
   .s("plk:lp").gain(0.22).cut(1)
 // arp
-$: note("0 4 7 4").scale("<C5:minor C5:minor G5:dorian C5:minor>")
+$: note("0 4 7 12  7 4 0 4").scale("<C5:minor C5:minor G5:dorian C5:minor>")
   .s("plk:hd").gain(0.14).cut(1)
 // chords
-$: note("[0,2,4] ~ [0,2,4] ~").scale("<C4:minor C4:minor G4:dorian C4:minor>")
+$: note("[0,2,4]@2 [0,2,4]@2").scale("<C4:minor C4:minor G4:dorian C4:minor>")
   .s("ep:ky").gain(0.26)
 // pad
 $: note("0").scale("<C4:minor C4:minor G4:dorian C4:minor>")

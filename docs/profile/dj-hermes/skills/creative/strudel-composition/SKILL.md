@@ -1,7 +1,7 @@
 ---
 name: strudel-composition
 description: "Use when writing a dj-hermes song: 7–8 $: tracks (drums, bass 1–2, three melody instruments, chords, pad), 4-bar phrases, dj_hermes_apply_song (save only to persist)."
-version: 5.10.0
+version: 5.11.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -73,6 +73,31 @@ dj-hermes の曲は **`$:` を重ねたループを、演奏しながら 1 本�
 2. **Pad は低域。** `.scale("C2:…")` が既定。長いドローンは C1。lead / chords の C4 と同じオクターブに置かない。工場 PCM の native は C4 書きだが、pad は意図して下げる。
 3. **Arp はメロディ楽器。** `note()` + `plk:` / `ld:` / `ep:`。`s("<~ perc:tm ~>")` を arp にしない。perc は任意 8 本目 `// perc`。
 
+## 音の長さ（役割別）
+
+1 サイクル = 1 小節 = 4 拍。トップレベル **4 原子 = 4 分**、**8 原子 = 8 分**、**16 原子 = 16 分**。`@` を使ったら原子を減らして、その子のウェイト合計をグリッドに揃える（8 分なら 8。Future Bass / Kawaii の `<>` 子も同じ。合計 9 はドラムからズレる）。
+
+| スロット | 既定グリッド | 長音 / 休符 |
+| --- | --- | --- |
+| pad / strings | 1 小節 1 音 `0`、または `0@3 ~` | **ホールド。** `0 ~ ~ ~` は 4 分 1 打＋無音であり、長いパッドではない |
+| chords（ブロック） | `[0,2,4]@2 [0,2,4]@2` または `[0,2,4]`（小節まるごと） | **ホールド。** `[0,2,4] ~ [0,2,4] ~` はスタブ（音が切れる）。スタブがジャンル署名のときだけ残す（DnB / Dubstep の `[0,4]`、Kawaii の短いキラキラ） |
+| lead | **8 分**（ウェイト 8）。伸ばす音は `@` | `4 ~ ~ ~` と **4 原子リードは禁止**。16 分埋めは arp と同時にしない |
+| hook | **8 分。** ジャンル固定次数はそのまま | 空きは掛け合い用の `~`。伸ばしたい音は `@`。house フック `4 ~ 7 4  2 0 ~ -1` は書き換えない |
+| arp | **8 分または 16 分。** 原子を埋める | 4 原子 arp は禁止。末 1 個の `~` は可。`vc:` の 16 分壁は禁止（チョップは疎のまま） |
+| bass | ジャンルどおり。この正本は **8 分** | `0 ~ 0 ~` を床にしない |
+| drums | 裏拍・2/4 は `~` | 休符のまま。`~@n` はフィル専用 |
+
+対比（取り違えない）:
+
+| 書き方 | エンジン | 耳 |
+| --- | --- | --- |
+| `a@3` | ウェイト 3、ゲート長も 3 | 同じ音が続く |
+| `a ~ ~` | イベント 1、dur=1/3、Rest 2 | 音が切れる |
+| `a _ _` / `a @ @` / `a!3` | 未対応（ゴミ atom またはパース失敗） | 使わない |
+| `.sustain(0.5)` | Amp ADSR のレベル | 長さの主役はミニ記法の `@` |
+
+掛け合い: メロ 3 本が同時に 16 分アタックを埋めない。arp が 16 分なら lead / hook は 8 分＋`@`（ホールド中はアタックしない）。
+
 ## フレーズ長
 
 1 サイクル = 1 小節（エンジン）。**繰り返し周期**を 4 小節にする。
@@ -83,7 +108,7 @@ dj-hermes の曲は **`$:` を重ねたループを、演奏しながら 1 本�
 4. 長い PCM FX（ライザー約 15 秒）: `<fx:up ~ ~ ~ ~ ~ ~ ~>`（8 小節に 1 回。`fr` / `nr` / `rf` / `rp` / `rw` も同じ）
 5. `cat()`: プリセットで A/B を分けるときだけ、**最大 8 引数**
 
-禁止例（地味・短い）: `note("4 ~ ~ ~")` を毎小節、全メロが毎 16 分で同時、メロ／コード／パッドが全部 `triangle`、コードとパッドが同じ次数・同じオクターブ。
+禁止例（地味・短い）: `note("4 ~ ~ ~")` を毎小節、**4 原子の lead/hook/arp**、コードの `~` パディングをホールドと取り違える、全メロが毎 16 分で同時、メロ／コード／パッドが全部 `triangle`、コードとパッドが同じ次数・同じオクターブ。
 
 ## 正本テンプレ（そのまま content に）
 
@@ -98,23 +123,23 @@ setcpm(128/4)
 $: s("bd*4, [~ hh]*4, <~ ~ ~ [~@3 bd ~@4]>").gain(0.55)
 
 // bass
-$: note("0 0 2 <4 3 5 2>").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
+$: note("0 0 2 0  0 2 <4 3 5 2> 0").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
   .s("sawtooth").adsr("0.001:0.08:0.2:0.05").lpf(450).gain(0.45)
 
 // lead
-$: note("~ 7 6 <4 9 3 7>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
+$: note("7@2 6 4  9@2 7 <4 3 7 9>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
   .s("ld:ss").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.16)
 
 // hook
-$: note("4 ~ 7 <4 2 0 4>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
+$: note("~ 4 7@2  2 0 4 <2 0 4 7>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
   .s("plk:lp").gain(0.18).cut(1)
 
 // arp
-$: note("0 4 7 12  7 4 0 ~").scale("<C5:minor C5:minor G5:phrygian C5:minor>")
+$: note("0 4 7 12 7 4 0 4  12 7 4 0 7 4 0 ~").scale("<C5:minor C5:minor G5:phrygian C5:minor>")
   .s("plk:hd").cut(1).gain(0.12)
 
 // chords
-$: note("[0,2,4] ~ [0,2,4] ~").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
+$: note("[0,2,4]@2 [0,2,4]@2").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
   .s("ep:ky").gain(0.26)
 
 // pad
@@ -138,7 +163,7 @@ $: note("0 0 2 4").scale("C2:minor").s("sawtooth").lpf(450).gain(0.5)
 
 - 新規 apply は対象 **strudel-genre-*** の **音色パレット** からスロットごとに選ぶ。Pattern フェンスの `.s()` を全文コピーしない
 - 同一曲の pitched 2 本に同じ `.s()` を使わない。例外は DnB Reese（square サブ + saw ミッド）だけ
-- メロ 3 本は **同時に全 16 分を埋めない**。片方が休符のとき他方が出る
+- メロ 3 本は **同時に全 16 分アタックを埋めない**。arp が 16 分なら lead / hook は 8 分＋`@`。片方が休符またはホールドのとき他方が出る
 - 役割ごとに PCM を変える（メロ／コード／パッドを全部 `triangle` にしない。全部 `pf:ff` / `ld:ss` にもしない）
 - chords はジャンル表の和音（多くは `ep:*` の `[0,2,4]`、チルポップは `[0,2,6]`）。pad はパレットの pad 列。`pf:ff` なら次数 `0`（`[0,4]` で重ねない）
 - コードは **3 音まで**。`pf:ff` を `[0,2,4]` で鳴らさない。6 音スタック禁止（デッキ `MAX_VOICES` は 32）
@@ -200,13 +225,17 @@ $: note("0 0 2 4").scale("C2:minor").s("sawtooth").lpf(450).gain(0.5)
 
 ## Mini-notation（`$:` の文字列内だけ）
 
+公式の Mini-notation 全体は [Mini Notation](https://strudel.cc/learn/mini-notation/)（Strudel）。このエンジンが使うのは次のサブセット。公式の `_`（伸長）・裸の `@`・`!`（複製）・`-`（休符）・`?`・`|`・ユークリッド `bd(3,8)` は未対応。長音は `a@n`、休符は `~`。
+
 | 記法 | 意味 |
 | --- | --- |
 | `bd sd hh` | **スペース** → 順再生（ウェイト既定 1） |
 | `bd,sd` / `[bd,sd]` | **カンマ** → **同時再生** |
 | `bd*4` | 1 サイクルに 4 回（密度アップ） |
-| `a@2 b` | **`@` elongate** — 時間ウェイト（a が b の 2 倍）。`<>` の子どうしは **合計ウェイトを揃える**（8 分グリッドなら 8。`[4@2 7 9@2  7 4 2 0]` は 9 なのでズレる） |
-| `~` | 休符 |
+| `a@2 b` | **`@` elongate** — 時間ウェイト（a が b の 2 倍）。ゲートも伸びる。`<>` の子どうしは **合計ウェイトを揃える**（8 分グリッドなら 8。`[4@2 7 9@2  7 4 2 0]` は 9 なのでズレる） |
+| `a ~ ~` | **休符** — `a` のあと無音。音は切れる。`a@3` ではない |
+| `~` | 休符（スロット無音）。ドラム裏拍・掛け合い用。長音の代用にしない |
+| `a _ _` / `a @ @` / `a!3` | **使わない**（エンジン未対応。公式の `_` / `!` と同じ意味にはならない） |
 | `[a b]` | 細分化シーケンス |
 | `<a b c>` | サイクルまたぎで 1 つずつ（同時ではない） |
 | `bd*4, [~ sd]*2` | 層ごとの密度を保った並列 |
@@ -271,7 +300,7 @@ $: note("0 2 4").scale("C2:minor").add(2).s("sawtooth").lpf(500).gain(0.5)
 $: note("0 2 4 0").scale("<A2:minor D:dorian G:mixolydian C:major>")
   .s("sawtooth").lpf(600).gain(0.5)
 // 和音レイヤも同じ進行を共有
-$: note("[0,2,4] ~ [0,2,4] ~")
+$: note("[0,2,4]@2 [0,2,4]@2")
   .scale("<A4:minor D4:dorian G4:mixolydian C4:major>")
   .s("ep:ky").gain(0.28)
 ```
@@ -311,7 +340,7 @@ pad / lead / piano でユーザー WAV がある例:
 ```
 $: note("<0@3 ~>").scale("C2:minor").s("pad-ambient_drone01")
   .adsr("0.2:0.4:0.5:0.4").room(0.4).orbit(2).gain(0.35)
-$: note("7 6 <4 9>").scale("C4:minor").s("lead-supersaw_4oct")
+$: note("7@2 6 4  9@2 7 <4 9 3 7>").scale("C4:minor").s("lead-supersaw_4oct")
   .adsr("0.01:0.3:0.7:0.2").lpf(2800).cut(1).gain(0.16)
 $: note("0 2 4 0").scale("C3:minor").s("piano-acoustic_soft")
   .adsr("0.005:0.3:0.2:0.25").gain(0.35)
@@ -357,11 +386,11 @@ $: note("0 2 4 0").scale("C3:minor").s("piano-acoustic_soft")
 1. チャットにコードだけ書いて終わりにしない → `dj_hermes_apply_song`（save は残す指示のときだけ。save は演奏を変えない）
 2. `stack(...).cpm(170)` を content に入れる → 400
 3. `.vib("<1 4>")` など未対応メソッドへ `"<...>"` を渡す → パース失敗（`.lpf("<…>")` と `sine.rangex` は可）
-4. mini に `bd(3,8)` や `-` 休符（休符は `~` のみ。`(` は unexpected char）
+4. mini に `bd(3,8)` や `-` 休符、`a _ _` / `a @ @` / `a!3`（休符は `~` のみ。長音は `a@n`。`(` と `!` は unexpected char）
 5. 毎回フル曲を `dj_hermes_save_song` で書き直して差分が巨大になる（save は演奏を変えない。鳴らすのは apply / patch / edit_method）
 6. ドラムをフルファイル名で書く → 読めない。短い part + `.bank`
 7. `{bank}-{part}.wav` とハイフン連結 → 正は `{bank}_{part}`
-8. 1 小節 1 音のフック（`4 ~ ~ ~`）を既定にする → 4 子の `<>` か 4 小節 scale
+8. 1 小節 1 音（`4 ~ ~ ~`）や **4 原子の lead/hook/arp** を既定にする → lead/hook は 8 分＋`@`、arp は 8/16 分。コードの `~` パディングをホールドと取り違えない（ホールドは `@`）
 9. 無い PCM キー → 無音。slug は INDEX で確認。FX 長尺は毎小節撃たない。lead / pad は ADSR なしで撃たない
 10. 新規 apply でジャンルフェンスの `.s()` を全コピーする（パレットから選ぶ）
 11. 同一曲の lead と hook が同じ `.s()`（Reese 分割以外）
@@ -374,7 +403,7 @@ $: note("0 2 4 0").scale("C3:minor").s("piano-acoustic_soft")
 - [ ] 4 小節フレーズ（`.scale("<…>")` 4 個 または `<>` 4 子）。1 小節同一繰り返しだけにしない。Future Bass / Kawaii は 16 子 scale。Ambient は 16 子（末 4 は逆行またはクリシェ。転調しない）。Minimal は非リズムの 16 子ミュート（和声は 4 子）
 - [ ] ドラムは原則 1 本の短い `s("bd …")`（キットは `.bank` / `part:slug`）。duck キックのみ分離。Minimal は kick / ohh / chh を分割
 - [ ] ピッチは可能なら次数 + `.scale`（acid の 303 は音名で `.scale` なし）。PCM フロアは `C4:`、シンセサブは `C2:`。**pad は C2**（ドローンなら C1）
-- [ ] メロ 3 本は掛け合い。arp はメロディ楽器（`perc:` ではない）。コード 3 音まで。pad はジャンルパレット（`pf:ff` なら `note("0")`）+ **`.adsr`** + 別 orbit
+- [ ] メロ 3 本は掛け合い。lead/hook は 8 分＋`@`、arp は 8/16 分（4 原子にしない）。arp はメロディ楽器（`perc:` ではない）。コードはホールド（`@2` または小節まるごと。スタブはジャンル署名のときだけ）。pad はジャンルパレット（`pf:ff` なら `note("0")`）+ **`.adsr`** + 別 orbit
 - [ ] lead / pad の PCM は `.s(…).adsr(…)`（`.gain` の後ろに付けない）
 - [ ] 音色はジャンルの **音色パレット**。同一曲で pitched の `.s()` を重複させない（Reese 分割以外）
 - [ ] メロ／コード／パッドはカタログ `in_bank=yes` またはパレットが許した波形 / `wt_*` / `.fm`。ユーザー WAV があればフルネーム。ボーカルチョップは `vc:`（本数上限内の `// vox` または arp 差し替え）

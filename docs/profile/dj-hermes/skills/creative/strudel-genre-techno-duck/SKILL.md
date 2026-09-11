@@ -5,7 +5,7 @@ description: >-
   pad and bass on the same orbit, short duckattack (0.03–0.05), techno
   grid bd*4 + offbeat hats, no per-track compressor (master glue is Mixer default).
   8 $: tracks (kick+hats count as drums), 4-bar phrase, no clap.
-version: 5.2.0
+version: 5.3.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -44,17 +44,17 @@ $: note("0 0 2 <4 6 2 0>").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
   .s("sine").fm(3).fmh(1.5).adsr("0.005:0.1:0.3:0.08").lpf(500).gain(0.52)
   .orbit(2)
 // lead
-$: note("~ 7 4 <9 7 4 2>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
+$: note("7@2 4 7  9@2 4 <9 7 4 2>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
   .s("sine").fm(3).fmh(2).fmatt(0.01).fmdec(0.3).fmsus(0.25)
   .lpf(1800).lpenv(2).gain(0.16)
 // hook
-$: note("~ 4 ~ <7 4 4 7>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
+$: note("~ 4 7@2  4 7 4 <7 4 4 7>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
   .s("plk:s5").gain(0.16).cut(1)
 // arp
-$: note("~ 0 4 7  ~ 4 0 2").scale("<C5:minor C5:minor G5:phrygian C5:minor>")
+$: note("0 4 7 12  7 4 0 2").scale("<C5:minor C5:minor G5:phrygian C5:minor>")
   .s("plk:hd").gain(0.14).cut(1)
 // chords
-$: note("[0,2,4] ~ ~ ~").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
+$: note("[0,2,4]").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
   .s("ep:ky").gain(0.18).orbit(2)
 // pad
 $: note("0").scale("<C2:minor C2:minor G2:phrygian C2:minor>")

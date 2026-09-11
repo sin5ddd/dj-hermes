@@ -7,14 +7,14 @@ $: s("bd ~ ~ ~ bd ~ sd ~, hh:dk*8, <~ ~ ~ [bd sd bd sd]>").gain(0.72)
 $: note("0 0 3 <0 0 3 -1>").scale("<Ab4:minor Ab4:minor Eb5:phrygian Ab4:minor>")
   .s("bs:wb").gain(0.5)
 // lead
-$: note("~ 7 ~ <10 7 3 7>").scale("<Ab4:minor Ab4:minor Eb5:phrygian Ab4:minor>")
+$: note("7@2 ~ 10  7@2 3 <10 7 3 7>").scale("<Ab4:minor Ab4:minor Eb5:phrygian Ab4:minor>")
   .s("ld:gr").adsr("0.01:0.3:0.7:0.2")
   .cut(1).gain(0.16)
 // hook
-$: note("~ 4 ~ <7 4 4 7>").scale("<Ab4:minor Ab4:minor Eb5:phrygian Ab4:minor>")
+$: note("~ 4 7@2  4 7 4 <7 4 4 7>").scale("<Ab4:minor Ab4:minor Eb5:phrygian Ab4:minor>")
   .s("plk:nn").gain(0.18).cut(1)
 // arp
-$: note("~ ~ 12 ~").scale("<Ab4:minor Ab4:minor Eb5:phrygian Ab4:minor>")
+$: note("~ 12 ~ 7  ~ 12 ~ 3").scale("<Ab4:minor Ab4:minor Eb5:phrygian Ab4:minor>")
   .s("plk:dt").gain(0.1).cut(1)
 // chords
 $: note("[0,4] ~ ~ [0,4]").scale("<Ab4:minor Ab4:minor Eb5:phrygian Ab4:minor>")

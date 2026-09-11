@@ -5,7 +5,7 @@ description: >-
   mid Reese sample and hollow-fifth stab: 174 BPM, square C2 sub,
   bs:rm at C4:minor, plk:s5 degrees 4/7 as the hook. Not saw-Reese.
   8 $: tracks. Do not DJ-pair with 124 house.
-version: 5.2.0
+version: 5.3.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -43,10 +43,10 @@ $: note("0 3 0 <0 -1>").scale("C4:minor").s("bs:rm").gain(0.36)
 // hook
 $: note("~ 4 ~ <7 4>").scale("C4:minor").s("plk:s5").gain(0.2).cut(1)
 // lead
-$: note("~ 11 7 <12 9 7 4>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
+$: note("11@2 7 12  9@2 7 <12 9 7 4>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
   .s("ld:ss").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.12)
 // arp
-$: note("~ 0 7 12  7 0 ~ 4").scale("<C5:minor C5:minor G5:phrygian C5:minor>")
+$: note("0 7 12 7  0 4 7 12").scale("<C5:minor C5:minor G5:phrygian C5:minor>")
   .s("plk:dt").gain(0.12).cut(1)
 // chords
 $: note("[0,4] ~ ~ [0,4]").scale("<C4:minor C4:minor G4:phrygian C4:minor>")

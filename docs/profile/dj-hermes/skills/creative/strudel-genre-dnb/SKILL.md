@@ -4,7 +4,7 @@ description: >-
   Use when writing a Drum and Bass loop in dj-hermes: 174 BPM, break in
   front of the sub, split Reese (square sub + saw mid as bass + bass-mid).
   Never use sample db. 8 $: tracks, play solo at 174.
-version: 5.2.0
+version: 5.3.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -42,13 +42,13 @@ $: note("0 3 0 <0 -1 0 3>").scale("C2:minor")
 $: note("0 3 0 <0 -1 0 3>").scale("C2:minor")
   .s("sawtooth").attack(0.01).decay(0.4).release(0.3).lpf(1000).gain(0.32)
 // lead
-$: note("~ 7 ~ <9 7 4 11>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
+$: note("7@2 ~ 9  11@2 7 <9 7 4 11>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
   .s("ld:ss").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.14)
 // hook
-$: note("~ 4 ~ <7 4 4 7>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
+$: note("~ 4 7@2  4 7 4 <7 4 4 7>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
   .s("plk:dt").gain(0.16).cut(1)
 // arp
-$: note("~ 0 7 12  7 0 ~ 4").scale("<C5:minor C5:minor G5:phrygian C5:minor>")
+$: note("0 7 12 7  0 4 7 12").scale("<C5:minor C5:minor G5:phrygian C5:minor>")
   .s("plk:hd").gain(0.12).cut(1)
 // chords
 $: note("[0,4] ~ [0,4] ~").scale("<C4:minor C4:minor G4:phrygian C4:minor>")

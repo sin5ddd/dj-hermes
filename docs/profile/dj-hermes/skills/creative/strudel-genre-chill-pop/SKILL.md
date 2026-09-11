@@ -4,7 +4,7 @@ description: >-
   Use when writing chill-pop for dj-hermes: Japanese city pop
   (IV–iii–ii–I 下降, maj7, Rhodes), 95–110 BPM. Not EDM I–I–IV–I,
   not 王道進行, not downtempo chill, not house [~ cp]*2.
-version: 6.4.0
+version: 6.5.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -70,10 +70,10 @@ $: note("~ 2 4 6  4 2 ~ <0 2 4 6>").scale("<F4:lydian E4:phrygian D4:dorian C4:m
 $: note("0 ~ 2 6  ~ 4 2 <6 4 2 0>").scale("<F4:lydian E4:phrygian D4:dorian C4:major>")
   .s("ep:rs").gain(0.22)
 // arp — nylon, includes 7th
-$: note("0 2 4 6  4 2 0 ~").scale("<F5:lydian E5:phrygian D5:dorian C5:major>")
+$: note("0 2 4 6  4 2 0 4").scale("<F5:lydian E5:phrygian D5:dorian C5:major>")
   .s("plk:ny").gain(0.12).cut(1)
-// chords — maj7 / m7 (root, 3rd, 7th); muted EP, not triangle
-$: note("[0,2,6] ~ [0,2,6] ~").scale("<F4:lydian E4:phrygian D4:dorian C4:major>")
+// chords — maj7 / m7 (root, 3rd, 7th); hold, not triangle
+$: note("[0,2,6]@2 [0,2,6]@2").scale("<F4:lydian E4:phrygian D4:dorian C4:major>")
   .s("ep:mt").gain(0.24).room(0.25).orbit(2)
 // pad — pf:ff is already a fifth; do not write [0,4]
 $: note("0").scale("<F2:lydian E2:phrygian D2:dorian C2:major>")

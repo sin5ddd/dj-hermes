@@ -55,8 +55,11 @@ One **cycle = one bar = four beats**. `events()` in `mini.rs` places each atom i
 | `bd/2` | Slow: fire every *n* cycles | Half-time |
 | `[~ sd]` | Brackets = subdivide that span | Rest then snare in that cell |
 | `<a b>` | One child per cycle (not unison) | Alternate bars |
-| `a@2 b` | Elongate: *a* gets twice *b*'s weight | Uneven grid |
-| `~` | Rest (no event) | Silence |
+| `a@2 b` | Elongate: *a* gets twice *b*'s weight **and gate** | Held note (not a rest) |
+| `a ~ ~` | Event then two rests | Sound cuts; not a hold |
+| `~` | Rest (no event) | Offbeat drums, call-and-response |
+
+Official Mini-notation: [Mini Notation](https://strudel.cc/learn/mini-notation/). This engine uses a subset. `_` (elongate), bare `@`, `!` (replicate), `-` as rest, `?`, `|`, and Euclidean `bd(3,8)` are not parsed. Hold with `a@n`; rest with `~`.
 
 `setcpm(N)` is cycles per minute. Engine BPM is `N * 4`. `setcpm(124/4)` is 124 BPM. `setcps(x)` is `BPM = x * 240`. Both decks share **one** master tempo: a DJ pair must use the same `setcpm` or the second file’s tempo is discarded.
 

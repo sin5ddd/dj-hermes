@@ -5,7 +5,7 @@ description: >-
   ([~ cp]*2), not a snare and not stacked with sd, plus the C-minor
   FM pluck at C4:minor as the hook. 7–8 $: tracks, 4-bar phrase.
   Not kick-front techno.
-version: 5.4.0
+version: 5.5.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -42,16 +42,16 @@ $: s("bd:hf*4, [~ cp]*2, [~ hh:hs]*4, <~ ~ ~ [~@3 bd:hf ~@4]>").gain(0.58)
 $: note("0 0 4 <0 2 4 0>").scale("<C4:minor C4:minor G4:dorian C4:minor>")
   .s("bs:hf").gain(0.42)
 // lead
-$: note("~ 7 4 <7 9 4 2>").scale("<C4:minor C4:minor G4:dorian C4:minor>")
+$: note("7@2 4 7  9@2 4 <7 9 4 2>").scale("<C4:minor C4:minor G4:dorian C4:minor>")
   .s("ld:ss").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.16)
 // hook
 $: note("4 ~ 7 4  2 0 ~ -1").scale("<C4:minor C4:minor G4:dorian C4:minor>")
   .s("plk:lp").gain(0.22).cut(1)
 // arp
-$: note("~ 0 4 7  ~ 4 0 2").scale("<C5:minor C5:minor G5:dorian C5:minor>")
+$: note("0 4 7 12  7 4 0 2").scale("<C5:minor C5:minor G5:dorian C5:minor>")
   .s("plk:hd").gain(0.14).cut(1)
 // chords
-$: note("[0,2,4] ~ [0,2,4] ~").scale("<C4:minor C4:minor G4:dorian C4:minor>")
+$: note("[0,2,4]@2 [0,2,4]@2").scale("<C4:minor C4:minor G4:dorian C4:minor>")
   .s("ep:ky").gain(0.22)
 // pad
 $: note("0").scale("<C2:minor C2:minor G2:dorian C2:minor>")

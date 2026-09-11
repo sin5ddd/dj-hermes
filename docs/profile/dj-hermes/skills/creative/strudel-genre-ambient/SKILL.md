@@ -5,7 +5,7 @@ description: >-
   16 tracks, 16-bar form (plain 4 / drums 4 / plain 4 / retrograde
   or cliché 4), rest-heavy melody, low gain. Not a 4-bar loop, not
   a key change, not chill drums, not house clap, not 7 thin tracks.
-version: 6.0.1
+version: 6.1.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -78,7 +78,7 @@ pad は **C2**、arp は **C5**、choir は **C3**、`vc:` は **C4**。PCM フ�
 | --- | --- | --- | --- |
 | 1 | `// pad` | 常時 | **主**。C2、`.adsr`、`pf:ff` なら次数 `0` |
 | 2 | `// bass` | 常時 | 疎なサブ 1 本 |
-| 3 | `// chords` | 常時（疎） | `[0,2,4]`。1 小節に 1 回 |
+| 3 | `// chords` | 常時 | `[0,2,4]` 小節ホールド |
 | 4 | `// lead` | 常時（休符多） | 主メロ。PCM は `.adsr`。13–16 で逆行 |
 | 5 | `// hook` | 常時（長い音） | 13–16 で逆行 |
 | 6 | `// arp` | 常時（疎） | **メロディ楽器** + `note()`。`perc:` ではない |
@@ -110,7 +110,7 @@ $: note("0").scale("<C2:minor Ab2:lydian F2:dorian G2:phrygian C2:minor Ab2:lydi
 $: note("0 ~ ~ ~").scale("<C4:minor Ab4:lydian F4:dorian G4:phrygian C4:minor Ab4:lydian F4:dorian G4:phrygian C4:minor Ab4:lydian F4:dorian G4:phrygian G4:phrygian F4:dorian Ab4:lydian C4:minor>")
   .s("bs:su").gain(0.26)
 // chords
-$: note("[0,2,4] ~ ~ ~").scale("<C4:minor Ab4:lydian F4:dorian G4:phrygian C4:minor Ab4:lydian F4:dorian G4:phrygian C4:minor Ab4:lydian F4:dorian G4:phrygian G4:phrygian F4:dorian Ab4:lydian C4:minor>")
+$: note("[0,2,4]").scale("<C4:minor Ab4:lydian F4:dorian G4:phrygian C4:minor Ab4:lydian F4:dorian G4:phrygian C4:minor Ab4:lydian F4:dorian G4:phrygian G4:phrygian F4:dorian Ab4:lydian C4:minor>")
   .s("ep:mt").gain(0.16)
 // lead
 $: note("<[~ 7 ~ ~] [~ ~ 4 ~] [~ 9 ~ 7] [4 ~ ~ ~] [~ 7 ~ ~] [~ ~ 4 ~] [~ 9 ~ 7] [4 ~ ~ ~] [~ 7 ~ ~] [~ ~ 4 ~] [~ 9 ~ 7] [4 ~ ~ ~] [~ ~ ~ 4] [7 ~ 9 ~] [~ 4 ~ ~] [~ ~ 7 ~]>")
@@ -163,7 +163,7 @@ Pattern はグリッド・次数・ミュートの見本。スロットごとに
 | --- | --- | --- | --- |
 | pad | **主**。C2 + `.adsr` | `pf:ff`+次数 `0`、`pf:cl`、`pf:wa`、`ps:sh` | スーパーソー、C4、ADSR なし、`bd*4` の上に載せるだけ |
 | bass | 疎なサブ 1 本 | `bs:su` | `bs:hf` 重ね、wobble |
-| chords | 疎な `[0,2,4]` | `ep:mt`、薄い `ld:fp` | `triangle`、毎拍、`pf:ff` を `[0,2,4]` |
+| chords | `[0,2,4]` ホールド | `ep:mt`、薄い `ld:fp` | `triangle`、毎拍スタブ、`pf:ff` を `[0,2,4]` |
 | lead | 休符多め + `.adsr` | `ld:et`、`ld:fl`、`ld:si` | `ld:ss` アンセム、`ld:zp`、ADSR なし |
 | hook | 長いノート | `plk:am`、`ld:cr`（choir と被らない） | gabber、`plk:ss` |
 | arp | メロディ楽器 | `plk:lp`、`ld:si`、`plk:hp` | `perc:`、16 分埋め |

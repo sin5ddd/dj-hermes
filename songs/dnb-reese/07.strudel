@@ -10,10 +10,10 @@ $: note("0 3 0 <0 -1>").scale("Ab4:minor").s("bs:rm").gain(0.36)
 // hook
 $: note("~ 4 ~ <7 4>").scale("Ab4:minor").s("plk:s5").gain(0.2).cut(1)
 // lead
-$: note("~ 11 7 <12 9 7 4>").scale("<Ab4:minor Ab4:minor Eb5:phrygian Ab4:minor>")
+$: note("11@2 7 12  9@2 7 <12 9 7 4>").scale("<Ab4:minor Ab4:minor Eb5:phrygian Ab4:minor>")
   .s("ld:ds").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.12)
 // arp
-$: note("~ 0 7 12  7 0 ~ 4").scale("<Ab5:minor Ab5:minor Eb6:phrygian Ab5:minor>")
+$: note("0 7 12 7  0 4 7 12").scale("<Ab5:minor Ab5:minor Eb6:phrygian Ab5:minor>")
   .s("plk:nn").gain(0.12).cut(1)
 // chords
 $: note("[0,4] ~ ~ [0,4]").scale("<Ab4:minor Ab4:minor Eb5:phrygian Ab4:minor>")

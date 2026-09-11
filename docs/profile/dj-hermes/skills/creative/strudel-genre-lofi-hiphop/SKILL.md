@@ -3,7 +3,7 @@ name: strudel-genre-lofi-hiphop
 description: >-
   Use when writing lo-fi hip hop for dj-hermes: 75–90 BPM, dusty
   bd:lf, keys, slow hats. Not house [~ cp]*2.
-version: 5.2.0
+version: 5.3.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -41,16 +41,16 @@ $: s("bd:lf ~ ~ sd, [~ hh]*4, <~ ~ ~ [bd:lf sd bd:lf sd]>").gain(0.44)
 $: note("0 ~ 2 <0 0 3 2>").scale("<C4:minor C4:minor F4:dorian C4:minor>")
   .s("bs:su").gain(0.38)
 // lead
-$: note("~ 4 7 <5 4 0 2>").scale("<C4:minor C4:minor F4:dorian C4:minor>")
+$: note("4@2 7 5  4@2 0 <5 4 0 2>").scale("<C4:minor C4:minor F4:dorian C4:minor>")
   .s("plk:lf").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.18)
 // hook
-$: note("[0,2,4] ~ [0,3,5] ~").scale("<C4:minor C4:minor F4:dorian C4:minor>")
+$: note("[0,2,4]@2 [0,3,5]@2").scale("<C4:minor C4:minor F4:dorian C4:minor>")
   .s("ep:rs").adsr("0.05:0.3:0.5:0.3").gain(0.22)
 // arp
-$: note("~ 0 4 7  ~ 4 0 2").scale("<C5:minor C5:minor F5:dorian C5:minor>")
+$: note("0 4 7 12  7 4 0 2").scale("<C5:minor C5:minor F5:dorian C5:minor>")
   .s("plk:ny").gain(0.12).cut(1)
 // chords
-$: note("[0,2,4] ~ [0,2,4] ~").scale("<C4:minor C4:minor F4:dorian C4:minor>")
+$: note("[0,2,4]@2 [0,2,4]@2").scale("<C4:minor C4:minor F4:dorian C4:minor>")
   .s("ep:mt").gain(0.2).room(0.3).orbit(1)
 // pad
 $: note("0").scale("<C2:minor C2:minor F2:dorian C2:minor>")

@@ -4,7 +4,7 @@ description: >-
   Use when writing Progressive House for dj-hermes: 128 BPM, clap on 2
   and 4 ([~ cp]*2), long pad and arp, C-minor / F-dorian 4-bar phrase.
   Not kick-front techno.
-version: 5.2.0
+version: 5.3.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -40,16 +40,16 @@ $: s("bd*4, [~ cp]*2, hh*8, <~ ~ ~ oh>").gain(0.58)
 $: note("0 0 4 <0 2 4 0>").scale("<C4:minor C4:minor F4:dorian C4:minor>")
   .s("bs:hf").gain(0.42)
 // lead
-$: note("4@2 7 9@3 ~").scale("<C4:minor C4:minor F4:dorian C4:minor>")
+$: note("4@2 7 9@3  ~ 7").scale("<C4:minor C4:minor F4:dorian C4:minor>")
   .s("ld:ss").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.16)
 // hook
-$: note("~ 7 4 <9 7 4 2>").scale("<C4:minor C4:minor F4:dorian C4:minor>")
+$: note("~ 7 4@2  9 7 4 <9 7 4 2>").scale("<C4:minor C4:minor F4:dorian C4:minor>")
   .s("plk:hb").gain(0.18).cut(1)
 // arp
-$: note("0 2 4 7  4 2 0 ~").scale("<C5:minor C5:minor F5:dorian C5:minor>")
+$: note("0 2 4 7  4 2 0 4").scale("<C5:minor C5:minor F5:dorian C5:minor>")
   .s("plk:hd").gain(0.12).cut(1)
 // chords
-$: note("[0,2,4] ~ [0,2,4] ~").scale("<C4:minor C4:minor F4:dorian C4:minor>")
+$: note("[0,2,4]@2 [0,2,4]@2").scale("<C4:minor C4:minor F4:dorian C4:minor>")
   .s("ep:ky").gain(0.24)
 // pad
 $: note("0").scale("<C2:minor C2:minor F2:dorian C2:minor>")

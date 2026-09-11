@@ -1,7 +1,7 @@
 ---
 name: strudel-live-edit
 description: "Use when editing a playing dj-hermes song from natural language: add melody, drum fill, modulate/transpose, brighter/darker."
-version: 1.4.0
+version: 1.5.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -51,7 +51,7 @@ dj_hermes_edit_method(deck="A", track="hat", op="remove", method="gain")
 
 | 言い方の例 | 対象 | 操作の要約 |
 | --- | --- | --- |
-| メロディ足して / lead 欲しい | 空いている `// lead` / `// hook` / `// arp`。既に 3 本あるときは 1 本を差し替え。**ミニマルは次数を増やさず `// synth` / `// pluck` をオン** | 次数 + `.scale` + `@` で長め音。新規全文は composition / ジャンル Skill |
+| メロディ足して / lead 欲しい | 空いている `// lead` / `// hook` / `// arp`。既に 3 本あるときは 1 本を差し替え。**ミニマルは次数を増やさず `// synth` / `// pluck` をオン** | lead/hook は 8 分＋`@`、arp は 8/16 分。`4 ~ ~ ~` にしない。新規全文は composition / ジャンル Skill |
 | ボーカル / チョップ足して | **`// vox`**（カタログ `vc:`）。7 本床なら perc の代わりに append。8 本上限・Future Bass / Kawaii は **arp を `vc:` に差し替え**。ミニマルは texture 差し替えか 15–16 本目 | `vc:pa` 等 + `.cut(1)` + `C4:`。自前 WAV を invent しない。→ **strudel-composition** ボーカルチョップ |
 | フィル入れて / ブレイク | `// drums` の `s(...)` | `<>` でフィル層 / `*` / `.ply(n)`。Mixer のディレイ/スイッチは **strudel-dj-mix** |
 | 転調 / キー上げ下げ | 全 `.scale` の **ルート** | ルート変更 or `.scale("<…>")` 進行（pitched 全部で揃える） |
@@ -69,12 +69,13 @@ dj_hermes_edit_method(deck="A", track="hat", op="remove", method="gain")
 **ルール**
 
 - 既存 pitched トラックの **Root:mode をコピー**（キーをバラバラにしない）  
-- 次数は **0 始まり**。長音は mini **`@`**（`a@2` = a が b の 2 倍の長さ）  
+- 次数は **0 始まり**。長音は mini **`@`**（`a@2` = a が b の 2 倍の長さ。ゲートも伸びる。`a ~ ~` は休符で音が切れる）  
+- lead/hook は **8 分**（ウェイト 8）。arp は **8 分または 16 分**。4 原子や `4 ~ ~ ~` にしない  
 - 空いている `// lead` / `// hook` / `// arp` を埋める。既に 3 本あるときは 1 本だけ差し替え。新規全文は composition の 7–8 本  
 
 ```
-// lead — 長めノート + 次数（既存の Root:mode をコピー）
-$: note("0@2 2 4@3 ~ 7")
+// lead — 8 分 + `@` ホールド（既存の Root:mode をコピー）
+$: note("0@2 2 4  7@2 9 ~")
   .scale("C4:minor")
   .s("plk:ps").gain(0.18).cut(1)
 ```
@@ -194,7 +195,7 @@ $: note("0 2 4 0").scale("C2:phrygian").s("sawtooth").lpf(500).gain(0.6)
 | `.ply(2)` | **可**（スカラー、1..=16） |
 | `chooseCycles` | `<a b c>` |
 | 動的 cutoff / `sine.rangex` | **可** — mini `lpf("<…>")` または `lpf(sine.rangex(…))` |
-| 長音 | mini `@` |
+| 長音 | mini `a@n`（`a ~ ~` や `a _ _` ではない） |
 | 明るく/暗く | モード梯子 ±1 |
 
 不可のまま: `stack(...)`、`.cpm()`、`.lfo(...)`（LFO は `lpf(sine.rangex(...))` 等を使う）。`cp` は同梱。ハウス 2/4 専用。  

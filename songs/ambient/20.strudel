@@ -8,7 +8,7 @@ $: note("0").scale("<B2:minor G3:lydian E3:dorian F#3:phrygian B2:minor G3:lydia
 $: note("0 ~ ~ ~").scale("<B4:minor G5:lydian E5:dorian F#5:phrygian B4:minor G5:lydian E5:dorian F#5:phrygian B4:minor G5:lydian E5:dorian F#5:phrygian B4:minor A5:mixolydian G5:lydian F#5:phrygian>")
   .s("bs:su").gain(0.26)
 // chords
-$: note("<[[0,2,4] ~ ~ ~] ~ ~ ~>").scale("<B4:minor G5:lydian E5:dorian F#5:phrygian B4:minor G5:lydian E5:dorian F#5:phrygian B4:minor G5:lydian E5:dorian F#5:phrygian B4:minor A5:mixolydian G5:lydian F#5:phrygian>")
+$: note("<[[0,2,4]] ~ ~ ~>").scale("<B4:minor G5:lydian E5:dorian F#5:phrygian B4:minor G5:lydian E5:dorian F#5:phrygian B4:minor G5:lydian E5:dorian F#5:phrygian B4:minor A5:mixolydian G5:lydian F#5:phrygian>")
   .s("ld:fp").gain(0.16)
 // lead
 $: note("<[~ 7 ~ ~] [~ ~ 4 ~] [~ 9 ~ 7] [4 ~ ~ ~] [~ 7 ~ ~] [~ ~ 4 ~] [~ 9 ~ 7] [4 ~ ~ ~] [~ 7 ~ ~] [~ ~ 4 ~] [~ 9 ~ 7] [4 ~ ~ ~] [~ ~ ~ 4] [7 ~ 9 ~] [~ 4 ~ ~] [~ ~ 7 ~]>")

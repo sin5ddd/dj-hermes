@@ -10,17 +10,17 @@ $: note("0 0 2 <4 6 2 0>").scale("<A4:minor A4:minor E5:phrygian A4:minor>")
   .s("bs:ht").adsr("0.005:0.1:0.3:0.08").gain(0.52)
   .orbit(2)
 // lead
-$: note("~ 7 4 <9 7 4 2>").scale("<A4:minor A4:minor E5:phrygian A4:minor>")
+$: note("7@2 4 7  9@2 4 <9 7 4 2>").scale("<A4:minor A4:minor E5:phrygian A4:minor>")
   .s("ld:sw").adsr("0.01:0.3:0.7:0.2")
   .cut(1).gain(0.16)
 // hook
-$: note("~ 4 ~ <7 4 4 7>").scale("<A4:minor A4:minor E5:phrygian A4:minor>")
+$: note("~ 4 7@2  4 7 4 <7 4 4 7>").scale("<A4:minor A4:minor E5:phrygian A4:minor>")
   .s("plk:ac").gain(0.16).cut(1)
 // arp
-$: note("~ 0 4 7  ~ 4 0 2").scale("<A5:minor A5:minor E6:phrygian A5:minor>")
+$: note("0 4 7 12  7 4 0 2").scale("<A5:minor A5:minor E6:phrygian A5:minor>")
   .s("plk:aj").gain(0.14).cut(1)
 // chords
-$: note("[0,2,4] ~ ~ ~").scale("<A4:minor A4:minor E5:phrygian A4:minor>")
+$: note("[0,2,4]").scale("<A4:minor A4:minor E5:phrygian A4:minor>")
   .s("ep:ky").gain(0.18).orbit(2)
 // pad
 $: note("0").scale("<A2:minor A2:minor E3:phrygian A2:minor>")

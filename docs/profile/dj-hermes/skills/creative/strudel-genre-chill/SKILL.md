@@ -4,7 +4,7 @@ description: >-
   Use when writing chill / downtempo for dj-hermes: 80–100 BPM feel,
   soft drums, bs:hf floor only (do not stack bs:su). Not ambient and
   not chill-pop.
-version: 5.2.0
+version: 5.3.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -42,16 +42,16 @@ $: s("bd:hf ~ ~ bd:hf ~ ~ sd ~, [~ hh]*4, <~ ~ ~ oh>").gain(0.42)
 $: note("0 ~ 2 ~ 0 <3 4 2 0>").scale("<C4:minor C4:minor F4:dorian C4:minor>")
   .s("bs:hf").gain(0.4)
 // lead
-$: note("~ 4 ~ 7 ~ <6 9 7 4>").scale("<C4:minor C4:minor F4:dorian C4:minor>")
+$: note("4@2 7 6  9@2 7 <6 9 7 4>").scale("<C4:minor C4:minor F4:dorian C4:minor>")
   .s("plk:ps").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.16)
 // hook
-$: note("0@2 4 7@2 ~").scale("<C4:minor C4:minor F4:dorian C4:minor>")
+$: note("0@2 4 7@2  4 ~ ~").scale("<C4:minor C4:minor F4:dorian C4:minor>")
   .s("plk:am").gain(0.18).cut(1)
 // arp
-$: note("~ 7 12 7  4 0 ~ 2").scale("<C5:minor C5:minor F5:dorian C5:minor>")
+$: note("7 12 7 4  0 2 4 7").scale("<C5:minor C5:minor F5:dorian C5:minor>")
   .s("plk:hp").gain(0.12).cut(1)
 // chords
-$: note("[0,2,4] ~ [0,2,4] ~").scale("<C4:minor C4:minor F4:dorian C4:minor>")
+$: note("[0,2,4]@2 [0,2,4]@2").scale("<C4:minor C4:minor F4:dorian C4:minor>")
   .s("ep:rs").gain(0.22).room(0.3).orbit(2)
 // pad
 $: note("0").scale("<C2:minor C2:minor F2:dorian C2:minor>")

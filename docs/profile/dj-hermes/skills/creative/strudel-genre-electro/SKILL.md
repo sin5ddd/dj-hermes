@@ -5,7 +5,7 @@ description: >-
   four-on-the-floor, short square bass, supersaw hook, pitched parts
   two octaves below typical C4 PCM. Not house clap-front, not a thin
   zap hook, and not sparse minimal.
-version: 6.1.0
+version: 6.2.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -44,16 +44,16 @@ $: s("bd*4, ~ sd ~ sd, hh*8, <~ ~ ~ [bd sd bd sd]>").gain(0.62)
 $: note("0 ~ 0 <3 0 0 5>").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
   .s("square").adsr("0.001:0.08:0.15:0.04").lpf(500).gain(0.46)
 // lead
-$: note("~ 7 4 <9 7 12 7>").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
+$: note("7@2 4 7  9@2 12 <9 7 12 7>").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
   .s("ld:pu").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.14)
 // hook
-$: note("12 ~ 7 <12 15 12 7>").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
+$: note("12@2 7 12  15@2 12 <12 15 12 7>").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
   .s("ld:ss").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.16)
 // arp
-$: note("~ 0 3 7  3 0 ~ 5").scale("<C3:minor C3:minor G3:phrygian C3:minor>")
+$: note("0 3 7 12  3 0 5 7").scale("<C3:minor C3:minor G3:phrygian C3:minor>")
   .s("plk:cv").gain(0.14).cut(1)
 // chords
-$: note("[0,2,4] ~ [0,2,4] ~").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
+$: note("[0,2,4]@2 [0,2,4]@2").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
   .s("plk:sp").gain(0.18)
 // pad
 $: note("0").scale("<C2:minor C2:minor G2:phrygian C2:minor>")

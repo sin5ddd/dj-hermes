@@ -8,7 +8,7 @@ description: >-
     arp, chords, pad) may differ freely. Not a parked lpf plus amp ADSR,
     not a chromatic key walk of the same bed, and not sidechain ducking.
     7 $: tracks, play solo at 130.
-version: 6.4.0
+version: 6.5.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -63,20 +63,20 @@ $: note("c2 c2 eb2 e2  g2 eb2 d2 c2  f2 f#2 f2 c2  b1 eb2 c2 <d2 g2>")
     .cut(1)
     .gain(0.3);
 // lead
-$: note("~ 7 ~ <9 7 4 12>")
+$: note("7@2 ~ 9  12@2 7 <9 7 4 12>")
     .scale("<C4:minor C4:minor G4:phrygian C4:minor>")
     .s("plk:lp")
     .adsr("0.01:0.3:0.7:0.2")
     .cut(1)
     .gain(0.12);
 // arp
-$: note("~ 0 7 12  7 0 ~ 4")
+$: note("0 7 12 7  0 4 7 12")
     .scale("<C5:minor C5:minor G5:phrygian C5:minor>")
     .s("plk:hd")
     .gain(0.12)
     .cut(1);
 // chords
-$: note("[0,4] ~ ~ [0,4]")
+$: note("[0,4]@2 [0,4]@2")
     .scale("<C4:minor C4:minor G4:phrygian C4:minor>")
     .s("ep:mt")
     .gain(0.16);

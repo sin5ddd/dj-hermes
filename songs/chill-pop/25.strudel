@@ -13,10 +13,10 @@ $: note("~ 2 4 6  4 2 ~ <0 2 4 6>").scale("<G4:dorian C5:mixolydian F4:major D5:
 $: note("0 ~ 2 6  ~ 4 2 <6 4 2 0>").scale("<G4:dorian C5:mixolydian F4:major D5:minor>")
   .s("ep:wr").gain(0.22)
 // arp
-$: note("0 2 4 6  4 2 0 ~").scale("<G5:dorian C6:mixolydian F5:major D6:minor>")
+$: note("0 2 4 6  4 2 0 4").scale("<G5:dorian C6:mixolydian F5:major D6:minor>")
   .s("plk:hp").gain(0.12).cut(1)
 // chords
-$: note("[0,2,6] ~ [0,2,6] ~").scale("<G4:dorian C5:mixolydian F4:major D5:minor>")
+$: note("[0,2,6]@2 [0,2,6]@2").scale("<G4:dorian C5:mixolydian F4:major D5:minor>")
   .s("ep:ky").gain(0.24).room(0.25).orbit(2)
 // pad
 $: note("0").scale("<G2:dorian C3:mixolydian F2:major D3:minor>")

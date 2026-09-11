@@ -7,16 +7,16 @@ $: s("bd:hf*4, [~ cp:rm]*2, hh*8, <~ ~ ~ oh>").gain(0.58)
 $: note("0 0 4 <0 2 4 0>").scale("<E4:minor E4:minor A4:dorian E4:minor>")
   .s("bs:ht").gain(0.42)
 // lead
-$: note("4@2 7 9@3 ~").scale("<E4:minor E4:minor A4:dorian E4:minor>")
+$: note("4@2 7 9@3  ~ 7").scale("<E4:minor E4:minor A4:dorian E4:minor>")
   .s("ld:ss").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.16)
 // hook
-$: note("~ 7 4 <9 7 4 2>").scale("<E4:minor E4:minor A4:dorian E4:minor>")
+$: note("~ 7 4@2  9 7 4 <9 7 4 2>").scale("<E4:minor E4:minor A4:dorian E4:minor>")
   .s("plk:tg").gain(0.18).cut(1)
 // arp
-$: note("0 2 4 7  4 2 0 ~").scale("<E5:minor E5:minor A5:dorian E5:minor>")
+$: note("0 2 4 7  4 2 0 4").scale("<E5:minor E5:minor A5:dorian E5:minor>")
   .s("plk:hd").gain(0.12).cut(1)
 // chords
-$: note("[0,2,4] ~ [0,2,4] ~").scale("<E4:minor E4:minor A4:dorian E4:minor>")
+$: note("[0,2,4]@2 [0,2,4]@2").scale("<E4:minor E4:minor A4:dorian E4:minor>")
   .s("ep:wr").gain(0.24)
 // pad
 $: note("0").scale("<E2:minor E2:minor A2:dorian E2:minor>")

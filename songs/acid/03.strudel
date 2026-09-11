@@ -19,13 +19,13 @@ $: note("g1 g2 g1 bb1  b1 g1 d2 g1  g1 f1 f#1 g1  bb1 d2 c2 <bb1 g1>")
   .cut(1)
   .gain(0.3)
 // lead
-$: note("~ 7 ~ <9 7 4 12>").scale("<G3:minor G3:minor D4:phrygian G3:minor>")
+$: note("7@2 ~ 9  12@2 7 <9 7 4 12>").scale("<G3:minor G3:minor D4:phrygian G3:minor>")
   .s("ld:fm").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.12)
 // arp
-$: note("~ 0 7 12  7 0 ~ 4").scale("<G4:minor G4:minor D5:phrygian G4:minor>")
+$: note("0 7 12 7  0 4 7 12").scale("<G4:minor G4:minor D5:phrygian G4:minor>")
   .s("plk:s5").gain(0.12).cut(1)
 // chords
-$: note("[0,4] ~ ~ [0,4]").scale("<G3:minor G3:minor D4:phrygian G3:minor>")
+$: note("[0,4]@2 [0,4]@2").scale("<G3:minor G3:minor D4:phrygian G3:minor>")
   .s("ep:ky").gain(0.16)
 // pad
 $: note("0").scale("<G1:minor G1:minor D2:phrygian G1:minor>")

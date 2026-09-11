@@ -7,16 +7,16 @@ $: s("bd:9p*4, ~ sd ~ sd, hh*8, <~ ~ ~ [bd:9p sd bd:9p sd]>").gain(0.62)
 $: note("0 ~ 0 <3 0 0 5>").scale("<Ab2:minor Ab2:minor Eb3:phrygian Ab2:minor>")
   .s("bs:dq").adsr("0.001:0.08:0.15:0.04").gain(0.46)
 // lead
-$: note("~ 7 4 <9 7 12 7>").scale("<Ab2:minor Ab2:minor Eb3:phrygian Ab2:minor>")
+$: note("7@2 4 7  9@2 12 <9 7 12 7>").scale("<Ab2:minor Ab2:minor Eb3:phrygian Ab2:minor>")
   .s("ld:pu").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.14)
 // hook
-$: note("12 ~ 7 <12 15 12 7>").scale("<Ab2:minor Ab2:minor Eb3:phrygian Ab2:minor>")
+$: note("12@2 7 12  15@2 12 <12 15 12 7>").scale("<Ab2:minor Ab2:minor Eb3:phrygian Ab2:minor>")
   .s("ld:ss").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.16)
 // arp
-$: note("~ 0 3 7  3 0 ~ 5").scale("<Ab3:minor Ab3:minor Eb4:phrygian Ab3:minor>")
+$: note("0 3 7 12  3 0 5 7").scale("<Ab3:minor Ab3:minor Eb4:phrygian Ab3:minor>")
   .s("plk:cv").gain(0.14).cut(1)
 // chords
-$: note("[0,2,4] ~ [0,2,4] ~").scale("<Ab2:minor Ab2:minor Eb3:phrygian Ab2:minor>")
+$: note("[0,2,4]@2 [0,2,4]@2").scale("<Ab2:minor Ab2:minor Eb3:phrygian Ab2:minor>")
   .s("plk:sf").gain(0.18)
 // pad
 $: note("0").scale("<Ab2:minor Ab2:minor Eb3:phrygian Ab2:minor>")
