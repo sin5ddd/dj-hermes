@@ -4,7 +4,9 @@ dj-hermes の呼び出しは `s("<part>:<slug>")`。音程楽器は `note(...).s
 
 `in_bank=yes` は `samples/<part>/<slug>.wav` があるキー。`in_bank=no` は未作成（ファイルが無いので曲には書かない）。現行カタログのキーはすべて `yes`（`dr` / `ld` / `pf` / `ps` の長尺を含む）。
 
-長尺は `dr` / `pf` / `ps` が約 16–17 秒、ライザー（`fx:fr` / `fx:nr` / `fx:rf` / `fx:rp` / `fx:rw` / `fx:up`）が約 15 秒、`ld` と `plk:fp` / `plk:sp` が約 8.2 秒。毎小節撃たない。同梱キットの `bd/00.wav` などは `s("bd")`（整数 index）。カタログ slug ではない。
+長尺は `dr` / `pf` / `ps` が約 16–17 秒、ライザー（`fx:fr` / `fx:nr` / `fx:rf` / `fx:rp` / `fx:rw` / `fx:up`）が約 15 秒、`ld` と `plk:fp` / `plk:sp` が約 8.2 秒。FX ライザーは毎小節撃たない（`<>` 間引き）。lead / pad は `.adsr` + `.cut(1)` ならグリッド可（→ strudel-composition）。同梱キットの `bd/00.wav` などは `s("bd")`（整数 index）。カタログ slug ではない。
+
+ボイス系は `vc`（C4 のフォルマント合成チョップ、約 3.2 秒）と `iv`（Irodori-TTS の日本語ボイスフレーズ、音程なし、約 0.2–1.9 秒）。`iv:` は発話のまま bare で置く。
 
 ## `bd`
 
@@ -207,6 +209,28 @@ dj-hermes の呼び出しは `s("<part>:<slug>")`。音程楽器は `note(...).s
 | `hh:pd` | yes | `pc-hat-pedal` | pedal hat | ペダル／フットハット。クローズより暗いホワイトノイズの短いチック。 | 72 | 0.3 |
 | `hh:tt` | yes | `pc-hat-tight` | tight hat | 極短いタイトハット。明るいホワイトノイズ。16分の隙間向き。 | 88 | 0.2 |
 
+## `iv`
+
+Irodori-TTS（Aratako）で無から生成した日本語ボイスのワンショット（48 kHz 16-bit mono・CC0）。**発話なので音程は無く、`note()` を付けず bare `s("iv:…")` で置く。** `vc`（C4 フォルマント合成チョップ）とは別カテゴリ。kawaii 系のフィル・DJ ミックス中の掛け声向き。長さ約 0.2–1.9 秒。
+
+| call | in_bank | id | name | description | note | dur |
+| --- | --- | --- | --- | --- | --- | --- |
+| `iv:dou` | yes | `iv-dou` | dou chop | 「どう」のチョップ。はいどうぞの分割2。単発の粒。 | - | 0.39 |
+| `iv:dzo` | yes | `iv-dzo` | hai douzo | 「はいどうぞ」のフレーズ。渡す・見せ場の掛け声。 | - | 1.30 |
+| `iv:fu` | yes | `iv-fu` | fu | 「フ」の短い息。照れ・気の抜け・間。 | - | 0.30 |
+| `iv:hai` | yes | `iv-hai` | hai chop | 「はい」。相づち・頭出しの1音。 | - | 0.35 |
+| `iv:iku` | yes | `iv-iku` | iku yo | 「行くよ」。セクション転換・ドロップ前の頭出し。 | - | 1.93 |
+| `iv:kai` | yes | `iv-kai` | kai | 「かい」。短い問い返し。 | - | 0.21 |
+| `iv:moi` | yes | `iv-moi` | mou i chop | 「もういっ」の頭チョップ。もう一回の前振り。 | - | 0.47 |
+| `iv:mou` | yes | `iv-mou` | mou ikkai | 「もう一回」。リピート要求の掛け声。 | - | 0.94 |
+| `iv:ra` | yes | `iv-ra` | ra | 「ラ」の1音。歌い出しっぽい粒。 | - | 0.47 |
+| `iv:sen` | yes | `iv-sen` | se-no | 「せーの」（長）。カウントイン・ビルド。 | - | 1.30 |
+| `iv:ses` | yes | `iv-ses` | se-no short | 「せーの」の短いチョップ。フィルの頭出し。 | - | 0.77 |
+| `iv:uke` | yes | `iv-uke` | chou ukeru | 「超ウケる」。リアクションの決め。 | - | 0.86 |
+| `iv:wkw` | yes | `iv-wkw` | wakuwaku | 「わくわく」。期待のつぶやき。 | - | 0.86 |
+| `iv:yat` | yes | `iv-yat` | yatta | 「やったー」。歓声の決め。ドロップ・フィル。 | - | 1.41 |
+| `iv:zo` | yes | `iv-zo` | zo chop | 「ぞ」のチョップ。はいどうぞの3音目。締めの1音。 | - | 0.23 |
+
 ## `ld`
 
 | call | in_bank | id | name | description | note | dur |
@@ -380,8 +404,8 @@ dj-hermes の呼び出しは `s("<part>:<slug>")`。音程楽器は `note(...).s
 | `plk:sm` | yes | `pl-stab-major` | stab major pluck | スタブ。長三和音で明るい。ワンショット（0.60秒）。C–E–G。 | 55 | 0.60 |
 | `plk:ss` | yes | `pl-supersaw-short` | supersaw short pluck | EDM。厚いスーパーソーで中庸の明るさ。ワンショット（0.60秒）。ユニゾン5本。 | 55 | 0.60 |
 | `plk:tg` | yes | `pl-trance-gate` | trance gate pluck | トランス。明るくゲートしたスーパーソー。ワンショット（0.60秒）。速いLP閉じ。 | 60 | 0.60 |
-| `plk:fp` | yes | `filter-pluck` | filter-pluck | カットオフADSRで開いて閉じるプラック。低めのLPから3–6 kHz付近まで開く。約8.2秒のホールド。毎小節撃たない。 | 60 | 8.2 |
-| `plk:sp` | yes | `stab-pluck` | stab-pluck | 長いホールドのスタブ／プラック（約8.2秒）。デュアルスタックで芯と倍音を分離。短いワンショットではない。毎小節撃たない。 | 60 | 8.2 |
+| `plk:fp` | yes | `filter-pluck` | filter-pluck | カットオフADSRで開いて閉じるプラック。低めのLPから3–6 kHz付近まで開く。約8.2秒のホールド。ADSR なしで毎小節撃たない（lead / pad なら `.adsr` + `.cut(1)`）。 | 60 | 8.2 |
+| `plk:sp` | yes | `stab-pluck` | stab-pluck | 長いホールドのスタブ／プラック（約8.2秒）。デュアルスタックで芯と倍音を分離。短いワンショットではない。ADSR なしで毎小節撃たない（lead / pad なら `.adsr` + `.cut(1)`）。 | 60 | 8.2 |
 | `plk:s5` | yes | `stab-fm-fifth` | stab-fm-fifth | C3の中空DnBスタブ。完全5度（CとG、比1と3/2）の2パーシャルだけ。長3度（E / 5:4）は出さない。 alias `plk:s5` | 48 | 0.34 |
 | `plk:s3` | yes | `stab-fm-major` | stab-fm-major | C3の明るい長三和音スタブ。C–E–G（比1、5/4、3/2）の3パーシャル。中空の stab-fm-fifth（C–Gのみ）の対。 alias `plk:s3` | 48 | 0.42 |
 | `plk:bl` | yes | `lead-fm_bell` | FM bell pluck | C3 inharmonic bell / glass (ratio 3.5). Write C4:…. Not a pad. | 48 | 0.88 |

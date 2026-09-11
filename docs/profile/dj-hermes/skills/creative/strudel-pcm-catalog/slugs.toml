@@ -384,3 +384,21 @@
 "vl-tu" = { part = "vc", slug = "tu" }
 "vl-ya" = { part = "vc", slug = "ya" }
 "vl-yeah" = { part = "vc", slug = "yeah" }
+
+# Irodori-TTS voice phrases (samples/iv/*.wav). Original TTS renders (CC0);
+# not rust-fm-synthe presets. 2-3 char slugs, bare s("iv:...").
+"iv-dou" = { part = "iv", slug = "dou" }
+"iv-dzo" = { part = "iv", slug = "dzo" }
+"iv-fu" = { part = "iv", slug = "fu" }
+"iv-hai" = { part = "iv", slug = "hai" }
+"iv-iku" = { part = "iv", slug = "iku" }
+"iv-kai" = { part = "iv", slug = "kai" }
+"iv-moi" = { part = "iv", slug = "moi" }
+"iv-mou" = { part = "iv", slug = "mou" }
+"iv-ra" = { part = "iv", slug = "ra" }
+"iv-sen" = { part = "iv", slug = "sen" }
+"iv-ses" = { part = "iv", slug = "ses" }
+"iv-uke" = { part = "iv", slug = "uke" }
+"iv-wkw" = { part = "iv", slug = "wkw" }
+"iv-yat" = { part = "iv", slug = "yat" }
+"iv-zo" = { part = "iv", slug = "zo" }

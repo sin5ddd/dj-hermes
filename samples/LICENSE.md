@@ -67,6 +67,18 @@ Do not overwrite the Sonic Pi files `bd/00.wav`, `bd/01.wav`, `sd/00.wav`,
 Vocal chops (`samples/vc/*.wav`) are the same factory renders (`vl-pa` etc.),
 C4 (~262 Hz), ~3.2 s, 16-bit mono 48 kHz. Keys are `s("vc:pa")` and so on.
 
+## Irodori-TTS voice phrases (CC0)
+
+The fifteen voice one-shots under `samples/iv/` (for example `iv/hai.wav`) are
+original renders generated from scratch with
+[Irodori-TTS](https://github.com/Aratako/Irodori-TTS) (no reference audio; no
+third-party voice material). They are dedicated to the public domain under
+**CC0 1.0 Universal**. Irodori-TTS code and weights are MIT-licensed and place
+no license conditions on the generated audio; courtesy credit:
+"音声制作: Irodori-TTS (MIT License / Copyright (c) 2026 Aratako)". Keys are
+`s("iv:hai")` etc. The map and descriptions live in
+`docs/profile/dj-hermes/skills/creative/strudel-pcm-catalog/`.
+
 ## Custom samples
 
 You may add your own WAV files under this tree (same layout). Prefer CC0 or

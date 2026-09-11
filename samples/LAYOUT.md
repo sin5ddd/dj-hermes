@@ -155,6 +155,7 @@ samples/
   fx/id.wav  # unpitched DnB impact (~0.5 s)
   fx/sd.wav    # unpitched sub drop (~1.1 s)
   vc/na.wav pa.wav ra.wav tu.wav ya.wav yeah.wav  # C4 vocal chops ~3.2s
+  iv/dou.wav dzo.wav fu.wav hai.wav iku.wav kai.wav moi.wav mou.wav ra.wav sen.wav ses.wav uke.wav wkw.wav yat.wav zo.wav  # Irodori-TTS voice phrases ~0.2–1.9s (CC0)
   LICENSE.md
   README.md
   LAYOUT.md          # 本ファイル
@@ -176,6 +177,7 @@ samples/
 ```
 
 - rust-fm-synthe カタログ: `samples/<part>/<slug>.wav`（例 `bd/8b.wav` → `s("bd:8b")`）。slug 表と説明は `docs/profile/dj-hermes/skills/creative/strudel-pcm-catalog/`。同梱 `00.wav` は上書きしない
+- Irodori-TTS ボイス: `samples/iv/`（`s("iv:hai")` など）。CC0。`LICENSE.md` 参照
 - **同梱 CC0 キット**（`bd/` `cp/` と上記 FM ワンショット）はリポジトリに残す  
 - **追加の `samples/<name>.wav` / `samples/<name>/00.wav`** は Git LFS（`.gitattributes` の `*.wav`）。gitignore されない  
 - スクラッチ出力は `/out/` `/recordings/` のまま git 外  
@@ -195,6 +197,7 @@ samples/
 | FX one-shot | `s("fx-riser_short01")` |
 | 同梱 FM catalog | `s("bd:8b")` / `note("0").scale("C4:minor").s("bs:hf")` |
 | ボーカルチョップ | `s("vc:pa")` / `note("0").scale("C4:minor").s("vc:ya").cut(1)` |
+| ボイスフレーズ（Irodori-TTS） | `s("iv:yat")` / `s("[~ ~ ~ iv:ses]")`（bare。`note()` なし） |
 
 ---
 
