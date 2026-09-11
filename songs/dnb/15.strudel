@@ -5,23 +5,22 @@ setcpm(174/4)
 $: s("[bd <~ sd> ~ sd ~ <bd ~> <bd sd> <bd ~>, hh:dn*8, [~@5 oh ~@2]]*2").gain(0.7).lpf(4000)
 // bass
 $: note("0 3 0 <0 -1 0 3>").scale("F2:minor")
-  .s("square").lpf(120).gain(0.42)
-  .attack(0.01).decay(0.5).release(0.4)
+  .s("square").attack(0.01).decay(0.5).release(0.4).lpf(120).gain(0.42)
 // bass-mid
 $: note("0 3 0 <0 -1 0 3>").scale("F2:minor")
-  .s("sawtooth").lpf(1000).gain(0.32)
-  .attack(0.01).decay(0.4).release(0.3)
+  .s("sawtooth").attack(0.01).decay(0.4).release(0.3).lpf(1000).gain(0.32)
 // lead
 $: note("~ 7 ~ <9 7 4 11>").scale("<F4:minor F4:minor C5:phrygian F4:minor>")
-  .s("ld:dp").gain(0.14).cut(1)
+  .s("ld:dp").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.14)
 // hook
 $: note("~ 4 ~ <7 4 4 7>").scale("<F4:minor F4:minor C5:phrygian F4:minor>")
   .s("plk:nn").gain(0.16).cut(1)
 // arp
-$: s("<~ perc:tm ~ perc:st>").gain(0.16)
+$: note("~ 0 7 12  7 0 ~ 4").scale("<F5:minor F5:minor C6:phrygian F5:minor>")
+  .s("plk:lp").gain(0.12).cut(1)
 // chords
 $: note("[0,4] ~ [0,4] ~").scale("<F4:minor F4:minor C5:phrygian F4:minor>")
   .s("plk:s5").gain(0.16)
 // pad
-$: note("0").scale("<F4:minor F4:minor C5:phrygian F4:minor>")
-  .s("pf:ff").gain(0.12).room(0.22).orbit(2)
+$: note("0").scale("<F2:minor F2:minor C3:phrygian F2:minor>")
+  .s("pf:ff").adsr("0.2:0.4:0.5:0.4").cut(1).gain(0.12).room(0.22).orbit(2)

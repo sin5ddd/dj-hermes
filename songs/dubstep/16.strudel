@@ -8,7 +8,7 @@ $: note("0 0 3 <0 0 3 -1>").scale("<G4:minor G4:minor D5:phrygian G4:minor>")
   .s("bs:wb").gain(0.5)
 // lead
 $: note("~ 7 ~ <10 7 3 7>").scale("<G4:minor G4:minor D5:phrygian G4:minor>")
-  .s("ld:gr")
+  .s("ld:gr").adsr("0.01:0.3:0.7:0.2")
   .cut(1).gain(0.16)
 // hook
 $: note("~ 4 ~ <7 4 4 7>").scale("<G4:minor G4:minor D5:phrygian G4:minor>")
@@ -20,5 +20,5 @@ $: note("~ ~ 12 ~").scale("<G4:minor G4:minor D5:phrygian G4:minor>")
 $: note("[0,4] ~ ~ [0,4]").scale("<G4:minor G4:minor D5:phrygian G4:minor>")
   .s("ep:mt").gain(0.16)
 // pad
-$: note("<0 ~ ~ ~>").scale("<G4:minor G4:minor D5:phrygian G4:minor>")
-  .s("dr:rd").cut(1).gain(0.12).room(0.25).orbit(2)
+$: note("0").scale("<G2:minor G2:minor D3:phrygian G2:minor>")
+  .s("dr:rd").adsr("0.2:0.4:0.5:0.4").cut(1).gain(0.12).room(0.25).orbit(2)

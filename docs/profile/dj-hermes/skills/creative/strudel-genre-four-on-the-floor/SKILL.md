@@ -4,7 +4,7 @@ description: >-
   Use when writing a techno four-on-the-floor loop in dj-hermes
   (kick on every beat, hats on the offbeats, kick in front).
   7–8 $: tracks, 4-bar phrase, no clap.
-version: 5.1.1
+version: 5.2.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -70,7 +70,7 @@ $: note("0 0 2 <4 0 3 0>").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
   .s("sawtooth").adsr("0.001:0.08:0.2:0.05").lpf(400).gain(0.44)
 // lead
 $: note("~ 7 6 <4 9 3 7>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
-  .s("ld:ss").gain(0.15).cut(1)
+  .s("ld:ss").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.15)
 // hook
 $: note("~ 4 ~ <7 4 4 7>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
   .s("plk:s5").gain(0.18).cut(1)
@@ -81,15 +81,15 @@ $: note("0 3 0 7  3 0 5 ~").scale("<C5:minor C5:minor G5:phrygian C5:minor>")
 $: note("[0,2,4] ~ [0,2,4] ~").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
   .s("ep:ky").gain(0.22)
 // pad
-$: note("0").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
-  .s("pf:ff").gain(0.16).room(0.3).orbit(2)
+$: note("0").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
+  .s("pf:ff").adsr("0.2:0.4:0.5:0.4").cut(1).gain(0.16).room(0.3).orbit(2)
 ```
 
 `songs/four-on-the-floor/01.strudel` matches the full-song fence (pulse and degrees). New apply picks `.s()` from the palette below.
 
 ## Timbre palette (pick per new apply)
 
-The Pattern fence is one example of grid, degrees, and slots. For a **new** apply, pick **one** sound per slot from the table. Do not copy the fence `.s()` every time. Do not reuse the same `.s()` on two pitched tracks in one song. Slug meanings: strudel-pcm-catalog INDEX. Long one-shots (`ld:` / `dr:` / `pf:` / `ps:`, `plk:fp` / `plk:sp`) need `.cut(1)` or `s("<x ~ ~ ~>")`.
+The Pattern fence is one example of grid, degrees, and slots. For a **new** apply, pick **one** sound per slot from the table. Do not copy the fence `.s()` every time. Do not reuse the same `.s()` on two pitched tracks in one song. Slug meanings: strudel-pcm-catalog INDEX. Lead / pad PCM takes `.adsr` right after `.s()` (then `.cut(1)`). FX risers still use `<>` thinning.
 
 | Slot | Keep | Pick one | Forbidden |
 | --- | --- | --- | --- |
@@ -97,12 +97,12 @@ The Pattern fence is one example of grid, degrees, and slots. For a **new** appl
 | bass | `sawtooth`+`lpf(400)` at `C2:` | `square`+low lpf (one track only), `bs:ht` at `C4:` | stacked `bs:su` / `bs:hf` / `bs:dk` |
 | lead | | `ld:pu`, `ld:sw`, `ld:si` | `ld:ss` on every song, `ld:mx` |
 | hook | | `plk:ac`, `plk:pk` | `plk:s5` as the default (DnB stab), Rhodes |
-| arp | | `plk:ac`, `plk:pk`, `perc:st` | 16s pad every bar |
+| arp | melody + `note()` | `plk:ac`, `plk:pk` | `perc:`, 16s pad every bar |
 | chords | `[0,2,4]` | `ep:ky`, `plk:sf` | `triangle`; `ep:rs` |
-| pad | | `pf:pu`, `pf:cs`, `pf:or`, `pf:ff`+`note("0")` | `dr:hr`, music box, Rhodes |
+| pad | **C2** + `.adsr` | `pf:pu`, `pf:cs`, `pf:or`, `pf:ff`+`note("0")` | C4, ADSR なし, `dr:hr`, music box, Rhodes |
 | vox | optional 8th `// vox` or arp swap. `.cut(1)` | `vc:tu`, `vc:na` at `C4:` | 16th wall, `vc:yeah` shout every bar, invent a vocal WAV |
 
-Bass is a synth sub at **C2** (`sawtooth` + `lpf(400)`), or a palette PCM bass at **C4:**. Do not stack another sub (`bs:su` / `bs:hf` / `bs:dk` / a second `square`+low lpf). PCM lead/hook/arp/chords/pad stay at **C4/C5**. Chords max 3 notes. Pad from the palette (`pf:ff` uses `note("0")`). Lead / hook / arp rest on different slots.
+Bass is a synth sub at **C2** (`sawtooth` + `lpf(400)`), or a palette PCM bass at **C4:**. Do not stack another sub (`bs:su` / `bs:hf` / `bs:dk` / a second `square`+low lpf). PCM lead/hook/chords stay at **C4**, arp at **C5**, **pad at C2** + `.adsr`. Chords max 3 notes. Pad from the palette (`pf:ff` uses `note("0")`). Lead / hook / arp rest on different slots. Arp is a melody instrument, not `perc:`.
 
 ## Why it sounds that way
 
@@ -154,7 +154,7 @@ Live TUI: `/a load four-on-the-floor-01` (or the `songs/` path). HTTP: `POST /so
 - [ ] Pulse identity remains `bd*4, [~ hh]*4` (no clap)
 - [ ] New apply is **7 `$:`** (drums, bass, lead, hook, arp, chords, pad)
 - [ ] 4-bar phrase on pitched tracks; drums 1-bar + 4th-bar fill is OK
-- [ ] Synth bass at `C2:` (or palette PCM at `C4:`). Chords max 3 notes. Pad from the palette
+- [ ] Synth bass at `C2:` (or palette PCM at `C4:`). **Pad at C2** + `.adsr`. Lead PCM `.s(…).adsr(…)`. Arp is melody, not `perc:`. Chords max 3 notes. Pad from the palette
 - [ ] New apply `.s()` from the Timbre palette (not a copy of the fence sounds)
 - [ ] `songs/four-on-the-floor/01.strudel` matches the full-song pulse and degrees
 
@@ -165,7 +165,7 @@ Live TUI: `/a load four-on-the-floor-01` (or the `songs/` path). HTTP: `POST /so
 - Ship drums-only for a new apply.
 - Pair this file with a song at another `setcpm` (shared clock; the other tempo is discarded).
 - Copy the fence `.s()` on every new apply — pick from the Timbre palette.
-- 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`、約 8–17 秒）を毎小節撃たない。
+- 長い PCM（`ld:` / `pf:` / `dr:` / `ps:`）を **ADSR なし**で毎小節撃つ。lead / pad は `.adsr` + `.cut(1)` ならグリッド可。pad を C4 に置かない。arp を `perc:` にしない。
 - Stack subs (`bs:su` / `bs:hf` / `bs:dk` / a second `square`+low lpf).
 - `stack("bd*4", …)` or `.cpm(124)` or `.lfo()` — not song format.
 - `kit:bd` — bank does not go on the left. Catalog one-shots use `bd:hf` (see strudel-pcm-catalog). Default kit remains `s("bd")`.

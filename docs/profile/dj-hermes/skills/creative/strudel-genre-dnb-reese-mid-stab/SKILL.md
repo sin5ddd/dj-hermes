@@ -5,7 +5,7 @@ description: >-
   mid Reese sample and hollow-fifth stab: 174 BPM, square C2 sub,
   bs:rm at C4:minor, plk:s5 degrees 4/7 as the hook. Not saw-Reese.
   8 $: tracks. Do not DJ-pair with 124 house.
-version: 5.1.0
+version: 5.2.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -44,7 +44,7 @@ $: note("0 3 0 <0 -1>").scale("C4:minor").s("bs:rm").gain(0.36)
 $: note("~ 4 ~ <7 4>").scale("C4:minor").s("plk:s5").gain(0.2).cut(1)
 // lead
 $: note("~ 11 7 <12 9 7 4>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
-  .s("ld:ss").gain(0.12).cut(1)
+  .s("ld:ss").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.12)
 // arp
 $: note("~ 0 7 12  7 0 ~ 4").scale("<C5:minor C5:minor G5:phrygian C5:minor>")
   .s("plk:dt").gain(0.12).cut(1)
@@ -52,8 +52,8 @@ $: note("~ 0 7 12  7 0 ~ 4").scale("<C5:minor C5:minor G5:phrygian C5:minor>")
 $: note("[0,4] ~ ~ [0,4]").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
   .s("ep:mt").gain(0.14)
 // pad
-$: note("0").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
-  .s("pf:ff").gain(0.12).room(0.2).orbit(2)
+$: note("0").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
+  .s("pf:ff").adsr("0.2:0.4:0.5:0.4").cut(1).gain(0.12).room(0.2).orbit(2)
 ```
 
 Keep square at **C2**, `bs:rm` at **C4**, and `plk:s5` degrees `~ 4 ~ <7 4>` as **`// hook`**. Do not retune `bs:rm` to C2. Do not rewrite stab 4/7.
@@ -62,7 +62,7 @@ Keep square at **C2**, `bs:rm` at **C4**, and `plk:s5` degrees `~ 4 ~ <7 4>` as 
 
 ## Timbre palette (pick per new apply)
 
-Keep **square `C2` + `bs:rm` at `C4:` + hook `plk:s5` degrees `~ 4 ~ <7 4>`**. For a **new** apply, pick **one** sound per other slot. Do not copy the fence lead/pad `.s()` every time. Do not reuse the same `.s()` on two pitched tracks (the split already uses two different sounds). Slug meanings: strudel-pcm-catalog INDEX. Long one-shots (`ld:` / `dr:` / `pf:` / `ps:`, `plk:fp` / `plk:sp`) need `.cut(1)` or `s("<x ~ ~ ~>")`.
+Keep **square `C2` + `bs:rm` at `C4:` + hook `plk:s5` degrees `~ 4 ~ <7 4>`**. For a **new** apply, pick **one** sound per other slot. Do not copy the fence lead/pad `.s()` every time. Do not reuse the same `.s()` on two pitched tracks (the split already uses two different sounds). Slug meanings: strudel-pcm-catalog INDEX. Lead / pad PCM takes `.adsr` right after `.s()` (then `.cut(1)`). FX risers still use `<>` thinning.
 
 | Slot | Keep | Pick one | Forbidden |
 | --- | --- | --- | --- |
@@ -71,9 +71,9 @@ Keep **square `C2` + `bs:rm` at `C4:` + hook `plk:s5` degrees `~ 4 ~ <7 4>`**. F
 | bass-mid | `bs:rm` at `C4:` | (identity) | `C2:` on `bs:rm`, mixing saw-Reese |
 | hook | `plk:s5` degrees `4` / `7` | (identity) | rewriting 4/7, `plk:s3` |
 | lead | | `ld:ds`, `plk:nn`, `ld:dp` | `ld:ss` on every song, `plk:mx` |
-| arp | | `plk:dt`, `plk:nn`, `perc:st` | a third Reese |
+| arp | melody + `note()` | `plk:dt`, `plk:nn` | `perc:`, a third Reese |
 | chords | `[0,4]` | `ep:mt`, `plk:sf` | a major third on the hollow stab |
-| pad | | `pf:fo`, `dr:rd` with `<>`, `pf:ff`+`note("0")` | music box, Rhodes |
+| pad | **C2** + `.adsr` | `pf:fo`, `dr:rd`, `pf:ff`+`note("0")` | C4, ADSR なし, music box, Rhodes |
 | vox | replace `// arp` (stay 8). do not touch hook `plk:s5`. `.cut(1)` | `vc:tu`, `vc:pa` at `C4:` | 9th track, rewriting 4/7, invent a vocal WAV |
 
 | Piece | Role |
@@ -132,7 +132,7 @@ Moving by a fifth or an octave keeps a hollow fifth. It does **not** invent E (m
 
 `.cut(1)` puts the stab on cut group 1; `Deck::alloc_voice` drops earlier voices in that group. The one-shot must not overlap itself.
 
-Lead and arp take the 4-bar `.scale("<…>")` and rest on different slots from the hook. Do not fill all 16ths on every melody track at once. Chords are `ep:mt` `[0,4]`; pad is `pf:ff` `note("0")` so they do not add a third on top of the hollow stab.
+Lead and arp take the 4-bar `.scale("<…>")` and rest on different slots from the hook. Do not fill all 16ths on every melody track at once. Chords are `ep:mt` `[0,4]`; pad is `pf:ff` `note("0")` at **C2** + `.adsr` so they do not add a third on top of the hollow stab. Lead PCM takes `.adsr` after `.s()`. Arp is a melody instrument, not `perc:`.
 
 ## Why `*2`, not `.fast(2)`
 
@@ -194,7 +194,7 @@ Do not move `bs:rm` to octave 2. Do not replace the square with the sample. Do n
 - [ ] Square `C2` + `lpf(120)` as bass; `bs:rm` at **`C4:minor`** as bass-mid
 - [ ] Hook `plk:s5` degrees `~ 4 ~ <7 4>` — do not rewrite 4/7
 - [ ] Break `*2`, drums gain above sub. Never `db`. Never `.fast(2)`
-- [ ] 4-bar phrase on lead / arp / chords / pad. Lead/pad `.s()` from the Timbre palette
+- [ ] 4-bar phrase on lead / arp / chords / pad. Lead `.adsr`. **Pad at C2**. Arp is melody, not `perc:`. Lead/pad `.s()` from the Timbre palette
 - [ ] Play **solo** at 174. `songs/dnb-reese/01.strudel` matches this fence’s split and stab degrees
 
 ## Do not
@@ -208,7 +208,7 @@ Do not move `bs:rm` to octave 2. Do not replace the square with the sample. Do n
 - Put `.compressor` on a track.
 - Pair this file with 124 house or 126 techno (shared clock; the other tempo is discarded).
 - Copy the fence lead/pad `.s()` on every new apply.
-- 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`、約 8–17 秒）を毎小節撃たない。
+- 長い PCM（`ld:` / `pf:` / `dr:` / `ps:`）を **ADSR なし**で毎小節撃つ。lead / pad は `.adsr` + `.cut(1)` ならグリッド可。pad を C4 に置かない。arp を `perc:` にしない。
 - Stack `bs:su` / `bs:dk` on this split. `bs:dk` is a different recipe.
 - Ship a 4-track loop for a new apply.
 - `stack()` / `.cpm(174)` / `.lfo()` / `kit:bd`.

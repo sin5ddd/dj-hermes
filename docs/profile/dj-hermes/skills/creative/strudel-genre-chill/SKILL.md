@@ -4,7 +4,7 @@ description: >-
   Use when writing chill / downtempo for dj-hermes: 80–100 BPM feel,
   soft drums, bs:hf floor only (do not stack bs:su). Not ambient and
   not chill-pop.
-version: 5.1.0
+version: 5.2.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -43,7 +43,7 @@ $: note("0 ~ 2 ~ 0 <3 4 2 0>").scale("<C4:minor C4:minor F4:dorian C4:minor>")
   .s("bs:hf").gain(0.4)
 // lead
 $: note("~ 4 ~ 7 ~ <6 9 7 4>").scale("<C4:minor C4:minor F4:dorian C4:minor>")
-  .s("plk:ps").gain(0.16).cut(1)
+  .s("plk:ps").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.16)
 // hook
 $: note("0@2 4 7@2 ~").scale("<C4:minor C4:minor F4:dorian C4:minor>")
   .s("plk:am").gain(0.18).cut(1)
@@ -54,15 +54,15 @@ $: note("~ 7 12 7  4 0 ~ 2").scale("<C5:minor C5:minor F5:dorian C5:minor>")
 $: note("[0,2,4] ~ [0,2,4] ~").scale("<C4:minor C4:minor F4:dorian C4:minor>")
   .s("ep:rs").gain(0.22).room(0.3).orbit(2)
 // pad
-$: note("0").scale("<C4:minor C4:minor F4:dorian C4:minor>")
-  .s("pf:ff").gain(0.16).room(0.35).orbit(2)
+$: note("0").scale("<C2:minor C2:minor F2:dorian C2:minor>")
+  .s("pf:ff").adsr("0.2:0.4:0.5:0.4").cut(1).gain(0.16).room(0.35).orbit(2)
 ```
 
 `bs:hf` のみ。`bs:su` は重ねない。
 
 ## 音色パレット（新規 apply はここから選ぶ）
 
-Pattern はグリッド・次数・スロットの見本。新規曲は下表からスロットごとに 1 つ選び、このフェンスの `.s()` を毎回コピーしない。同一曲の pitched 2 本に同じ `.s()` を使わない。slug の意味は strudel-pcm-catalog の INDEX。長尺（`ld:` / `dr:` / `pf:` / `ps:`、`plk:fp` / `plk:sp`）は `.cut(1)` か `s("<x ~ ~ ~>")`。ドラムの間引きは残す。
+Pattern はグリッド・次数・スロットの見本。新規曲は下表からスロットごとに 1 つ選び、このフェンスの `.s()` を毎回コピーしない。同一曲の pitched 2 本に同じ `.s()` を使わない。slug の意味は strudel-pcm-catalog の INDEX。lead / pad の PCM は `.s()` の直後に `.adsr`、そのあと `.cut(1)`。FX ライザーだけ `<>` 間引き。ドラムの間引きは残す。
 
 | スロット | 芯 | 代替 | 禁止 |
 | --- | --- | --- | --- |
@@ -72,19 +72,19 @@ Pattern はグリッド・次数・スロットの見本。新規曲は下表か
 | hook | | `plk:am`、`ep:rs` | 303、`plk:ss` |
 | arp | | `plk:hp`、`plk:kl` | `plk:dt` |
 | chords | `[0,2,4]` | `ep:rs`、`ep:mt` | シティポップ maj7 を既定に、`triangle` |
-| pad | | `pf:cl`、`pf:ln`、`dr:fg` を `<>`、`pf:ff`+`note("0")` | gabber、`dr:hr` |
+| pad | **C2** + `.adsr` | `pf:cl`、`pf:ln`、`dr:fg`、`pf:ff`+`note("0")` | C4、ADSR なし、gabber、`dr:hr` |
 | vox | 任意 8 本目 `// vox`。疎、`.cut(1)` | `vc:na`、`vc:ra` at `C4:` | 16 分埋め、毎小節 `vc:yeah`、自前 WAV を invent |
 
 ## レシピ
 
 - トラックは 7 本: `// drums` `// bass` `// lead` `// hook` `// arp` `// chords` `// pad`（任意で perc または vox）
 - ドラムは 1 本の `$:`。キック／スネア／ハットに分けない。キックは間引き、ハットは `[~ hh]*4`
-- ピッチトラックは 4 小節 `.scale("<C4:minor C4:minor F4:dorian C4:minor>")`（PCM は C4、arp は C5）
-- PCM は `C4:`。フロアは `bs:hf` だけ（サブ同士を重ねない）
+- ピッチトラックは 4 小節 `.scale`（bass / lead / hook / chords は C4、arp は C5、**pad は C2**）
+- PCM フロアは `C4:`。**pad は C2** + `.adsr`。フロアは `bs:hf` だけ（サブ同士を重ねない）
 - コードは 3 音まで。パッドは音色パレット（`pf:ff` なら `note("0")`）
 - メロ／コード／パッドに `triangle` / `sine` / `wt_organ` を使わない
-- メロは掛け合い。gain 0.12–0.18。プラックに `.cut(1)`
-- 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`）は毎小節撃たない。`plk:*` / `ep:*` / `perc:*` / `bs:*` / `vc:*`、波形、`wt_*`、ライブ `.fm` も使える
+- メロは掛け合い。gain 0.12–0.18。lead PCM は `.s(…).adsr(…)`。プラックに `.cut(1)`。arp はメロディ楽器（`perc:` ではない）
+- 長い PCM を ADSR なしで毎小節撃たない。lead / pad は `.adsr` + `.cut(1)` ならグリッド可。`plk:*` / `ep:*` / `bs:*` / `vc:*`、波形、`wt_*`、ライブ `.fm` も使える
 
 ## Pitfalls
 
@@ -100,5 +100,5 @@ Pattern はグリッド・次数・スロットの見本。新規曲は下表か
 ## Checklist
 
 - [ ] 7–8 本（drums / bass / lead / hook / arp / chords / pad。任意 perc または vox）
-- [ ] 4 小節 `.scale("<…>")`。ドラムは 1 本。`.s()` は音色パレット
+- [ ] 4 小節 `.scale("<…>")`。**pad は C2** + `.adsr`。lead PCM は `.adsr`。arp はメロディ楽器。ドラムは 1 本。`.s()` は音色パレット
 - [ ] `dj_hermes_apply_song(content, deck)`。save は残す指示のときだけ

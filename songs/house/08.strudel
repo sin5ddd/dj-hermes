@@ -8,7 +8,7 @@ $: note("0 0 4 <0 2 4 0>").scale("<A4:minor A4:minor E5:dorian A4:minor>")
   .s("bs:sw").gain(0.42)
 // lead
 $: note("~ 7 4 <7 9 4 2>").scale("<A4:minor A4:minor E5:dorian A4:minor>")
-  .s("ld:us").gain(0.16).cut(1)
+  .s("ld:us").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.16)
 // hook
 $: note("4 ~ 7 4  2 0 ~ -1").scale("<A4:minor A4:minor E5:dorian A4:minor>")
   .s("plk:ep").gain(0.22).cut(1)
@@ -19,8 +19,8 @@ $: note("~ 0 4 7  ~ 4 0 2").scale("<A5:minor A5:minor E6:dorian A5:minor>")
 $: note("[0,2,4] ~ [0,2,4] ~").scale("<A4:minor A4:minor E5:dorian A4:minor>")
   .s("plk:sm").gain(0.22)
 // pad
-$: note("<0 ~ ~ ~>").scale("<A4:minor A4:minor E5:dorian A4:minor>")
-  .s("pf:cs").cut(1).gain(0.16).room(0.3).orbit(2)
+$: note("0").scale("<A2:minor A2:minor E3:dorian A2:minor>")
+  .s("pf:cs").adsr("0.2:0.4:0.5:0.4").cut(1).gain(0.16).room(0.3).orbit(2)
 // vox
 $: note("~ 0 ~ ~  ~ 4 ~ ~").scale("<A4:minor A4:minor E5:dorian A4:minor>")
   .s("vc:ya").gain(0.14).cut(1)

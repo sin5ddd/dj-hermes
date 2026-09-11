@@ -7,7 +7,7 @@ description: >-
   only, closed-hat 16ths `[hh hh ~ hh]*4` exclusive with OHH, metallic
   uneasy pluck, note() allowed on perc/tom/metal. Not a house [~ cp]*2
   backbeat; not hh*16; not 8 thin tracks; not muting kick/ohh/bass.
-version: 8.2.0
+version: 8.3.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -140,7 +140,7 @@ $: s("<~ ~ ~ cp ~ ~ ~ cp ~ ~ ~ cp ~ ~ ~ cp>").gain(0.22)
 // synth
 $: note("<~ ~ ~ ~ [~ ~ 4 ~] [~ ~ 4 ~] [~ ~ 4 ~] [~ ~ 4 ~] [~ ~ 4 ~] [~ ~ 4 ~] [~ ~ 4 ~] [~ ~ 4 ~] ~ ~ [~ ~ 4 ~] [~ ~ 4 ~]>")
   .scale("<C4:minor C4:minor C4:minor G4:phrygian>")
-  .s("ld:in").lpf(900).gain(0.16).cut(1)
+  .s("ld:in").adsr("0.01:0.3:0.7:0.2").lpf(900).cut(1).gain(0.16)
 // pluck
 $: note("<~ ~ ~ ~ ~ ~ ~ ~ [~ 7 ~ 1] [~ 7 ~ 1] [~ 7 ~ 1] [~ 7 ~ 1] ~ ~ ~ ~>")
   .scale("<C4:minor C4:minor C4:minor G4:phrygian>")
@@ -154,11 +154,11 @@ $: note("<~ ~ ~ ~ ~ ~ ~ ~ [~ [0,2,4] ~ ~] [~ [0,2,4] ~ ~] [~ [0,2,4] ~ ~] [~ [0,
   .scale("<C4:minor C4:minor C4:minor G4:phrygian>")
   .s("plk:sf").gain(0.12)
 // pad
-$: note("<~ ~ ~ ~ ~ ~ ~ ~ 0 ~ ~ ~ ~ ~ ~ ~>").scale("<C4:minor C4:minor C4:minor G4:phrygian>")
-  .s("dr:pd").orbit(2).cut(1).gain(0.1).room(0.25)
+$: note("<~ ~ ~ ~ ~ ~ ~ ~ 0 ~ ~ ~ ~ ~ ~ ~>").scale("<C2:minor C2:minor C2:minor G2:phrygian>")
+  .s("dr:pd").adsr("0.2:0.4:0.5:0.4").orbit(2).cut(1).gain(0.1).room(0.25)
 // drone
-$: note("<~ ~ ~ ~ 0 ~ ~ ~ 0 ~ ~ ~ ~ ~ ~ ~>").scale("<C4:minor C4:minor C4:minor G4:phrygian>")
-  .s("dr:mb").orbit(2).cut(1).gain(0.08)
+$: note("<~ ~ ~ ~ 0 ~ ~ ~ 0 ~ ~ ~ ~ ~ ~ ~>").scale("<C2:minor C2:minor C2:minor G2:phrygian>")
+  .s("dr:mb").adsr("0.2:0.4:0.5:0.4").orbit(2).cut(1).gain(0.08)
 // texture
 $: s("<~ ~ ~ ~ ~ ~ fx:ha ~ ~ ~ fx:nh ~ ~ ~ ~ ~>").gain(0.12).cut(1)
 // fx
@@ -169,7 +169,7 @@ $: s("<~ ~ ~ fx:rd ~ ~ fx:rk ~ fx:cg ~ ~ ~ fx:sd ~ ~ fx:sw>").gain(0.18).cut(1)
 
 ## 音色パレット（新規 apply はここから選ぶ）
 
-Pattern はグリッド・次数・ミュートの見本。スロットごとに 1 つ選ぶ。同一曲の pitched 2 本に同じ `.s()` を使わない。slug は strudel-pcm-catalog の INDEX。長尺（`ld:` / `dr:` / `pf:` / `ps:`、`plk:fp` / `plk:sp`、`fx:rk` / `fx:rl` / `fx:ry`）は `.cut(1)` か 16 子の休符。
+Pattern はグリッド・次数・ミュートの見本。スロットごとに 1 つ選ぶ。同一曲の pitched 2 本に同じ `.s()` を使わない。slug は strudel-pcm-catalog の INDEX。synth / pad / drone の PCM は `.s()` の直後に `.adsr`、そのあと `.cut(1)`。FX ライザーと長いリバースは 16 子の休符。
 
 126 BPM の 1 小節は約 1.9 秒。`fx:rk` は 3.0 秒、`fx:rl` は 3.8 秒。連続した小節に長い FX を置かない。
 
@@ -183,12 +183,12 @@ Pattern はグリッド・次数・ミュートの見本。スロットごとに
 | tom | ピッチしたロータム | `tom:lo`、`tom:md`、`perc:gl` | 2/4 スネア代用、`sd` のバックビート |
 | metal | ピッチした金属 | `perc:mh`、`perc:fm`、`perc:cw`、`fx:cg`（短いクラングは `note()` 可） | 明るいベル `perc:gs` をメロ代わり |
 | clap | 4 小節に 1 `cp` | `cp:dr`、`perc:rm` | `[~ cp]*2` |
-| synth | ダーク上モノ + `.lpf(700–1200)` | `ld:in`、`ld:mt`、`ld:nb`、`ld:gr`、`ld:pu`、`sawtooth`+lpf | `ld:ss` アンセム、`ld:an`、`ld:cy`、`ld:mx`、16 小節常時、lpf 無し |
+| synth | ダーク上モノ + `.lpf(700–1200)` + `.adsr` | `ld:in`、`ld:mt`、`ld:nb`、`ld:gr`、`ld:pu`、`sawtooth`+lpf | `ld:ss` アンセム、`ld:an`、`ld:cy`、`ld:mx`、16 小節常時、lpf 無し、ADSR なし |
 | pluck | 金属・不安。次数は少なめ（`1` や中空 5 度） | `plk:nn`、`plk:s5`、`plk:gm`、`plk:kl`、`ld:mt` | `plk:mx`、`plk:ch`、`plk:aj`、`plk:sm`、16 小節常時 |
 | stab | 疎な `[0,4]` | `plk:s5`、`plk:sf`、`plk:nn` | Rhodes、スーパーソー、`plk:ss` |
 | chords | 疎な `[0,2,4]` | `plk:sf`、`ep:mt` | `triangle`、`ld:ss`、毎拍 |
-| pad | 薄い。9 だけ | `dr:pd`、`dr:fg`、`pf:ff`+次数 `0` | `ps:gt`、gabber、毎小節 |
-| drone | 金属／ホラー床。5 と 9 | `dr:mb`、`dr:hr`、`dr:md`、`dr:id` | `dr:sl` ソー壁、毎小節 |
+| pad | 薄い。**C2** + `.adsr`。9 だけ | `dr:pd`、`dr:fg`、`pf:ff`+次数 `0` | C4、ADSR なし、`ps:gt`、gabber、毎小節（ミュートマップを無視） |
+| drone | 金属／ホラー床。**C2** + `.adsr`。5 と 9 | `dr:mb`、`dr:hr`、`dr:md`、`dr:id` | C4、ADSR なし、`dr:sl` ソー壁、毎小節 |
 | texture | 短い砂／エア | `fx:ha`、`fx:nh`、`fx:ck`、`fx:wd` | ライザーを毎 4 小節 |
 | fx | 16 子のダークワンショット（`note()` なし） | `fx:rd`、`fx:rk`、`fx:ry`、`fx:rl`、`fx:cg`、`fx:mc`、`fx:sd`、`fx:sw`、`fx:dn`、`fx:nb`、`fx:wh` | `fx:gb`、`fx:fc`、`fx:up`、`fx:rb`、`fx:rs`、毎小節、ライザーに `note()` |
 | vox | ミュート対象。疎、`.cut(1)` | `vc:tu`、`vc:na` at `C4:` | 16 分埋め、`vc:yeah` アンセム、キック / ohh / bass を落とす、自前 WAV を invent |
@@ -203,14 +203,14 @@ perc / tom / metal を `note()` でキーに乗せるのは、このジャンル
 
 `[~ cp]*2` はハウスのバックビート。`cp` は 4 小節に 1 回だけ。
 
-PCM ベースは `C4:`（native）。シンセサブは `C2:`。どちらも `.lpf` を残す。
+PCM ベースは `C4:`（native）。シンセサブは `C2:`。**pad / drone は C2** + `.adsr`。どちらも `.lpf` を残す。
 
 ## レシピ
 
 1. kick `bd*4`、ohh `[~ oh]*4`、bass は lpf 付きで常時。この 3 本をミュートしない
 2. **14–16 本**。PCM をスロットに割り当てる。8 本にまとめない
 3. CHH は `[hh hh ~ hh]*4`。`hh*16` にしない
-4. synth はダーク + lpf。pluck は金属・不安。次数は 16 小節で書き換えない
+4. synth はダーク + lpf + `.adsr`。pluck は金属・不安。次数は 16 小節で書き換えない。pad / drone は C2 + `.adsr`
 5. perc / tom / metal は `note()` + 同じ 4 小節 `.scale` でよい
 6. 16 小節ミュート（上表）。和声の変化は 4 小節目の G phrygian と `cp`
 7. 長い FX はセクション境界だけ。ライザーに `note()` しない
@@ -244,7 +244,7 @@ PCM ベースは `C4:`（native）。シンセサブは `C2:`。どちらも `.l
 9. 新規 apply でフェンスの `.s()` を全コピーする。スーパーソーや Rhodes、`ld:ss`
 10. `dj_hermes_mute` を曲のフォームにする
 11. `fx:gb` / `fx:fc` / `fx:up` / `fx:rb`。ライザー・サブドロップに `note()`
-12. 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`、`fx:rk` / `fx:rl`）を毎小節撃つ
+12. 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`）を **ADSR なし**で毎小節撃つ。synth / pad / drone は `.adsr` + `.cut(1)` ならグリッド可（ミュートマップは残す）。`fx:rk` / `fx:rl` は連続小節に置かない。pad を C4 に置かない
 13. 同一曲の synth と pluck が同じ `.s()`
 
 ## Checklist
@@ -253,7 +253,7 @@ PCM ベースは `C4:`（native）。シンセサブは `C2:`。どちらも `.l
 - [ ] キック `bd*4`、OHH `[~ oh]*4`、bass は `.lpf` 付きオスティナート。この 3 本に 16 子ミュートを書いていない
 - [ ] 他は 16 子のミュートマップ。和声は 4 小節 `.scale`。13–14 はリズム帯だけ
 - [ ] CHH は `[hh hh ~ hh]*4`。`hh*16` も `[~ cp]*2` も書いていない
-- [ ] synth はダーク + lpf。pluck は金属・不安。次数はほぼ固定
+- [ ] synth はダーク + lpf + `.adsr`。pluck は金属・不安。次数はほぼ固定。**pad / drone は C2** + `.adsr`
 - [ ] perc / tom / metal は `note()` してよい。ライザー / サブドロップ / リバースシンバルには付けていない
 - [ ] `.s()` は音色パレット。長い FX は連続小節に置いていない
 - [ ] `dj_hermes_apply_song(content, deck)`（save は残す指示のときだけ）

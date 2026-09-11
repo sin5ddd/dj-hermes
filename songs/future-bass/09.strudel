@@ -12,7 +12,7 @@ $: note("<[0 0 ~ 0  0 ~ 7 4] [0 0 0 ~  0 4 ~ 7] [0 ~ 0 0  4 0 7 ~] [0 0 ~ 4  0 ~
 // lead
 $: note("<[~ 4 ~ 7  ~ 9 4 2] [~ 7 4 9  7 ~ 4 2] [4 ~ 9 7  ~ 4 2 0] [~ 4 7 9  4 2 ~ 7] [4@2 7 9@2 7 4 2] [4@2 7 9@2 7 4 0] [4@2 7 9@2 7 2 ~] [4@2 7 9@2 7 4 2] [7 9 4 ~  2 0 4 7] [~ 4 9 2  0 ~ 7 4] [9 ~ 2 4  7 0 ~ 2] [4 0 7 ~  2 4 0 9] [4@2 7 9@2 7 4 2] [4@2 7 9@2 7 4 0] [4@2 7 9@2 7 2 ~] [4@2 7 9@2 7 4 2]>")
   .scale("<G5:minor Eb5:lydian Bb4:major F5:mixolydian G5:minor Eb5:lydian Bb4:major F5:mixolydian Bb4:major F5:mixolydian G5:minor Eb5:lydian G5:minor F5:mixolydian Eb5:lydian D5:phrygian>")
-  .s("ld:ss").gain(0.16).cut(1)
+  .s("ld:ss").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.16)
 // hook
 $: note("<[~ 7 ~ 11  ~ 9 ~ 7] [~ 11 ~ 9  ~ 7 ~ 4] [7 ~ 11 9  ~ 7 4 2] [~ 9 ~ 7  ~ 4 ~ 11] [7 11 ~ 12  11 7 9 7] [~ 11 ~ 12  9 ~ 7 4] [7 12 ~ 11  9 ~ 12 7] [7 11 12 9  11 7 4 2] [~ 12 ~ 9  ~ 7 ~ 4] [~ 11 ~ 7  ~ 4 ~ 0] [~ 9 ~ 4  ~ 7 ~ 2] [~ 7 ~ 4  ~ 2 ~ 0] [7 11 ~ 12  11 7 9 7] [~ 11 ~ 12  9 ~ 7 4] [7 12 ~ 11  9 ~ 12 7] [7 11 12 9  11 7 4 2]>")
   .scale("<G5:minor Eb5:lydian Bb4:major F5:mixolydian G5:minor Eb5:lydian Bb4:major F5:mixolydian Bb4:major F5:mixolydian G5:minor Eb5:lydian G5:minor F5:mixolydian Eb5:lydian D5:phrygian>")
@@ -26,8 +26,8 @@ $: note("<[[0,4,8] ~ ~ [0,4,8]  [0,4,8] ~ [0,4,8] ~] [[0,2,8] ~ [0,2,8] ~  ~ [0,
   .scale("<G5:minor Eb5:lydian Bb4:major F5:mixolydian G5:minor Eb5:lydian Bb4:major F5:mixolydian Bb4:major F5:mixolydian G5:minor Eb5:lydian G5:minor F5:mixolydian Eb5:lydian D5:phrygian>")
   .s("ld:st").gain(0.2).orbit(2)
 // pad
-$: note("<0 ~ ~ ~ 0 ~ ~ ~ ~ ~ 0 ~ 0 ~ ~ ~>").scale("<G5:minor Eb5:lydian Bb4:major F5:mixolydian G5:minor Eb5:lydian Bb4:major F5:mixolydian Bb4:major F5:mixolydian G5:minor Eb5:lydian G5:minor F5:mixolydian Eb5:lydian D5:phrygian>")
-  .s("pf:fo").gain(0.14).room(0.25).orbit(2)
+$: note("<0 ~ ~ ~ 0 ~ ~ ~ ~ ~ 0 ~ 0 ~ ~ ~>").scale("<G3:minor Eb3:lydian Bb2:major F3:mixolydian G3:minor Eb3:lydian Bb2:major F3:mixolydian Bb2:major F3:mixolydian G3:minor Eb3:lydian G3:minor F3:mixolydian Eb3:lydian D3:phrygian>")
+  .s("pf:fo").adsr("0.2:0.4:0.5:0.4").cut(1).gain(0.14).room(0.25).orbit(2)
 // strings
-$: note("<~ ~ 0 ~ ~ ~ 0 ~ 0 ~ ~ ~ ~ ~ 0 ~>").scale("<G5:minor Eb5:lydian Bb4:major F5:mixolydian G5:minor Eb5:lydian Bb4:major F5:mixolydian Bb4:major F5:mixolydian G5:minor Eb5:lydian G5:minor F5:mixolydian Eb5:lydian D5:phrygian>")
-  .s("dr:sl").gain(0.12).orbit(2)
+$: note("<~ ~ 0 ~ ~ ~ 0 ~ 0 ~ ~ ~ ~ ~ 0 ~>").scale("<G3:minor Eb3:lydian Bb2:major F3:mixolydian G3:minor Eb3:lydian Bb2:major F3:mixolydian Bb2:major F3:mixolydian G3:minor Eb3:lydian G3:minor F3:mixolydian Eb3:lydian D3:phrygian>")
+  .s("dr:sl").adsr("0.2:0.4:0.5:0.4").cut(1).gain(0.12).orbit(2)

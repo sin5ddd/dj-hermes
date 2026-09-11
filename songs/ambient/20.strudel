@@ -1,22 +1,49 @@
 // @title ambient-20
 // @genre ambient
 setcpm(70/4)
-// drums
-$: s("~ ~ ~ ~").gain(0.18)
-// bass
-$: note("0 ~ ~ <0 0 ~ 0>").scale("<B4:minor B4:minor F#5:dorian B4:minor>")
-  .s("bs:su").gain(0.28)
-// lead
-$: note("~ 7 ~ <9 7 4 11>").scale("<B4:minor B4:minor F#5:dorian B4:minor>")
-  .s("ld:si").gain(0.1).cut(1)
-// hook
-$: note("0@2 ~ 4@2 ~").scale("<B4:minor B4:minor F#5:dorian B4:minor>")
-  .s("plk:am").gain(0.16).cut(1)
-// arp
-$: s("<~ perc:cm ~ perc:tg>").gain(0.1)
-// chords
-$: note("[0,2,4] ~ ~ ~").scale("<B4:minor B4:minor F#5:dorian B4:minor>")
-  .s("ep:mt").gain(0.18)
 // pad
-$: note("<0 ~ ~ ~>").scale("<B4:minor B4:minor F#5:dorian B4:minor>")
-  .s("dr:uw").cut(1).gain(0.24).room(0.5).orbit(1)
+$: note("0").scale("<B2:minor G3:lydian E3:dorian F#3:phrygian B2:minor G3:lydian E3:dorian F#3:phrygian B2:minor G3:lydian E3:dorian F#3:phrygian B2:minor A3:mixolydian G3:lydian F#3:phrygian>")
+  .s("ps:sh").adsr("0.4:0.8:0.7:0.8").cut(1).gain(0.22).room(0.5).orbit(2)
+// bass
+$: note("0 ~ ~ ~").scale("<B4:minor G5:lydian E5:dorian F#5:phrygian B4:minor G5:lydian E5:dorian F#5:phrygian B4:minor G5:lydian E5:dorian F#5:phrygian B4:minor A5:mixolydian G5:lydian F#5:phrygian>")
+  .s("bs:su").gain(0.26)
+// chords
+$: note("<[[0,2,4] ~ ~ ~] ~ ~ ~>").scale("<B4:minor G5:lydian E5:dorian F#5:phrygian B4:minor G5:lydian E5:dorian F#5:phrygian B4:minor G5:lydian E5:dorian F#5:phrygian B4:minor A5:mixolydian G5:lydian F#5:phrygian>")
+  .s("ld:fp").gain(0.16)
+// lead
+$: note("<[~ 7 ~ ~] [~ ~ 4 ~] [~ 9 ~ 7] [4 ~ ~ ~] [~ 7 ~ ~] [~ ~ 4 ~] [~ 9 ~ 7] [4 ~ ~ ~] [~ 7 ~ ~] [~ ~ 4 ~] [~ 9 ~ 7] [4 ~ ~ ~] [~ ~ ~ 4] [7 ~ 9 ~] [~ 4 ~ ~] [~ ~ 7 ~]>")
+  .scale("<B4:minor G5:lydian E5:dorian F#5:phrygian B4:minor G5:lydian E5:dorian F#5:phrygian B4:minor G5:lydian E5:dorian F#5:phrygian B4:minor A5:mixolydian G5:lydian F#5:phrygian>")
+  .s("ld:fl").adsr("0.08:0.5:0.6:0.5").cut(1).gain(0.12)
+// hook
+$: note("<[0@2 ~ 4@2 ~] [0@2 ~ 4@2 ~] [0@2 ~ 4@2 ~] [0@2 ~ 4@2 ~] [0@2 ~ 4@2 ~] [0@2 ~ 4@2 ~] [0@2 ~ 4@2 ~] [0@2 ~ 4@2 ~] [0@2 ~ 4@2 ~] [0@2 ~ 4@2 ~] [0@2 ~ 4@2 ~] [0@2 ~ 4@2 ~] [4@2 ~ 0@2 ~] [4@2 ~ 0@2 ~] [4@2 ~ 0@2 ~] [4@2 ~ 0@2 ~]>")
+  .scale("<B4:minor G5:lydian E5:dorian F#5:phrygian B4:minor G5:lydian E5:dorian F#5:phrygian B4:minor G5:lydian E5:dorian F#5:phrygian B4:minor A5:mixolydian G5:lydian F#5:phrygian>")
+  .s("plk:am").gain(0.14).cut(1)
+// arp
+$: note("<[~ 4 ~ 7] [~ 4 ~ 7] [~ 4 ~ 7] [~ 4 ~ 7] [~ 4 ~ 7] [~ 4 ~ 7] [~ 4 ~ 7] [~ 4 ~ 7] [~ 4 ~ 7] [~ 4 ~ 7] [~ 4 ~ 7] [~ 4 ~ 7] [7 ~ 4 ~] [7 ~ 4 ~] [7 ~ 4 ~] [7 ~ 4 ~]>")
+  .scale("<B5:minor G6:lydian E6:dorian F#6:phrygian B5:minor G6:lydian E6:dorian F#6:phrygian B5:minor G6:lydian E6:dorian F#6:phrygian B5:minor A6:mixolydian G6:lydian F#6:phrygian>")
+  .s("ld:si").cut(1).gain(0.1)
+// drums
+$: s("<~ ~ ~ ~ [bd:lf ~ ~ ~] [bd:lf ~ ~ ~] [bd:lf ~ ~ ~] [bd:lf ~ ~ ~] ~ ~ ~ ~ ~ ~ ~ ~>").gain(0.18)
+// perc
+$: s("<~ ~ ~ ~ ~ perc:tg ~ perc:cb ~ ~ ~ ~ ~ ~ ~ ~>").gain(0.1)
+// drone
+$: note("<0 ~ ~ ~ ~ ~ ~ ~ 0 ~ ~ ~ ~ ~ ~ ~>").scale("<B2:minor G3:lydian E3:dorian F#3:phrygian B2:minor G3:lydian E3:dorian F#3:phrygian B2:minor G3:lydian E3:dorian F#3:phrygian B2:minor A3:mixolydian G3:lydian F#3:phrygian>")
+  .s("dr:uw").adsr("0.5:1.0:0.6:1.0").cut(1).gain(0.1).room(0.45).orbit(2)
+// air
+$: s("<~ ~ ~ fx:ha ~ ~ ~ fx:nh ~ ~ ~ fx:ha ~ ~ ~ fx:wd>").gain(0.1).cut(1)
+// fx
+$: s("<~ ~ ~ ~ ~ ~ ~ fx:wh ~ ~ ~ ~ ~ ~ ~ fx:sw>").gain(0.14).cut(1)
+// bells
+$: note("<~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ [~ 11 ~ ~] ~ [~ 7 ~ ~] ~>").scale("<B5:minor G6:lydian E6:dorian F#6:phrygian B5:minor G6:lydian E6:dorian F#6:phrygian B5:minor G6:lydian E6:dorian F#6:phrygian B5:minor A6:mixolydian G6:lydian F#6:phrygian>")
+  .s("plk:ch").gain(0.08).cut(1)
+// vox
+$: s("<~ ~ ~ ~ ~ ~ ~ ~ ~ vc:na ~ ~ ~ ~ ~ ~>").gain(0.1).cut(1)
+// choir
+$: note("<~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ [0@3 ~] [0@3 ~] [0@3 ~] [0@3 ~]>").scale("<B4:minor G5:lydian E5:dorian F#5:phrygian B4:minor G5:lydian E5:dorian F#5:phrygian B4:minor G5:lydian E5:dorian F#5:phrygian B4:minor A5:mixolydian G5:lydian F#5:phrygian>")
+  .s("pf:ca").adsr("0.3:0.6:0.7:0.6").cut(1).gain(0.1).room(0.4).orbit(2)
+// counter
+$: note("<~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ [~ 7 ~ ~] [~ ~ 4 ~] [~ 9 ~ 7] [4 ~ ~ ~]>").scale("<B4:minor G5:lydian E5:dorian F#5:phrygian B4:minor G5:lydian E5:dorian F#5:phrygian B4:minor G5:lydian E5:dorian F#5:phrygian B4:minor A5:mixolydian G5:lydian F#5:phrygian>")
+  .s("plk:ps").adsr("0.08:0.5:0.6:0.5").cut(1).gain(0.1)
+// swell
+$: note("<~ ~ ~ ~ ~ ~ ~ 0 ~ ~ ~ ~ ~ ~ ~ 0>").scale("<B2:minor G3:lydian E3:dorian F#3:phrygian B2:minor G3:lydian E3:dorian F#3:phrygian B2:minor G3:lydian E3:dorian F#3:phrygian B2:minor A3:mixolydian G3:lydian F#3:phrygian>")
+  .s("pf:cl").adsr("0.4:0.8:0.5:0.8").cut(1).gain(0.12).room(0.5).orbit(2)

@@ -8,11 +8,10 @@ $: note("0 ~ 2 <0 0 3 2>").scale("<F4:minor F4:minor Bb4:dorian F4:minor>")
   .s("bs:su").gain(0.38)
 // lead
 $: note("~ 4 7 <5 4 0 2>").scale("<F4:minor F4:minor Bb4:dorian F4:minor>")
-  .s("ld:ny").gain(0.18).cut(1)
+  .s("ld:ny").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.18)
 // hook
 $: note("[0,2,4] ~ [0,3,5] ~").scale("<F4:minor F4:minor Bb4:dorian F4:minor>")
-  .s("ep:wr").gain(0.22)
-  .attack(0.05).decay(0.3).sustain(0.5).release(0.3)
+  .s("ep:wr").adsr("0.05:0.3:0.5:0.3").cut(1).gain(0.22)
 // arp
 $: note("~ 0 4 7  ~ 4 0 2").scale("<F5:minor F5:minor Bb5:dorian F5:minor>")
   .s("plk:lf").gain(0.12).cut(1)
@@ -20,5 +19,5 @@ $: note("~ 0 4 7  ~ 4 0 2").scale("<F5:minor F5:minor Bb5:dorian F5:minor>")
 $: note("[0,2,4] ~ [0,2,4] ~").scale("<F4:minor F4:minor Bb4:dorian F4:minor>")
   .s("ep:mt").gain(0.2).room(0.3).orbit(1)
 // pad
-$: note("<0 ~ ~ ~>").scale("<F4:minor F4:minor Bb4:dorian F4:minor>")
-  .s("dr:th").cut(1).gain(0.14).room(0.35).orbit(1)
+$: note("0").scale("<F2:minor F2:minor Bb2:dorian F2:minor>")
+  .s("dr:th").adsr("0.2:0.4:0.5:0.4").cut(1).gain(0.14).room(0.35).orbit(1)

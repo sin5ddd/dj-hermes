@@ -5,7 +5,7 @@ description: >-
   pad and bass on the same orbit, short duckattack (0.03–0.05), techno
   grid bd*4 + offbeat hats, no per-track compressor (master glue is Mixer default).
   8 $: tracks (kick+hats count as drums), 4-bar phrase, no clap.
-version: 5.1.1
+version: 5.2.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -51,13 +51,14 @@ $: note("~ 7 4 <9 7 4 2>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
 $: note("~ 4 ~ <7 4 4 7>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
   .s("plk:s5").gain(0.16).cut(1)
 // arp
-$: s("<~ perc:tm ~ perc:st>").gain(0.18)
+$: note("~ 0 4 7  ~ 4 0 2").scale("<C5:minor C5:minor G5:phrygian C5:minor>")
+  .s("plk:hd").gain(0.14).cut(1)
 // chords
 $: note("[0,2,4] ~ ~ ~").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
   .s("ep:ky").gain(0.18).orbit(2)
 // pad
-$: note("0").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
-  .s("pf:ff").orbit(2).gain(0.22).room(0.25)
+$: note("0").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
+  .s("pf:ff").adsr("0.2:0.4:0.5:0.4").cut(1).orbit(2).gain(0.22).room(0.25)
 ```
 
 Kick `$:` keeps `.duckorbit(2).duckattack(0.04).duckdepth(0.85)`. Hats have **no** `duckorbit`. FM bass and pad (and chords) sit on **orbit 2**. Bass degrees stay the old `0 0 2 <4 6>` shape, expanded to four `<>` children and wrapped in a 4-bar scale.
@@ -66,7 +67,7 @@ Kick `$:` keeps `.duckorbit(2).duckattack(0.04).duckdepth(0.85)`. Hats have **no
 
 ## Timbre palette (pick per new apply)
 
-The Pattern fence is one example of grid, degrees, and slots. For a **new** apply, pick **one** sound per slot from the table. Do not copy the fence `.s()` every time. Do not reuse the same `.s()` on two pitched tracks — **do not put `sine`+`.fm` on both bass and lead**. Slug meanings: strudel-pcm-catalog INDEX. Long one-shots (`ld:` / `dr:` / `pf:` / `ps:`, `plk:fp` / `plk:sp`) need `.cut(1)` or `s("<x ~ ~ ~>")`.
+The Pattern fence is one example of grid, degrees, and slots. For a **new** apply, pick **one** sound per slot from the table. Do not copy the fence `.s()` every time. Do not reuse the same `.s()` on two pitched tracks — **do not put `sine`+`.fm` on both bass and lead**. Slug meanings: strudel-pcm-catalog INDEX. Pad PCM takes `.adsr` right after `.s()` (then `.cut(1)`). Lead PCM (if not live FM) does the same. FX risers still use `<>` thinning.
 
 | Slot | Keep | Pick one | Forbidden |
 | --- | --- | --- | --- |
@@ -74,9 +75,9 @@ The Pattern fence is one example of grid, degrees, and slots. For a **new** appl
 | bass | `sine`+`.fm` on orbit 2 | `sawtooth`+`lpf`, `bs:ht` at `C4:` | second sub, `bs:su` |
 | lead | not the bass FM | `ld:pu`, `plk:pk`, `wt_bright`, `ld:sw` | same `sine`+`.fm` as bass |
 | hook | | `plk:pk`, `plk:ac` | `plk:s5` (DnB stab) |
-| arp | sparse perc | `perc:tm`, `perc:ti`, `perc:st` | a second bass |
+| arp | melody + `note()` | `plk:hd`, `plk:aj`, `plk:cv` | `perc:`, a second bass |
 | chords | `[0,2,4]` on orbit 2 | `ep:ky`, `plk:sf` | `triangle` |
-| pad | orbit 2 | `pf:pu`, `pf:cs`, `pf:or`, `pf:ff`+`note("0")` | `dr:hr`, music box |
+| pad | orbit 2, **C2** + `.adsr` | `pf:pu`, `pf:cs`, `pf:or`, `pf:ff`+`note("0")` | C4, ADSR なし, `dr:hr`, music box |
 | vox | replace `// arp` (stay 8). dry, `.cut(1)` | `vc:tu`, `vc:na` at `C4:` | 9th track, 16th wall, invent a vocal WAV |
 
 | Piece | Role |
@@ -112,7 +113,7 @@ Hats stay on a **separate** `$:` with no `duckorbit`. If hats shared the kick li
 
 **`.compressor` on a `$:` is a per-voice insert** (after filters, before pan). It no longer writes the mixer master. Omit it for this recipe — the pump is `duckorbit`, and master glue is Mixer `MIXER_DEFAULT`. Do not put `.compressor` on the bass “to control the low end”; that only squashes that voice.
 
-Lead uses live 2-op FM (`sine` + `.fm` / `.lpenv`) — not a long catalog PCM on every bar. Arp is sparse perc (`perc:tm` / `perc:st`), not a second bass. Do not add `bs:su`.
+Fence lead is live 2-op FM (`sine` + `.fm` / `.lpenv`). A palette PCM lead still needs `.adsr` after `.s()`. Arp is a melody instrument (`plk:hd` etc. + `note()`), not `perc:`. Pad is **C2** + `.adsr`. Do not add `bs:su`.
 
 Both decks share one `Transport`. This file is 126 BPM — pair it with `songs/electro/01.strudel` (also `setcpm(126/4)`). Do **not** pair it with 70 BPM ambient or the 174 DnB skill.
 
@@ -155,7 +156,7 @@ Live TUI: `/a load techno-duck-01`. Then `/x 4` to crossfade toward B (equal-pow
 - [ ] Kick has `duckorbit(2)` `duckattack(0.04)` `duckdepth(0.85)`; hats do **not**
 - [ ] Bass + pad (+ chords) on orbit 2. Synth bass at `C2:`
 - [ ] 4-bar `.scale("<…>")` on pitched tracks. Hats may stay 1-bar + 4th-bar fill
-- [ ] No clap. Pad from the palette (`pf:ff` uses `note("0")`)
+- [ ] No clap. **Pad at C2** + `.adsr`. Arp is melody (`note()` + `plk:`), not `perc:`. Pad from the palette (`pf:ff` uses `note("0")`)
 - [ ] New apply `.s()` from the Timbre palette. Bass and lead are not the same `sine`+`.fm`
 - [ ] `songs/techno-duck/01.strudel` matches this fence’s duck split and degrees
 
@@ -168,7 +169,7 @@ Live TUI: `/a load techno-duck-01`. Then `/x 4` to crossfade toward B (equal-pow
 - Call `bd*4` + `[~ sd]*2` or `[~ cp]*2` techno — that is a house backbeat.
 - Add a second bass (`bs:su` / `bs:hf` / `bs:dk` / extra `square`+low lpf). No 9th track.
 - Copy the fence `.s()` on every new apply, or put `sine`+`.fm` on both bass and lead.
-- 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`、約 8–17 秒）を毎小節撃たない。
+- 長い PCM（`ld:` / `pf:` / `dr:` / `ps:`）を **ADSR なし**で毎小節撃つ。lead / pad は `.adsr` + `.cut(1)` ならグリッド可。pad を C4 に置かない。arp を `perc:` にしない。
 - Ship a 4-track loop for a new apply.
 - Pair this file with a 174 BPM DnB song (shared clock; the other tempo is discarded).
 - `stack()` / `.cpm(126)` / `.lfo()` / `kit:bd`.

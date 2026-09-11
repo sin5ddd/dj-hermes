@@ -8,7 +8,7 @@ $: note("0 ~ 4 0  0 ~ <4 7 2 0>").scale("<F#4:dorian B4:mixolydian E4:major C#5:
   .s("bs:su").gain(0.42)
 // lead
 $: note("~ 2 4 6  4 2 ~ <0 2 4 6>").scale("<F#4:dorian B4:mixolydian E4:major C#5:minor>")
-  .s("plk:ps").gain(0.16).cut(1)
+  .s("plk:ps").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.16)
 // hook
 $: note("0 ~ 2 6  ~ 4 2 <6 4 2 0>").scale("<F#4:dorian B4:mixolydian E4:major C#5:minor>")
   .s("ep:rs").gain(0.22)
@@ -19,8 +19,8 @@ $: note("0 2 4 6  4 2 0 ~").scale("<F#5:dorian B5:mixolydian E5:major C#6:minor>
 $: note("[0,2,6] ~ [0,2,6] ~").scale("<F#4:dorian B4:mixolydian E4:major C#5:minor>")
   .s("ep:mt").gain(0.24).room(0.25).orbit(2)
 // pad
-$: note("<0 ~ ~ ~>").scale("<F#4:dorian B4:mixolydian E4:major C#5:minor>")
-  .s("pf:wa").cut(1).gain(0.14).room(0.3).orbit(2)
+$: note("0").scale("<F#2:dorian B2:mixolydian E2:major C#3:minor>")
+  .s("pf:wa").adsr("0.2:0.4:0.5:0.4").cut(1).gain(0.14).room(0.3).orbit(2)
 // vox
 $: note("~ 0 ~ ~  ~ ~ ~ ~").scale("<F#4:dorian B4:mixolydian E4:major C#5:minor>")
   .s("vc:ya").gain(0.12).cut(1)

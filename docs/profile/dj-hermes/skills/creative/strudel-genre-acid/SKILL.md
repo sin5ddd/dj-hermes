@@ -8,7 +8,7 @@ description: >-
     arp, chords, pad) may differ freely. Not a parked lpf plus amp ADSR,
     not a chromatic key walk of the same bed, and not sidechain ducking.
     7 $: tracks, play solo at 130.
-version: 6.3.0
+version: 6.4.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -30,7 +30,7 @@ metadata:
 - You need the **filter envelope**, not a louder amp click and not a static `.lpf(800)`. The 303 sits on **`// hook`** — do not add a second 303.
 - **The 303 filter-envelope recipe is locked** (`lpenv` / `lpq` / patterned `.lpf` / lp ADSR / amp ADSR / `.cut(1)` / `.gain(0.3)`). The 16 pitches are **named notes, almost chromatic, no `.scale`**. New apply may rewrite those 16 tokens. Drums kit, sub bass filter, lead, arp, chords, and pad should **not** copy the previous song. A new kit (`bd:9p` / `bd:ez` / `bd:hf` …) is enough to separate 02 from 01.
 - You are **not** adding a house snare or clap unless you label the song **house** (or an explicit hybrid).
-- New apply is **7 `$:` tracks** (one bass under the 303, perc as arp). Play **solo** at 130 BPM.
+- New apply is **7 `$:` tracks** (one bass under the 303, melody arp). Play **solo** at 130 BPM.
 - You are **not** writing sidechain duck or putting `.compressor` on the bass.
 - Factory 02–30 must **not** be the same bed walking C→D→Eb→E. Jump the key (fifth up, fourth down). Vary the **sub** `.lpf` or give it `sine.rangex` LFO. Never put LFO on the 303 (it replaces `lpenv`).
 
@@ -66,10 +66,15 @@ $: note("c2 c2 eb2 e2  g2 eb2 d2 c2  f2 f#2 f2 c2  b1 eb2 c2 <d2 g2>")
 $: note("~ 7 ~ <9 7 4 12>")
     .scale("<C4:minor C4:minor G4:phrygian C4:minor>")
     .s("plk:lp")
+    .adsr("0.01:0.3:0.7:0.2")
+    .cut(1)
+    .gain(0.12);
+// arp
+$: note("~ 0 7 12  7 0 ~ 4")
+    .scale("<C5:minor C5:minor G5:phrygian C5:minor>")
+    .s("plk:hd")
     .gain(0.12)
     .cut(1);
-// arp
-$: s("<~ perc:mh ~ perc:tm>").gain(0.14);
 // chords
 $: note("[0,4] ~ ~ [0,4]")
     .scale("<C4:minor C4:minor G4:phrygian C4:minor>")
@@ -77,8 +82,10 @@ $: note("[0,4] ~ ~ [0,4]")
     .gain(0.16);
 // pad
 $: note("0")
-    .scale("<C4:minor C4:minor G4:phrygian C4:minor>")
+    .scale("<C2:minor C2:minor G2:phrygian C2:minor>")
     .s("pf:ff")
+    .adsr("0.2:0.4:0.5:0.4")
+    .cut(1)
     .gain(0.12)
     .room(0.25)
     .orbit(2);
@@ -92,7 +99,7 @@ Keep patterned `.lpf`, `.lpq(14)`, `.lpenv(3)`, lp attack/decay/sustain, `.cut(1
 
 ## Timbre palette (pick per new apply)
 
-The Pattern fence is one example of grid, 303 pitches, and slots. Keep the **303 on `// hook`**. For a **new** apply, pick **one** sound per other slot, and you may rewrite the 16 named notes (keep 16 tokens so the `.lpf` pattern still lines up). Do not copy the fence `.s()` every time. Do not add a second 303 on lead or bass. Slug meanings: strudel-pcm-catalog INDEX. Long one-shots (`ld:` / `dr:` / `pf:` / `ps:`, `plk:fp` / `plk:sp`) need `.cut(1)` or `s("<x ~ ~ ~>")`.
+The Pattern fence is one example of grid, 303 pitches, and slots. Keep the **303 on `// hook`**. For a **new** apply, pick **one** sound per other slot, and you may rewrite the 16 named notes (keep 16 tokens so the `.lpf` pattern still lines up). Do not copy the fence `.s()` every time. Do not add a second 303 on lead or bass. Slug meanings: strudel-pcm-catalog INDEX. Lead / pad PCM takes `.adsr` right after `.s()` (then `.cut(1)`). FX risers still use `<>` thinning.
 
 | Slot   | Keep                                                                                                                                | Pick one                                                                                                                                                                               | Forbidden                                                                                                |
 | ------ | ----------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
@@ -100,9 +107,9 @@ The Pattern fence is one example of grid, 303 pitches, and slots. Keep the **303
 | bass   | sine sub **or** `bs:su` (one only). **Change the filter** (`lpf` 100–280 or `sine.rangex(…).slow(n)`). Synth at `C2:`, PCM at `C4:` | `sine`+lpf, `bs:su`+lpf                                                                                                                                                                | second 303, stacked subs, LFO on the **hook**                                                            |
 | hook   | 303: `sawtooth` or `square` + `lpenv` / `lpq` + 16 named notes, **no `.scale`**, `.gain(0.3)`                                       | waveform swap; another chromatic 16th string                                                                                                                                           | a second 303, `ld:ac` as a second acid, `.lpf(sine.rangex)`, `.scale` on this `$:`                       |
 | lead   | not a 303. **PCM or live FM only** — no bare `sawtooth` / `square` / `sine`                                                         | `plk:pk`, `plk:lp`, `ld:fm`, `ld:sf`, `plk:fc`, `ld:mt`; or `.s("sine").fm(3).fmh(2).fmatt(0.01).fmdec(0.3).fmsus(0.25).lpf(1800).lpenv(2)`                                            | `ld:si` / `ld:sw` / `ld:pu`（素のサイン／ソー／パルス）、`plk:mx`, kawaii bells, `ld:ac` as a second 303 |
-| arp    | sparse perc                                                                                                                         | `perc:mh`, `perc:tm`, `perc:st`, `perc:tk`, `perc:cb`, `perc:sk`                                                                                                                       | a second 303                                                                                             |
+| arp    | melody + `note()`                                                                                                                   | `plk:hd`, `plk:aj`, `plk:s5`, `plk:hp`, `plk:dt`, `plk:cv`                                                                                                                             | `perc:`, a second 303                                                                                    |
 | chords | `[0,4]`                                                                                                                             | `ep:mt`, `plk:sf`, `plk:s5`, `ep:ky`, `plk:an`                                                                                                                                         | `triangle`, major stab `plk:sm` / `plk:s3` on this minor bed                                             |
-| pad    |                                                                                                                                     | `pf:pu`, `dr:pd` / `dr:fg` with `<>`, `pf:cs`, `pf:fo`, `pf:ff`+`note("0")`                                                                                                            | `ps:mx`, house Rhodes                                                                                    |
+| pad    | **C2** + `.adsr`                                                                                                                    | `pf:pu`, `dr:pd` / `dr:fg`, `pf:cs`, `pf:fo`, `pf:ff`+`note("0")`                                                                                                                      | C4, ADSR なし, `ps:mx`, house Rhodes                                                                      |
 | vox    | not on the 303 hook. arp swap or 8th `// vox`. `.cut(1)`                                                                            | `vc:pa`, `vc:tu` at `C4:`                                                                                                                                                              | second 303, `vc:yeah` every bar, invent a vocal WAV                                                      |
 
 | Piece                                                      | Role                                                                                                                           |
@@ -205,6 +212,7 @@ Do not add a second 303 on lead or bass.
 - [ ] Other pitched tracks use 4-bar `.scale("<…>")`. The 303 `$:` has **no** `.scale`
 - [ ] No second 303. No clap. Sub filter is not a copy of `.lpf(180)` on every song. No LFO on hook
 - [ ] Non-303 `.s()` from the Timbre palette — drums kit and lead/pad differ from the last acid song
+- [ ] Lead PCM is `.s(…).adsr(…)`. **Pad at C2** + `.adsr`. Arp is melody (`note()` + `plk:`), not `perc:`
 - [ ] Play **solo** at 130. `songs/acid/01.strudel` matches this fence’s 303 line and grid
 
 ## Do not
@@ -222,7 +230,7 @@ Do not add a second 303 on lead or bass.
 - Write the 303 at `.gain(0.44)` — too hot; use **`.gain(0.3)`**.
 - Chain amp ADSR after `.gain()` (`.gain(0.3).attack(…)`). Amp ADSR belongs next to `.s()`.
 - Copy the fence `.s()` on every new apply for non-303 slots.
-- 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`、約 8–17 秒）を毎小節撃たない。
+- 長い PCM（`ld:` / `pf:` / `dr:` / `ps:`）を **ADSR なし**で毎小節撃つ。lead / pad は `.adsr` + `.cut(1)` ならグリッド可。pad を C4 に置かない。arp を `perc:` にしない。
 - Ship a 2-track loop for a new apply.
 - Pair this file with a different `setcpm` (shared clock; the other tempo is discarded).
 - `stack()` / `.cpm(130)` / `.lfo()` / `kit:bd`.

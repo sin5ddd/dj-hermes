@@ -6,7 +6,7 @@ description: >-
     kawaii bells, 16-bar loop, equal-weight <> children, hat rolls only
     at phrase ends. Not supersaw-anthem Future Bass, not four-on-the-floor,
     not hh*16 every 4 bars, not kick-only bass.
-version: 1.2.0
+version: 1.3.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -63,7 +63,7 @@ metadata:
 
 ## 進行（16 小節。Hermes は名前で書く）
 
-親キー C。次数は固定、`.scale("<…>")` の **16 子**が 1 コード／小節。pitched 全部で同じ 16 小節。PCM は `C4:` 帯。`vc:` の arp も C4（ガラス代用だけ C5）。
+親キー C。次数は固定、`.scale("<…>")` の **16 子**が 1 コード／小節。pitched 全部で同じ 16 小節。PCM フロア / lead / hook / chords は `C4:` 帯。**pad / strings は C2。** `vc:` の arp も C4（ガラス代用だけ C5）。
 
 4 小節ブロックを 4 つ並べる。**新規曲を 4 小節王道の繰り返しにしない。**
 
@@ -169,8 +169,9 @@ $: note(
         "<F4:lydian G4:mixolydian E4:phrygian A4:minor F4:lydian G4:mixolydian E4:phrygian A4:minor A4:minor E4:phrygian G4:mixolydian F4:lydian C4:major B4:locrian A4:minor G4:mixolydian>",
     )
     .s("ld:mx")
-    .gain(0.16)
-    .cut(1);
+    .adsr("0.01:0.3:0.7:0.2")
+    .cut(1)
+    .gain(0.16);
 // hook — kawaii bell; denser on refrain bars
 $: note(
     "<[~ 11 ~ 12  ~ 9 ~ 11] [~ 12 ~ 9  ~ 11 ~ 7] [~ 11 ~ 12  ~ 9 ~ 4] [~ 9 ~ 7  ~ 4 ~ 11] [11 ~ 12 9  ~ 11 12 9] [~ 11 ~ 12  9 ~ 11 7] [11 12 ~ 9  11 ~ 12 9] [11 12 9 11  12 9 11 7] [~ 12 ~ 9  ~ 7 ~ 4] [~ 11 ~ 7  ~ 4 ~ 0] [~ 9 ~ 4  ~ 7 ~ 2] [~ 7 ~ 4  ~ 2 ~ 0] [11 ~ 12 9  ~ 11 12 9] [~ 11 ~ 12  9 ~ 11 7] [11 12 ~ 9  11 ~ 12 9] [11 12 9 11  12 9 11 7]>",
@@ -204,18 +205,22 @@ $: note(
 // pad — sparkly hold (the kawaii identity)
 $: note("<0 ~ ~ ~ 0 ~ ~ ~ ~ ~ 0 ~ 0 ~ ~ ~>")
     .scale(
-        "<F4:lydian G4:mixolydian E4:phrygian A4:minor F4:lydian G4:mixolydian E4:phrygian A4:minor A4:minor E4:phrygian G4:mixolydian F4:lydian C4:major B4:locrian A4:minor G4:mixolydian>",
+        "<F2:lydian G2:mixolydian E2:phrygian A2:minor F2:lydian G2:mixolydian E2:phrygian A2:minor A2:minor E2:phrygian G2:mixolydian F2:lydian C2:major B2:locrian A2:minor G2:mixolydian>",
     )
     .s("ps:mx")
+    .adsr("0.2:0.4:0.5:0.4")
+    .cut(1)
     .gain(0.16)
     .room(0.35)
     .orbit(2);
 // strings — choir / wide sparkle, offset from pad
 $: note("<~ ~ 0 ~ ~ ~ 0 ~ 0 ~ ~ ~ ~ ~ 0 ~>")
     .scale(
-        "<F4:lydian G4:mixolydian E4:phrygian A4:minor F4:lydian G4:mixolydian E4:phrygian A4:minor A4:minor E4:phrygian G4:mixolydian F4:lydian C4:major B4:locrian A4:minor G4:mixolydian>",
+        "<F2:lydian G2:mixolydian E2:phrygian A2:minor F2:lydian G2:mixolydian E2:phrygian A2:minor A2:minor E2:phrygian G2:mixolydian F2:lydian C2:major B2:locrian A2:minor G2:mixolydian>",
     )
     .s("ld:cr")
+    .adsr("0.2:0.4:0.5:0.4")
+    .cut(1)
     .gain(0.12)
     .room(0.45)
     .orbit(2);
@@ -238,18 +243,18 @@ $: note("<~ ~ 0 ~ ~ ~ 0 ~ 0 ~ ~ ~ ~ ~ 0 ~>")
 
 ## 音色パレット（新規 apply はここから選ぶ）
 
-同一曲の pitched 2 本に同じ `.s()` を使わない。長尺は `.cut(1)` か間引き。カタログに violin は無い。
+同一曲の pitched 2 本に同じ `.s()` を使わない。lead / pad / strings の PCM は `.s()` の直後に `.adsr`、そのあと `.cut(1)`。FX ライザーだけ `<>` 間引き。カタログに violin は無い。
 
 | スロット | 芯                                                   | 代替                                                | 禁止                                                                            |
 | -------- | ---------------------------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------------- |
 | drums    | キック表 1 行 + 3 拍目 `sd` + `hh*8` + 8/16 末ロール | `bd:8t`、`sd:tr`、`hh:ch`、`hh:tt`                  | `bd*4`、`[~ cp]*2`、全曲 `bd ~ bd ~`、4 小節ごと `[hh*16]`                      |
 | bass     | 8 分ルート追い。`bs:ht` / `bs:8s`+`.cut(1)` at `C4:` | `bs:su`+`.cut(1)`                                   | `0 ~ 0 ~` を既定、サブ重ね、`bs:wb`、`bs:sw` を主役（ソーベースは future-bass） |
-| lead     | メロディックなリフレイン。子はウェイト 8             | `ld:mx`、`ld:gl`、`ld:cy`、`.s("square").lpf(3200)` | `ld:ss` / `ld:an` の壁、303、`ld:gr`、ウェイト 9 の `@`                         |
+| lead     | メロディックなリフレイン。子はウェイト 8。`.adsr`     | `ld:mx`、`ld:gl`、`ld:cy`、`.s("square").lpf(3200)` | `ld:ss` / `ld:an` の壁、303、`ld:gr`、ウェイト 9 の `@`、ADSR なし               |
 | hook     | kawaii ベル                                          | `plk:mx`、`plk:ch`、`plk:bl`、`plk:mb`              | `ld:st` ソースタブ、wobble、`plk:dt`                                            |
 | arp      | ガラス、**またはカタログ `vc:` チョップ**。8 子以上   | `plk:fg`、`plk:fc`、`vc:ya` / `vc:na` / `vc:pa` at `C4:` + `.cut(1)` | `ld:ap` 忙しいソー arp（future-bass 側）、自前ボーカル WAV を invent            |
 | chords   | `[0,4,8]` add9。短いキラキラ                         | `[0,2,8]`、`plk:ch`、`plk:sm`                       | `[0,2,4]`、`[0,4,9]` を add9 と呼ぶ、`plk:ss` ソー壁                            |
-| pad      | **キラキラがこのジャンルの芯**                       | `ps:mx`、`ps:gb`、`pf:ga`、`pf:sp`                  | `dr:sl` 低いソー、gabber、毎小節撃つ、strings と同じオンオフ                    |
-| strings  | クワイア／広いキラキラ。pad とずらす                 | `ld:cr`、`pf:ca`、`pf:hl`、`pf:wm`                  | `dr:sl`、`ld:ss`、violin を invent、毎小節撃つ                                  |
+| pad      | **C2** + `.adsr`。キラキラがこのジャンルの芯         | `ps:mx`、`ps:gb`、`pf:ga`、`pf:sp`                  | C4、ADSR なし、`dr:sl` 低いソー、gabber、strings と同じオンオフ                 |
+| strings  | **C2** + `.adsr`。クワイア／広いキラキラ。pad とずらす | `ld:cr`、`pf:ca`、`pf:hl`、`pf:wm`                  | C4、ADSR なし、`dr:sl`、`ld:ss`、violin を invent                               |
 | vox      | arp 差し替え（**9 本のまま**）。`.cut(1)`             | `vc:ya`、`vc:na`、`vc:pa` at `C4:`                  | 10 本目、16 分埋め、毎小節 `vc:yeah`、自前 WAV を invent                        |
 
 ## Why
@@ -270,7 +275,7 @@ $: note("<~ ~ 0 ~ ~ ~ 0 ~ 0 ~ ~ ~ ~ ~ 0 ~>")
 
 **duck。** キックが orbit 2 を潰す。lead / hook はドライ。ハットに `duckorbit` 禁止。
 
-PCM は `C4:`。
+PCM フロア / lead / hook / chords は `C4:`。**pad / strings は C2** + `.adsr`。
 
 ## レシピ
 
@@ -278,7 +283,7 @@ PCM は `C4:`。
 2. ハットは 8 分。ロールは 8 / 16 小節目の末だけ
 3. ベースは 8 分ルート追い。`<>` 8 子以上。`.cut(1)`
 4. ループは **16 小節** 王道 A A' B C。lead はリフレイン、**各子ウェイト 8**
-5. パッドはキラキラ（`ps:mx` 族）。スーパーソーの壁にしない
+5. パッドはキラキラ（`ps:mx` 族）**C2** + `.adsr`。スーパーソーの壁にしない。lead PCM は `.s(…).adsr(…)`
 6. フックはベル。コードは `[0,4,8]`
 7. duck はキックだけ。**9 本**。pad と strings のオンオフをずらす
 8. フェンスをキーだけ変えて量産しない
@@ -307,7 +312,7 @@ PCM は `C4:`。
 3. ハットへ `duckorbit`
 4. wobble を主役にする
 5. サブを重ねる
-6. 長い PCM を毎小節撃つ
+6. 長い PCM を **ADSR なし**で毎小節撃つ。lead / pad / strings は `.adsr` + `.cut(1)` ならグリッド可。pad を C4 に置かない
 7. `note("c3'maj")` は root 単音。和音は `[0,4,8]`
 8. スーパーソーの壁（`ld:ss` + `plk:ss` + `dr:sl`）をこの床に載せる（それは future-bass）
 9. 140 と 174 を `dj` する
@@ -330,7 +335,7 @@ PCM は `C4:`。
 - [ ] ベースは 8 分ルート追い、`<>` 8 子以上、`.cut(1)`
 - [ ] **16 小節** 王道 A A' B C（小室／カノンは名前付き）。アンセム i–VI–III–VII ではない
 - [ ] lead がリフレイン。**各 `<>` 子のウェイトが 8**。スーパーソーの壁ではない
-- [ ] chords `[0,4,8]`。pad はキラキラ。hook はベル
+- [ ] chords `[0,4,8]`。pad はキラキラ。hook はベル。**pad / strings は C2** + `.adsr`。lead PCM は `.adsr`
 - [ ] ベース PCM は `C4:`、orbit 2、1 本。ハットに duckorbit なし
 - [ ] `.s()` は音色パレット（ベル／ガラス／キラキラパッド。チョップはカタログ `vc:`、自前 WAV は invent しない）
 - [ ] `dj_hermes_apply_song(content, deck)`（save は残す指示のときだけ）

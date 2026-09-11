@@ -182,11 +182,11 @@ $: note("<[0 0 ~ 0  0 ~ 7 4] [0 0 0 ~  0 4 ~ 7] [0 ~ 0 0  4 0 7 ~] [0 0 ~ 4  0 ~
 // lead
 $: note("<[~ 4 ~ 7  ~ 9 7 4] [~ 7 4 9  7 ~ 4 2] [4 ~ 9 7  ~ 4 2 0] [~ 4 7 9  4 7 ~ 11] [4@2 7 9@2 7 4 2] [4@2 7 9@2 7 4 0] [4@2 7 9@2 7 2 ~] [4@2 7 9@2 7 4 2] [~ 9 7 4  2 0 ~ 4] [9 ~ 7 4  ~ 2 0 4] [7 4 ~ 2  0 ~ 4 7] [~ 4 2 0  4 7 ~ 9] [4@2 7 9@2 7 4 2] [4@2 7 9@2 7 4 0] [4@2 7 9@2 7 2 ~] [4@2 7 9@2 7 4 2]>")
   .scale("<A4:minor F4:lydian C4:major G4:mixolydian A4:minor F4:lydian C4:major G4:mixolydian C4:major G4:mixolydian A4:minor F4:lydian A4:minor G4:mixolydian F4:lydian E4:phrygian>")
-  .s("ld:ss").gain(0.16).cut(1)
+  .s("ld:ss").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.16)
 // hook
 $: note("<[~ 7 ~ 11  ~ 9 ~ 7] [~ 11 ~ 9  ~ 7 ~ 4] [7 ~ 11 9  ~ 7 4 2] [~ 9 ~ 7  ~ 4 ~ 11] [7 11 ~ 12  11 7 9 7] [~ 11 ~ 12  9 ~ 7 4] [7 12 ~ 11  9 ~ 12 7] [7 11 12 9  11 7 4 2] [~ 12 ~ 9  ~ 7 ~ 4] [~ 11 ~ 7  ~ 4 ~ 0] [~ 9 ~ 4  ~ 7 ~ 2] [~ 7 ~ 4  ~ 2 ~ 0] [7 11 ~ 12  11 7 9 7] [~ 11 ~ 12  9 ~ 7 4] [7 12 ~ 11  9 ~ 12 7] [7 11 12 9  11 7 4 2]>")
   .scale("<A4:minor F4:lydian C4:major G4:mixolydian A4:minor F4:lydian C4:major G4:mixolydian C4:major G4:mixolydian A4:minor F4:lydian A4:minor G4:mixolydian F4:lydian E4:phrygian>")
-  .s("ld:st").gain(0.18).cut(1)
+  .s("ld:st").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.18)
 // arp
 $: note("<[~ 0 ~ ~  ~ 4 ~ ~] [~ ~ 0 ~  ~ ~ 4 ~] [0 ~ ~ 4  ~ 0 ~ ~] [~ 4 ~ ~  0 ~ ~ 7] [~ 0 ~ 4  ~ ~ 0 ~] [4 ~ ~ ~  ~ 0 ~ 4] [~ ~ 0 ~  4 ~ ~ ~] [0 ~ 4 ~  ~ ~ 0 ~]>")
   .scale("<A4:minor F4:lydian C4:major G4:mixolydian A4:minor F4:lydian C4:major G4:mixolydian C4:major G4:mixolydian A4:minor F4:lydian A4:minor G4:mixolydian F4:lydian E4:phrygian>")
@@ -196,11 +196,11 @@ $: note("<[[0,4,8] ~ ~ [0,4,8]  [0,4,8] ~ [0,4,8] ~] [[0,2,8] ~ [0,2,8] ~  ~ [0,
   .scale("<A4:minor F4:lydian C4:major G4:mixolydian A4:minor F4:lydian C4:major G4:mixolydian C4:major G4:mixolydian A4:minor F4:lydian A4:minor G4:mixolydian F4:lydian E4:phrygian>")
   .s("plk:ss").gain(0.2).orbit(2)
 // pad
-$: note("<0 ~ ~ ~ 0 ~ ~ ~ ~ ~ 0 ~ 0 ~ ~ ~>").scale("<A4:minor F4:lydian C4:major G4:mixolydian A4:minor F4:lydian C4:major G4:mixolydian C4:major G4:mixolydian A4:minor F4:lydian A4:minor G4:mixolydian F4:lydian E4:phrygian>")
-  .s("pf:sp").gain(0.14).room(0.25).orbit(2)
+$: note("<0 ~ ~ ~ 0 ~ ~ ~ ~ ~ 0 ~ 0 ~ ~ ~>").scale("<A2:minor F2:lydian C2:major G2:mixolydian A2:minor F2:lydian C2:major G2:mixolydian C2:major G2:mixolydian A2:minor F2:lydian A2:minor G2:mixolydian F2:lydian E2:phrygian>")
+  .s("pf:sp").adsr("0.2:0.4:0.5:0.4").cut(1).gain(0.14).room(0.25).orbit(2)
 // strings
-$: note("<~ ~ 0 ~ ~ ~ 0 ~ 0 ~ ~ ~ ~ ~ 0 ~>").scale("<A4:minor F4:lydian C4:major G4:mixolydian A4:minor F4:lydian C4:major G4:mixolydian C4:major G4:mixolydian A4:minor F4:lydian A4:minor G4:mixolydian F4:lydian E4:phrygian>")
-  .s("dr:sl").gain(0.12).orbit(2)
+$: note("<~ ~ 0 ~ ~ ~ 0 ~ 0 ~ ~ ~ ~ ~ 0 ~>").scale("<A2:minor F2:lydian C2:major G2:mixolydian A2:minor F2:lydian C2:major G2:mixolydian C2:major G2:mixolydian A2:minor F2:lydian A2:minor G2:mixolydian F2:lydian E2:phrygian>")
+  .s("dr:sl").adsr("0.2:0.4:0.5:0.4").cut(1).gain(0.12).orbit(2)
 '''
 
 FENCE_KW = r'''// @title kawaii-future-bass-01
@@ -217,7 +217,7 @@ $: note("<[0 0 ~ 0  0 ~ 0 4] [0 0 0 ~  0 4 ~ 0] [0 ~ 0 0  4 0 0 ~] [0 0 ~ 4  0 ~
 // lead
 $: note("<[~ 4 ~ 7  ~ 9 4 2] [~ 7 4 9  7 ~ 4 2] [4 ~ 9 7  ~ 4 2 0] [~ 4 7 9  4 2 ~ 7] [4@2 7 9@2 7 4 2] [4@2 7 9@2 7 4 0] [4@2 7 9@2 7 2 ~] [4@2 7 9@2 7 4 2] [~ 9 7 4  2 0 ~ 4] [9 ~ 7 4  ~ 2 0 4] [7 4 ~ 2  0 ~ 4 7] [~ 4 2 0  4 7 ~ 9] [4@2 7 9@2 7 4 2] [4@2 7 9@2 7 4 0] [4@2 7 9@2 7 2 ~] [4@2 7 9@2 7 4 2]>")
   .scale("<F4:lydian G4:mixolydian E4:phrygian A4:minor F4:lydian G4:mixolydian E4:phrygian A4:minor A4:minor E4:phrygian G4:mixolydian F4:lydian C4:major B4:locrian A4:minor G4:mixolydian>")
-  .s("ld:mx").gain(0.16).cut(1)
+  .s("ld:mx").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.16)
 // hook
 $: note("<[~ 11 ~ 12  ~ 9 ~ 11] [~ 12 ~ 9  ~ 11 ~ 7] [~ 11 ~ 12  ~ 9 ~ 4] [~ 9 ~ 7  ~ 4 ~ 11] [11 ~ 12 9  ~ 11 12 9] [~ 11 ~ 12  9 ~ 11 7] [11 12 ~ 9  11 ~ 12 9] [11 12 9 11  12 9 11 7] [~ 12 ~ 9  ~ 7 ~ 4] [~ 11 ~ 7  ~ 4 ~ 0] [~ 9 ~ 4  ~ 7 ~ 2] [~ 7 ~ 4  ~ 2 ~ 0] [11 ~ 12 9  ~ 11 12 9] [~ 11 ~ 12  9 ~ 11 7] [11 12 ~ 9  11 ~ 12 9] [11 12 9 11  12 9 11 7]>")
   .scale("<F4:lydian G4:mixolydian E4:phrygian A4:minor F4:lydian G4:mixolydian E4:phrygian A4:minor A4:minor E4:phrygian G4:mixolydian F4:lydian C4:major B4:locrian A4:minor G4:mixolydian>")
@@ -231,11 +231,11 @@ $: note("<[[0,4,8] ~ ~ [0,4,8]  [0,4,8] ~ [0,4,8] ~] [[0,2,8] ~ [0,2,8] ~  ~ [0,
   .scale("<F4:lydian G4:mixolydian E4:phrygian A4:minor F4:lydian G4:mixolydian E4:phrygian A4:minor A4:minor E4:phrygian G4:mixolydian F4:lydian C4:major B4:locrian A4:minor G4:mixolydian>")
   .s("plk:ch").gain(0.2).orbit(2)
 // pad
-$: note("<0 ~ ~ ~ 0 ~ ~ ~ ~ ~ 0 ~ 0 ~ ~ ~>").scale("<F4:lydian G4:mixolydian E4:phrygian A4:minor F4:lydian G4:mixolydian E4:phrygian A4:minor A4:minor E4:phrygian G4:mixolydian F4:lydian C4:major B4:locrian A4:minor G4:mixolydian>")
-  .s("ps:mx").gain(0.16).room(0.35).orbit(2)
+$: note("<0 ~ ~ ~ 0 ~ ~ ~ ~ ~ 0 ~ 0 ~ ~ ~>").scale("<F2:lydian G2:mixolydian E2:phrygian A2:minor F2:lydian G2:mixolydian E2:phrygian A2:minor A2:minor E2:phrygian G2:mixolydian F2:lydian C2:major B2:locrian A2:minor G2:mixolydian>")
+  .s("ps:mx").adsr("0.2:0.4:0.5:0.4").cut(1).gain(0.16).room(0.35).orbit(2)
 // strings
-$: note("<~ ~ 0 ~ ~ ~ 0 ~ 0 ~ ~ ~ ~ ~ 0 ~>").scale("<F4:lydian G4:mixolydian E4:phrygian A4:minor F4:lydian G4:mixolydian E4:phrygian A4:minor A4:minor E4:phrygian G4:mixolydian F4:lydian C4:major B4:locrian A4:minor G4:mixolydian>")
-  .s("ld:cr").gain(0.12).room(0.45).orbit(2)
+$: note("<~ ~ 0 ~ ~ ~ 0 ~ 0 ~ ~ ~ ~ ~ 0 ~>").scale("<F2:lydian G2:mixolydian E2:phrygian A2:minor F2:lydian G2:mixolydian E2:phrygian A2:minor A2:minor E2:phrygian G2:mixolydian F2:lydian C2:major B2:locrian A2:minor G2:mixolydian>")
+  .s("ld:cr").adsr("0.2:0.4:0.5:0.4").cut(1).gain(0.12).room(0.45).orbit(2)
 '''
 
 HALF_TIME_FENCES = {
@@ -547,7 +547,27 @@ def assert_weight8(label: str, pattern: str) -> None:
 def lead_s_chain(sound: str) -> str:
     if sound == "square":
         return '.s("square").lpf(3200).gain(0.16).cut(1)'
-    return f'.s("{sound}").gain(0.16).cut(1)'
+    return f'.s("{sound}").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.16)'
+
+
+def hook_s_chain(sound: str) -> str:
+    if sound.startswith(("ld:", "pf:", "dr:", "ps:")):
+        return f'.s("{sound}").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.18)'
+    return f'.s("{sound}").gain(0.18).cut(1)'
+
+
+def pad_s_chain(sound: str, gain: str, room: str) -> str:
+    return (
+        f'.s("{sound}").adsr("0.2:0.4:0.5:0.4").cut(1)'
+        f".gain({gain}).room({room}).orbit(2)"
+    )
+
+
+def strings_s_chain(sound: str, extra: str) -> str:
+    return (
+        f'.s("{sound}").adsr("0.2:0.4:0.5:0.4").cut(1)'
+        f".gain(0.12){extra}.orbit(2)"
+    )
 
 
 def render_variant(genre: str, n: int) -> str:
@@ -561,6 +581,7 @@ def render_variant(genre: str, n: int) -> str:
     variant = idx // 10
     pairs = form_pairs(genre, variant, n)
     scale4 = scale_inner(pairs, 4)
+    scale2 = scale_inner(pairs, 2)
     lead = lead_pattern(n)
     chords = CHORDS[idx % len(CHORDS)]
     pad = PAD_GATES[idx % len(PAD_GATES)]
@@ -591,6 +612,9 @@ def render_variant(genre: str, n: int) -> str:
     if len(set(sounds)) != 7:
         raise SystemExit(f"{genre}/{n} pitched .s() collision: {pal}")
     lead_chain = lead_s_chain(pal["lead"])
+    hook_chain = hook_s_chain(pal["hook"])
+    pad_chain = pad_s_chain(pal["pad"], pad_gain, pad_room)
+    str_chain = strings_s_chain(pal["strings"], str_extra)
     text = f'''// @title {genre}-{n:02d}
 // @genre {genre}
 setcpm(140/4)
@@ -609,7 +633,7 @@ $: note("{lead}")
 // hook
 $: note("{hook}")
   .scale("{scale4}")
-  .s("{pal["hook"]}").gain(0.18).cut(1)
+  {hook_chain}
 // arp
 $: note("{arp}")
   .scale("{scale4}")
@@ -619,11 +643,11 @@ $: note("{chords}")
   .scale("{scale4}")
   .s("{pal["chords"]}").gain(0.2).orbit(2)
 // pad
-$: note("{pad}").scale("{scale4}")
-  .s("{pal["pad"]}").gain({pad_gain}).room({pad_room}).orbit(2)
+$: note("{pad}").scale("{scale2}")
+  {pad_chain}
 // strings
-$: note("{strings}").scale("{scale4}")
-  .s("{pal["strings"]}").gain(0.12){str_extra}.orbit(2)
+$: note("{strings}").scale("{scale2}")
+  {str_chain}
 '''
     return text
 

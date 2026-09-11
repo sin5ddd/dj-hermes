@@ -32,7 +32,7 @@ $: note("0 0 2 <4 3 5 2>").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
   .s("sawtooth").lpf(450).gain(0.45)
 // lead
 $: note("~ 7 6 <4 9 3 7>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
-  .s("ld:ss").gain(0.16).cut(1)
+  .s("ld:ss").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.16)
 // hook
 $: note("4 ~ 7 <4 2 0 4>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
   .s("plk:lp").gain(0.18).cut(1)
@@ -43,15 +43,15 @@ $: note("0 4 7 12  7 4 0 ~").scale("<C5:minor C5:minor G5:phrygian C5:minor>")
 $: note("[0,2,4] ~ [0,2,4] ~").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
   .s("ep:ky").gain(0.26)
 // pad
-$: note("0").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
-  .s("pf:ff").gain(0.16).room(0.3).orbit(2)
+$: note("<0@3 ~>").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
+  .s("pf:ff").adsr("0.2:0.4:0.5:0.4").cut(1).gain(0.16).room(0.3).orbit(2)
 ```
 
 Rules:
 - Use `setcpm(N)` or `setcpm(BPM/4)` (1 cycle = 1 bar of 4 beats → engine BPM = N*4).
 - Each track is one line starting with `$:` (or a label comment then `$:`).
 - Prefer **one** drum `$:` with mini commas (`bd*4, [~ sd]*2, [~ hh]*4`). Use **short** part names (`bd`/`sd`/`hh`/`oh`); kit character via **`.bank("tr808-hard")`** when user kit files exist (`{bank}_{part}` on disk). Split only for duckorbit on kick.
-- Pad / lead / piano / FX / vocal chop: catalog PCM (`plk:` / `ep:` / `ld:` / `pf:` / `dr:` / `ps:` / **`vc:`**) or user **full sound names** (e.g. `pad-ambient_drone01`, `piano-electric_rhodes`) — no `.bank`. Do not fall back to `triangle` / `sine` for melody, chords, or pad. Long PCM is about 8–17 s; do not fire it every bar. Vocal chops (`vc:pa` etc.) are allowed in **every** genre; slot/count is **strudel-composition** (`// vox` or arp swap). Always `.cut(1)` on grid chops. Do not invent a vocal WAV.
+- Pad / lead / piano / FX / vocal chop: catalog PCM (`plk:` / `ep:` / `ld:` / `pf:` / `dr:` / `ps:` / **`vc:`**) or user **full sound names** (e.g. `pad-ambient_drone01`, `piano-electric_rhodes`) — no `.bank`. Do not fall back to `triangle` / `sine` for melody, chords, or pad. Lead / pad PCM takes `.adsr` right after `.s()` (then `.cut(1)`). Pad sits at **C2** (drone C1), not C4 with the lead. Arp is a melody instrument (`plk:` / `ld:` / `ep:`), not `perc:`. Long FX risers (~15 s) still use `<>` thinning; do not fire them every bar. Vocal chops (`vc:pa` etc.) are allowed in **every** genre; slot/count is **strudel-composition** (`// vox` or arp swap). Always `.cut(1)` on grid chops. Do not invent a vocal WAV.
 - Prefer degree + `.scale("RootOct:mode")` for pitched lines (e.g. `C2:minor`; degree `-1` is one scale step below root).
 - Chord progressions: keep degrees fixed and cycle scales — `.scale("<A2:minor D:dorian G:mixolydian C:major>")` (one scale per bar).
 - Live edits: change **one** thing via get_song + edit_method/patch_track (hat density, degrees, lpf, gain, scale mode, `.add`/`.ply`). Keep the rest. Use **strudel-live-edit** for melody / fill / modulate / brighter-darker recipes.

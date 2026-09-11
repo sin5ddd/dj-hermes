@@ -24,7 +24,7 @@ $: s("<~ ~ ~ perc:rm ~ ~ ~ perc:rm ~ ~ ~ perc:rm ~ ~ ~ perc:rm>").gain(0.22)
 // synth
 $: note("<~ ~ ~ ~ [~ ~ 7 ~] [~ ~ 7 ~] [~ ~ 7 ~] [~ ~ 7 ~] [~ ~ 7 ~] [~ ~ 7 ~] [~ ~ 7 ~] [~ ~ 7 ~] ~ ~ [~ ~ 7 ~] [~ ~ 7 ~]>")
   .scale("<D4:minor D4:minor D4:minor A4:phrygian>")
-  .s("ld:nb").lpf(800).gain(0.16).cut(1)
+  .s("ld:nb").lpf(800).adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.16)
 // pluck
 $: note("<~ ~ ~ ~ ~ ~ ~ ~ [~ 1 ~ 7] [~ 1 ~ 7] [~ 1 ~ 7] [~ 1 ~ 7] ~ ~ ~ ~>")
   .scale("<D4:minor D4:minor D4:minor A4:phrygian>")
@@ -38,11 +38,11 @@ $: note("<~ ~ ~ ~ ~ ~ ~ ~ [~ [0,2,4] ~ ~] [~ [0,2,4] ~ ~] [~ [0,2,4] ~ ~] [~ [0,
   .scale("<D4:minor D4:minor D4:minor A4:phrygian>")
   .s("plk:sf").gain(0.12)
 // pad
-$: note("<~ ~ ~ ~ ~ ~ ~ ~ 0 ~ ~ ~ ~ ~ ~ ~>").scale("<D4:minor D4:minor D4:minor A4:phrygian>")
-  .s("pf:ff").orbit(2).cut(1).gain(0.1).room(0.25)
+$: note("<~ ~ ~ ~ ~ ~ ~ ~ 0 ~ ~ ~ ~ ~ ~ ~>").scale("<D2:minor D2:minor D2:minor A2:phrygian>")
+  .s("pf:ff").adsr("0.2:0.4:0.5:0.4").orbit(2).cut(1).gain(0.1).room(0.25)
 // drone
-$: note("<~ ~ ~ ~ 0 ~ ~ ~ 0 ~ ~ ~ ~ ~ ~ ~>").scale("<D4:minor D4:minor D4:minor A4:phrygian>")
-  .s("dr:md").orbit(2).cut(1).gain(0.08)
+$: note("<~ ~ ~ ~ 0 ~ ~ ~ 0 ~ ~ ~ ~ ~ ~ ~>").scale("<D2:minor D2:minor D2:minor A2:phrygian>")
+  .s("dr:md").adsr("0.2:0.4:0.5:0.4").orbit(2).cut(1).gain(0.08)
 // texture
 $: s("<~ ~ ~ ~ ~ ~ fx:wd ~ ~ ~ fx:nh ~ ~ ~ ~ ~>").gain(0.12).cut(1)
 // fx

@@ -8,7 +8,7 @@ $: note("0 ~ 4 0  0 ~ <4 7 2 0>").scale("<G4:lydian F#4:phrygian E4:dorian D4:ma
   .s("bs:su").gain(0.42)
 // lead
 $: note("~ 2 4 6  4 2 ~ <0 2 4 6>").scale("<G4:lydian F#4:phrygian E4:dorian D4:major>")
-  .s("plk:gm").gain(0.16).cut(1)
+  .s("plk:gm").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.16)
 // hook
 $: note("0 ~ 2 6  ~ 4 2 <6 4 2 0>").scale("<G4:lydian F#4:phrygian E4:dorian D4:major>")
   .s("ep:rh").gain(0.22)
@@ -19,8 +19,8 @@ $: note("0 2 4 6  4 2 0 ~").scale("<G5:lydian F#5:phrygian E5:dorian D5:major>")
 $: note("[0,2,6] ~ [0,2,6] ~").scale("<G4:lydian F#4:phrygian E4:dorian D4:major>")
   .s("plk:ep").gain(0.24).room(0.25).orbit(2)
 // pad
-$: note("<0 ~ ~ ~>").scale("<G4:lydian F#4:phrygian E4:dorian D4:major>")
-  .s("pf:ln").cut(1).gain(0.14).room(0.3).orbit(2)
+$: note("0").scale("<G2:lydian F#2:phrygian E2:dorian D2:major>")
+  .s("pf:ln").adsr("0.2:0.4:0.5:0.4").cut(1).gain(0.14).room(0.3).orbit(2)
 // vox
 $: note("~ 0 ~ ~  ~ ~ ~ ~").scale("<G4:lydian F#4:phrygian E4:dorian D4:major>")
   .s("vc:pa").gain(0.12).cut(1)

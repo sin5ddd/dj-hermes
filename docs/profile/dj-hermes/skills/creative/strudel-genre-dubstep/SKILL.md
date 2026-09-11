@@ -4,7 +4,7 @@ description: >-
   Use when writing Dubstep for dj-hermes: 140 BPM half-time drums,
   wobble bass via .lpf(sine.rangex(...)). No second sub under the
   wobble. Not four-on-the-floor and not .lfo().
-version: 5.1.0
+version: 5.2.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -56,15 +56,15 @@ $: note("~ ~ 12 ~").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
 $: note("[0,4] ~ ~ [0,4]").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
   .s("ep:mt").gain(0.16)
 // pad
-$: note("0").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
-  .s("pf:ff").gain(0.12).room(0.25).orbit(2)
+$: note("0").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
+  .s("pf:ff").adsr("0.2:0.4:0.5:0.4").cut(1).gain(0.12).room(0.25).orbit(2)
 ```
 
 同梱 `songs/dubstep/01.strudel` はこのフェンスと同じ（ハーフタイムと wobble）。新規 apply の `.s()` は下のパレットから選ぶ。**ベースとリードの両方を `sawtooth` にしない。**
 
 ## 音色パレット（新規 apply はここから選ぶ）
 
-Pattern はグリッド・次数・スロットの見本。新規曲は下表からスロットごとに 1 つ選び、このフェンスの `.s()` を毎回コピーしない。同一曲の pitched 2 本に同じ `.s()` を使わない。slug の意味は strudel-pcm-catalog の INDEX。長尺（`ld:` / `dr:` / `pf:` / `ps:`、`plk:fp` / `plk:sp`）は `.cut(1)` か `s("<x ~ ~ ~>")`。
+Pattern はグリッド・次数・スロットの見本。新規曲は下表からスロットごとに 1 つ選び、このフェンスの `.s()` を毎回コピーしない。同一曲の pitched 2 本に同じ `.s()` を使わない。slug の意味は strudel-pcm-catalog の INDEX。lead / pad の PCM は `.s()` の直後に `.adsr`、そのあと `.cut(1)`（フェンス lead が `sawtooth`+`.fm` のときは波形側）。FX ライザーだけ `<>` 間引き。
 
 wobble は **1 本**（`sawtooth`+`.lpf(sine.rangex(80, 600))` または `bs:wb`）。その下に `bs:su` は置かない。
 
@@ -74,9 +74,9 @@ wobble は **1 本**（`sawtooth`+`.lpf(sine.rangex(80, 600))` または `bs:wb`
 | bass | wobble 1 本 | `sawtooth`+`.lpf(sine.rangex(80, 600))`、`bs:wb` | `bs:su` 重ね、2 本目ベース |
 | lead | bass と同じ `sawtooth` にしない | `ld:gr`、`ld:wb`、`ld:dp` | bass と同じ `sawtooth`、`plk:mx` |
 | hook | | `plk:s5`、`plk:nn` | Rhodes、kawaii ベル |
-| arp | | `plk:dt` | オルゴール |
+| arp | メロディ楽器 | `plk:dt` | オルゴール、`perc:` |
 | chords | `[0,4]` | `ep:mt`、`plk:sf` | `triangle`、maj7 |
-| pad | | `dr:rd` / `pf:fo` を `<>`、`pf:ff`+`note("0")` | `ps:mx`、`ep:rs` |
+| pad | **C2** + `.adsr` | `dr:rd` / `pf:fo` を `<>`、`pf:ff`+`note("0")` | C4、ADSR なし、`ps:mx`、`ep:rs` |
 | vox | 任意 8 本目、または arp 差し替え。`.cut(1)` | `vc:tu`、`s("<vc:yeah ~ ~ ~>")` at `C4:` | 16 分埋め、毎小節 `vc:yeah`、自前 WAV を invent |
 
 ## Why
@@ -89,7 +89,7 @@ wobble は **1 本**（`sawtooth`+`.lpf(sine.rangex(80, 600))` または `bs:wb`
 2. ベースは C2 の saw + `.lpf(sine.rangex(80, 600))` + `.lpq(6)`。`.lfo(...)` は未実装
 3. wobble の下に `bs:su` や 2 本目ベースを足さない（bass-mid も置かない）
 4. キックとサブの同時打は gain でキックを前に（drums 0.72 / bass 0.5）
-5. ピッチトラックは 4 小節 `.scale("<C:minor C:minor G:phrygian C:minor>")`
+5. ピッチトラックは 4 小節 `.scale`（bass は C2、lead は C3、hook / chords は C4、**pad は C2** + `.adsr`。arp はメロディ楽器）
 
 鳴らすのは `dj_hermes_apply_song(content, deck)`（次小節、無書き込み）。`dj_hermes_save_song` は残す指示のときだけ（演奏は変えない）。
 
@@ -97,7 +97,7 @@ wobble は **1 本**（`sawtooth`+`.lpf(sine.rangex(80, 600))` または `bs:wb`
 
 1. `stack()` / `.cpm()` / `.lfo()` → apply / save とも 400。wobble は `.lpf(sine.rangex(…))`。`.vib("<…>")` は不可
 2. ドラムを kick / snare / hat の 3 `$:` に分ける
-3. 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`）を毎小節撃たない
+3. 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`）を **ADSR なし**で毎小節撃つ。lead / pad は `.adsr` + `.cut(1)` ならグリッド可。pad を C4 に置かない。arp を `perc:` にしない
 4. wobble の下に `bs:su` を重ねる（低域が二重になる）
 5. ハイハットだらけで低域が埋もれる。`bd*4` にして 4 つ打ち化する
 6. ベースとリードの両方を `sawtooth` にする。kawaii ベルや Rhodes を載せる
@@ -107,5 +107,5 @@ wobble は **1 本**（`sawtooth`+`.lpf(sine.rangex(80, 600))` または `bs:wb`
 - [ ] 7 本（// drums // bass // lead // hook // arp // chords // pad）。bass-mid は置かない。任意 8 本目は `// vox`
 - [ ] 4 小節フレーズ（`.scale("<…>")` が 4 個）
 - [ ] ドラムは 1 本。ハーフタイム（`bd*4` ではない）
-- [ ] wobble は `.lpf(sine.rangex(...))` または `bs:wb`。サブは 1 本。lead は別の `.s()`
+- [ ] wobble は `.lpf(sine.rangex(...))` または `bs:wb`。サブは 1 本。lead は別の `.s()`。**pad は C2** + `.adsr`。arp はメロディ楽器
 - [ ] `dj_hermes_apply_song(content, deck)`（save は残す指示のときだけ）

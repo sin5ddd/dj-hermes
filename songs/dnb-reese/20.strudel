@@ -11,7 +11,7 @@ $: note("0 3 0 <0 -1>").scale("B4:minor").s("bs:rm").gain(0.36)
 $: note("~ 4 ~ <7 4>").scale("B4:minor").s("plk:s5").gain(0.2).cut(1)
 // lead
 $: note("~ 11 7 <12 9 7 4>").scale("<B4:minor B4:minor F#5:phrygian B4:minor>")
-  .s("plk:nn").gain(0.12).cut(1)
+  .s("plk:nn").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.12)
 // arp
 $: note("~ 0 7 12  7 0 ~ 4").scale("<B5:minor B5:minor F#6:phrygian B5:minor>")
   .s("plk:dt").gain(0.12).cut(1)
@@ -19,5 +19,5 @@ $: note("~ 0 7 12  7 0 ~ 4").scale("<B5:minor B5:minor F#6:phrygian B5:minor>")
 $: note("[0,4] ~ ~ [0,4]").scale("<B4:minor B4:minor F#5:phrygian B4:minor>")
   .s("ep:mt").gain(0.14)
 // pad
-$: note("<0 ~ ~ ~>").scale("<B4:minor B4:minor F#5:phrygian B4:minor>")
-  .s("dr:rd").cut(1).gain(0.12).room(0.2).orbit(2)
+$: note("0").scale("<B2:minor B2:minor F#3:phrygian B2:minor>")
+  .s("dr:rd").adsr("0.2:0.4:0.5:0.4").cut(1).gain(0.12).room(0.2).orbit(2)

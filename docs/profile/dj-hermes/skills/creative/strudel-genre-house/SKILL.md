@@ -5,7 +5,7 @@ description: >-
   ([~ cp]*2), not a snare and not stacked with sd, plus the C-minor
   FM pluck at C4:minor as the hook. 7–8 $: tracks, 4-bar phrase.
   Not kick-front techno.
-version: 5.3.0
+version: 5.4.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -43,7 +43,7 @@ $: note("0 0 4 <0 2 4 0>").scale("<C4:minor C4:minor G4:dorian C4:minor>")
   .s("bs:hf").gain(0.42)
 // lead
 $: note("~ 7 4 <7 9 4 2>").scale("<C4:minor C4:minor G4:dorian C4:minor>")
-  .s("ld:ss").gain(0.16).cut(1)
+  .s("ld:ss").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.16)
 // hook
 $: note("4 ~ 7 4  2 0 ~ -1").scale("<C4:minor C4:minor G4:dorian C4:minor>")
   .s("plk:lp").gain(0.22).cut(1)
@@ -54,8 +54,8 @@ $: note("~ 0 4 7  ~ 4 0 2").scale("<C5:minor C5:minor G5:dorian C5:minor>")
 $: note("[0,2,4] ~ [0,2,4] ~").scale("<C4:minor C4:minor G4:dorian C4:minor>")
   .s("ep:ky").gain(0.22)
 // pad
-$: note("0").scale("<C4:minor C4:minor G4:dorian C4:minor>")
-  .s("pf:ff").gain(0.16).room(0.3).orbit(2)
+$: note("0").scale("<C2:minor C2:minor G2:dorian C2:minor>")
+  .s("pf:ff").adsr("0.2:0.4:0.5:0.4").cut(1).gain(0.16).room(0.3).orbit(2)
 // vox
 $: note("~ 0 ~ ~  ~ 4 ~ ~").scale("<C4:minor C4:minor G4:dorian C4:minor>")
   .s("vc:pa").gain(0.14).cut(1)
@@ -67,17 +67,17 @@ This fence is the new target (8 tracks: one bass, vox instead of perc). Do not �
 
 ## Timbre palette (pick per new apply)
 
-The Pattern fence is one example of grid, degrees, and slots. For a **new** apply, pick **one** sound per slot from the table. Do not copy the fence `.s()` every time. Do not reuse the same `.s()` on two pitched tracks in one song. Slug meanings: strudel-pcm-catalog INDEX. Long one-shots (`ld:` / `dr:` / `pf:` / `ps:`, `plk:fp` / `plk:sp`) need `.cut(1)` or `s("<x ~ ~ ~>")`.
+The Pattern fence is one example of grid, degrees, and slots. For a **new** apply, pick **one** sound per slot from the table. Do not copy the fence `.s()` every time. Do not reuse the same `.s()` on two pitched tracks in one song. Slug meanings: strudel-pcm-catalog INDEX. Lead / pad PCM takes `.adsr` right after `.s()` (then `.cut(1)`). FX risers still use `<>` thinning.
 
 | Slot | Keep | Pick one | Forbidden |
 | --- | --- | --- | --- |
 | drums | `bd:hf` + `[~ cp]*2` + `hh:hs` | `bd:dc`; `cp:rm` / `cp:gt`; `hh:cl` | `bd:gb` / `fc` / `hs`; `[~ sd]*2`; kick-only techno |
 | bass | `bs:hf` at `C4:` | `bs:ht`, `bs:sw` | stacked `bs:su`, `bs:dk`, `bs:wb` |
-| lead | (not fixed) | `ld:hu`, `ld:sw`, `ld:us`, `wt_organ`, `ld:ss`+`.cut(1)` | `ld:gb` / `hd` / `gr` / `wb` |
+| lead | PCM + `.adsr` after `.s()` | `ld:hu`, `ld:sw`, `ld:us`, `wt_organ`, `ld:ss`+`.adsr`+`.cut(1)` | `ld:gb` / `hd` / `gr` / `wb`, dry PCM (no `.adsr`) |
 | hook | degrees `4 ~ 7 4  2 0 ~ -1` | `plk:lp`, `plk:hb`, `plk:ep` | `plk:s5`, `plk:dt`, 303 `lpenv` |
-| arp | | `plk:hd`, `plk:aj`, `plk:hb` | a 16s pad every bar |
+| arp | melody + `note()` | `plk:hd`, `plk:aj`, `plk:hb` | `perc:`, a 16s pad every bar |
 | chords | `[0,2,4]` | `ep:ky`, `ep:wr`, `plk:sm` | `triangle`; `pf:ff` as a triad |
-| pad | | `pf:ju`, `pf:mn`, `pf:cs`, `pf:fo`, `pf:ff`+`note("0")` | `dr:hr` / `wf`, `ps:mx` |
+| pad | **C2** + `.adsr` | `pf:ju`, `pf:mn`, `pf:cs`, `pf:fo`, `pf:ff`+`note("0")` | C4 (same as lead), ADSR なし, `dr:hr` / `wf`, `ps:mx` |
 | vox | optional 8th `// vox` (instead of perc). `.cut(1)` | `vc:pa`, `vc:ya`, `vc:na` at `C4:` | 16th wall, `vc:yeah` every bar, invent a vocal WAV |
 
 | Piece | Role |
@@ -88,13 +88,13 @@ The Pattern fence is one example of grid, degrees, and slots. For a **new** appl
 | `[~ hh:hs]*4` | Closed hat on each **and** |
 | `<~ ~ ~ [~@3 bd:hf ~@4]>` | 4th-bar fill; drums may stay 1-bar + fill |
 | `bs:hf` + `C4:minor` | PCM floor. Pitched PCM uses **C4**. One bass only — do not stack `bs:su` |
-| `ld:ss` | スーパーソーリード。このレシピの既定。長い PCM は毎小節撃たない |
+| `ld:ss` | スーパーソーリード。このレシピの既定。`.s()` の直後に `.adsr`、そのあと `.cut(1)` |
 | `note("4 ~ 7 4  2 0 ~ -1")` | Hook eighths: G–rest–**C**–G–Eb–C–**rest**–Bb. Do not rewrite |
 | `.scale("<C4:minor C4:minor G4:dorian C4:minor>")` | 4-bar phrase on pitched tracks |
 | `.s("plk:lp")` | `samples/plk/lp.wav` (`part:slug`) |
 | `.cut(1)` | Steal the previous one-shot (~0.4 s must not overlap itself) |
 | chords `[0,2,4]` on `ep:ky` | PCM triad at **C4**. Do not use `triangle` |
-| pad `pf:ff` `note("0")` | Baked fifth. Do not write `[0,4]`. Orbit 2 |
+| pad `pf:ff` `note("0")` at **C2** | Baked fifth, dumped an octave on purpose. `.adsr` after `.s()`. Do not write `[0,4]`. Orbit 2 |
 | no `.compressor` / no `.duckorbit` | Per-voice compressor omitted. No duck in this recipe |
 
 ## Why `[~ cp]*2`, not `[~ sd]*2`
@@ -145,7 +145,7 @@ That is G–C–G–Eb–C–Bb (5–1–5–b3–1–b7). Do not rewrite it.
 
 Eight atoms = eighths. At 124 BPM an eighth is ~0.242 s. The pluck one-shot is ~0.4 s, so a new note starts before the previous wav ends. `.cut(1)` puts the hook on cut group 1; `Deck::alloc_voice` drops earlier voices in that group (`deck.rs`). Without it the tails stack. Lead and arp also use `.cut(1)` so their one-shots do not overlap themselves.
 
-Pitched tracks share `.scale("<C4:minor C4:minor G4:dorian C4:minor>")` (bass/lead/hook/chords/pad at C4, arp at C5). The degree string stays fixed; bar 3 is G dorian. Do not drop the `<>` back to a 1-bar `.scale("C4:minor")` for a new apply.
+Bass / lead / hook / chords share `.scale("<C4:minor C4:minor G4:dorian C4:minor>")`. **Pad is C2.** Arp is C5. The degree string stays fixed; bar 3 is G dorian. Do not drop the `<>` back to a 1-bar `.scale("C4:minor")` for a new apply. Do not put the pad on C4 with the lead.
 
 Lead / hook / arp are call-and-response (rests on different eighths). Do not fill all 16ths on every melody track at once.
 
@@ -190,7 +190,8 @@ Do not add `[~ sd]*2`. Do not drop the clap onto the techno skill song. Do not a
 - [ ] `setcpm(124/4)` + **8 `$:`** bundled (drums, bass, lead, hook, arp, chords, pad, vox). New apply may stay 7. 8th is `// vox` (`vc:`), not perc and not `bs:su`
 - [ ] 4-bar phrase on pitched tracks (`.scale("<C4:minor C4:minor G4:dorian C4:minor>")` and octave variants)
 - [ ] Clap grid `[~ cp]*2`. Hook degrees `4 ~ 7 4  2 0 ~ -1`. Do not rewrite either
-- [ ] PCM pitched at `C4:`. One bass (no stacked sub). Chords max 3 notes. Pad from the palette (`pf:ff` uses `note("0")`)
+- [ ] PCM floor / lead / hook / chords at `C4:`. **Pad at C2** + `.adsr`. One bass (no stacked sub). Chords max 3 notes. Pad from the palette (`pf:ff` uses `note("0")`)
+- [ ] Lead PCM is `.s(…).adsr(…)`. Arp is a melody instrument (`note()` + `plk:` / `ld:` / `ep:`), not `perc:`
 - [ ] New apply `.s()` from the Timbre palette (not a copy of the fence sounds)
 - [ ] `songs/house/01.strudel` matches this fence’s grid and hook degrees
 
@@ -203,7 +204,7 @@ Do not add `[~ sd]*2`. Do not drop the clap onto the techno skill song. Do not a
 - Use `plk:s5` / `bs:rm` here. Do not add `bs:su`.
 - Copy the fence `.s()` on every new apply — pick from the Timbre palette.
 - Reuse the same `.s()` on two pitched tracks.
-- 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`、約 8–17 秒）を毎小節撃たない。
+- 長い PCM（`ld:` / `pf:` / `dr:` / `ps:`）を **ADSR なし**で毎小節撃つ。lead / pad は `.adsr` + `.cut(1)` ならグリッド可。pad を C4 に置かない。arp を `perc:` にしない。
 - Ship a 2-track loop for a new apply.
 - `note("c3'maj")` when you want a chord — suffix is root only.
 - Put `.compressor` on a track. Do not add `.duckorbit`.

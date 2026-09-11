@@ -5,7 +5,7 @@ description: >-
   16 tracks, 16-bar form (plain 4 / drums 4 / plain 4 / retrograde
   or cliché 4), rest-heavy melody, low gain. Not a 4-bar loop, not
   a key change, not chill drums, not house clap, not 7 thin tracks.
-version: 6.0.0
+version: 6.0.1
 author: Hermes Agent
 license: MIT
 metadata:
@@ -26,7 +26,7 @@ metadata:
 BPM 目安 60–90。フェンスは **70**（`setcpm(70/4)`）。
 ハウスやチルより疎い。4 小節だけだと進行がすぐ一周するので、**このジャンルだけループは 16 小節**（4 小節の 4 倍。`cat` ではない）。転調はしない。
 
-同梱 `songs/ambient/` はまだ 7 本・4 小節のことがある。新規 apply は下の **16 本・16 小節**。
+同梱 `songs/ambient/` は下の **16 本・16 小節**フェンス。新規 apply も同じ本数・フォーム。
 
 ## When
 
@@ -225,7 +225,7 @@ PCM フロアは `C4:`。`bs:su` と `bs:hf` は重ねない。
 10. 転調する（後半を Eb や平行長調にする）
 11. arp を `perc:` にする。pad を C4 にする。lead / pad から `.adsr` を外す
 12. `<>` の 1 小節をブラケット無しにする
-13. `fx:up` や `dr:ad` を毎小節撃つ
+13. `fx:up` を毎小節撃つ。`dr:ad` を **ADSR なし**で毎小節撃つ（ドローンは `.adsr` + `.cut(1)` ならグリッド可。フェンスの間引きは残す）
 14. 16 引数の `cat`
 
 ## Checklist

@@ -88,7 +88,7 @@ $: note("0 0 4 <0 2 4 0>").scale("<C4:minor C4:minor G4:dorian C4:minor>")
   .s("bs:hf").gain(0.42)
 // lead
 $: note("~ 7 4 <7 9 4 2>").scale("<C4:minor C4:minor G4:dorian C4:minor>")
-  .s("ld:ss").gain(0.16).cut(1)
+  .s("ld:ss").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.16)
 // hook
 $: note("4 ~ 7 4  2 0 ~ -1").scale("<C4:minor C4:minor G4:dorian C4:minor>")
   .s("plk:lp").gain(0.22).cut(1)
@@ -99,8 +99,8 @@ $: note("~ 0 4 7  ~ 4 0 2").scale("<C5:minor C5:minor G5:dorian C5:minor>")
 $: note("[0,2,4] ~ [0,2,4] ~").scale("<C4:minor C4:minor G4:dorian C4:minor>")
   .s("ep:ky").gain(0.22)
 // pad
-$: note("0").scale("<C4:minor C4:minor G4:dorian C4:minor>")
-  .s("pf:ff").gain(0.16).room(0.3).orbit(2)
+$: note("0").scale("<C2:minor C2:minor G2:dorian C2:minor>")
+  .s("pf:ff").adsr("0.2:0.4:0.5:0.4").cut(1).gain(0.16).room(0.3).orbit(2)
 // vox
 $: note("~ 0 ~ ~  ~ 4 ~ ~").scale("<C4:minor C4:minor G4:dorian C4:minor>")
   .s("vc:pa").gain(0.14).cut(1)
@@ -116,7 +116,7 @@ $: note("0 0 2 <4 0 3 0>").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
   .s("sawtooth").adsr("0.001:0.08:0.2:0.05").lpf(400).gain(0.44)
 // lead
 $: note("~ 7 6 <4 9 3 7>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
-  .s("ld:ss").gain(0.15).cut(1)
+  .s("ld:ss").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.15)
 // hook
 $: note("~ 4 ~ <7 4 4 7>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
   .s("plk:s5").gain(0.18).cut(1)
@@ -127,8 +127,8 @@ $: note("0 3 0 7  3 0 5 ~").scale("<C5:minor C5:minor G5:phrygian C5:minor>")
 $: note("[0,2,4] ~ [0,2,4] ~").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
   .s("ep:ky").gain(0.22)
 // pad
-$: note("0").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
-  .s("pf:ff").gain(0.16).room(0.3).orbit(2)
+$: note("0").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
+  .s("pf:ff").adsr("0.2:0.4:0.5:0.4").cut(1).gain(0.16).room(0.3).orbit(2)
 '''
 
 FENCES["techno-duck"] = r'''// @title pump-core
@@ -150,13 +150,14 @@ $: note("~ 7 4 <9 7 4 2>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
 $: note("~ 4 ~ <7 4 4 7>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
   .s("plk:s5").gain(0.16).cut(1)
 // arp
-$: s("<~ perc:tm ~ perc:st>").gain(0.18)
+$: note("~ 0 4 7  ~ 4 0 2").scale("<C5:minor C5:minor G5:phrygian C5:minor>")
+  .s("plk:hd").gain(0.14).cut(1)
 // chords
 $: note("[0,2,4] ~ ~ ~").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
   .s("ep:ky").gain(0.18).orbit(2)
 // pad
-$: note("0").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
-  .s("pf:ff").orbit(2).gain(0.22).room(0.25)
+$: note("0").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
+  .s("pf:ff").adsr("0.2:0.4:0.5:0.4").cut(1).orbit(2).gain(0.22).room(0.25)
 '''
 
 FENCES["acid"] = r'''// @title saw-303
@@ -181,15 +182,16 @@ $: note("c2 c2 eb2 e2  g2 eb2 d2 c2  f2 f#2 f2 c2  b1 eb2 c2 <d2 g2>")
   .gain(0.3)
 // lead
 $: note("~ 7 ~ <9 7 4 12>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
-  .s("plk:lp").gain(0.12).cut(1)
+  .s("plk:lp").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.12)
 // arp
-$: s("<~ perc:mh ~ perc:tm>").gain(0.14)
+$: note("~ 0 7 12  7 0 ~ 4").scale("<C5:minor C5:minor G5:phrygian C5:minor>")
+  .s("plk:hd").gain(0.12).cut(1)
 // chords
 $: note("[0,4] ~ ~ [0,4]").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
   .s("ep:mt").gain(0.16)
 // pad
-$: note("0").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
-  .s("pf:ff").gain(0.12).room(0.25).orbit(2)
+$: note("0").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
+  .s("pf:ff").adsr("0.2:0.4:0.5:0.4").cut(1).gain(0.12).room(0.25).orbit(2)
 '''
 
 FENCES["dnb"] = r'''// @title dnb-01
@@ -205,18 +207,19 @@ $: note("0 3 0 <0 -1 0 3>").scale("C2:minor")
   .s("sawtooth").attack(0.01).decay(0.4).release(0.3).lpf(1000).gain(0.32)
 // lead
 $: note("~ 7 ~ <9 7 4 11>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
-  .s("ld:ss").gain(0.14).cut(1)
+  .s("ld:ss").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.14)
 // hook
 $: note("~ 4 ~ <7 4 4 7>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
   .s("plk:dt").gain(0.16).cut(1)
 // arp
-$: s("<~ perc:st ~ perc:tm>").gain(0.16)
+$: note("~ 0 7 12  7 0 ~ 4").scale("<C5:minor C5:minor G5:phrygian C5:minor>")
+  .s("plk:hd").gain(0.12).cut(1)
 // chords
 $: note("[0,4] ~ [0,4] ~").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
   .s("ep:mt").gain(0.16)
 // pad
-$: note("0").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
-  .s("pf:ff").gain(0.12).room(0.22).orbit(2)
+$: note("0").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
+  .s("pf:ff").adsr("0.2:0.4:0.5:0.4").cut(1).gain(0.12).room(0.22).orbit(2)
 '''
 
 FENCES["dnb-reese"] = r'''// @title dnb-reese-01
@@ -232,7 +235,7 @@ $: note("0 3 0 <0 -1>").scale("C4:minor").s("bs:rm").gain(0.36)
 $: note("~ 4 ~ <7 4>").scale("C4:minor").s("plk:s5").gain(0.2).cut(1)
 // lead
 $: note("~ 11 7 <12 9 7 4>").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
-  .s("ld:ss").gain(0.12).cut(1)
+  .s("ld:ss").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.12)
 // arp
 $: note("~ 0 7 12  7 0 ~ 4").scale("<C5:minor C5:minor G5:phrygian C5:minor>")
   .s("plk:dt").gain(0.12).cut(1)
@@ -240,8 +243,8 @@ $: note("~ 0 7 12  7 0 ~ 4").scale("<C5:minor C5:minor G5:phrygian C5:minor>")
 $: note("[0,4] ~ ~ [0,4]").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
   .s("ep:mt").gain(0.14)
 // pad
-$: note("0").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
-  .s("pf:ff").gain(0.12).room(0.2).orbit(2)
+$: note("0").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
+  .s("pf:ff").adsr("0.2:0.4:0.5:0.4").cut(1).gain(0.12).room(0.2).orbit(2)
 '''
 
 FENCES.update(HALF_TIME_FENCES)
@@ -256,7 +259,7 @@ $: note("0 ~ 4 0  0 ~ <4 7 2 0>").scale("<F4:lydian E4:phrygian D4:dorian C4:maj
   .s("bs:su").gain(0.42)
 // lead
 $: note("~ 2 4 6  4 2 ~ <0 2 4 6>").scale("<F4:lydian E4:phrygian D4:dorian C4:major>")
-  .s("plk:ps").gain(0.16).cut(1)
+  .s("plk:ps").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.16)
 // hook
 $: note("0 ~ 2 6  ~ 4 2 <6 4 2 0>").scale("<F4:lydian E4:phrygian D4:dorian C4:major>")
   .s("ep:rs").gain(0.22)
@@ -267,8 +270,8 @@ $: note("0 2 4 6  4 2 0 ~").scale("<F5:lydian E5:phrygian D5:dorian C5:major>")
 $: note("[0,2,6] ~ [0,2,6] ~").scale("<F4:lydian E4:phrygian D4:dorian C4:major>")
   .s("ep:mt").gain(0.24).room(0.25).orbit(2)
 // pad
-$: note("0").scale("<F4:lydian E4:phrygian D4:dorian C4:major>")
-  .s("pf:ff").gain(0.14).room(0.3).orbit(2)
+$: note("0").scale("<F2:lydian E2:phrygian D2:dorian C2:major>")
+  .s("pf:ff").adsr("0.2:0.4:0.5:0.4").cut(1).gain(0.14).room(0.3).orbit(2)
 // vox
 $: note("~ 0 ~ ~  ~ ~ ~ ~").scale("<F4:lydian E4:phrygian D4:dorian C4:major>")
   .s("vc:na").gain(0.12).cut(1)
@@ -284,7 +287,7 @@ $: note("0 ~ 2 ~ 0 <3 4 2 0>").scale("<C4:minor C4:minor F4:dorian C4:minor>")
   .s("bs:hf").gain(0.4)
 // lead
 $: note("~ 4 ~ 7 ~ <6 9 7 4>").scale("<C4:minor C4:minor F4:dorian C4:minor>")
-  .s("plk:ps").gain(0.16).cut(1)
+  .s("plk:ps").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.16)
 // hook
 $: note("0@2 4 7@2 ~").scale("<C4:minor C4:minor F4:dorian C4:minor>")
   .s("plk:am").gain(0.18).cut(1)
@@ -295,8 +298,8 @@ $: note("~ 7 12 7  4 0 ~ 2").scale("<C5:minor C5:minor F5:dorian C5:minor>")
 $: note("[0,2,4] ~ [0,2,4] ~").scale("<C4:minor C4:minor F4:dorian C4:minor>")
   .s("ep:rs").gain(0.22).room(0.3).orbit(2)
 // pad
-$: note("0").scale("<C4:minor C4:minor F4:dorian C4:minor>")
-  .s("pf:ff").gain(0.16).room(0.35).orbit(2)
+$: note("0").scale("<C2:minor C2:minor F2:dorian C2:minor>")
+  .s("pf:ff").adsr("0.2:0.4:0.5:0.4").cut(1).gain(0.16).room(0.35).orbit(2)
 '''
 
 FENCES["ambient"] = r'''// @title ambient-01
@@ -372,8 +375,8 @@ $: note("~ ~ 12 ~").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
 $: note("[0,4] ~ ~ [0,4]").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
   .s("ep:mt").gain(0.16)
 // pad
-$: note("0").scale("<C4:minor C4:minor G4:phrygian C4:minor>")
-  .s("pf:ff").gain(0.12).room(0.25).orbit(2)
+$: note("0").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
+  .s("pf:ff").adsr("0.2:0.4:0.5:0.4").cut(1).gain(0.12).room(0.25).orbit(2)
 '''
 
 FENCES["electro"] = r'''// @title electro-01
@@ -386,10 +389,10 @@ $: note("0 ~ 0 <3 0 0 5>").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
   .s("square").adsr("0.001:0.08:0.15:0.04").lpf(500).gain(0.46)
 // lead
 $: note("~ 7 4 <9 7 12 7>").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
-  .s("ld:pu").gain(0.14).cut(1)
+  .s("ld:pu").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.14)
 // hook
 $: note("12 ~ 7 <12 15 12 7>").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
-  .s("ld:ss").gain(0.16).cut(1)
+  .s("ld:ss").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.16)
 // arp
 $: note("~ 0 3 7  3 0 ~ 5").scale("<C3:minor C3:minor G3:phrygian C3:minor>")
   .s("plk:cv").gain(0.14).cut(1)
@@ -398,7 +401,7 @@ $: note("[0,2,4] ~ [0,2,4] ~").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
   .s("plk:sp").gain(0.18)
 // pad
 $: note("0").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
-  .s("pf:ff").gain(0.14).room(0.25).orbit(2)
+  .s("pf:ff").adsr("0.2:0.4:0.5:0.4").cut(1).gain(0.14).room(0.25).orbit(2)
 '''
 
 FENCES["lofi-hiphop"] = r'''// @title lofi-hiphop-01
@@ -411,7 +414,7 @@ $: note("0 ~ 2 <0 0 3 2>").scale("<C4:minor C4:minor F4:dorian C4:minor>")
   .s("bs:su").gain(0.38)
 // lead
 $: note("~ 4 7 <5 4 0 2>").scale("<C4:minor C4:minor F4:dorian C4:minor>")
-  .s("plk:lf").gain(0.18).cut(1)
+  .s("plk:lf").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.18)
 // hook
 $: note("[0,2,4] ~ [0,3,5] ~").scale("<C4:minor C4:minor F4:dorian C4:minor>")
   .s("ep:rs").adsr("0.05:0.3:0.5:0.3").gain(0.22)
@@ -422,8 +425,8 @@ $: note("~ 0 4 7  ~ 4 0 2").scale("<C5:minor C5:minor F5:dorian C5:minor>")
 $: note("[0,2,4] ~ [0,2,4] ~").scale("<C4:minor C4:minor F4:dorian C4:minor>")
   .s("ep:mt").gain(0.2).room(0.3).orbit(1)
 // pad
-$: note("0").scale("<C4:minor C4:minor F4:dorian C4:minor>")
-  .s("pf:ff").gain(0.14).room(0.35).orbit(1)
+$: note("0").scale("<C2:minor C2:minor F2:dorian C2:minor>")
+  .s("pf:ff").adsr("0.2:0.4:0.5:0.4").cut(1).gain(0.14).room(0.35).orbit(1)
 '''
 
 FENCES["minimal"] = r'''// @title minimal-01
@@ -452,7 +455,7 @@ $: s("<~ ~ ~ cp ~ ~ ~ cp ~ ~ ~ cp ~ ~ ~ cp>").gain(0.22)
 // synth
 $: note("<~ ~ ~ ~ [~ ~ 4 ~] [~ ~ 4 ~] [~ ~ 4 ~] [~ ~ 4 ~] [~ ~ 4 ~] [~ ~ 4 ~] [~ ~ 4 ~] [~ ~ 4 ~] ~ ~ [~ ~ 4 ~] [~ ~ 4 ~]>")
   .scale("<C4:minor C4:minor C4:minor G4:phrygian>")
-  .s("ld:in").lpf(900).gain(0.16).cut(1)
+  .s("ld:in").adsr("0.01:0.3:0.7:0.2").lpf(900).cut(1).gain(0.16)
 // pluck
 $: note("<~ ~ ~ ~ ~ ~ ~ ~ [~ 7 ~ 1] [~ 7 ~ 1] [~ 7 ~ 1] [~ 7 ~ 1] ~ ~ ~ ~>")
   .scale("<C4:minor C4:minor C4:minor G4:phrygian>")
@@ -466,11 +469,11 @@ $: note("<~ ~ ~ ~ ~ ~ ~ ~ [~ [0,2,4] ~ ~] [~ [0,2,4] ~ ~] [~ [0,2,4] ~ ~] [~ [0,
   .scale("<C4:minor C4:minor C4:minor G4:phrygian>")
   .s("plk:sf").gain(0.12)
 // pad
-$: note("<~ ~ ~ ~ ~ ~ ~ ~ 0 ~ ~ ~ ~ ~ ~ ~>").scale("<C4:minor C4:minor C4:minor G4:phrygian>")
-  .s("dr:pd").orbit(2).cut(1).gain(0.1).room(0.25)
+$: note("<~ ~ ~ ~ ~ ~ ~ ~ 0 ~ ~ ~ ~ ~ ~ ~>").scale("<C2:minor C2:minor C2:minor G2:phrygian>")
+  .s("dr:pd").adsr("0.2:0.4:0.5:0.4").orbit(2).cut(1).gain(0.1).room(0.25)
 // drone
-$: note("<~ ~ ~ ~ 0 ~ ~ ~ 0 ~ ~ ~ ~ ~ ~ ~>").scale("<C4:minor C4:minor C4:minor G4:phrygian>")
-  .s("dr:mb").orbit(2).cut(1).gain(0.08)
+$: note("<~ ~ ~ ~ 0 ~ ~ ~ 0 ~ ~ ~ ~ ~ ~ ~>").scale("<C2:minor C2:minor C2:minor G2:phrygian>")
+  .s("dr:mb").adsr("0.2:0.4:0.5:0.4").orbit(2).cut(1).gain(0.08)
 // texture
 $: s("<~ ~ ~ ~ ~ ~ fx:ha ~ ~ ~ fx:nh ~ ~ ~ ~ ~>").gain(0.12).cut(1)
 // fx
@@ -487,7 +490,7 @@ $: note("0 0 4 <0 2 4 0>").scale("<C4:minor C4:minor F4:dorian C4:minor>")
   .s("bs:hf").gain(0.42)
 // lead
 $: note("4@2 7 9@3 ~").scale("<C4:minor C4:minor F4:dorian C4:minor>")
-  .s("ld:ss").gain(0.16).cut(1)
+  .s("ld:ss").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.16)
 // hook
 $: note("~ 7 4 <9 7 4 2>").scale("<C4:minor C4:minor F4:dorian C4:minor>")
   .s("plk:hb").gain(0.18).cut(1)
@@ -498,8 +501,8 @@ $: note("0 2 4 7  4 2 0 ~").scale("<C5:minor C5:minor F5:dorian C5:minor>")
 $: note("[0,2,4] ~ [0,2,4] ~").scale("<C4:minor C4:minor F4:dorian C4:minor>")
   .s("ep:ky").gain(0.24)
 // pad
-$: note("0").scale("<C4:minor C4:minor F4:dorian C4:minor>")
-  .s("pf:ff").gain(0.18).room(0.4).orbit(2)
+$: note("0").scale("<C2:minor C2:minor F2:dorian C2:minor>")
+  .s("pf:ff").adsr("0.2:0.4:0.5:0.4").cut(1).gain(0.18).room(0.4).orbit(2)
 '''
 
 
@@ -547,7 +550,7 @@ PALETTES: dict[str, dict[str, list]] = {
         "bass": ["sawtooth", "bs:ht"],
         "lead": ["ld:pu", "plk:pk", "wt_bright", "ld:sw"],
         "hook": ["plk:pk", "plk:ac"],
-        "arp": ["perc:ti", "perc:st", "perc:tm"],
+        "arp": ["plk:hd", "plk:aj", "plk:cv"],
         "chords": ["plk:sf", "ep:ky"],
         "pad": ["pf:pu", "pf:cs", "pf:or", "pf:ff"],
     },
@@ -566,7 +569,7 @@ PALETTES: dict[str, dict[str, list]] = {
         ],
         "bass": ["bs:su", "sine"],
         "lead": ["plk:lp", "plk:pk", "ld:fm", "sine", "ld:sf", "plk:fc", "ld:mt"],
-        "arp": ["perc:tm", "perc:mh", "perc:st", "perc:tk", "perc:cb", "perc:sk"],
+        "arp": ["plk:hd", "plk:aj", "plk:s5", "plk:hp", "plk:dt", "plk:cv"],
         "chords": ["plk:sf", "ep:mt", "plk:s5", "ep:ky", "plk:an"],
         "pad": ["pf:pu", "dr:pd", "pf:ff", "pf:cs", "dr:fg", "pf:fo"],
     },
@@ -578,7 +581,7 @@ PALETTES: dict[str, dict[str, list]] = {
         ],
         "lead": ["ld:ds", "plk:nn", "ld:dp"],
         "hook": ["plk:nn", "plk:dt"],
-        "arp": ["perc:tm", "perc:st"],
+        "arp": ["plk:hd", "plk:aj", "plk:lp"],
         "chords": ["plk:s5", "ep:mt"],
         "pad": ["pf:fo", "dr:rd", "pf:ff"],
     },
@@ -1025,6 +1028,8 @@ def bump_scale_oct(body: str, min_oct: int = 4) -> str:
 
 
 def maybe_thin_note(body: str, sound: str, slot: str) -> str:
+    if ".adsr(" in body:
+        return body
     if not is_long(sound):
         return body
     m = re.search(r'note\("([^"]*)"\)', body)
@@ -1120,6 +1125,35 @@ def apply_acid_fm_lead(chunk: str) -> str:
     return ensure_cut1(chunk)
 
 
+LEAD_ADSR = "0.01:0.3:0.7:0.2"
+PAD_ADSR = "0.2:0.4:0.5:0.4"
+ADSR_SLOTS = {
+    "lead",
+    "pad",
+    "choir",
+    "counter",
+    "swell",
+    "drone",
+    "strings",
+    "synth",
+}
+PAD_LIKE_SLOTS = {"pad", "swell", "drone", "choir", "strings"}
+
+
+def ensure_amp_adsr(chunk: str, slot: str, sound: str) -> str:
+    if ".adsr(" in chunk:
+        return chunk
+    if sound in WAVEFORMS or sound.startswith("wt_"):
+        return chunk
+    if not is_pcm_key(sound):
+        return chunk
+    need = slot in ADSR_SLOTS or (slot == "hook" and is_long(sound))
+    if not need:
+        return chunk
+    args = PAD_ADSR if slot in PAD_LIKE_SLOTS else LEAD_ADSR
+    return inject_after_s(chunk, f'.adsr("{args}")')
+
+
 def apply_pitched_sound(
     chunk: str, new: str, slot: str, pcm_min_oct: int = 4
 ) -> str:
@@ -1133,8 +1167,11 @@ def apply_pitched_sound(
             chunk = bump_scale_oct(chunk, min_oct)
         if new == "square" and ".lpf(" not in chunk:
             chunk = inject_after_s(chunk, ".lpf(3200)")
+    chunk = ensure_amp_adsr(chunk, slot, new)
     if slot != "chords" and (
-        is_long(new) or new.startswith(("plk:", "ld:", "vc:"))
+        is_long(new)
+        or new.startswith(("plk:", "ld:", "vc:"))
+        or ".adsr(" in chunk
     ):
         chunk = ensure_cut1(chunk)
     if slot in {"pad", "chords", "strings"} and ".adsr(" not in chunk:
@@ -1492,6 +1529,35 @@ def validate(path: Path, text: str) -> None:
         validate_half_time(path, text)
     if path.parent.name == "minimal":
         validate_minimal(path, text)
+    validate_lead_pad_arp(path, text)
+
+
+def validate_lead_pad_arp(path: Path, text: str) -> None:
+    def check(name: str, chunk: str) -> str:
+        sound = dot_s(chunk) or ""
+        if name == "arp":
+            if sound.startswith("perc:") or (
+                is_perc_track(chunk) and "perc:" in chunk
+            ):
+                raise SystemExit(
+                    f"{path}: arp must be a melody instrument, not perc"
+                )
+            if "note(" not in chunk:
+                raise SystemExit(f"{path}: arp needs note()")
+        if name in ADSR_SLOTS or (name == "hook" and is_long(sound)):
+            if is_pcm_key(sound) and ".adsr(" not in chunk:
+                raise SystemExit(
+                    f"{path}: {name} PCM {sound} needs .adsr after .s()"
+                )
+        if name == "pad":
+            octs = [int(m.group(2)) for m in SCALE_TOKEN.finditer(chunk)]
+            if octs and max(octs) > 3:
+                raise SystemExit(
+                    f"{path}: pad scale octave {octs} should sit near C2, not C4"
+                )
+        return chunk
+
+    map_tracks(text, check)
 
 
 def mini_inner(chunk: str) -> str:

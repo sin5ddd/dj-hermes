@@ -5,14 +5,13 @@ setcpm(126/4)
 $: s("bd:ez*4, ~ sd ~ sd, hh*8, <~ ~ ~ [bd:ez sd bd:ez sd]>").gain(0.62)
 // bass
 $: note("0 ~ 0 <3 0 0 5>").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
-  .s("square").lpf(500).gain(0.46)
-  .attack(0.001).decay(0.08).sustain(0.15).release(0.04)
+  .s("square").adsr("0.001:0.08:0.15:0.04").lpf(500).gain(0.46)
 // lead
 $: note("~ 7 4 <9 7 12 7>").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
-  .s("ld:pu").gain(0.14).cut(1)
+  .s("ld:pu").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.14)
 // hook
 $: note("12 ~ 7 <12 15 12 7>").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
-  .s("ld:ss").gain(0.16).cut(1)
+  .s("ld:ss").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.16)
 // arp
 $: note("~ 0 3 7  3 0 ~ 5").scale("<C3:minor C3:minor G3:phrygian C3:minor>")
   .s("plk:cv").gain(0.14).cut(1)
@@ -20,5 +19,5 @@ $: note("~ 0 3 7  3 0 ~ 5").scale("<C3:minor C3:minor G3:phrygian C3:minor>")
 $: note("[0,2,4] ~ [0,2,4] ~").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
   .s("plk:sf").gain(0.18)
 // pad
-$: note("<0 ~ ~ ~>").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
-  .s("pf:pu").cut(1).gain(0.14).room(0.25).orbit(2)
+$: note("0").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
+  .s("pf:pu").adsr("0.2:0.4:0.5:0.4").cut(1).gain(0.14).room(0.25).orbit(2)

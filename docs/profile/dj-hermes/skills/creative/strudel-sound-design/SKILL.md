@@ -3,7 +3,7 @@ name: strudel-sound-design
 description: >-
   Use when designing synths, samples, banks, or effects for dj-hermes
   (live 2-op FM, factory PCM stems, not full Strudel REPL).
-version: 4.4.0
+version: 4.5.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -198,9 +198,9 @@ $: s("fx-riser_short01")
 
 | 役割 | サンプルがあるとき | 無いとき（同梱のみ） |
 | --- | --- | --- |
-| **Pad** | `pad-ambient_*` 等フル名 + 長め ADSR / room | `pf:ff` `note("0")` at `C4:`（録音が 5 度。`[0,4]` で重ねない） |
+| **Pad** | `pad-ambient_*` 等フル名 + 長め ADSR / room | composition の pad スロットは `pf:ff` `note("0")` at **`C2:`** + `.adsr`（lead と同じ C4 に置かない）。工場 PCM の native 書きは `C4:`（下の Factory PCM） |
 | **Bass** | 短い hit ならフル名。持続はシンセでも可 | PCM `bs:hf` / `bs:su` at `C4:`、または `sawtooth`+lpf のシンセサブ `C2:` |
-| **Lead** | `lead-*` フル名 | `ld:ss` / `plk:*` at `C4:`。`triangle` にしない |
+| **Lead** | `lead-*` フル名 + `.adsr` | `ld:ss` / `plk:*` at `C4:`。PCM は `.s(…).adsr(…)`。`triangle` にしない |
 | **Piano / EP** | `piano-acoustic_*` / `piano-electric_*` フル名 + `note`+`.scale` | `ep:rs` / `ep:ky` / `ep:mt` at `C4:` |
 | **FX** | `fx-*` / `atmo-*` フル名 | `white`/`pink` + 短 ADSR + hpf |
 | **Vocal chop** | カタログ `vc:*`（`C4:` + `.cut(1)`） | 無い。自前 WAV を invent しない。波形で代用しない |
@@ -771,7 +771,10 @@ Writing `C3:…` targets C3 (~130.8 Hz) → ratio **0.5** → an **extra octave 
 | `.scale("C2:minor")` | ~65.4 (C2) | 0.25 | C1 | C0 |
 
 Always write **`C4:…`** for native pitch on this batch. Do not “match” the
-recorded octave in the scale string.
+recorded octave in the scale string. **Exception:** the composition **pad /
+drone / strings** slot writes **`C2:…` + `.adsr` on purpose** so the pad sits
+under the lead (intentional dump; → **strudel-composition**). Factory demos
+below stay `C4:` to show native pitch.
 
 Bare `s("name")` (no `note()`) sets `is_note = false` (`code.rs`). Then
 `pitch_ratio` is **1.0** (`deck.rs`) — the wav plays as recorded, unpitched.
@@ -829,6 +832,8 @@ Sustained fifth pad (C and G only). `note()` only **transposes** that recording.
 It cannot invent a major (or minor) third. Do **not** use this to brighten.
 Do **not** play it as `note("[0,2,4]")` — that stacks three hollow fifths
 (root / third / fifth), still no E or Eb inside the wav.
+This factory snippet shows **native C4 write**. Composition pad slots write
+**C2 + `.adsr`** so the pad sits under the lead (→ **strudel-composition**).
 Key is `pf:ff` (`samples/pf/ff.wav`). Not `pad-fm_fifth` or `pad-fm-fifth`.
 Not a swap for `plk:s5` (that one is a short stab).
 
@@ -839,11 +844,11 @@ or the dark-Reese bed (it fills the mids). Separate song at the same 124 clock.
 
 ```
 setcpm(124/4)
-$: note("4 ~ 7 4").scale("C4:minor").s("ld:ss").gain(0.28).cut(1)
+$: note("4 ~ 7 4").scale("C4:minor").s("ld:ss").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.28)
 ```
 
-The wav is a long hold (~8 s). `.cut(1)` steals the previous shot so the
-melody stays monophonic. Key is `ld:ss` (`samples/ld/ss.wav`).
+The wav is a long hold (~8 s). Amp `.adsr` right after `.s()`, then `.cut(1)`
+so the melody stays monophonic. Key is `ld:ss` (`samples/ld/ss.wav`).
 Not `lead-supersaw` or `lead_supersaw`. Do not rewrite the [strudel-genre-house](../strudel-genre-house/SKILL.md)
 pluck line to this stem.
 
@@ -862,9 +867,10 @@ These are gestures, not pitched instruments. Bare `s("…")`. No `.scale`.
 | `samples/fx/id.wav` | `fx:id` | DnB impact (~0.5 s) |
 | `samples/fx/sd.wav` | `fx:sd` | Sub drop (~50 Hz, ~1.1 s) |
 
-Long one-shots must **not** fire every bar. The six risers are ~15 s; a
+FX risers must **not** fire every bar. The six risers are ~15 s; a
 bar at 124 BPM is ~1.94 s. `s("fx:up")` overlaps itself. Mini `<>` picks
-one child **per cycle** (`mini.rs` `Node::Stack`):
+one child **per cycle** (`mini.rs` `Node::Stack`). Lead / pad PCM is a
+different rule: `.adsr` + `.cut(1)` may sit on the grid (→ **strudel-composition**).
 
 ```
 setcpm(124/4)
@@ -1032,7 +1038,7 @@ is required. Do not change this grid.
 setcpm(124/4)
 $: s("bd*4, [~ cp]*2, [~ hh]*4").gain(0.65)
 $: note("0 0 4 0").scale("C4:minor").s("bs:hf").gain(0.45)
-$: note("4 ~ 7 4").scale("C4:minor").s("ld:ss").gain(0.28).cut(1)
+$: note("4 ~ 7 4").scale("C4:minor").s("ld:ss").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.28)
 ```
 
 Apply the inline recipe with `dj_hermes_apply_song`. Shared `setcpm(124/4)` so the
@@ -1053,6 +1059,7 @@ Live TUI: apply the inline recipes with `dj_hermes_apply_song`.
 ## Do not
 
 - Write `C3:…` or `C2:…` on these pitched stems — that dumps octaves.
+  **Exception:** composition pad / drone / strings use `C2:` + `.adsr` (intentional dump).
 - Put `bs:hf` at C3 (on top of the kick) or hear it as a mid-bass.
 - Put `bs:dk` on the same song as `bs:hf` (both have sub).
 - Stack `bs:dk` with `bs:su` or square sub.
@@ -1062,7 +1069,7 @@ Live TUI: apply the inline recipes with `dj_hermes_apply_song`.
 - Put `note()` / `.scale` on `fx:up`, `fx:nr`, `fx:rf`, `fx:rp`,
   `fx:rw`, `fx:fr`, `fx:id`, or `fx:sd` (including the ~50 Hz drop).
 - Stack `ld:ss` on the floor pad or the Reese bed.
-- Rewrite the lead degrees `4 ~ 7 4` or drop `.cut(1)`.
+- Rewrite the lead degrees `4 ~ 7 4` or drop `.adsr` / `.cut(1)` on `ld:ss`.
 - Rewrite `bs:rm` / `plk:lp` / live 2-op recipes to these stems.
 - Add a `bd/` bank or a third-party drum kit from this batch.
 - Write old flats (`bass-fm_house`, `pad-fm_fifth`, `reese-dark`, `fx-uplifter`) or hyphen swaps (`bass-fm-house`, `pad-fm-fifth`, `reese_dark`, `fx-riser-noise`).

@@ -5,7 +5,7 @@ description: >-
   four-on-the-floor, short square bass, supersaw hook, pitched parts
   two octaves below typical C4 PCM. Not house clap-front, not a thin
   zap hook, and not sparse minimal.
-version: 6.0.1
+version: 6.1.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -45,10 +45,10 @@ $: note("0 ~ 0 <3 0 0 5>").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
   .s("square").adsr("0.001:0.08:0.15:0.04").lpf(500).gain(0.46)
 // lead
 $: note("~ 7 4 <9 7 12 7>").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
-  .s("ld:pu").gain(0.14).cut(1)
+  .s("ld:pu").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.14)
 // hook
 $: note("12 ~ 7 <12 15 12 7>").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
-  .s("ld:ss").gain(0.16).cut(1)
+  .s("ld:ss").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.16)
 // arp
 $: note("~ 0 3 7  3 0 ~ 5").scale("<C3:minor C3:minor G3:phrygian C3:minor>")
   .s("plk:cv").gain(0.14).cut(1)
@@ -57,7 +57,7 @@ $: note("[0,2,4] ~ [0,2,4] ~").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
   .s("plk:sp").gain(0.18)
 // pad
 $: note("0").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
-  .s("pf:ff").gain(0.14).room(0.25).orbit(2)
+  .s("pf:ff").adsr("0.2:0.4:0.5:0.4").cut(1).gain(0.14).room(0.25).orbit(2)
 ```
 
 同梱 `songs/electro/01.strudel` はこのフェンスと同じ（グリッド・次数・帯域）。新規 apply の `.s()` は下のパレットから選ぶ。**フックはスーパーソー。リードに `ld:ss` を重ねない。**
@@ -66,7 +66,7 @@ $: note("0").scale("<C2:minor C2:minor G2:phrygian C2:minor>")
 
 ## 音色パレット（新規 apply はここから選ぶ）
 
-Pattern はグリッド・次数・スロットの見本。新規曲は下表からスロットごとに 1 つ選び、このフェンスの `.s()` を毎回コピーしない。同一曲の pitched 2 本に同じ `.s()` を使わない。slug の意味は strudel-pcm-catalog の INDEX。長尺（`ld:` / `dr:` / `pf:` / `ps:`、`plk:fp` / `plk:sp`）は `.cut(1)` か `s("<x ~ ~ ~>")`。
+Pattern はグリッド・次数・スロットの見本。新規曲は下表からスロットごとに 1 つ選び、このフェンスの `.s()` を毎回コピーしない。同一曲の pitched 2 本に同じ `.s()` を使わない。slug の意味は strudel-pcm-catalog の INDEX。lead / pad の PCM は `.s()` の直後に `.adsr`、そのあと `.cut(1)`。FX ライザーだけ `<>` 間引き。
 
 短い square ベースは **1 役だけ**。フックの芯は `ld:ss`。zap（`ld:zp`）は下の Variations だけ。
 
@@ -74,11 +74,11 @@ Pattern はグリッド・次数・スロットの見本。新規曲は下表か
 | --- | --- | --- | --- |
 | drums | 機械的 4 つ打ち + 2/4 `sd` | `bd:ez` / `bd:9p`、`sd:rm`、`hh:ch` | `[~ cp]*2`、`bd:gb` |
 | bass | 短い `square`+`lpf(500)` at `C2:` | `bs:dq` at `C2:`（square と同時に使わない。`C4:` に上げない） | `bs:su` 重ね、長い pad をベースに、`C0:` |
-| lead | `C2:` | `ld:pu`、`ld:ch`、`ld:dp` | `ld:ss`（フックの役）、`ep:rs`、`C4:` |
+| lead | `C2:` + `.adsr` | `ld:pu`、`ld:ch`、`ld:dp` | `ld:ss`（フックの役）、`ep:rs`、`C4:`、ADSR なし |
 | hook | `ld:ss` at `C2:` | `ld:st`、`ld:us` | `ld:zp` を既定、bass と同じ `square`、`plk:mx`、`C4:` |
-| arp | `C3:` | `plk:cv`、`perc:zp` | ナイロン `plk:ny`、`C5:` |
+| arp | `C3:` メロディ楽器 | `plk:cv`、`plk:s5` | ナイロン `plk:ny`、`perc:`、`C5:` |
 | chords | `C2:` | `plk:sf`、`plk:s5`、`plk:sp` を `<>` | `ep:rs`、`triangle`、`C4:` |
-| pad | `C2:` | `pf:pu`、`ld:hf` を `<>`、`pf:ff`+`note("0")` | `pf:al`、オルゴール、Rhodes、`C4:` |
+| pad | `C2:` + `.adsr` | `pf:pu`、`ld:hf` を `<>`、`pf:ff`+`note("0")` | ADSR なし、`pf:al`、オルゴール、Rhodes、`C4:` |
 | vox | **`C4:` のみ**（他 pitched の C2 ルール対象外）。任意 8 本目。`.cut(1)` | `vc:tu`、`vc:pa` | `C2:` / `C3:` に落とす、`C5:`、16 分埋め、自前 WAV を invent |
 
 ## Why
@@ -91,8 +91,8 @@ Pattern はグリッド・次数・スロットの見本。新規曲は下表か
 
 1. キック / スネア / ハットはカンマで 1 本
 2. ベースは短い square（シンセサブ）**または** `bs:dq` 1 つ。どちらも **`C2:`**。ADSR を短くする
-3. フックはスーパーソー（`ld:ss` / `ld:st` / `ld:us`）。長い `ld:` は `.cut(1)`
-4. ピッチトラックは 4 小節 `.scale`。オクターブは **bass/lead/hook/chords/pad = C2、arp = C3**（他ジャンルの C4/C5 から 2 オクターブ下）。**`vc:` だけ `C4:`**
+3. フックはスーパーソー（`ld:ss` / `ld:st` / `ld:us`）。lead / hook / pad の PCM は `.s(…).adsr(…)` + `.cut(1)`
+4. ピッチトラックは 4 小節 `.scale`。オクターブは **bass/lead/hook/chords/pad = C2、arp = C3**（他ジャンルの C4/C5 から 2 オクターブ下。pad はもともと C2）。**`vc:` だけ `C4:`**。arp はメロディ楽器（`perc:` ではない）
 5. ハットは乾いたまま（長い room をドラムに載せない）
 
 鳴らすのは `dj_hermes_apply_song(content, deck)`（次小節、無書き込み）。`dj_hermes_save_song` は残す指示のときだけ（演奏は変えない）。
@@ -109,7 +109,7 @@ Pattern はグリッド・次数・スロットの見本。新規曲は下表か
 
 1. `stack()` / `.cpm()` / `.lfo()` → apply / save とも 400
 2. ドラムを kick / snare / hat の 3 `$:` に分ける
-3. 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`）を毎小節撃たない
+3. 長い PCM（`ld:` / `dr:` / `pf:` / `ps:`）を **ADSR なし**で毎小節撃つ。lead / pad は `.adsr` + `.cut(1)` ならグリッド可。arp を `perc:` にしない
 4. アンビエント寄りの長い release
 5. square サブの上に `bs:su` を重ねる
 6. フックを `ld:zp` や `square`+`penv` の既定にする。lead と hook の両方を `ld:ss` にする
@@ -122,6 +122,6 @@ Pattern はグリッド・次数・スロットの見本。新規曲は下表か
 - [ ] ドラムは 1 本のカンマ層
 - [ ] 機械的な 4 つ打ち + 2/4 スネア（クラップ先行にしない）
 - [ ] フックはスーパーソー（`ld:ss` / `ld:st` / `ld:us`）。lead と重ねない
-- [ ] 帯域は bass/lead/hook/chords/pad `C2:`、arp `C3:`（PCM も `C4:` に上げない）。`vc:` だけ `C4:`
+- [ ] 帯域は bass/lead/hook/chords/pad `C2:`、arp `C3:`（PCM も `C4:` に上げない）。`vc:` だけ `C4:`。lead / pad PCM は `.adsr`。arp はメロディ楽器
 - [ ] `.s()` は音色パレット
 - [ ] `dj_hermes_apply_song(content, deck)`（save は残す指示のときだけ）
