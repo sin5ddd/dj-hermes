@@ -3,7 +3,7 @@ name: strudel-pcm-catalog
 description: >-
   Use when choosing a rust-fm-synthe or Irodori-TTS PCM one-shot for dj-hermes
   (bd:8b, hh:cl, bs:ht, vc:pa, iv:yat, and other part:slug keys). Not for live 2-op .fm.
-version: 1.6.1
+version: 1.6.2
 author: Hermes Agent
 license: MIT
 metadata:
@@ -204,7 +204,7 @@ $: s("[~ ~ iv:yat]").gain(0.45)
 $: s("<iv:dzo ~ ~ ~>").gain(0.4)
 ```
 
-発話はミックスに埋もれやすいので `.gain(0.4–0.6)` 目安。狭いグリッドで連打・重ねるときは `.cut(1)`。長いフレーズ（`iv:yat` / `iv:iku` / `iv:dzo` / `iv:sen`）は小節末に 1 回が基本。`vc:` と違いコーラスも移調も無い（録音のまま）。MIX のカウントインは `dj_hermes_mix(move="fill", kind="count")`（`mixes/count.strudel` が `iv:iku` と `iv:ic` `iv:ni` `iv:sa` `iv:si` を拍に乗せる）。
+発話はミックスに埋もれやすいので `.gain(0.4–0.6)` 目安。狭いグリッドで連打・重ねるときは `.cut(1)`。長いフレーズ（`iv:yat` / `iv:iku` / `iv:dzo` / `iv:sen`）は小節末に 1 回が基本。`vc:` と違いコーラスも移調も無い（録音のまま）。MIX のカウントインは `dj_hermes_mix(move="fill", kind="count")`（`mixes/count.strudel` が `iv:iku` と `iv:ic` `iv:ni` `iv:sa` `iv:si` を拍に乗せる）。**曲本体の kawaii 掛け声**（`hai dou zo` / `moi kai` / `ses` / `yat` のセットと置き場、1 曲 1 セット、カウント 4 語は曲に書かない）は **strudel-genre-kawaii-future-bass**。
 
 ## Rules
 

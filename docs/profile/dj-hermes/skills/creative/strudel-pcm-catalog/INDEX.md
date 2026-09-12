@@ -219,17 +219,17 @@ Irodori-TTS（Aratako）で無から生成した日本語ボイスのワンシ�
 | `iv:dzo` | yes | `iv-dzo` | hai douzo | 「はいどうぞ」のフレーズ。渡す・見せ場の掛け声。 | - | 1.30 |
 | `iv:fu` | yes | `iv-fu` | fu | 「フ」の短い息。照れ・気の抜け・間。 | - | 0.30 |
 | `iv:hai` | yes | `iv-hai` | hai chop | 「はい」。相づち・頭出しの1音。 | - | 0.35 |
-| `iv:ic` | yes | `iv-ic` | ichi | 「いち」。カウントの1。 | - | 1.17 |
+| `iv:ic` | yes | `iv-ic` | ichi | 「いち」。カウントの1。 | - | 0.39 |
 | `iv:iku` | yes | `iv-iku` | iku yo | 「行くよ」。セクション転換・ドロップ前の頭出し。 | - | 1.93 |
 | `iv:kai` | yes | `iv-kai` | kai | 「かい」。短い問い返し。 | - | 0.21 |
 | `iv:moi` | yes | `iv-moi` | mou i chop | 「もういっ」の頭チョップ。もう一回の前振り。 | - | 0.47 |
 | `iv:mou` | yes | `iv-mou` | mou ikkai | 「もう一回」。リピート要求の掛け声。 | - | 0.94 |
-| `iv:ni` | yes | `iv-ni` | ni | 「に」。カウントの2。 | - | 1.11 |
+| `iv:ni` | yes | `iv-ni` | ni | 「に」。カウントの2。 | - | 0.30 |
 | `iv:ra` | yes | `iv-ra` | ra | 「ラ」の1音。歌い出しっぽい粒。 | - | 0.47 |
-| `iv:sa` | yes | `iv-sa` | san | 「さん」。カウントの3。 | - | 1.19 |
+| `iv:sa` | yes | `iv-sa` | san | 「さん」。カウントの3。 | - | 0.39 |
 | `iv:sen` | yes | `iv-sen` | se-no | 「せーの」（長）。カウントイン・ビルド。 | - | 1.30 |
 | `iv:ses` | yes | `iv-ses` | se-no short | 「せーの」の短いチョップ。フィルの頭出し。 | - | 0.77 |
-| `iv:si` | yes | `iv-si` | shi | 「し」。カウントの4。 | - | 0.80 |
+| `iv:si` | yes | `iv-si` | shi | 「し」。カウントの4。 | - | 0.26 |
 | `iv:uke` | yes | `iv-uke` | chou ukeru | 「超ウケる」。リアクションの決め。 | - | 0.86 |
 | `iv:wkw` | yes | `iv-wkw` | wakuwaku | 「わくわく」。期待のつぶやき。 | - | 0.86 |
 | `iv:yat` | yes | `iv-yat` | yatta | 「やったー」。歓声の決め。ドロップ・フィル。 | - | 1.41 |

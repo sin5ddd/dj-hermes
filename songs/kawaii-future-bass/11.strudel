@@ -10,9 +10,9 @@ $: note("<[0 ~ 0 0  4 0 ~ 0] [0 0 4 0  0 ~ 4 0] [0 4 ~ 0  0 0 2 ~] [0 0 0 4  ~ 2
   .scale("<A4:minor F4:lydian G4:mixolydian C4:major A4:minor F4:lydian G4:mixolydian C4:major C4:major G4:mixolydian F4:lydian A4:minor C4:major B4:locrian A4:minor G4:mixolydian>")
   .s("bs:8s").gain(0.4).cut(1).orbit(2)
 // lead
-$: note("<[~ 9 ~ 4  ~ 7 9 2] [9 ~ 7 4  ~ 2 4 7] [~ 7 9 4  2 ~ 7 4] [4 ~ 7 9  ~ 4 2 0] [4 7 ~ 9  7@2 4 2] [4 7 ~ 9  7@2 4 0] [4 7 ~ 9  7@2 2 ~] [4 7 ~ 9  7@2 4 2] [9 7 ~ 4  2 ~ 0 4] [~ 7 4 2  0 4 ~ 7] [4 2 0 ~  7 4 2 0] [~ 2 4 7  0 4 ~ 2] [4 7 ~ 9  7@2 4 2] [4 7 ~ 9  7@2 4 0] [4 7 ~ 9  7@2 2 ~] [4 7 ~ 9  7@2 4 2]>")
+$: note("<[9@3 4@2 7 9 2] [9@2 7 4@2 2 4 7] [7@2 9 4 2@2 7 4] [4@2 7 9@2 4 2 0] [4 7@2 9 7@2 4 2] [4 7@2 9 7@2 4 0] [4 7@2 9 7@2 2@2] [4 7@2 9 7@2 4 2] [9 7@2 4 2@2 0 4] [7@2 4 2 0 4@2 7] [4 2 0@2 7 4 2 0] [2@2 4 7 0 4@2 2] [4 7@2 9 7@2 4 2] [4 7@2 9 7@2 4 0] [4 7@2 9 7@2 2@2] [4 7@2 9 7@2 4 2]>")
   .scale("<A4:minor F4:lydian G4:mixolydian C4:major A4:minor F4:lydian G4:mixolydian C4:major C4:major G4:mixolydian F4:lydian A4:minor C4:major B4:locrian A4:minor G4:mixolydian>")
-  .s("ld:cy").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.16)
+  .s("ld:ss").adsr("0.01:0.3:0.7:0.2").cut(1).gain(0.16)
 // hook
 $: note("<[11 ~ ~ 12  9 ~ 11 7] [~ 12 11 ~  9 12 ~ 4] [12 9 ~ 11  ~ 7 9 12] [~ 9 11 4  12 7 ~ 9] [11 12 11 9  12 11 9 7] [12 ~ 11 12  9 7 11 9] [~ 11 12 9  11 12 7 12] [9 11 12 9  11 7 4 12] [~ 12 4 ~  9 7 ~ 0] [12 7 ~ 4  ~ 0 11 7] [~ 4 9 0  7 ~ 2 11] [4 ~ 7 2  0 9 ~ 4] [11 12 11 9  12 11 9 7] [12 ~ 11 12  9 7 11 9] [~ 11 12 9  11 12 7 12] [9 11 12 9  11 7 4 12]>")
   .scale("<A4:minor F4:lydian G4:mixolydian C4:major A4:minor F4:lydian G4:mixolydian C4:major C4:major G4:mixolydian F4:lydian A4:minor C4:major B4:locrian A4:minor G4:mixolydian>")
@@ -22,12 +22,14 @@ $: note("<[~ ~ 0 ~  ~ ~ ~ ~] [~ 0 ~ ~  ~ ~ 4 ~] [0 ~ ~ ~  ~ ~ ~ ~] [~ ~ 4 ~  ~ ~
   .scale("<A4:minor F4:lydian G4:mixolydian C4:major A4:minor F4:lydian G4:mixolydian C4:major C4:major G4:mixolydian F4:lydian A4:minor C4:major B4:locrian A4:minor G4:mixolydian>")
   .s("vc:na").gain(0.14).cut(1)
 // chords
-$: note("<[[0,4,8] [0,4,8] ~ ~  ~ [0,2,8] ~ [0,4,8]] [[0,2,8] ~ [0,4,8] [0,4,8]  ~ ~ [0,2,8] ~] [[0,4,8] ~ ~ [0,2,8]  [0,4,8] ~ ~ [0,4,8]] [[0,2,8] [0,4,8] ~ [0,4,8]  ~ [0,2,8] ~ ~]>")
+$: note("<[0,4,8]@8 [0,2,8]@8 [0,4,8]@8 [0,4,8]@8>")
   .scale("<A4:minor F4:lydian G4:mixolydian C4:major A4:minor F4:lydian G4:mixolydian C4:major C4:major G4:mixolydian F4:lydian A4:minor C4:major B4:locrian A4:minor G4:mixolydian>")
-  .s("plk:sm").gain(0.2).orbit(2)
+  .s("ep:ky").adsr("0.02:0.3:0.6:0.4").gain(0.24).orbit(2)
 // pad
-$: note("<0 ~ 0 ~ ~ ~ 0 ~ ~ 0 ~ ~ 0 ~ ~ ~>").scale("<A2:minor F2:lydian G2:mixolydian C2:major A2:minor F2:lydian G2:mixolydian C2:major C2:major G2:mixolydian F2:lydian A2:minor C2:major B2:locrian A2:minor G2:mixolydian>")
+$: note("0").scale("<A2:minor F2:lydian G2:mixolydian C2:major A2:minor F2:lydian G2:mixolydian C2:major C2:major G2:mixolydian F2:lydian A2:minor C2:major B2:locrian A2:minor G2:mixolydian>")
   .s("pf:sp").adsr("0.2:0.4:0.5:0.4").cut(1).gain(0.16).room(0.35).orbit(2)
 // strings
-$: note("<~ ~ ~ 0 ~ 0 ~ ~ 0 ~ ~ 0 ~ ~ ~ ~>").scale("<A2:minor F2:lydian G2:mixolydian C2:major A2:minor F2:lydian G2:mixolydian C2:major C2:major G2:mixolydian F2:lydian A2:minor C2:major B2:locrian A2:minor G2:mixolydian>")
+$: note("<[~@2 0@6]>").scale("<A2:minor F2:lydian G2:mixolydian C2:major A2:minor F2:lydian G2:mixolydian C2:major C2:major G2:mixolydian F2:lydian A2:minor C2:major B2:locrian A2:minor G2:mixolydian>")
   .s("pf:hl").adsr("0.2:0.4:0.5:0.4").cut(1).gain(0.12).room(0.45).orbit(2)
+// vox
+$: s("<~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ [iv:moi iv:kai]>").gain(0.5).cut(1)

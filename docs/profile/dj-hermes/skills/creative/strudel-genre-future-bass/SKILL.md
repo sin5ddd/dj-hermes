@@ -6,7 +6,7 @@ description: >-
   8th-note bass, 16-bar anthem loop, equal-weight <> children, hat
   rolls only at phrase ends. Not 王道, not kawaii bells, not four-on-the-floor,
   not hh*16 every 4 bars, not kick-only bass.
-version: 8.2.0
+version: 8.2.1
 author: Hermes Agent
 license: MIT
 metadata:
@@ -28,7 +28,7 @@ metadata:
 
 このリポジトリの **Future Bass** は、トラップ由来のハーフタイムの上に **スーパーソーを厚く積んだ派手さ**。ユーロビートから借りるのはキックの四つ打ちではなく、**デチューンしたソーのアンセム感・忙しいアルペジオ・オクターブの跳ね**。参照の方向はフェスのドロップ（広いソーコード、8 分ベース、シンコペしたキック）。
 
-**Kawaii Future Bass とは別物。** キラキラパッド、ベル、オルゴール、王道／小室は [strudel-genre-kawaii-future-bass](../strudel-genre-kawaii-future-bass/SKILL.md)。来場者が「アニソン」「カワイイベース」「王道」と言ったらそちら。こちらにベルと王道を載せない。
+**Kawaii Future Bass とは別物。** `ld:ss` メロ 1 本、EP ホールド、キラキラパッド、フックのベル、王道／小室は [strudel-genre-kawaii-future-bass](../strudel-genre-kawaii-future-bass/SKILL.md)。来場者が「アニソン」「カワイイベース」「王道」と言ったらそちら。こちらにベルと王道を載せない。
 
 | 層 | 取るもの | 取らないもの |
 | --- | --- | --- |
@@ -216,7 +216,7 @@ Pattern はグリッド・次数・スロットの見本。新規曲は下表か
 
 **add9 `[0,4,8]`。** 0=根、4=5 度、8=9 度。`[0,4,9]` は 10 度。コードは短いスーパーソー `plk:ss` で 8 分に跳ねる。
 
-**Kawaii との差。** こちらはソーのスタック。ベル・オルゴール・キラキラパッド・王道・クワイアは隣の Skill。ダブステップとの差は wobble を主役にしないこと（同じ 140 でも）。
+**Kawaii との差。** こちらはソーのスタック（lead + 跳ねるコード + 低いソー床）。kawaii は lead だけ `ld:ss`、コードは EP ホールド、パッドはキラキラ、進行は王道。kawaii だけたまに `iv:` の 10 本目がある（こちらは足さない）。ダブステップとの差は wobble を主役にしないこと（同じ 140 でも）。
 
 PCM フロア / lead / hook / chords は `C4:`。**pad / strings は C2** + `.adsr`。シンセサブを `bs:sw` と重ねない。
 

@@ -1,7 +1,7 @@
 ---
 name: strudel-composition
 description: "Use when writing a dj-hermes song: 7–8 $: tracks (drums, bass 1–2, three melody instruments, chords, pad), 4-bar phrases, dj_hermes_apply_song (save only to persist)."
-version: 5.11.0
+version: 5.13.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -33,9 +33,9 @@ dj-hermes の曲は **`$:` を重ねたループを、演奏しながら 1 本�
 
 | 場面 | 既定 |
 | --- | --- |
-| 新規曲・プリセット（`dj_hermes_apply_song`） | 7–8 本、4 小節フレーズ（Future Bass / Kawaii Future Bass は 9 本・16 小節 scale。Ambient は 16 本・16 小節フォーム。Minimal は 14–16 本・16 小節ミュート） |
+| 新規曲・プリセット（`dj_hermes_apply_song`） | 7–8 本、4 小節フレーズ（Future Bass / Kawaii Future Bass は 9 本・16 小節 scale。Kawaii はたまに `iv:` で 10 本目。Ambient は 16 本・16 小節フォーム。Minimal は 14–16 本・16 小節ミュート） |
 | 来場者の一言編集 | **1 トラック or 1 メソッド**（全文を作り直さない） |
-| 同梱 `songs/<genre>/` | 7–8 本、4 小節フレーズ（Future Bass / Kawaii Future Bass は 9 本・16 小節 scale。Ambient は 16 本・16 小節フォーム。Minimal は 14–16 本・16 小節ミュート） |
+| 同梱 `songs/<genre>/` | 7–8 本、4 小節フレーズ（Future Bass / Kawaii Future Bass は 9 本・16 小節 scale。Kawaii はたまに `iv:` で 10 本目。Ambient は 16 本・16 小節フォーム。Minimal は 14–16 本・16 小節ミュート） |
 
 ## スロット（`$:` 本数の正本）
 
@@ -52,18 +52,18 @@ dj-hermes の曲は **`$:` を重ねたループを、演奏しながら 1 本�
 | 7 | `// chords` | ブロック和音。`ep:*` で `[0,2,4]` 等。`c3'maj` は root のみなので使わない |
 | 8 | `// pad` | ジャンルパレットの pad。**C2**（ドローンなら C1）。PCM は **`.adsr`**。`pf:ff` なら次数 `0`。orbit をリードと分ける |
 | 9 | `// strings` | Future Bass と Kawaii Future Bass だけ。長いホールド（カタログに violin は無い）。orbit は pad と同じ |
-| 10 | `// vox` | 任意。ボーカルチョップ（`vc:`）。perc と同時に足して本数上限を超えない |
+| 10 | `// vox` | 任意。ボーカルチョップ（`vc:`）。Kawaii の疎な `iv:` もここ（セットは **strudel-genre-kawaii-future-bass**）。perc と同時に足して本数上限を超えない |
 
 数え方:
 
 - ベース 1 本: drums + bass + lead + hook + arp + chords + pad = **7**。8 本目は `// perc`（毎小節撃たないワンショット）か **`// vox`**（同時に両方は置かない）
 - ベース 2 本: drums + bass + bass-mid + lead + hook + arp + chords + pad = **8**。vox は **`// arp` を差し替え**（9 本にしない）
 - **duck 例外**: キックだけ別 `$:`（`duckorbit`）。ハットは 2 本目。この 2 本でドラム枠。残り 6 = bass 1 + メロ 3 + chords + pad。2 本目ベースは足さない。vox は arp 差し替え（9 本にしない）
-- **Future Bass / Kawaii Future Bass 例外**: duck 分割のうえ `// strings` を足して **9 本**。繰り返しは **16 小節**（`.scale` 16 子。`cat` ではない）。ドラム／ベース／リードは 1 小節ループにしない。`<>` の子は **同じウェイト**（8 分なら 8）。王道・ベルは kawaii、スーパーソーの壁は future-bass（混ぜない）。vox は **`// arp` の `.s("vc:…")`**（10 本にしない）
+- **Future Bass / Kawaii Future Bass 例外**: duck 分割のうえ `// strings` を足して **9 本**。繰り返しは **16 小節**（`.scale` 16 子。`cat` ではない）。ドラム／ベース／リードは 1 小節ループにしない。`<>` の子は **同じウェイト**（8 分なら 8）。kawaii の lead 既定は `ld:ss`（壁ではない）、コードは EP／パッドのホールド、フックだけベル。スーパーソーの壁は future-bass（混ぜない）。`vc:` は **`// arp` の `.s("vc:…")`**（`vc:` のために 10 本にしない）。**Kawaii だけ**、たまに Irodori `iv:` を 10 本目 `// vox` に置いてよい（必須ではない。セット 1 個。置き場と禁止キーは **strudel-genre-kawaii-future-bass**）
 - **Minimal 例外**: **14–16 本**。キック / 裏拍 OHH / ベースは常時オン（16 子ミュートを書かない）。他は 16 小節ミュート。kick / ohh / chh は別 `$:`。perc / tom / metal は `note()` 可。`// vox` はミュート対象（texture 差し替え、または 15–16 本目）。スロットとマップは **strudel-genre-minimal**
 - **Ambient 例外**: **16 本**。繰り返しは **16 小節**（4 小節細胞を 4 ブロック。`cat` ではない）。1–4 基本（キック無し）→ 5–8 ドラム → 9–12 基本 → 13–16 モチーフ逆行または下行バスのクリシェ。**転調しない**。床以外はアクセント。スロットとマップは **strudel-genre-ambient**
 - **Electro 例外**: フックはスーパーソー（`ld:ss`）。pitched は `C2:`（arp は `C3:`）。PCM も他ジャンルの `C4:` native に上げない。**`vc:` だけは `C4:`**（録音が C4。C2 に落とすと声が床になる）→ **strudel-genre-electro**
-- 目標 **7–8 本**。9 本以上は既定にしない（Future Bass / Kawaii は 9 本、Minimal は 14–16 本、Ambient は 16 本）
+- 目標 **7–8 本**。9 本以上は既定にしない（Future Bass / Kawaii は 9 本。Kawaii の `iv:` があるときだけ 10 本。Minimal は 14–16 本、Ambient は 16 本）
 
 各ジャンルのグリッドは Pattern、音色は **音色パレット**（**strudel-genre-***）。
 
@@ -80,7 +80,7 @@ dj-hermes の曲は **`$:` を重ねたループを、演奏しながら 1 本�
 | スロット | 既定グリッド | 長音 / 休符 |
 | --- | --- | --- |
 | pad / strings | 1 小節 1 音 `0`、または `0@3 ~` | **ホールド。** `0 ~ ~ ~` は 4 分 1 打＋無音であり、長いパッドではない |
-| chords（ブロック） | `[0,2,4]@2 [0,2,4]@2` または `[0,2,4]`（小節まるごと） | **ホールド。** `[0,2,4] ~ [0,2,4] ~` はスタブ（音が切れる）。スタブがジャンル署名のときだけ残す（DnB / Dubstep の `[0,4]`、Kawaii の短いキラキラ） |
+| chords（ブロック） | `[0,2,4]@2 [0,2,4]@2` または `[0,2,4]`（小節まるごと） | **ホールド。** `[0,2,4] ~ [0,2,4] ~` はスタブ（音が切れる）。スタブがジャンル署名のときだけ残す（DnB / Dubstep の `[0,4]`）。**Kawaii のコードは `[0,4,8]@8` の EP／パッド** |
 | lead | **8 分**（ウェイト 8）。伸ばす音は `@` | `4 ~ ~ ~` と **4 原子リードは禁止**。16 分埋めは arp と同時にしない |
 | hook | **8 分。** ジャンル固定次数はそのまま | 空きは掛け合い用の `~`。伸ばしたい音は `@`。house フック `4 ~ 7 4  2 0 ~ -1` は書き換えない |
 | arp | **8 分または 16 分。** 原子を埋める | 4 原子 arp は禁止。末 1 個の `~` は可。`vc:` の 16 分壁は禁止（チョップは疎のまま） |
@@ -176,7 +176,7 @@ $: note("0 0 2 4").scale("C2:minor").s("sawtooth").lpf(450).gain(0.5)
 
 ## ライブ編集ワークフロー（必須）
 
-1. 初回: 正本に近い **7–8 本** content を `dj_hermes_apply_song(content, deck)`（ディスクに書かない。Ambient は 16 本、Future Bass / Kawaii は 9 本、Minimal は 14–16 本）
+1. 初回: 正本に近い **7–8 本** content を `dj_hermes_apply_song(content, deck)`（ディスクに書かない。Ambient は 16 本、Future Bass / Kawaii は 9 本、Kawaii の `iv:` があるときだけ 10 本、Minimal は 14–16 本）
 2. 来場者の要望: **`dj_hermes_get_song(deck)`** → **1 トラック or 1 メソッド**だけ
    - パラメータ 1 個 → `dj_hermes_edit_method`
    - 1 本の `$:` 差し替え/追加 → `dj_hermes_patch_track`
@@ -192,7 +192,7 @@ $: note("0 0 2 4").scale("C2:minor").s("sawtooth").lpf(450).gain(0.5)
 | 暗い / 明るい | **モード梯子**（→ **strudel-mood-bright-dark**）。副次で lpf |
 | ブレイク / フィル | drums に `<>` / `.ply(2)` |
 | メロディ足して | 空いている lead/hook/arp を埋める。既に 3 本あるときは 1 本を差し替え。**ミニマルは次数を増やさず synth / pluck をオン** |
-| ボーカル / チョップ足して | **`// vox`**（`vc:`）。7 本床なら 8 本目（perc の代わり）。8 本上限・Future Bass / Kawaii は **arp 差し替え**。ミニマルは texture 差し替えか 15–16 本目。アンビエントは 16 本のうちの `// vox` |
+| ボーカル / チョップ足して | **`// vox`**（`vc:`）。7 本床なら 8 本目（perc の代わり）。8 本上限・Future Bass / Kawaii の `vc:` は **arp 差し替え**。Kawaii の Irodori 掛け声はたまに 10 本目 `iv:`（→ **strudel-genre-kawaii-future-bass**）。ミニマルは texture 差し替えか 15–16 本目。アンビエントは 16 本のうちの `// vox` |
 | 転調 / 移調 | scale ルート or `.add`/`.sub` |
 | コード変えて | `// chords` の `[0,2,4]` または進行の `<>` |
 | パッド薄く | `// pad` の `.gain` / `.lpf` |
@@ -217,7 +217,7 @@ $: note("0 0 2 4").scale("C2:minor").s("sawtooth").lpf(450).gain(0.5)
 
 1. 16 分連打は **必ず `.cut(1)`**（3.2 秒が次のヒットに重なる）
 2. `vc:yeah` を毎小節撃たない
-3. コメント名は **`// vox`**。本数上限は上の数え方（perc と同時に足して 9 本にしない。Future Bass / Kawaii / DnB / techno-duck は arp 差し替え。Ambient は 16 本のうちの `// vox`）
+3. コメント名は **`// vox`**。本数上限は上の数え方（perc と同時に足して 9 本にしない。Future Bass / Kawaii / DnB / techno-duck の `vc:` は arp 差し替え。Kawaii の疎な `iv:` は 10 本目可。Ambient は 16 本のうちの `// vox`）
 4. slug は 2 字。**`yeah` だけ 4 字**（音節どおり）
 5. Electro の pitched `C2:` ルールは **`vc:` には適用しない**（C2 に落とすと声が床になる）
 6. arp スロットに置くときも **`C4:`**（ジャンルの arp `C5:` に上げない。1 オクターブ上になる）
@@ -399,7 +399,7 @@ $: note("0 2 4 0").scale("C3:minor").s("piano-acoustic_soft")
 
 ## Checklist
 
-- [ ] `setcpm` + **7–8 本**の `$:`（drums、bass 1–2、lead/hook/arp、chords、pad）。Future Bass / Kawaii Future Bass は 9 本（`// strings`）。Ambient は 16 本。Minimal は 14–16 本（kick / ohh / bass 常時）
+- [ ] `setcpm` + **7–8 本**の `$:`（drums、bass 1–2、lead/hook/arp、chords、pad）。Future Bass / Kawaii Future Bass は 9 本（`// strings`）。Kawaii の `iv:` があるときだけ 10 本目。Ambient は 16 本。Minimal は 14–16 本（kick / ohh / bass 常時）
 - [ ] 4 小節フレーズ（`.scale("<…>")` 4 個 または `<>` 4 子）。1 小節同一繰り返しだけにしない。Future Bass / Kawaii は 16 子 scale。Ambient は 16 子（末 4 は逆行またはクリシェ。転調しない）。Minimal は非リズムの 16 子ミュート（和声は 4 子）
 - [ ] ドラムは原則 1 本の短い `s("bd …")`（キットは `.bank` / `part:slug`）。duck キックのみ分離。Minimal は kick / ohh / chh を分割
 - [ ] ピッチは可能なら次数 + `.scale`（acid の 303 は音名で `.scale` なし）。PCM フロアは `C4:`、シンセサブは `C2:`。**pad は C2**（ドローンなら C1）
