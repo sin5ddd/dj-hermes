@@ -55,7 +55,7 @@ sys.exit(0 if r.get("success") else 1)
 /// How recording starts.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum VoiceMode {
-    /// F12 starts and stops capture (exhibit default).
+    /// F12 starts and stops capture (`--voice` opt-in).
     Push,
     /// Keep the input stream open and split utterances with RMS.
     Vad,

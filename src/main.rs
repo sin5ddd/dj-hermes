@@ -21,7 +21,7 @@ use dj_hermes::bounce::{
 use dj_hermes::cmd::{new_deck_paths, DeckPaths};
 use dj_hermes::engine::{Command, Engine};
 use dj_hermes::highlight::{
-    active_spans, bar_index, bar_pos, format_header, render_ansi, HighlightModel,
+    active_spans, bar_index, bar_pos, format_header, render_ansi_wrapped, HighlightModel,
 };
 use dj_hermes::live_ui;
 use dj_hermes::mcp;
@@ -139,10 +139,10 @@ Usage:
   dj: left=A / right=B highlight, » prompt at bottom.
   Live TUI input:
     bare text     → Hermes (play: profile play-hermes; dj: dj-hermes; needs API + MCP)
-    F12           → voice (Hermes STT → Hermes; optional DJ_HERMES_STT_BASE_URL)
+    F12           → voice (only with --voice; Hermes STT → Hermes; optional DJ_HERMES_STT_BASE_URL)
     /cmd …        → local (play: /house 01  /bpm 128; dj: /a house 01  /x 4)
     --no-hermes   → bare text is local again (text REPL always local)
-  Flags: --no-hermes  --no-voice  --hermes-bin PATH  --hermes-profile NAME  -d/--debug
+  Flags: --no-hermes  --voice  --no-voice  --hermes-bin PATH  --hermes-profile NAME  -d/--debug
 
 Examples:
   cargo run --                             # DJ, empty decks
@@ -181,7 +181,7 @@ struct LiveSessionOpts {
     hermes_enabled: bool,
     hermes_bin: Option<PathBuf>,
     hermes_profile: Option<String>,
-    /// When false, skip F12 voice capture even if STT keys are set.
+    /// When true (`--voice`), start F12 / VAD capture. Default off (issue #59).
     voice_enabled: bool,
     /// Hermes spawn/wait I/O tracing (`-d` / `--debug`).
     debug: bool,
@@ -205,7 +205,7 @@ fn parse_live_session_args(args: &[String]) -> Result<Option<LiveSessionOpts>, S
     let mut hermes_enabled = true;
     let mut hermes_bin: Option<PathBuf> = None;
     let mut hermes_profile: Option<String> = None;
-    let mut voice_enabled = true;
+    let mut voice_enabled = false;
     let mut debug = false;
     let mut debug_log: Option<PathBuf> = None;
     let mut cli_port: Option<u16> = None;
@@ -229,6 +229,9 @@ fn parse_live_session_args(args: &[String]) -> Result<Option<LiveSessionOpts>, S
             }
             "--no-hermes" => {
                 hermes_enabled = false;
+            }
+            "--voice" => {
+                voice_enabled = true;
             }
             "--no-voice" => {
                 voice_enabled = false;
@@ -388,7 +391,7 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
     let mut hermes_enabled = true;
     let mut hermes_bin: Option<PathBuf> = None;
     let mut hermes_profile: Option<String> = None;
-    let mut voice_enabled = true;
+    let mut voice_enabled = false;
     let mut debug = false;
     let mut debug_log: Option<PathBuf> = None;
     let mut cli_port: Option<u16> = None;
@@ -436,6 +439,9 @@ fn cmd_play(args: &[String]) -> Result<(), String> {
             }
             "--no-hermes" => {
                 hermes_enabled = false;
+            }
+            "--voice" => {
+                voice_enabled = true;
             }
             "--no-voice" => {
                 voice_enabled = false;
@@ -801,10 +807,6 @@ fn cmd_live_session(opts: LiveSessionOpts) -> Result<(), String> {
 
     let voice_handle = match (with_highlight, voice_enabled, hermes_handle.as_ref()) {
         (true, true, Some(h)) => start_voice_for_tui(h.config()),
-        (true, false, Some(_)) => {
-            eprintln!("voice: disabled (--no-voice)");
-            None
-        }
         _ => None,
     };
 
@@ -1113,7 +1115,8 @@ fn run_highlight_loop(
             let pos = bar_pos(gs, model.sample_rate, model.bpm);
             let spans = active_spans(model, bar, pos);
             let header = format_header(model, gs, bar, pos);
-            let frame_text = render_ansi(model, &spans, &header);
+            let cols = terminal::size().map(|(c, _)| c as usize).unwrap_or(80);
+            let frame_text = render_ansi_wrapped(model, &spans, &header, true, cols.max(1));
 
             out.queue(cursor::MoveTo(0, 0))
                 .map_err(|e| format!("draw: {e}"))?;
@@ -1381,6 +1384,17 @@ mod tests {
         assert!(opts.song_b.is_none());
         assert!(opts.with_highlight);
         assert!(opts.api_enabled);
+        assert!(!opts.voice_enabled);
+    }
+
+    #[test]
+    fn dj_args_voice_opt_in() {
+        let opts = parse_live_session_args(&s(&["--voice"])).unwrap().unwrap();
+        assert!(opts.voice_enabled);
+        let opts = parse_live_session_args(&s(&["--voice", "--no-voice"]))
+            .unwrap()
+            .unwrap();
+        assert!(!opts.voice_enabled);
     }
 
     #[test]

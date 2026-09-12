@@ -27,7 +27,8 @@ use crate::complete::{self, CompleteCtx, CompleteResult};
 use crate::engine::{Command, Engine};
 use crate::hermes::{HermesEvent, HermesHandle};
 use crate::highlight::{
-    active_atoms, active_spans, bar_index, bar_pos, render_ansi_ex, HighlightModel,
+    active_atoms, active_spans, bar_index, bar_pos, layout_byte_xy, layout_js_source,
+    layout_span_cols, render_ansi_wrapped, HighlightModel,
 };
 use crate::live_fx::{self, FxState};
 use crate::session::SessionKind;
@@ -35,8 +36,10 @@ use crate::song::Song;
 use crate::viz::{self, VizModel};
 use crate::voice_input::{VoiceEvent, VoiceHandle, VoiceMode};
 
-const HELP_LINE: &str = "F9 vfx  F10 viz  F12音声  mute  drag xf/EQ  /help";
-const HELP_LINE_PLAY: &str = "F9 vfx  F10 viz  F12音声  mute  drag EQ  /help";
+const HELP_LINE: &str = "F9 vfx  F10 viz  mute  drag xf/EQ  /help";
+const HELP_LINE_PLAY: &str = "F9 vfx  F10 viz  mute  drag EQ  /help";
+const HELP_LINE_VOICE: &str = "F9 vfx  F10 viz  F12音声  mute  drag xf/EQ  /help";
+const HELP_LINE_PLAY_VOICE: &str = "F9 vfx  F10 viz  F12音声  mute  drag EQ  /help";
 /// Max candidate rows inside the suggest overlay (scroll window).
 const SUGGEST_MAX_ROWS: usize = 10;
 const HELP_LINE_LISTEN: &str = "VAD 待ち  話してね  F12 で一時停止";
@@ -148,6 +151,8 @@ struct LiveState {
     help_open: bool,
     /// Voice capture / STT status for the help footer line.
     voice_phase: VoicePhase,
+    /// True when F12 / VAD capture is running (`--voice`).
+    voice_enabled: bool,
     /// Last painted frame (line strings) — skip rewrite when unchanged.
     prev_lines: Vec<String>,
     prev_cols: u16,
@@ -275,7 +280,7 @@ fn snapshot_dj_then_hush(
 ///
 /// `initial_a` / `initial_b` seed deck highlight models (e.g. songs passed to `dj`).
 /// `hermes` when `Some` routes bare natural language to Hermes (local cmds need `/`).
-/// `voice` when `Some` enables F12 / VAD (Hermes STT → Hermes（URL があれば HTTP STT）).
+/// `voice` when `Some` enables F12 / VAD (`--voice`; Hermes STT or HTTP STT).
 #[allow(clippy::too_many_arguments)]
 pub fn run(
     tx: Sender<Command>,
@@ -314,6 +319,7 @@ pub fn run(
         log: VecDeque::new(),
         help_open: false,
         voice_phase: VoicePhase::Idle,
+        voice_enabled: voice.is_some(),
         prev_lines: Vec::new(),
         prev_cols: 0,
         prev_rows: 0,
@@ -429,10 +435,6 @@ pub fn run(
                             KeyCode::F(12) => {
                                 if let Some(ref v) = voice {
                                     v.toggle();
-                                } else if hermes.is_some() {
-                                    state.push_log("voice: 無効（マイクなし / Hermes Python 未検出 / --no-voice）");
-                                } else {
-                                    state.push_log("voice: Hermes off では使えません");
                                 }
                             }
                             // Suggest open: Esc only dismisses the overlay.
@@ -984,6 +986,7 @@ fn draw_frame(
         let (help, vfx_hit) = format_help_line(
             state.vfx_on,
             state.voice_phase,
+            state.voice_enabled,
             state.session,
             cols,
             help_row,
@@ -1113,7 +1116,7 @@ fn gather_fx_hits(
         .unwrap_or(120.0);
     let secs_per_cycle = (240.0 / bpm.max(1.0)) as f32;
     let hits = match state.body_mode {
-        BodyMode::Highlight => gather_highlight_hits(model, gs, sample_rate, offset),
+        BodyMode::Highlight => gather_highlight_hits(model, gs, sample_rate, offset, width),
         BodyMode::Viz => gather_punchcard_hits(viz, gs, sample_rate, offset, width, height),
     };
     (hits, secs_per_cycle)
@@ -1124,6 +1127,7 @@ fn gather_highlight_hits(
     gs: u64,
     sample_rate: u32,
     offset: i64,
+    width: usize,
 ) -> Vec<live_fx::FxHit> {
     let Some(model) = model else {
         return Vec::new();
@@ -1132,6 +1136,7 @@ fn gather_highlight_hits(
     let pattern_bar = (bar_index(gs, sr, model.bpm) as i64 + offset).max(0) as u64;
     let pos = bar_pos(gs, sr, model.bpm);
     let atoms = active_atoms(model, pattern_bar, pos);
+    let layout = layout_js_source(&model.source, width.max(1));
     atoms
         .into_iter()
         .map(|a| {
@@ -1141,13 +1146,9 @@ fn gather_highlight_hits(
                 None
             };
             let (x, y, atom_cols) = if let Some(sp) = a.span {
-                let (x, y) = live_fx::source_byte_xy(&model.source, sp.start, 2);
-                let cols = model
-                    .source
-                    .get(sp.start..sp.end)
-                    .map(|s| s.chars().count() as u16)
-                    .unwrap_or(a.value.chars().count() as u16);
-                (x, y, cols.max(1))
+                let (x, y) = layout_byte_xy(&layout, sp.start, 2);
+                let cols = layout_span_cols(&layout, sp.start, sp.end, 2);
+                (x, y, cols)
             } else {
                 (8.0, 3.0, a.value.chars().count() as u16)
             };
@@ -1199,6 +1200,7 @@ fn gather_punchcard_hits(
 fn format_help_line(
     vfx_on: bool,
     voice: VoicePhase,
+    voice_enabled: bool,
     session: SessionKind,
     cols: usize,
     row: u16,
@@ -1207,7 +1209,9 @@ fn format_help_line(
         VoicePhase::Listening => HELP_LINE_LISTEN,
         VoicePhase::Recording => HELP_LINE_REC,
         VoicePhase::Stt => HELP_LINE_STT,
+        VoicePhase::Idle if session.single_deck() && voice_enabled => HELP_LINE_PLAY_VOICE,
         VoicePhase::Idle if session.single_deck() => HELP_LINE_PLAY,
+        VoicePhase::Idle if voice_enabled => HELP_LINE_VOICE,
         VoicePhase::Idle => HELP_LINE,
     };
     let btn = if vfx_on { "[VFX:ON]" } else { "[VFX:OFF]" };
@@ -1630,27 +1634,44 @@ fn collect_pane_mute_hits(
         }
         BodyMode::Highlight => {
             let Some(model) = model else { return };
-            for (i, line) in model.source.lines().enumerate() {
-                let row = 2 + i;
-                if row >= body_rows {
-                    break;
-                }
+            let layout = layout_js_source(&model.source, pane_w.max(1));
+            let mut byte = 0usize;
+            for line in model.source.lines() {
                 let trimmed = line.trim();
                 for t in &model.tracks {
                     let tag = format!("// {}", t.name);
                     if trimmed == tag {
-                        let cols = t.name.chars().count().clamp(1, pane_w) as u16;
-                        out.push(MuteHit {
-                            hit: SliderHit {
-                                row: row as u16,
-                                col0: pane_x,
-                                cols,
-                            },
-                            deck,
-                            track: t.name.clone(),
-                        });
+                        let (_, y) = layout_byte_xy(&layout, byte, 2);
+                        let row = y as usize;
+                        if row < body_rows {
+                            let cols = t.name.chars().count().clamp(1, pane_w) as u16;
+                            out.push(MuteHit {
+                                hit: SliderHit {
+                                    row: row as u16,
+                                    col0: pane_x,
+                                    cols,
+                                },
+                                deck,
+                                track: t.name.clone(),
+                            });
+                        }
                         break;
                     }
+                }
+                byte += line.len();
+                if model
+                    .source
+                    .get(byte..)
+                    .is_some_and(|s| s.starts_with('\r'))
+                {
+                    byte += 1;
+                }
+                if model
+                    .source
+                    .get(byte..)
+                    .is_some_and(|s| s.starts_with('\n'))
+                {
+                    byte += 1;
                 }
             }
         }
@@ -1717,7 +1738,7 @@ fn pane_lines(args: PaneArgs<'_>) -> Vec<String> {
                     "[{}] {}  ·  {:.0} BPM  ·  bar {song_bar}  ·  pos {:.2}",
                     deck_label, model.title, model.bpm, pos
                 );
-                render_ansi_ex(model, &spans, &header, false)
+                render_ansi_wrapped(model, &spans, &header, false, width.max(1))
             } else {
                 format!(
                     "[{}] (empty)\n────────────────────────────────────────\n/{} house 01\n",
@@ -2093,6 +2114,7 @@ mod tests {
             log: VecDeque::new(),
             help_open: false,
             voice_phase: VoicePhase::Idle,
+            voice_enabled: false,
             prev_lines: Vec::new(),
             prev_cols: 0,
             prev_rows: 0,
@@ -2181,12 +2203,16 @@ mod tests {
 
     #[test]
     fn help_line_has_clickable_vfx_button() {
-        let (line, hit) = format_help_line(true, VoicePhase::Idle, SessionKind::Dj, 80, 20);
+        let (line, hit) = format_help_line(true, VoicePhase::Idle, false, SessionKind::Dj, 80, 20);
         assert!(line.contains("[VFX:ON]"), "{line}");
+        assert!(!line.contains("F12"), "{line}");
         assert_eq!(hit.row, 20);
         assert!(hit.cols >= 8);
-        let (line_off, _) = format_help_line(false, VoicePhase::Idle, SessionKind::Dj, 80, 20);
+        let (line_off, _) =
+            format_help_line(false, VoicePhase::Idle, false, SessionKind::Dj, 80, 20);
         assert!(line_off.contains("[VFX:OFF]"), "{line_off}");
+        let (line_v, _) = format_help_line(true, VoicePhase::Idle, true, SessionKind::Dj, 80, 20);
+        assert!(line_v.contains("F12"), "{line_v}");
     }
 
     #[test]
@@ -2258,5 +2284,47 @@ mod tests {
         assert!(cmd::is_help_body("?"));
         assert!(cmd::is_help_body("h"));
         assert!(!cmd::is_help_body("status"));
+    }
+
+    #[test]
+    fn mute_hit_row_follows_wrapped_source() {
+        let text = concat!(
+            "setcpm(30)\n",
+            "$: s(\"abcdefghijklmnopqrstuvwxyz0123456789\").gain(0.5)\n",
+            "// drums\n",
+            "$: s(\"bd\")\n",
+        );
+        let song = crate::song::parse_song(text, "t").unwrap();
+        let model = HighlightModel::from_song(&song, 48_000);
+        assert!(
+            model.tracks.iter().any(|t| t.name == "drums"),
+            "tracks={:?}",
+            model.tracks.iter().map(|t| &t.name).collect::<Vec<_>>()
+        );
+        let width = 20usize;
+        let mut hits = Vec::new();
+        collect_pane_mute_hits(
+            &mut hits,
+            0,
+            0,
+            width,
+            40,
+            BodyMode::Highlight,
+            Some(&model),
+            None,
+        );
+        let drums = hits
+            .iter()
+            .find(|h| h.track == "drums")
+            .expect("drums mute hit");
+        let layout = layout_js_source(&model.source, width);
+        let drums_byte = model.source.find("// drums").expect("comment");
+        let (_, y) = layout_byte_xy(&layout, drums_byte, 2);
+        assert_eq!(drums.hit.row, y as u16);
+        assert!(
+            drums.hit.row > 4,
+            "wrap should push drums below unwrapped row 4, got {}",
+            drums.hit.row
+        );
     }
 }

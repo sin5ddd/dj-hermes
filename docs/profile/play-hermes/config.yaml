@@ -30,8 +30,9 @@ tools:
   tool_search:
     enabled: off
 
-# Engine config for transcribe_recording (F12). Not a toolset grant —
+# Engine config for Hermes-side STT (wake / voice mode). Not a toolset grant —
 # agent.disabled_toolsets still lists stt so the agent cannot transcribe paths.
+# dj-hermes F12 capture is opt-in (`--voice`), not this block.
 stt:
   enabled: true
   provider: local
