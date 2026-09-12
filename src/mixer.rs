@@ -156,8 +156,9 @@ impl FillKind {
         match self {
             // Mix job length. Catalog riser WAVs are still ~15 s at 1× from bar head.
             Self::Riser => 4,
-            // Vinyl fill: worn BPF wet ramps over 8 bars, then cut-in.
-            Self::Vinyl => 8,
+            // Vinyl fill: worn BPF wet ramps over 4 bars, then cut-in.
+            // mixes/vinyl.strudel @bars 4 is the live path; this is the no-file fallback.
+            Self::Vinyl => 4,
             _ => 1,
         }
     }
@@ -2306,7 +2307,7 @@ mod tests {
         assert_eq!(FillKind::Riser.default_bars(), 4);
         assert_eq!(FillKind::parse("vinyl").unwrap(), FillKind::Vinyl);
         assert_eq!(FillKind::Vinyl.as_str(), "vinyl");
-        assert_eq!(FillKind::Vinyl.default_bars(), 8);
+        assert_eq!(FillKind::Vinyl.default_bars(), 4);
         assert_eq!(FillKind::parse("lane").unwrap(), FillKind::Lane);
         assert_eq!(FillKind::Lane.as_str(), "lane");
         assert_eq!(FillKind::Lane.default_bars(), 1);

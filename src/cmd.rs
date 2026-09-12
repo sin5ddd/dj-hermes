@@ -38,9 +38,9 @@ list [genre]        bundled genres, or slot numbers in one genre
 x [bars]            xfade to the other deck (default 4)
 a x [bars]          xfade to deck A
 b x [bars]          xfade to deck B
-mix long A|B [bars] long mix (EQ bass-swap + xfade, next phrase)
-mix cut A|B         cut-in next bar (EQ reset)
-mix fill <kind> A|B [8n|4n]  mixes/<kind>.strudel or delay|lpf|…|vinyl|lane then cut-in
+mix long A|B [bars] long mix (EQ bass-swap + xfade; cut-in on 1/5/9…, fill starts bars earlier)
+mix cut A|B         cut-in on 1-based 4n+1 (EQ reset)
+mix fill <kind> A|B [8n|4n]  mixes/<kind>.strudel then cut-in on 1/5/9… (count starts 2 bars before)
 mix hold            freeze xfade now
 filter lpf <hz>|off post-mix LPF (held)
 filter hpf <hz>|off post-mix HPF (held)
@@ -743,13 +743,14 @@ fn exec_mix(
             fill: Some(kind),
             grid,
             mute_track: None,
-            phrase: 1,
+            phrase: 4,
             lane: resolved.lane,
         }));
         return ExecResult::msg(format!(
-            "mix fill {} → {} (次の小節から)",
+            "mix fill {} → {} (切替は 1,5,9… 小節。エフェクトはその {} 小節前から)",
             args[2],
-            if to == 0 { "A" } else { "B" }
+            if to == 0 { "A" } else { "B" },
+            resolved.bars
         ));
     }
     if args.len() < 3 {
@@ -776,15 +777,17 @@ fn exec_mix(
         fill: None,
         grid: MixGrid::Eighth,
         mute_track: None,
-        phrase: 1,
+        phrase: 4,
         lane: None,
     }));
     let label = if to == 0 { "A" } else { "B" };
     match action {
-        MixAction::Long => {
-            ExecResult::msg(format!("mix long → {label} ({bars} bars, 次の小節から)"))
-        }
-        MixAction::Cut => ExecResult::msg(format!("mix cut → {label} (次の小節から)")),
+        MixAction::Long => ExecResult::msg(format!(
+            "mix long → {label} ({bars} bars, 切替は 1,5,9… 小節。エフェクトはその {bars} 小節前から)"
+        )),
+        MixAction::Cut => ExecResult::msg(format!(
+            "mix cut → {label} (切替は 1,5,9… 小節)"
+        )),
         MixAction::Fill => ExecResult::msg("fill needs kind"),
     }
 }
@@ -1075,6 +1078,7 @@ mod tests {
                 assert_eq!(m.fill, Some(crate::mixer::FillKind::Lane));
                 assert_eq!(m.to_deck, 1);
                 assert_eq!(m.bars, 2);
+                assert_eq!(m.phrase, 4);
                 assert!(m.lane.is_some());
             }
             _ => panic!("expected Mix"),

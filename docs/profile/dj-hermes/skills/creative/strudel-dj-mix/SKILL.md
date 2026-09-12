@@ -1,7 +1,7 @@
 ---
 name: strudel-dj-mix
 description: "Use when mixing two decks, long mix, cut-in, fill-in, switch/transformer chops, crossfade hold, つなげる, カットイン, フィル, スイッチ, 次の曲へ, エコー, ハイパス, ロール, ビニール, echo, hpf, roll, vinyl."
-version: 1.1.2
+version: 1.1.3
 author: Hermes Agent
 license: MIT
 metadata:
@@ -36,8 +36,8 @@ metadata:
 
 | 言い方 | 呼び出し |
 | --- | --- |
-| ロングでつないで / ゆっくり B へ | `dj_hermes_mix(move="long", to="B")`（既定 8 小節、帯域分け EQ） |
-| カットイン / いきなり A | `dj_hermes_mix(move="cut", to="A")`（次の小節、EQ を flat に戻す） |
+| ロングでつないで / ゆっくり B へ | `dj_hermes_mix(move="long", to="B")`（既定 8 小節、帯域分け EQ。着地は 1,5,9…） |
+| カットイン / いきなり A | `dj_hermes_mix(move="cut", to="A")`（1,5,9… 小節でスナップ、EQ を flat に戻す） |
 | フェーダーを途中で止めて | `dj_hermes_mix(move="hold")`（即時。pos は動かさない） |
 | ディレイのフィルから B | `dj_hermes_mix(move="fill", kind="delay", to="B")` |
 | ローパスで絞ってカット | `dj_hermes_mix(move="fill", kind="lpf", to="B")` |
@@ -52,15 +52,17 @@ metadata:
 | 四分音符のテープを 2 連 | `dj_hermes_mixer_tape(on=true, len="4n", reps=2)` |
 | 速い曲をテープで落として遅い曲へ | 主電源で `mixer_tape(on=true, len="1n")` → 途中で `on=false` → `dj_hermes_mix(move="cut", to=着地)`。BPM は共有のまま |
 | インパクト入れてカット | `dj_hermes_mix(move="fill", kind="drop", to="B")` |
-| ビニール（かすれ＋音程揺れ）してカット | `dj_hermes_mix(move="fill", kind="vinyl", to="B")`（既定 8 小節。バンドパスのかすれと wow 振幅がジョブ進行で大きくなり、カット） |
-| カウントしてから B | `dj_hermes_mix(move="fill", kind="count", to="B")`（次バーから「いくよー」、次のバーで 4 分のいちにさんし。既定 2 バー後にカット。`mixes/count.strudel`） |
+| ビニール（かすれ＋音程揺れ）してカット | `dj_hermes_mix(move="fill", kind="vinyl", to="B")`（既定 4 小節。バンドパスのかすれと wow 振幅がジョブ進行で大きくなり、カット。3 小節目なら 5–8 でかけて 9 で切替） |
+| カウントしてから B | `dj_hermes_mix(move="fill", kind="count", to="B")`（切替は 1,5,9…。その 2 小節前から「いくよー」→ いちにさんし。2 小節目なら 3–4 でかけて 5 で切替。間に合わなければ次の 4n+1。`mixes/count.strudel`） |
 | 4 分でスイッチ | `grid="4n"` |
 
 `to` は **着地先**。スイッチの最初のマスは着地の反対（B から始めて A へ）。
 
 flash は outgoing だけ消す。switch は AB を 100:0 ↔ 0:100 で交互。取り違えない。
 
-任意: `bars`（long 既定 8、fill は `mixes/<kind>.strudel` の `@bars`、無ければ 1、riser 4、vinyl 8、count 2）、`phrase` 1/4/8、`eq=false`（long で EQ しない）、`reset_eq=false`、`mute_track`（outgoing のトラック名）。
+切替（カットイン）は **1 始まりの 4 の倍数+1**（1, 5, 9, 13…）。`phrase` 省略時は 4。fill / long のエフェクトはその `@bars` 小節前から（`@bars 2` なら 3, 7, 11…）。`phrase=1` は次の小節、`phrase=8` は 1, 9, 17…。`hush` / `load` / `bpm` / `/x` / `hold` はこの格子にしない。
+
+任意: `bars`（long 既定 8、fill は `mixes/<kind>.strudel` の `@bars`、無ければ 1、riser 4、vinyl 4、count 2）、`phrase` 1/4/8（既定 4）、`eq=false`（long で EQ しない）、`reset_eq=false`、`mute_track`（outgoing のトラック名）。
 
 fill の kind は **`mixes/<kind>.strudel`**。DSP（delay / lpf / …）はファイルの `// @dsp`。`$:` は Mixer 専用レーン（A/B と同じ mini、TUI には出ない）。掛け声を足すときはファイルを足す。新しい DSP アルゴリズムだけ Rust の `FillKind` が要る。曲ソースへ `$:` を `apply_song` / `patch_track` しない。
 

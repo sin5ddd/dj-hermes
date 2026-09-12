@@ -1,7 +1,7 @@
 ---
 name: strudel-dj-hype
 description: "Use when フロアを沸かせて, 沸かせて, 盛り上げて, ドロップ, 上げて, 沸かせるMIX, hype the floor, drop it."
-version: 1.0.0
+version: 1.0.1
 author: Hermes Agent
 license: MIT
 metadata:
@@ -39,7 +39,7 @@ metadata:
 
 ## 状況 → `kind`（既存 10 種だけ）
 
-ジャンルは主電源スロットのフォルダ。`kind=vinyl` は既定 8 小節。かすれ（バンドパス）と wow 振幅が徐々に大きくなり、カットイン。保持の `dj_hermes_mixer_vinyl` は使わない（ドロップ後も残る）。
+ジャンルは主電源スロットのフォルダ。`kind=vinyl` は既定 4 小節。かすれ（バンドパス）と wow 振幅が徐々に大きくなり、1,5,9… でカットイン。保持の `dj_hermes_mixer_vinyl` は使わない（ドロップ後も残る）。
 
 | 主電源ジャンル | 既定 kind | 代わり（同じ系統を連続しない） |
 | --- | --- | --- |

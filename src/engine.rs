@@ -177,8 +177,14 @@ impl Engine {
         self.transport.bar_index().saturating_add(1)
     }
 
-    /// Next bar that is a multiple of `phrase` (1 = next bar, 4 = next 4-bar boundary).
-    fn phrase_target_bar(&self, phrase: u32) -> u64 {
+    /// Mix start bar (`transport.bar_index()`, 0-based).
+    ///
+    /// `phrase` 1 = next bar. 4 / 8 = **cut-in** on 1-based `4n+1` / `8n+1`
+    /// (bars 1, 5, 9… / 1, 9, 17…). Fill / long start `bars` earlier so
+    /// `@bars 2` occupies 1-based `4n+1-2` .. `4n+1-1`. Cut passes `bars = 0`
+    /// and snaps on the cut-in itself. If that start is already past
+    /// `next_bar`, the next cut-in is used. Mix never applies in the current bar.
+    fn phrase_target_bar(&self, phrase: u32, bars: u32) -> u64 {
         let n = match phrase {
             8 => 8u64,
             4 => 4,
@@ -188,7 +194,9 @@ impl Engine {
         if n <= 1 {
             return next;
         }
-        next.div_ceil(n) * n
+        let bars = u64::from(bars);
+        let switch = next.saturating_add(bars).div_ceil(n) * n;
+        switch.saturating_sub(bars)
     }
 
     /// Load a song on a deck immediately (no bar wait). For CLI play / startup UX.
@@ -328,7 +336,12 @@ impl Engine {
             Command::Mix(spec) => {
                 self.mixer.clear_job();
                 self.pending.retain(|q| !matches!(q.kind, Pending::Mix(_)));
-                let target_bar = self.phrase_target_bar(spec.phrase);
+                // Cut has no lead-in: snap on 1-based 4n+1. Fill/long back up by `bars`.
+                let lead = match spec.action {
+                    MixAction::Cut => 0,
+                    _ => spec.bars,
+                };
+                let target_bar = self.phrase_target_bar(spec.phrase, lead);
                 if let Some(track) = spec.mute_track.clone() {
                     if !track.is_empty() && spec.to_deck < 2 {
                         let from = 1 - spec.to_deck;
@@ -1080,6 +1093,113 @@ $: note("c3").s("sawtooth").gain(0.8).compressor("-12:20:0:.0:.05")
             phrase: 1,
             lane: None,
         }
+    }
+
+    #[test]
+    fn phrase_target_bar_cut_in_is_1based_4n_plus_1() {
+        let mut e = Engine::new(48_000, 120.0);
+        let spb = e.transport.samples_per_bar().round() as u64;
+        assert_eq!(spb, 96_000);
+
+        // 1-based bar 3, vinyl @bars 4 → fill 5–8, cut-in 9 (0-based start 4).
+        e.transport.global_sample = 2 * spb;
+        assert_eq!(e.transport.bar_index(), 2);
+        assert_eq!(e.phrase_target_bar(4, 4), 4);
+
+        // 1-based bar 2, @bars 2 → fill 3–4, cut-in 5 (0-based start 2).
+        e.transport.global_sample = spb;
+        assert_eq!(e.phrase_target_bar(4, 2), 2);
+
+        // 1-based bar 3, @bars 2 → too late for 3–4; fill 7–8, cut-in 9.
+        e.transport.global_sample = 2 * spb;
+        assert_eq!(e.phrase_target_bar(4, 2), 6);
+
+        // Cut (lead 0) in 1-based bar 1 → snap at 5, not 4.
+        e.transport.global_sample = 0;
+        assert_eq!(e.phrase_target_bar(4, 0), 4);
+
+        // Cut in 1-based bar 4 → still snap at 5.
+        e.transport.global_sample = 3 * spb;
+        assert_eq!(e.phrase_target_bar(4, 0), 4);
+
+        // Cut in 1-based bar 5 → next cut-in is 9.
+        e.transport.global_sample = 4 * spb;
+        assert_eq!(e.phrase_target_bar(4, 0), 8);
+
+        // phrase=1 is always the next bar.
+        e.transport.global_sample = 2 * spb;
+        assert_eq!(e.phrase_target_bar(1, 4), 3);
+        assert_eq!(e.phrase_target_bar(1, 0), 3);
+    }
+
+    #[test]
+    fn mix_phrase4_vinyl_starts_on_1based_bar_5_from_bar_3() {
+        let mut e = Engine::new(48_000, 120.0);
+        let bank = SampleBank::empty();
+        let spb = e.transport.samples_per_bar().round() as u64;
+        e.load_song_immediate(0, test_song("c3"));
+        e.load_song_immediate(1, test_song("g3"));
+        e.mixer.set_crossfader(0.0);
+        e.transport.global_sample = 2 * spb; // 1-based bar 3
+        e.push_command(Command::Mix(MixCommand {
+            action: MixAction::Fill,
+            to_deck: 1,
+            bars: 4,
+            eq: true,
+            reset_eq: true,
+            fill: Some(FillKind::Vinyl),
+            grid: crate::mixer::MixGrid::Eighth,
+            mute_track: None,
+            phrase: 4,
+            lane: None,
+        }));
+        while e.transport.bar_index() < 4 {
+            assert!(
+                !e.mixer.has_mix_job(),
+                "vinyl must not start before 1-based bar 5, bar_index={}",
+                e.transport.bar_index()
+            );
+            let _ = process_one_bar(&mut e, &bank);
+        }
+        let mut buf = stereo_buf(1_000);
+        e.process(&mut buf, &bank);
+        assert_eq!(e.transport.bar_index(), 4);
+        assert!(e.mixer.has_mix_job(), "vinyl should start at 1-based bar 5");
+    }
+
+    #[test]
+    fn mix_phrase4_cut_snaps_on_1based_bar_5() {
+        let mut e = Engine::new(48_000, 120.0);
+        let bank = SampleBank::empty();
+        e.load_song_immediate(0, test_song("c3"));
+        e.load_song_immediate(1, test_song("g3"));
+        e.mixer.set_crossfader(0.0);
+        e.push_command(Command::Mix(MixCommand {
+            action: MixAction::Cut,
+            to_deck: 1,
+            bars: 1,
+            eq: true,
+            reset_eq: true,
+            fill: None,
+            grid: crate::mixer::MixGrid::Eighth,
+            mute_track: None,
+            phrase: 4,
+            lane: None,
+        }));
+        // 1-based bars 1–4 must stay on A; snap at 5 (0-based 4).
+        for _ in 0..4 {
+            let _ = process_one_bar(&mut e, &bank);
+            assert!(
+                e.mixer.gain_a > 0.9,
+                "cut must not snap before 1-based bar 5, bar_index={}",
+                e.transport.bar_index()
+            );
+        }
+        let mut buf = stereo_buf(1_000);
+        e.process(&mut buf, &bank);
+        assert_eq!(e.transport.bar_index(), 4);
+        assert!(e.mixer.gain_a.abs() < 1e-3);
+        assert!((e.mixer.gain_b - 1.0).abs() < 1e-3);
     }
 
     #[test]

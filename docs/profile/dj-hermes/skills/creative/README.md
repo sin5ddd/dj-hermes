@@ -107,7 +107,7 @@ Bundled one-shots: `samples/bd`, `sd`, `hh`, `oh`, `cp` (`samples/cp/00.wav`), p
 ## DJ / mix
 
 - Two decks, one `Transport`.
-- Mixer faders + per-deck Hi/Mid/Lo EQ (cut-only: 1.0 = 0 dB, 0 = kill; shelves at 6 kHz / 1 kHz / 200 Hz) + held master LPF/HPF, delay, and vinyl (worn band-pass + pitch wow). Time-repeat (`/repeat 16n`) loops the **play** position for one bar (四分/八分/16分/32分音符). Tape-stop (`/tape 4n 2`, `/tape 1n`) slows the mixed output; `off` cancels mid-shot. Fill `kind=roll` is a different PCM loop that then cuts in. Fill `kind=vinyl` ramps worn band-pass and wow amplitude over 8 bars, then cuts in.
+- Mixer faders + per-deck Hi/Mid/Lo EQ (cut-only: 1.0 = 0 dB, 0 = kill; shelves at 6 kHz / 1 kHz / 200 Hz) + held master LPF/HPF, delay, and vinyl (worn band-pass + pitch wow). Time-repeat (`/repeat 16n`) loops the **play** position for one bar (四分/八分/16分/32分音符). Tape-stop (`/tape 4n 2`, `/tape 1n`) slows the mixed output; `off` cancels mid-shot. Fill `kind=roll` is a different PCM loop that then cuts in. Fill `kind=vinyl` ramps worn band-pass and wow amplitude over 4 bars, then cuts in on 1-based 4n+1 (1, 5, 9…).
 - Crossfade: `gainA = cos(θ)`, `gainB = sin(θ)` for `θ` in `0 … π/2` (`mixer.rs`). Starts on a bar boundary; `hush` is immediate.
 - `.compressor(...)` on a `$:` is a **per-voice insert**. Mixer master glue is always-on (`MIXER_DEFAULT`), not last-write from the pattern.
 - Try a pair **at the same BPM**: `dj-hermes dj songs/house/01.strudel songs/four-on-the-floor/01.strudel` (both `setcpm(124/4)`) then `/x 4`. A second file at another `setcpm` does not keep its own tempo. Do not pair 174 DnB with 126 techno.

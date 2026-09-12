@@ -496,7 +496,7 @@ pub(crate) fn mix_command_from_req(r: &MixReq) -> Result<Command, String> {
         None => resolved.as_ref().map(|r| r.grid).unwrap_or(MixGrid::Eighth),
         Some(s) => MixGrid::parse(s)?,
     };
-    let phrase = parse_phrase(r.phrase.unwrap_or(1))?;
+    let phrase = parse_phrase(r.phrase.unwrap_or(4))?;
     let bars = r
         .bars
         .or_else(|| resolved.as_ref().map(|r| r.bars))
@@ -2126,6 +2126,7 @@ b: note("c3").s("sawtooth").gain(0.8)
                 assert_eq!(m.fill, Some(FillKind::Lane));
                 assert_eq!(m.to_deck, 1);
                 assert_eq!(m.bars, 2);
+                assert_eq!(m.phrase, 4);
                 assert!(m.lane.is_some(), "count recipe should carry a lane song");
             }
             _ => panic!("expected Mix"),
