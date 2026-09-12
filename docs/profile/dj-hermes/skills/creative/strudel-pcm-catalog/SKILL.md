@@ -3,7 +3,7 @@ name: strudel-pcm-catalog
 description: >-
   Use when choosing a rust-fm-synthe or Irodori-TTS PCM one-shot for dj-hermes
   (bd:8b, hh:cl, bs:ht, vc:pa, iv:yat, and other part:slug keys). Not for live 2-op .fm.
-version: 1.5.0
+version: 1.6.1
 author: Hermes Agent
 license: MIT
 metadata:
@@ -172,7 +172,7 @@ Apply the inline recipe with `dj_hermes_apply_song`. `songs/house/01.strudel` us
 
 ### ボイスフレーズ `iv:`（Irodori-TTS・音程なし・約 0.2–1.9 秒）
 
-Irodori-TTS で無から生成した日本語の掛け声／リアクション（同梱サンプルは CC0）。**発話なので音程は無い。`note()` を付けず bare `s("iv:yat")` のまま置く。** 用途は kawaii 系のフィルと DJ ミックス中の掛け声（小節末・転換の頭）。全 15 本の意味は INDEX の `iv` を参照。
+Irodori-TTS で無から生成した日本語の掛け声／リアクション（同梱サンプルは CC0）。**発話なので音程は無い。`note()` を付けず bare `s("iv:yat")` のまま置く。** 用途は kawaii 系のフィルと DJ ミックス中の掛け声（小節末・転換の頭）。全 19 本の意味は INDEX の `iv` を参照。
 
 | call | 向き |
 | --- | --- |
@@ -180,13 +180,17 @@ Irodori-TTS で無から生成した日本語の掛け声／リアクション�
 | `iv:dzo` | 「はいどうぞ」。渡す・見せ場 |
 | `iv:fu` | 「フ」の短い息。照れ・間 |
 | `iv:hai` | 「はい」。相づち・頭出し |
+| `iv:ic` | 「いち」。カウントの1 |
 | `iv:iku` | 「行くよ」。転換・ドロップ前の頭出し |
 | `iv:kai` | 「かい」。短い問い返し |
 | `iv:moi` | 「もういっ」の頭チョップ。もう一回の前振り |
 | `iv:mou` | 「もう一回」。リピートの掛け声 |
+| `iv:ni` | 「に」。カウントの2 |
 | `iv:ra` | 「ラ」の1音。歌い出しの粒 |
+| `iv:sa` | 「さん」。カウントの3 |
 | `iv:sen` | 「せーの」（長）。カウントイン・ビルド |
 | `iv:ses` | 「せーの」の短いチョップ。フィルの頭 |
+| `iv:si` | 「し」。カウントの4 |
 | `iv:uke` | 「超ウケる」。リアクション |
 | `iv:wkw` | 「わくわく」。期待のつぶやき |
 | `iv:yat` | 「やったー」。歓声の決め |
@@ -200,7 +204,7 @@ $: s("[~ ~ iv:yat]").gain(0.45)
 $: s("<iv:dzo ~ ~ ~>").gain(0.4)
 ```
 
-発話はミックスに埋もれやすいので `.gain(0.4–0.6)` 目安。狭いグリッドで連打・重ねるときは `.cut(1)`。長いフレーズ（`iv:yat` / `iv:iku` / `iv:dzo` / `iv:sen`）は小節末に 1 回が基本。`vc:` と違いコーラスも移調も無い（録音のまま）。
+発話はミックスに埋もれやすいので `.gain(0.4–0.6)` 目安。狭いグリッドで連打・重ねるときは `.cut(1)`。長いフレーズ（`iv:yat` / `iv:iku` / `iv:dzo` / `iv:sen`）は小節末に 1 回が基本。`vc:` と違いコーラスも移調も無い（録音のまま）。MIX のカウントインは `dj_hermes_mix(move="fill", kind="count")`（`mixes/count.strudel` が `iv:iku` と `iv:ic` `iv:ni` `iv:sa` `iv:si` を拍に乗せる）。
 
 ## Rules
 

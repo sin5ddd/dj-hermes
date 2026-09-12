@@ -1,0 +1,5 @@
+// @title count
+// @mix fill
+// @dsp lane
+// @bars 2
+$: s("<iv:iku [iv:ic iv:ni iv:sa iv:si]>").gain(0.5).cut(1)

@@ -1,7 +1,7 @@
 ---
 name: strudel-dj-mix
 description: "Use when mixing two decks, long mix, cut-in, fill-in, switch/transformer chops, crossfade hold, つなげる, カットイン, フィル, スイッチ, 次の曲へ, エコー, ハイパス, ロール, ビニール, echo, hpf, roll, vinyl."
-version: 1.0.0
+version: 1.1.1
 author: Hermes Agent
 license: MIT
 metadata:
@@ -42,7 +42,7 @@ metadata:
 | ディレイのフィルから B | `dj_hermes_mix(move="fill", kind="delay", to="B")` |
 | ローパスで絞ってカット | `dj_hermes_mix(move="fill", kind="lpf", to="B")` |
 | 点滅してカット | `dj_hermes_mix(move="fill", kind="flash", to="B")` |
-| ライザー入れてカット | `dj_hermes_mix(move="fill", kind="riser", to="B")` |
+| ライザー入れてカット | `dj_hermes_mix(move="fill", kind="riser", to="B")`（既定 4 小節。`mixes/riser.strudel`） |
 | B から 8 分でスイッチして A | `dj_hermes_mix(move="fill", kind="switch", to="A", grid="8n")` |
 | エコーで消して B へ | `dj_hermes_mix(move="fill", kind="echo", to="B")` |
 | ハイパスで薄くしてカット | `dj_hermes_mix(move="fill", kind="hpf", to="B")` |
@@ -53,13 +53,16 @@ metadata:
 | 速い曲をテープで落として遅い曲へ | 主電源で `mixer_tape(on=true, len="1n")` → 途中で `on=false` → `dj_hermes_mix(move="cut", to=着地)`。BPM は共有のまま |
 | インパクト入れてカット | `dj_hermes_mix(move="fill", kind="drop", to="B")` |
 | ビニール（かすれ＋音程揺れ）してカット | `dj_hermes_mix(move="fill", kind="vinyl", to="B")`（既定 8 小節。バンドパスのかすれが徐々に強くなり、音程 wow のあとカット） |
+| カウントしてから B | `dj_hermes_mix(move="fill", kind="count", to="B")`（次バーから「いくよー」、次のバーで 4 分のいちにさんし。既定 2 バー後にカット。`mixes/count.strudel`） |
 | 4 分でスイッチ | `grid="4n"` |
 
 `to` は **着地先**。スイッチの最初のマスは着地の反対（B から始めて A へ）。
 
 flash は outgoing だけ消す。switch は AB を 100:0 ↔ 0:100 で交互。取り違えない。
 
-任意: `bars`（long 既定 8、fill 既定 1、riser / vinyl 8）、`phrase` 1/4/8、`eq=false`（long で EQ しない）、`reset_eq=false`、`mute_track`（outgoing のトラック名）。
+任意: `bars`（long 既定 8、fill は `mixes/<kind>.strudel` の `@bars`、無ければ 1、riser 4、vinyl 8、count 2）、`phrase` 1/4/8、`eq=false`（long で EQ しない）、`reset_eq=false`、`mute_track`（outgoing のトラック名）。
+
+fill の kind は **`mixes/<kind>.strudel`**。DSP（delay / lpf / …）はファイルの `// @dsp`。`$:` は Mixer 専用レーン（A/B と同じ mini、TUI には出ない）。掛け声を足すときはファイルを足す。新しい DSP アルゴリズムだけ Rust の `FillKind` が要る。曲ソースへ `$:` を `apply_song` / `patch_track` しない。
 
 ## やってはいけないこと
 

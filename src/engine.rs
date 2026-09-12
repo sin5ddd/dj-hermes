@@ -102,12 +102,16 @@ struct Queued {
 pub struct Engine {
     pub transport: Transport,
     pub decks: [Deck; 2],
+    /// Hidden mix-lane deck (recipes in `mixes/`). Not a user deck; TUI ignores it.
+    mix_lane: Deck,
     pub mixer: Mixer,
     pending: Vec<Queued>,
     scratch_a_l: Vec<f32>,
     scratch_a_r: Vec<f32>,
     scratch_b_l: Vec<f32>,
     scratch_b_r: Vec<f32>,
+    scratch_lane_l: Vec<f32>,
+    scratch_lane_r: Vec<f32>,
     scratch_out_l: Vec<f32>,
     scratch_out_r: Vec<f32>,
     /// Lock-free playhead for UI highlight (UI re-evaluates patterns; audio only stores).
@@ -122,12 +126,15 @@ impl Engine {
         Self {
             transport: Transport::new(sample_rate, bpm),
             decks: [Deck::new("A"), Deck::new("B")],
+            mix_lane: Deck::new("mix"),
             mixer: Mixer::new(),
             pending: Vec::new(),
             scratch_a_l: Vec::new(),
             scratch_a_r: Vec::new(),
             scratch_b_l: Vec::new(),
             scratch_b_r: Vec::new(),
+            scratch_lane_l: Vec::new(),
+            scratch_lane_r: Vec::new(),
             scratch_out_l: Vec::new(),
             scratch_out_r: Vec::new(),
             playhead: Arc::new(AtomicU64::new(0)),
@@ -207,6 +214,7 @@ impl Engine {
             Command::Hush => {
                 self.decks[0].unload();
                 self.decks[1].unload();
+                self.mix_lane.unload();
                 self.transport.clear_repeat();
                 self.transport.clear_tape();
                 self.mixer.clear_tape();
@@ -407,6 +415,7 @@ impl Engine {
         let sr = self.transport.sample_rate as f32;
         match spec.action {
             MixAction::Long => {
+                self.mix_lane.unload();
                 let bars = spec.bars.clamp(1, 32);
                 if spec.eq {
                     self.mixer.apply_long_eq_preset(to);
@@ -416,6 +425,7 @@ impl Engine {
                 self.mixer.note_long_mix(to, bars);
             }
             MixAction::Cut => {
+                self.mix_lane.unload();
                 if spec.reset_eq {
                     self.mixer.reset_eq_flat();
                 }
@@ -438,6 +448,13 @@ impl Engine {
                     self.transport.bpm,
                     sr,
                 );
+                if let Some(song) = spec.lane {
+                    let bar_now = self.transport.bar_index();
+                    self.mix_lane.load(*song);
+                    self.mix_lane.head_to_bar(1, bar_now);
+                } else {
+                    self.mix_lane.unload();
+                }
                 let _ = self.mixer.tick_job(start, sr);
             }
         }
@@ -453,6 +470,9 @@ impl Engine {
         let _ = self.mixer.tick_xfade(self.transport.global_sample);
         let sr = self.transport.sample_rate as f32;
         let _ = self.mixer.tick_job(self.transport.global_sample, sr);
+        if !self.mixer.has_mix_job() {
+            self.mix_lane.unload();
+        }
 
         let frames = out.len() / 2;
         if frames == 0 {
@@ -478,10 +498,16 @@ impl Engine {
             self.scratch_out_l.resize(frames, 0.0);
             self.scratch_out_r.resize(frames, 0.0);
         }
+        if self.scratch_lane_l.len() < frames {
+            self.scratch_lane_l.resize(frames, 0.0);
+            self.scratch_lane_r.resize(frames, 0.0);
+        }
         self.scratch_a_l[..frames].fill(0.0);
         self.scratch_a_r[..frames].fill(0.0);
         self.scratch_b_l[..frames].fill(0.0);
         self.scratch_b_r[..frames].fill(0.0);
+        self.scratch_lane_l[..frames].fill(0.0);
+        self.scratch_lane_r[..frames].fill(0.0);
 
         // Deck outputs are pre-fader; mixer applies gain_a/gain_b.
         self.decks[0].gain = 1.0;
@@ -498,6 +524,15 @@ impl Engine {
             &self.transport,
             samples,
         );
+        if self.mix_lane.song_ref().is_some() {
+            self.mix_lane.gain = 1.0;
+            self.mix_lane.process(
+                &mut self.scratch_lane_l[..frames],
+                &mut self.scratch_lane_r[..frames],
+                &self.transport,
+                samples,
+            );
+        }
 
         let sr = self.transport.sample_rate as f32;
         if let Some(kind) = self.mixer.oneshot_needs_pcm() {
@@ -519,6 +554,8 @@ impl Engine {
             &self.scratch_a_r[..frames],
             &self.scratch_b_l[..frames],
             &self.scratch_b_r[..frames],
+            &self.scratch_lane_l[..frames],
+            &self.scratch_lane_r[..frames],
             sr,
             self.transport.global_sample,
         );
@@ -1041,6 +1078,7 @@ $: note("c3").s("sawtooth").gain(0.8).compressor("-12:20:0:.0:.05")
             grid: crate::mixer::MixGrid::Eighth,
             mute_track: None,
             phrase: 1,
+            lane: None,
         }
     }
 
@@ -1061,6 +1099,7 @@ $: note("c3").s("sawtooth").gain(0.8).compressor("-12:20:0:.0:.05")
             grid: crate::mixer::MixGrid::Eighth,
             mute_track: None,
             phrase: 1,
+            lane: None,
         }));
         let mut buf = stereo_buf(4_800);
         e.process(&mut buf, &bank);
@@ -1091,6 +1130,7 @@ $: note("c3").s("sawtooth").gain(0.8).compressor("-12:20:0:.0:.05")
             grid: crate::mixer::MixGrid::Eighth,
             mute_track: None,
             phrase: 1,
+            lane: None,
         }));
         let mut buf = stereo_buf(4_800);
         e.process(&mut buf, &bank);
@@ -1162,6 +1202,7 @@ $: note("c3").s("sawtooth").gain(0.8).compressor("-12:20:0:.0:.05")
             FillKind::Roll,
             FillKind::Drop,
             FillKind::Vinyl,
+            FillKind::Lane,
         ] {
             let mut e = Engine::new(48_000, 120.0);
             let bank = SampleBank::empty();
@@ -1200,6 +1241,53 @@ $: note("c3").s("sawtooth").gain(0.8).compressor("-12:20:0:.0:.05")
                 e.mixer.gain_b
             );
         }
+    }
+
+    #[test]
+    fn mix_lane_sounds_on_grid_then_cuts() {
+        let mut e = Engine::new(48_000, 120.0);
+        let bank = SampleBank::empty();
+        e.load_song_immediate(1, test_song("g3"));
+        e.mixer.gain_a = 0.0;
+        e.mixer.gain_b = 0.0;
+        let lane = parse_song(
+            r#"$: note("c4 c4 c4 c4").s("sawtooth").gain(0.9)
+"#,
+            "mixes/lane-test.strudel",
+        )
+        .unwrap();
+        e.push_command(Command::Mix(MixCommand {
+            action: MixAction::Fill,
+            to_deck: 1,
+            bars: 1,
+            eq: true,
+            reset_eq: true,
+            fill: Some(FillKind::Lane),
+            grid: crate::mixer::MixGrid::Eighth,
+            mute_track: None,
+            phrase: 1,
+            lane: Some(Box::new(lane)),
+        }));
+        let mut buf = stereo_buf(4_800);
+        e.process(&mut buf, &bank);
+        assert!(
+            buf.iter().all(|s| s.abs() < 1e-4),
+            "lane must wait for the bar"
+        );
+        process_until_next_bar_applied(&mut e, &bank);
+        assert!(e.mixer.has_mix_job());
+        let bar = process_one_bar(&mut e, &bank);
+        assert!(
+            bar.iter().any(|s| s.abs() > 1e-3),
+            "mix lane should sound in the fill bar, peak={}",
+            bar.iter().fold(0.0f32, |m, s| m.max(s.abs()))
+        );
+        if e.mixer.has_mix_job() {
+            let _ = process_one_bar(&mut e, &bank);
+        }
+        assert!(!e.mixer.has_mix_job());
+        assert!(e.mixer.gain_b > 0.9);
+        assert!(e.mix_lane.song_ref().is_none());
     }
 
     #[test]

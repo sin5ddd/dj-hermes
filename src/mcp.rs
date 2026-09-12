@@ -317,16 +317,16 @@ fn tools_list(session: SessionKind) -> Value {
             },
             {
                 "name": "dj_hermes_mix",
-                "description": "DJ mix move in one call. Prefer this over calling mixer_eq multiple times. move=long: EQ bass-swap + xfade. move=cut: next-bar 100% fader, optional EQ reset. move=fill: delay|lpf|flash|riser|switch|echo|hpf|roll|drop|vinyl then cut-in. move=hold: freeze xfade. Switch is AB 100:0 chops (not flash). echo=delay wet/fb ramp then cut. hpf=high-pass sweep then cut. roll=beat-repeat then cut. drop=impact one-shot then cut. vinyl=worn band-pass wet ramps over 8 bars plus pitch wow then cut.",
+                "description": "DJ mix move in one call. Prefer this over calling mixer_eq multiple times. move=long: EQ bass-swap + xfade. move=cut: next-bar 100% fader, optional EQ reset. move=fill: kind is mixes/<kind>.strudel (count=iku then 1-2-3-4) or delay|lpf|flash|riser|switch|echo|hpf|roll|drop|vinyl|lane then cut-in. move=hold: freeze xfade. Switch is AB 100:0 chops (not flash). echo=delay wet/fb ramp then cut. hpf=high-pass sweep then cut. roll=beat-repeat then cut. drop=impact one-shot then cut. vinyl=worn band-pass wet ramps over 8 bars plus pitch wow then cut. Add a new fill by dropping mixes/<slug>.strudel.",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
                         "move": { "type": "string", "description": "long | cut | fill | hold" },
                         "to": { "type": "string", "description": "A or B (required unless hold)" },
-                        "bars": { "type": "integer", "description": "long default 8, fill default 1 (riser/vinyl 8)" },
+                        "bars": { "type": "integer", "description": "long default 8, fill default from mixes/<kind> @bars (riser 4, vinyl 8, count 2)" },
                         "eq": { "type": "boolean", "description": "long: apply bass-swap EQ (default true)" },
                         "reset_eq": { "type": "boolean", "description": "cut/fill: flatten EQ at the end (default true)" },
-                        "kind": { "type": "string", "description": "fill only: delay | lpf | flash | riser | switch | echo | hpf | roll | drop | vinyl" },
+                        "kind": { "type": "string", "description": "fill only: mixes/<kind>.strudel stem (count, delay, lpf, flash, riser, switch, echo, hpf, roll, drop, vinyl, lane, …)" },
                         "grid": { "type": "string", "description": "switch/flash/roll: 8n or 4n (default 8n)" },
                         "mute_track": { "type": "string", "description": "optional track name to mute on the outgoing deck" },
                         "phrase": { "type": "integer", "description": "1, 4, or 8 — start on that bar boundary (default 1)" }

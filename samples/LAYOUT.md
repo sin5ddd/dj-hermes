@@ -177,7 +177,7 @@ samples/
 ```
 
 - rust-fm-synthe カタログ: `samples/<part>/<slug>.wav`（例 `bd/8b.wav` → `s("bd:8b")`）。slug 表と説明は `docs/profile/dj-hermes/skills/creative/strudel-pcm-catalog/`。同梱 `00.wav` は上書きしない
-- Irodori-TTS ボイス: `samples/iv/`（`s("iv:hai")` など）。CC0。`LICENSE.md` 参照
+- Irodori-TTS ボイス: `samples/iv/`（`s("iv:hai")` など。カウントは `iv:ic` / `iv:ni` / `iv:sa` / `iv:si`）。CC0。`LICENSE.md` 参照
 - **同梱 CC0 キット**（`bd/` `cp/` と上記 FM ワンショット）はリポジトリに残す  
 - **追加の `samples/<name>.wav` / `samples/<name>/00.wav`** は Git LFS（`.gitattributes` の `*.wav`）。gitignore されない  
 - スクラッチ出力は `/out/` `/recordings/` のまま git 外  

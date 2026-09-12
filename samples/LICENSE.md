@@ -69,7 +69,7 @@ C4 (~262 Hz), ~3.2 s, 16-bit mono 48 kHz. Keys are `s("vc:pa")` and so on.
 
 ## Irodori-TTS voice phrases (CC0)
 
-The fifteen voice one-shots under `samples/iv/` (for example `iv/hai.wav`) are
+The nineteen voice one-shots under `samples/iv/` (for example `iv/hai.wav`) are
 original renders generated from scratch with
 [Irodori-TTS](https://github.com/Aratako/Irodori-TTS) (no reference audio; no
 third-party voice material). They are dedicated to the public domain under

@@ -112,6 +112,8 @@ pub enum FillKind {
     Roll,
     Drop,
     Vinyl,
+    /// Hidden mix-lane pattern only, then cut-in. No extra DSP.
+    Lane,
 }
 
 impl FillKind {
@@ -127,8 +129,9 @@ impl FillKind {
             "roll" | "loop" | "repeat" => Ok(Self::Roll),
             "drop" | "impact" => Ok(Self::Drop),
             "vinyl" => Ok(Self::Vinyl),
+            "lane" => Ok(Self::Lane),
             other => Err(format!(
-                "kind must be delay, lpf, flash, riser, switch, echo, hpf, roll, drop, or vinyl: {other}"
+                "kind must be delay, lpf, flash, riser, switch, echo, hpf, roll, drop, vinyl, or lane: {other}"
             )),
         }
     }
@@ -145,13 +148,14 @@ impl FillKind {
             Self::Roll => "roll",
             Self::Drop => "drop",
             Self::Vinyl => "vinyl",
+            Self::Lane => "lane",
         }
     }
 
     pub fn default_bars(self) -> u32 {
         match self {
-            // Catalog risers (`fx:fr` / `nr` / `rf` / `rp` / `rw` / `up`) are ~15 s.
-            Self::Riser => 8,
+            // Mix job length. Catalog riser WAVs are still ~15 s at 1× from bar head.
+            Self::Riser => 4,
             // Vinyl fill: worn BPF wet ramps over 8 bars, then cut-in.
             Self::Vinyl => 8,
             _ => 1,
@@ -202,6 +206,8 @@ pub struct MixCommand {
     pub grid: MixGrid,
     pub mute_track: Option<String>,
     pub phrase: u32,
+    /// Mix-lane song (`$: ` from `mixes/<kind>.strudel`). Parsed on the control thread.
+    pub lane: Option<Box<crate::song::Song>>,
 }
 
 /// Snapshot for `/status` while a mix macro is running.
@@ -296,6 +302,12 @@ enum MixJob {
         to_deck: usize,
         reset_eq: bool,
         start_sample: u64,
+        end_sample: u64,
+        samples_per_bar: u64,
+    },
+    Lane {
+        to_deck: usize,
+        reset_eq: bool,
         end_sample: u64,
         samples_per_bar: u64,
     },
@@ -1175,6 +1187,14 @@ impl Mixer {
                     samples_per_bar: spb,
                 });
             }
+            FillKind::Lane => {
+                self.job = Some(MixJob::Lane {
+                    to_deck,
+                    reset_eq,
+                    end_sample: end,
+                    samples_per_bar: spb,
+                });
+            }
         }
     }
 
@@ -1191,7 +1211,8 @@ impl Mixer {
                 | MixJob::Hpf { end_sample, .. }
                 | MixJob::Roll { end_sample, .. }
                 | MixJob::Drop { end_sample, .. }
-                | MixJob::Vinyl { end_sample, .. } => *end_sample,
+                | MixJob::Vinyl { end_sample, .. }
+                | MixJob::Lane { end_sample, .. } => *end_sample,
             };
             if global_sample < end {
                 return None;
@@ -1225,6 +1246,9 @@ impl Mixer {
                     to_deck, reset_eq, ..
                 }
                 | MixJob::Vinyl {
+                    to_deck, reset_eq, ..
+                }
+                | MixJob::Lane {
                     to_deck, reset_eq, ..
                 } => Some((*to_deck, *reset_eq)),
             }
@@ -1292,6 +1316,10 @@ impl Mixer {
                 spb: u64,
             },
             Vinyl {
+                end: u64,
+                spb: u64,
+            },
+            Lane {
                 end: u64,
                 spb: u64,
             },
@@ -1407,6 +1435,14 @@ impl Mixer {
                 end: *end_sample,
                 spb: *samples_per_bar,
             },
+            MixJob::Lane {
+                end_sample,
+                samples_per_bar,
+                ..
+            } => Step::Lane {
+                end: *end_sample,
+                spb: *samples_per_bar,
+            },
         };
 
         match step {
@@ -1485,6 +1521,7 @@ impl Mixer {
             Step::Roll { end, spb } => self.update_bars_left(global_sample, end, spb),
             Step::Drop { end, spb } => self.update_bars_left(global_sample, end, spb),
             Step::Vinyl { end, spb } => self.update_bars_left(global_sample, end, spb),
+            Step::Lane { end, spb } => self.update_bars_left(global_sample, end, spb),
         }
         false
     }
@@ -1620,6 +1657,8 @@ impl Mixer {
         a_r: &[f32],
         b_l: &[f32],
         b_r: &[f32],
+        lane_l: &[f32],
+        lane_r: &[f32],
         sample_rate: f32,
         head_sample: u64,
     ) {
@@ -1698,6 +1737,11 @@ impl Mixer {
                     l += s;
                     r += s;
                 }
+            }
+
+            if i < lane_l.len() && i < lane_r.len() {
+                l += lane_l[i];
+                r += lane_r[i];
             }
 
             if self.roll_target > 0 {
@@ -1871,7 +1915,7 @@ mod tests {
         let mut out_l = vec![0.0f32; n];
         let mut out_r = vec![0.0f32; n];
         // Center mono sources: same on L and R (equal-power center would scale; tests use direct L/R).
-        m.mix(&mut out_l, &mut out_r, a, a, b, b, sr, 0);
+        m.mix(&mut out_l, &mut out_r, a, a, b, b, &[], &[], sr, 0);
         for i in 0..n {
             out[i] = 0.5 * (out_l[i] + out_r[i]);
         }
@@ -2254,10 +2298,30 @@ mod tests {
         assert_eq!(FillKind::Hpf.default_bars(), 1);
         assert_eq!(FillKind::Roll.default_bars(), 1);
         assert_eq!(FillKind::Drop.default_bars(), 1);
-        assert_eq!(FillKind::Riser.default_bars(), 8);
+        assert_eq!(FillKind::Riser.default_bars(), 4);
         assert_eq!(FillKind::parse("vinyl").unwrap(), FillKind::Vinyl);
         assert_eq!(FillKind::Vinyl.as_str(), "vinyl");
         assert_eq!(FillKind::Vinyl.default_bars(), 8);
+        assert_eq!(FillKind::parse("lane").unwrap(), FillKind::Lane);
+        assert_eq!(FillKind::Lane.as_str(), "lane");
+        assert_eq!(FillKind::Lane.default_bars(), 1);
+    }
+
+    #[test]
+    fn mix_adds_lane_bus() {
+        let mut m = Mixer::new();
+        m.gain_a = 0.0;
+        m.gain_b = 0.0;
+        let sil = [0.0f32; 4];
+        let lane = [0.5f32; 4];
+        let mut out_l = [0.0f32; 4];
+        let mut out_r = [0.0f32; 4];
+        m.mix(
+            &mut out_l, &mut out_r, &sil, &sil, &sil, &sil, &lane, &lane, 48_000.0, 0,
+        );
+        for x in out_l {
+            assert!((x - 0.5).abs() < 0.2, "lane should be audible, got {x}");
+        }
     }
 
     #[test]
@@ -2351,7 +2415,18 @@ mod tests {
         let b = [0.0f32; 8];
         let mut out_l = [0.0f32; 8];
         let mut out_r = [0.0f32; 8];
-        m.mix(&mut out_l, &mut out_r, &a_l, &a_r, &b, &b, 48_000.0, 0);
+        m.mix(
+            &mut out_l,
+            &mut out_r,
+            &a_l,
+            &a_r,
+            &b,
+            &b,
+            &[],
+            &[],
+            48_000.0,
+            0,
+        );
         assert!(out_l[0].abs() > 1e-6);
         for x in &out_l[1..] {
             assert!(
@@ -2478,6 +2553,8 @@ mod tests {
             &low,
             &silent,
             &silent,
+            &[],
+            &[],
             sr,
             0,
         );
@@ -2490,6 +2567,8 @@ mod tests {
             &low,
             &silent,
             &silent,
+            &[],
+            &[],
             sr,
             7_400,
         );
@@ -2518,7 +2597,16 @@ mod tests {
         let mut out_l = vec![0.0f32; n];
         let mut out_r = vec![0.0f32; n];
         m.mix(
-            &mut out_l, &mut out_r, &tone, &tone, &silent, &silent, sr, 0,
+            &mut out_l,
+            &mut out_r,
+            &tone,
+            &tone,
+            &silent,
+            &silent,
+            &[],
+            &[],
+            sr,
+            0,
         );
         let mut crossings = Vec::new();
         for (i, pair) in out_l.windows(2).enumerate().skip(2_000) {
@@ -2574,10 +2662,30 @@ mod tests {
         m.start_tape(0, 64, 1);
         let mut out_l = vec![0.0f32; n];
         let mut out_r = vec![0.0f32; n];
-        m.mix(&mut out_l, &mut out_r, &low, &low, &silent, &silent, sr, 0);
+        m.mix(
+            &mut out_l,
+            &mut out_r,
+            &low,
+            &low,
+            &silent,
+            &silent,
+            &[],
+            &[],
+            sr,
+            0,
+        );
         assert!(m.tape_on() || m.held_vinyl());
         m.mix(
-            &mut out_l, &mut out_r, &low, &low, &silent, &silent, sr, 200,
+            &mut out_l,
+            &mut out_r,
+            &low,
+            &low,
+            &silent,
+            &silent,
+            &[],
+            &[],
+            sr,
+            200,
         );
         assert!(m.held_vinyl());
         assert!(!m.tape_on());

@@ -18,6 +18,7 @@ pub mod live_ui;
 pub mod mcp;
 pub mod midi;
 pub mod mini;
+pub mod mix_recipe;
 pub mod mixer;
 pub mod repl;
 pub mod resume;

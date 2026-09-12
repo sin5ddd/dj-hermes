@@ -552,6 +552,7 @@ fn dj_echo_fill_house_to_four_on_the_floor() {
         grid: MixGrid::Eighth,
         mute_track: None,
         phrase: 1,
+        lane: None,
     }));
 
     let buf = process_n(&mut e, &bank, bl);

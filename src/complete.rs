@@ -53,7 +53,7 @@ const REPEAT_DIVS: &[&str] = &["4n", "8n", "16n", "32n", "off"];
 const TAPE_LENS: &[&str] = &["1n", "2n", "4n", "8n", "off"];
 const MIX_MOVES: &[&str] = &["long", "cut", "fill", "hold"];
 const MIX_KINDS: &[&str] = &[
-    "delay", "lpf", "flash", "riser", "switch", "echo", "hpf", "roll", "drop", "vinyl",
+    "delay", "lpf", "flash", "riser", "switch", "echo", "hpf", "roll", "drop", "vinyl", "lane",
 ];
 const DECK_VERBS: &[&str] = &["load", "mute", "unmute", "gain", "head", "x"];
 const DECK_VERBS_PLAY: &[&str] = &["load", "mute", "unmute", "gain", "head", "save", "reload"];
@@ -322,7 +322,7 @@ fn stage_suggest(
         ["x"] | ["xfade"] => hint_only(replace_from, "<bars>"),
         ["mix"] => list_result(filter_static(MIX_MOVES, partial), replace_from, None),
         ["mix", "long"] | ["mix", "cut"] => hint_only(replace_from, "A|B"),
-        ["mix", "fill"] => list_result(filter_static(MIX_KINDS, partial), replace_from, None),
+        ["mix", "fill"] => list_result(filter_owned(&mix_kind_list(), partial), replace_from, None),
         ["mix", "fill", _] => hint_only(replace_from, "A|B"),
         // Completing first token (complete empty, partial is first word) already handled by [].
         // If complete has one non-deck token and we're still typing more — no further suggest.
@@ -340,6 +340,16 @@ fn deck_tracks<'a>(deck: &str, ctx: &'a CompleteCtx<'_>) -> &'a [String] {
         "b" | "B" | "1" => ctx.tracks_b,
         _ => &[],
     }
+}
+
+fn mix_kind_list() -> Vec<String> {
+    let mut out: Vec<String> = MIX_KINDS.iter().map(|s| (*s).to_string()).collect();
+    for slug in crate::mix_recipe::list_mix_slugs() {
+        if !out.iter().any(|s| s == &slug) {
+            out.push(slug);
+        }
+    }
+    out
 }
 
 fn filter_static(items: &[&str], prefix: &str) -> Vec<String> {

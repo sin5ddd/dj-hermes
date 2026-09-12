@@ -482,24 +482,27 @@ pub(crate) fn mix_command_from_req(r: &MixReq) -> Result<Command, String> {
         r.to.as_deref()
             .ok_or("to required (A or B) unless move=hold")?;
     let to_deck = deck_idx(to_s)?;
-    let fill = match action {
+    let resolved = match action {
         MixAction::Fill => {
             let k = r.kind.as_deref().ok_or(
-                "kind required for move=fill (delay|lpf|flash|riser|switch|echo|hpf|roll|drop|vinyl)",
+                "kind required for move=fill (mixes/<kind>.strudel or delay|lpf|flash|riser|switch|echo|hpf|roll|drop|vinyl|lane)",
             )?;
-            Some(FillKind::parse(k)?)
+            Some(crate::mix_recipe::resolve_mix_kind(k)?)
         }
         _ => None,
     };
+    let fill = resolved.as_ref().map(|r| r.dsp);
     let grid = match r.grid.as_deref() {
-        None => MixGrid::Eighth,
+        None => resolved.as_ref().map(|r| r.grid).unwrap_or(MixGrid::Eighth),
         Some(s) => MixGrid::parse(s)?,
     };
     let phrase = parse_phrase(r.phrase.unwrap_or(1))?;
     let bars = r
         .bars
+        .or_else(|| resolved.as_ref().map(|r| r.bars))
         .unwrap_or_else(|| action.default_bars(fill))
         .clamp(1, 32);
+    let lane = resolved.and_then(|r| r.lane);
     Ok(Command::Mix(MixCommand {
         action,
         to_deck,
@@ -514,6 +517,7 @@ pub(crate) fn mix_command_from_req(r: &MixReq) -> Result<Command, String> {
             .map(|s| s.trim().to_string())
             .filter(|s| !s.is_empty()),
         phrase,
+        lane,
     }))
 }
 
@@ -2083,6 +2087,46 @@ b: note("c3").s("sawtooth").gain(0.8)
                 assert_eq!(m.fill, Some(FillKind::Switch));
                 assert_eq!(m.to_deck, 0);
                 assert_eq!(m.grid, MixGrid::Eighth);
+            }
+            _ => panic!("expected Mix"),
+        }
+    }
+
+    #[tokio::test]
+    async fn mix_fill_count_queues() {
+        let (state, rx) = test_state();
+        {
+            let song = parse_song(
+                r#"---
+b: note("c3").s("sawtooth").gain(0.8)
+"#,
+                "t",
+            )
+            .unwrap();
+            let mut e = state.engine.lock().unwrap();
+            e.load_song_immediate(0, song.clone());
+            e.load_song_immediate(1, song);
+        }
+        let app = router(state);
+        let res = app
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/mix")
+                    .header("content-type", "application/json")
+                    .body(Body::from(r#"{"move":"fill","kind":"count","to":"B"}"#))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(res.status(), StatusCode::ACCEPTED);
+        match rx.try_recv().unwrap() {
+            Command::Mix(m) => {
+                assert_eq!(m.action, MixAction::Fill);
+                assert_eq!(m.fill, Some(FillKind::Lane));
+                assert_eq!(m.to_deck, 1);
+                assert_eq!(m.bars, 2);
+                assert!(m.lane.is_some(), "count recipe should carry a lane song");
             }
             _ => panic!("expected Mix"),
         }

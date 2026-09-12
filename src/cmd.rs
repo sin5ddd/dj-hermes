@@ -40,7 +40,7 @@ a x [bars]          xfade to deck A
 b x [bars]          xfade to deck B
 mix long A|B [bars] long mix (EQ bass-swap + xfade, next phrase)
 mix cut A|B         cut-in next bar (EQ reset)
-mix fill <kind> A|B [8n|4n]  delay|lpf|flash|riser|switch|echo|hpf|roll|drop|vinyl then cut-in
+mix fill <kind> A|B [8n|4n]  mixes/<kind>.strudel or delay|lpf|…|vinyl|lane then cut-in
 mix hold            freeze xfade now
 filter lpf <hz>|off post-mix LPF (held)
 filter hpf <hz>|off post-mix HPF (held)
@@ -696,7 +696,7 @@ fn exec_mix(
     tx: &Sender<Command>,
     engine: Option<&Arc<Mutex<Engine>>>,
 ) -> ExecResult {
-    use crate::mixer::{FillKind, MixAction, MixCommand, MixGrid};
+    use crate::mixer::{MixAction, MixCommand, MixGrid};
     if args.len() < 2 {
         return ExecResult::msg("usage: mix long|cut|fill|hold …");
     }
@@ -712,19 +712,20 @@ fn exec_mix(
     if action == MixAction::Fill {
         if args.len() < 4 {
             return ExecResult::msg(
-                "usage: mix fill delay|lpf|flash|riser|switch|echo|hpf|roll|drop|vinyl A|B [8n|4n]",
+                "usage: mix fill <kind> A|B [8n|4n]  (mixes/<kind>.strudel or delay|lpf|flash|riser|switch|echo|hpf|roll|drop|vinyl|lane)",
             );
         }
-        let kind = match FillKind::parse(args[2]) {
-            Ok(k) => k,
+        let resolved = match crate::mix_recipe::resolve_mix_kind(args[2]) {
+            Ok(r) => r,
             Err(e) => return ExecResult::msg(e),
         };
+        let kind = resolved.dsp;
         let to = match parse_deck(args[3]) {
             Some(d) => d,
             None => return ExecResult::msg(format!("deck must be A or B: {}", args[3])),
         };
         let grid = match args.get(4) {
-            None => MixGrid::Eighth,
+            None => resolved.grid,
             Some(s) => match MixGrid::parse(s) {
                 Ok(g) => g,
                 Err(e) => return ExecResult::msg(e),
@@ -736,17 +737,18 @@ fn exec_mix(
         let _ = tx.send(Command::Mix(MixCommand {
             action,
             to_deck: to,
-            bars: kind.default_bars(),
+            bars: resolved.bars,
             eq: true,
             reset_eq: true,
             fill: Some(kind),
             grid,
             mute_track: None,
             phrase: 1,
+            lane: resolved.lane,
         }));
         return ExecResult::msg(format!(
             "mix fill {} → {} (次の小節から)",
-            kind.as_str(),
+            args[2],
             if to == 0 { "A" } else { "B" }
         ));
     }
@@ -775,6 +777,7 @@ fn exec_mix(
         grid: MixGrid::Eighth,
         mute_track: None,
         phrase: 1,
+        lane: None,
     }));
     let label = if to == 0 { "A" } else { "B" };
     match action {
@@ -1054,6 +1057,27 @@ mod tests {
                 assert_eq!(bars, 2);
             }
             _ => panic!("expected XFade"),
+        }
+    }
+
+    #[test]
+    fn mix_fill_count_loads_lane() {
+        let (tx, rx) = unbounded();
+        let paths = new_deck_paths();
+        let r = exec("mix fill count B", &tx, &paths, None);
+        assert!(
+            r.messages[0].contains("lane") || r.messages[0].contains("count"),
+            "{}",
+            r.messages[0]
+        );
+        match rx.try_recv().unwrap() {
+            Command::Mix(m) => {
+                assert_eq!(m.fill, Some(crate::mixer::FillKind::Lane));
+                assert_eq!(m.to_deck, 1);
+                assert_eq!(m.bars, 2);
+                assert!(m.lane.is_some());
+            }
+            _ => panic!("expected Mix"),
         }
     }
 

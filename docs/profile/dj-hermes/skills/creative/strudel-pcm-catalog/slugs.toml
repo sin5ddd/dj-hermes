@@ -391,13 +391,17 @@
 "iv-dzo" = { part = "iv", slug = "dzo" }
 "iv-fu" = { part = "iv", slug = "fu" }
 "iv-hai" = { part = "iv", slug = "hai" }
+"iv-ic" = { part = "iv", slug = "ic" }
 "iv-iku" = { part = "iv", slug = "iku" }
 "iv-kai" = { part = "iv", slug = "kai" }
 "iv-moi" = { part = "iv", slug = "moi" }
 "iv-mou" = { part = "iv", slug = "mou" }
+"iv-ni" = { part = "iv", slug = "ni" }
 "iv-ra" = { part = "iv", slug = "ra" }
+"iv-sa" = { part = "iv", slug = "sa" }
 "iv-sen" = { part = "iv", slug = "sen" }
 "iv-ses" = { part = "iv", slug = "ses" }
+"iv-si" = { part = "iv", slug = "si" }
 "iv-uke" = { part = "iv", slug = "uke" }
 "iv-wkw" = { part = "iv", slug = "wkw" }
 "iv-yat" = { part = "iv", slug = "yat" }

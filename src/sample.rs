@@ -785,6 +785,18 @@ mod tests {
     }
 
     #[test]
+    fn loads_bundled_iv_count_stems() {
+        let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("samples");
+        let bank = SampleBank::load_dir(&dir, 48_000);
+        for slug in ["ic", "ni", "sa", "si"] {
+            let s = bank
+                .get_stem("iv", slug)
+                .unwrap_or_else(|| panic!("bundled iv:{slug}"));
+            assert!(s.len() > 100, "iv:{slug} too short");
+        }
+    }
+
+    #[test]
     fn git_lfs_pointer_without_object_is_skipped() {
         let dir = std::env::temp_dir().join("dj_hermes_test_samples_lfs_missing");
         let _ = std::fs::remove_dir_all(&dir);
