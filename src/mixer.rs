@@ -38,7 +38,7 @@ const VINYL_WOW_HZ: f64 = 33.3 / 60.0;
 const VINYL_VIBRATO_CENTER: f64 = 900.0;
 /// Delay amplitude → ≈ ±50 cent at [`VINYL_WOW_HZ`] (48 kHz).
 const VINYL_VIBRATO_AMP_HELD: f64 = 400.0;
-/// Fill delay amplitude → ≈ ±100 cent.
+/// Fill delay amplitude at job end → ≈ ±100 cent. Ramps with job t (0 or held → this).
 const VINYL_VIBRATO_AMP_FILL: f64 = 800.0;
 
 /// Equal-power crossfade over N bars (sample range).
@@ -624,7 +624,7 @@ pub struct Mixer {
     vinyl_l: Biquad,
     vinyl_r: Biquad,
     vinyl_sr: f32,
-    /// Held wow phase (radians). Fill uses job progress instead; this still advances.
+    /// Held wow phase (radians). Fill ramps vibrato amplitude with job t; phase still advances.
     vinyl_phase: f64,
     flash_mul: [f32; 2],
     riser_pcm: Option<Arc<Vec<f32>>>,
@@ -1782,16 +1782,15 @@ impl Mixer {
                 r = self.lpf_y_r;
             }
 
+            let vinyl_t = vinyl_fill.map(|(start, end)| {
+                let denom = end.saturating_sub(start).max(1) as f32;
+                let abs = head_sample.saturating_add(i as u64);
+                (abs.saturating_sub(start) as f32 / denom).clamp(0.0, 1.0)
+            });
             if vinyl_on {
                 let bl = self.vinyl_l.process(l);
                 let br = self.vinyl_r.process(r);
-                let wet = if let Some((start, end)) = vinyl_fill {
-                    let denom = end.saturating_sub(start).max(1) as f32;
-                    let abs = head_sample.saturating_add(i as u64);
-                    (abs.saturating_sub(start) as f32 / denom).clamp(0.0, 1.0)
-                } else {
-                    1.0
-                };
+                let wet = vinyl_t.unwrap_or(1.0);
                 l = l.mul_add(1.0 - wet, bl * wet);
                 r = r.mul_add(1.0 - wet, br * wet);
             }
@@ -1827,10 +1826,16 @@ impl Mixer {
                     r = or_;
                 } else if vinyl_on {
                     let _ = self.tape.take();
-                    let amp = if vinyl_fill.is_some() {
-                        VINYL_VIBRATO_AMP_FILL
-                    } else {
-                        VINYL_VIBRATO_AMP_HELD
+                    let amp = match vinyl_t {
+                        Some(t) => {
+                            let start_amp = if self.held_vinyl {
+                                VINYL_VIBRATO_AMP_HELD
+                            } else {
+                                0.0
+                            };
+                            start_amp + (VINYL_VIBRATO_AMP_FILL - start_amp) * f64::from(t)
+                        }
+                        None => VINYL_VIBRATO_AMP_HELD,
                     };
                     let delay = VINYL_VIBRATO_CENTER + amp * self.vinyl_phase.sin();
                     let (ol, or_) = self.varispeed.process_vibrato(l, r, delay);
@@ -2489,6 +2494,25 @@ mod tests {
         buf[start..].iter().map(|x| x * x).sum()
     }
 
+    fn wow_gap_spread(buf: &[f32]) -> (i64, i64) {
+        let mut crossings = Vec::new();
+        for (i, pair) in buf.windows(2).enumerate().skip(2_000) {
+            if pair[0] < 0.0 && pair[1] >= 0.0 {
+                crossings.push(i + 1);
+            }
+        }
+        assert!(
+            crossings.len() >= 20,
+            "need several crossings, got {}",
+            crossings.len()
+        );
+        let gaps: Vec<i64> = crossings
+            .windows(2)
+            .map(|w| w[1] as i64 - w[0] as i64)
+            .collect();
+        (*gaps.iter().min().unwrap(), *gaps.iter().max().unwrap())
+    }
+
     #[test]
     fn vinyl_bpf_cuts_low_sine() {
         let sr = 48_000.0f32;
@@ -2585,6 +2609,64 @@ mod tests {
     }
 
     #[test]
+    fn vinyl_fill_wow_amp_grows() {
+        let sr = 48_000.0f32;
+        let n = 48_000usize;
+        let silent = vec![0.0f32; n];
+        let tone = sine_buf(n, 1_000.0, sr);
+        let mut m = Mixer::new();
+        m.gain_a = 1.0;
+        m.set_compressor(None, sr);
+        m.start_fill(
+            FillKind::Vinyl,
+            1,
+            8,
+            true,
+            MixGrid::Eighth,
+            0,
+            f64::from(sr),
+            120.0,
+            sr,
+        );
+        let mut early_l = vec![0.0f32; n];
+        let mut early_r = vec![0.0f32; n];
+        m.mix(
+            &mut early_l,
+            &mut early_r,
+            &tone,
+            &tone,
+            &silent,
+            &silent,
+            &[],
+            &[],
+            sr,
+            0,
+        );
+        let mut late_l = vec![0.0f32; n];
+        let mut late_r = vec![0.0f32; n];
+        m.mix(
+            &mut late_l,
+            &mut late_r,
+            &tone,
+            &tone,
+            &silent,
+            &silent,
+            &[],
+            &[],
+            sr,
+            7 * n as u64,
+        );
+        let (e_min, e_max) = wow_gap_spread(&early_l);
+        let (l_min, l_max) = wow_gap_spread(&late_l);
+        let early = e_max - e_min;
+        let late = l_max - l_min;
+        assert!(
+            late > early,
+            "fill wow amp should grow: early={early} ({e_min}..{e_max}) late={late} ({l_min}..{l_max})"
+        );
+    }
+
+    #[test]
     fn vinyl_held_wow_varies_zero_cross_gaps() {
         let sr = 48_000.0f32;
         let n = 48_000usize;
@@ -2608,23 +2690,7 @@ mod tests {
             sr,
             0,
         );
-        let mut crossings = Vec::new();
-        for (i, pair) in out_l.windows(2).enumerate().skip(2_000) {
-            if pair[0] < 0.0 && pair[1] >= 0.0 {
-                crossings.push(i + 1);
-            }
-        }
-        assert!(
-            crossings.len() >= 20,
-            "need several crossings, got {}",
-            crossings.len()
-        );
-        let gaps: Vec<i64> = crossings
-            .windows(2)
-            .map(|w| w[1] as i64 - w[0] as i64)
-            .collect();
-        let min = *gaps.iter().min().unwrap();
-        let max = *gaps.iter().max().unwrap();
+        let (min, max) = wow_gap_spread(&out_l);
         assert!(max > min, "wow should stretch period: min={min} max={max}");
     }
 

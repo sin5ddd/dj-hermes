@@ -317,7 +317,7 @@ fn tools_list(session: SessionKind) -> Value {
             },
             {
                 "name": "dj_hermes_mix",
-                "description": "DJ mix move in one call. Prefer this over calling mixer_eq multiple times. move=long: EQ bass-swap + xfade. move=cut: next-bar 100% fader, optional EQ reset. move=fill: kind is mixes/<kind>.strudel (count=iku then 1-2-3-4) or delay|lpf|flash|riser|switch|echo|hpf|roll|drop|vinyl|lane then cut-in. move=hold: freeze xfade. Switch is AB 100:0 chops (not flash). echo=delay wet/fb ramp then cut. hpf=high-pass sweep then cut. roll=beat-repeat then cut. drop=impact one-shot then cut. vinyl=worn band-pass wet ramps over 8 bars plus pitch wow then cut. Add a new fill by dropping mixes/<slug>.strudel.",
+                "description": "DJ mix move in one call. Prefer this over calling mixer_eq multiple times. move=long: EQ bass-swap + xfade. move=cut: next-bar 100% fader, optional EQ reset. move=fill: kind is mixes/<kind>.strudel (count=iku then 1-2-3-4) or delay|lpf|flash|riser|switch|echo|hpf|roll|drop|vinyl|lane then cut-in. move=hold: freeze xfade. Switch is AB 100:0 chops (not flash). echo=delay wet/fb ramp then cut. hpf=high-pass sweep then cut. roll=beat-repeat then cut. drop=impact one-shot then cut. vinyl=worn band-pass wet and wow amplitude ramp over 8 bars then cut. Add a new fill by dropping mixes/<slug>.strudel.",
                 "inputSchema": {
                     "type": "object",
                     "properties": {

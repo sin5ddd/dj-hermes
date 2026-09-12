@@ -1,7 +1,7 @@
 ---
 name: strudel-dj-mix
 description: "Use when mixing two decks, long mix, cut-in, fill-in, switch/transformer chops, crossfade hold, つなげる, カットイン, フィル, スイッチ, 次の曲へ, エコー, ハイパス, ロール, ビニール, echo, hpf, roll, vinyl."
-version: 1.1.1
+version: 1.1.2
 author: Hermes Agent
 license: MIT
 metadata:
@@ -52,7 +52,7 @@ metadata:
 | 四分音符のテープを 2 連 | `dj_hermes_mixer_tape(on=true, len="4n", reps=2)` |
 | 速い曲をテープで落として遅い曲へ | 主電源で `mixer_tape(on=true, len="1n")` → 途中で `on=false` → `dj_hermes_mix(move="cut", to=着地)`。BPM は共有のまま |
 | インパクト入れてカット | `dj_hermes_mix(move="fill", kind="drop", to="B")` |
-| ビニール（かすれ＋音程揺れ）してカット | `dj_hermes_mix(move="fill", kind="vinyl", to="B")`（既定 8 小節。バンドパスのかすれが徐々に強くなり、音程 wow のあとカット） |
+| ビニール（かすれ＋音程揺れ）してカット | `dj_hermes_mix(move="fill", kind="vinyl", to="B")`（既定 8 小節。バンドパスのかすれと wow 振幅がジョブ進行で大きくなり、カット） |
 | カウントしてから B | `dj_hermes_mix(move="fill", kind="count", to="B")`（次バーから「いくよー」、次のバーで 4 分のいちにさんし。既定 2 バー後にカット。`mixes/count.strudel`） |
 | 4 分でスイッチ | `grid="4n"` |
 
