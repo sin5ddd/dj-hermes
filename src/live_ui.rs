@@ -20,7 +20,7 @@ use crossterm::terminal::{
 };
 use crossterm::{cursor, execute, queue, terminal};
 
-use crate::automix::{AutomixEvent, AutomixHandle, AutomixMode, GATEWAY_DOWN_MSG};
+use crate::automix::{AutomixEvent, AutomixHandle, AutomixMode, CRON_PROFILE, GATEWAY_DOWN_MSG};
 use crate::cmd::{self, DeckPaths, LiveInput};
 use crate::code::note_to_midi;
 use crate::complete::{self, CompleteCtx, CompleteResult};
@@ -368,7 +368,7 @@ pub fn run(
     let automix = match hermes.as_ref() {
         Some(h) if !session.single_deck() => Some(AutomixHandle::start(
             h.config().bin.clone(),
-            h.config().profile.clone(),
+            CRON_PROFILE.to_string(),
         )),
         _ => None,
     };

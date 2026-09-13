@@ -3,21 +3,27 @@
 //! The worker talks to `hermes --profile … cron` off the UI thread. Jobs stay
 //! paused until 5 minutes of no local activity (or `/automix on`).
 
-use std::path::PathBuf;
+use std::fs;
+use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::sync::{Arc, Mutex};
 use std::thread::{self, JoinHandle};
-use std::time::{Duration, Instant};
+use std::time::{Duration, Instant, SystemTime};
 
 use crossbeam::channel::{unbounded, Receiver, RecvTimeoutError, Sender};
 
 pub const JOB_NAME: &str = "dj-automix";
 pub const SWAP_JOB_NAME: &str = "dj-autoswap";
+/// Cron store for automix/autoswap. Chat stays on `dj-hermes` so session
+/// writes do not share `state.db` with these jobs.
+pub const CRON_PROFILE: &str = "dj-cron";
 pub const IDLE: Duration = Duration::from_secs(300);
 const CLI_TIMEOUT: Duration = Duration::from_secs(15);
 const TICK: Duration = Duration::from_millis(200);
+/// Hermes builtin ticker interval is 60s; stale = 3 missed ticks + slack.
+const HEARTBEAT_STALE: Duration = Duration::from_secs(200);
 pub(crate) const GATEWAY_DOWN_MSG: &str =
-    "Hermes cron が起動していません（hermes --profile dj-hermes gateway、または default の gateway.multiplex_profiles: true）";
+    "Hermes cron が起動していません（dj-cron の ticker。default の Hermes desktop を開いたままにする。dj-hermes / dj-cron の gateway は不要）";
 
 const PROMPT: &str = include_str!("../docs/profile/dj-hermes/cron/dj-automix.prompt.txt");
 const SWAP_PROMPT: &str = include_str!("../docs/profile/dj-hermes/cron/dj-autoswap.prompt.txt");
@@ -151,6 +157,18 @@ impl HermesCronCli {
         args.extend(rest.iter().map(|s| (*s).to_string()));
         args
     }
+
+    fn heartbeat_path(&self) -> PathBuf {
+        match self.run(&self.profile_args(&["config", "path"])) {
+            Ok(out) => {
+                let cfg = PathBuf::from(out.trim().lines().last().unwrap_or(""));
+                cfg.parent()
+                    .map(|p| p.join("cron").join("ticker_heartbeat"))
+                    .unwrap_or_else(|| PathBuf::from("cron/ticker_heartbeat"))
+            }
+            Err(_) => PathBuf::from("cron/ticker_heartbeat"),
+        }
+    }
 }
 
 impl CronCli for HermesCronCli {
@@ -201,7 +219,17 @@ impl CronCli for HermesCronCli {
         let gateway_status = self
             .run(&self.profile_args(&["gateway", "status"]))
             .unwrap_or_default();
-        Ok(ticker_live_from_outputs(&cron_status, &gateway_status))
+        if ticker_live_from_outputs(&cron_status, &gateway_status) {
+            return Ok(true);
+        }
+        // Desktop `serve` ticks every local profile without a per-profile
+        // gateway; `cron status` then lies "will NOT fire". Heartbeat is the
+        // actual ticker (same 200s stale window as Hermes).
+        Ok(heartbeat_fresh(
+            &self.heartbeat_path(),
+            std::time::SystemTime::now(),
+            HEARTBEAT_STALE,
+        ))
     }
 }
 
@@ -238,7 +266,7 @@ fn ensure_job(cli: &dyn CronCli, event_tx: &Sender<AutomixEvent>) {
                     emit(
                         event_tx,
                         AutomixEvent::Failed(format!(
-                            "duplicate {name}; hermes --profile dj-hermes cron remove"
+                            "duplicate {name}; hermes --profile {CRON_PROFILE} cron remove"
                         )),
                     );
                 } else if n == 0 {
@@ -367,6 +395,18 @@ fn ticker_live_from_outputs(cron_status: &str, gateway_status: &str) -> bool {
     gw.contains("default-profile multiplexer")
         || gw.contains("gateway process running")
         || cron.contains("cron jobs will fire automatically")
+}
+
+fn heartbeat_fresh(path: &Path, now: SystemTime, stale: Duration) -> bool {
+    let Ok(meta) = fs::metadata(path) else {
+        return false;
+    };
+    let Ok(modified) = meta.modified() else {
+        return false;
+    };
+    now.duration_since(modified)
+        .ok()
+        .is_some_and(|age| age <= stale)
 }
 
 fn run_timed(bin: &std::path::Path, args: &[String], timeout: Duration) -> Result<String, String> {
@@ -600,6 +640,40 @@ mod tests {
             "has not reported a heartbeat",
             "✓ Gateway process running (PID: 1)",
         ));
+    }
+
+    #[test]
+    fn heartbeat_fresh_respects_stale_window() {
+        let dir = std::env::temp_dir().join(format!(
+            "dj-hermes-hb-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("ticker_heartbeat");
+        fs::write(&path, b"1").unwrap();
+        let now = fs::metadata(&path).unwrap().modified().unwrap();
+        assert!(heartbeat_fresh(&path, now, HEARTBEAT_STALE));
+        assert!(!heartbeat_fresh(
+            &path,
+            now + HEARTBEAT_STALE + Duration::from_secs(1),
+            HEARTBEAT_STALE,
+        ));
+        assert!(!heartbeat_fresh(
+            &dir.join("missing"),
+            now,
+            HEARTBEAT_STALE,
+        ));
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn cron_profile_is_isolated_from_chat() {
+        assert_eq!(CRON_PROFILE, "dj-cron");
+        assert_ne!(CRON_PROFILE, crate::hermes::DEFAULT_PROFILE);
     }
 
     #[test]

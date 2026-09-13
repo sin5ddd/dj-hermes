@@ -124,7 +124,7 @@ hermes --profile dj-hermes skills list --source local --enabled-only
 
 無操作 5 分後、Hermes cron が動く。`dj-automix` は 1 分おきにミックス、`dj-autoswap` は 3 分おきに同ジャンルの曲替え。`play` / `--text` / `--headless` では動かない。
 
-- **前提:** dj-hermes プロファイルの cron store を tick する gateway。`hermes --profile dj-hermes cron status` は multiplex 衛星で not running と嘘をつくので、確認は `hermes --profile dj-hermes gateway status`（bare `hermes cron status` は default store）。足りなければ `hermes --profile dj-hermes gateway` か、default config に `gateway.multiplex_profiles: true`。dj-hermes は gateway を起動しない。
+- **前提:** ジョブは **`dj-cron` プロファイル**（chat の `dj-hermes/state.db` とは別）。TUI は `hermes --profile dj-cron cron …`。ticker は default の Hermes desktop `serve`（全ローカルプロファイルを tick）。`hermes --profile dj-cron cron status` は gateway 不在で not running と嘘をつくことがある — 実体は `~/.hermes/profiles/dj-cron/cron/ticker_heartbeat`。dj-hermes / dj-cron の gateway は起動しない。bare `hermes cron` は default store。
 - live DJ で無操作 5 分 → 両ジョブを resume。操作 / `/automix off` で pause。`/automix on` は ticker 生存時だけ、idle を待たず resume。成功は「Hermes cronは起動中です」。不在は「Hermes cron が起動していません」。
 - `cronjob` ツールは無効のまま。`platform_toolsets.cron: [skills]`。`cron.allow_agent_scheduling: false`。ジョブ作成はアプリの CLI。
 - コピー手順に prompt は必須ではない（バイナリに焼いてある）。見本は `cron/dj-automix.prompt.txt` と `cron/dj-autoswap.prompt.txt`。
