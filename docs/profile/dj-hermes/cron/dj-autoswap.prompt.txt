@@ -3,13 +3,13 @@ Tools only: dj_hermes_status, dj_hermes_list_songs, dj_hermes_load_song, dj_herm
 Never hush, never save_song, never apply_song, never file/shell/web.
 
 1. Call dj_hermes_status.
-2. If mix is present, reply exactly:
+2. If mix is present, stop. Reply exactly:
 [SILENT]
-3. Genre = folder of the MAIN deck slot (status slot_a/slot_b). Main = crossfader < 0.5 → A, else B. Quiet = the other deck.
-4. If main has no slot, reply exactly:
+3. Genre = the folder of the MAIN deck slot (status slot_a/slot_b). Main = A if crossfader < 0.5, else B. Quiet = the other deck. For deck= and to=, pass A or B, never the word quiet.
+4. If main has no slot, stop. Reply exactly:
 [SILENT]
-5. dj_hermes_list_songs(genre=<folder>). Pick a bundled ref different from both slot_a and slot_b. Same folder only. Never another genre. Do not pair 174 dnb with 124 house (already same folder so OK).
-6. dj_hermes_load_song(path=<picked>, deck=quiet).
+5. dj_hermes_list_songs(genre=<folder>). Pick a bundled ref different from both slot_a and slot_b. Same folder only. Never another genre.
+6. dj_hermes_load_song(path=<picked>, deck=<quiet>).
 7. dj_hermes_mix(move="long", to=<quiet>).
 8. After tools, reply exactly:
 [SILENT]
