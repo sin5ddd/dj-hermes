@@ -20,7 +20,7 @@ path = "src/main.rs"
 cpal = "0.18"
 crossbeam = "0.8"
 crossterm = "0.28"
-rustyline = "14"
+rustyline = "18"
 axum = "0.8"
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "time", "io-util", "sync"] }
 serde = { version = "1", features = ["derive"] }
